@@ -10,33 +10,53 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as MarketplaceRouteImport } from './routes/marketplace'
+import { Route as MyPropertiesRouteImport } from './routes/my-properties'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MarketplaceRoute = MarketplaceRouteImport.update({
+  id: '/marketplace',
+  path: '/marketplace',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MyPropertiesRoute = MyPropertiesRouteImport.update({
+  id: '/my-properties',
+  path: '/my-properties',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/marketplace': typeof MarketplaceRoute
+  '/my-properties': typeof MyPropertiesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/marketplace': typeof MarketplaceRoute
+  '/my-properties': typeof MyPropertiesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/marketplace': typeof MarketplaceRoute
+  '/my-properties': typeof MyPropertiesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/marketplace' | '/my-properties'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/marketplace' | '/my-properties'
+  id: '__root__' | '/' | '/marketplace' | '/my-properties'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  MarketplaceRoute: typeof MarketplaceRoute
+  MyPropertiesRoute: typeof MyPropertiesRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,12 +68,38 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/marketplace': {
+      id: '/marketplace'
+      path: '/marketplace'
+      fullPath: '/marketplace'
+      preLoaderRoute: typeof MarketplaceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/my-properties': {
+      id: '/my-properties'
+      path: '/my-properties'
+      fullPath: '/my-properties'
+      preLoaderRoute: typeof MyPropertiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  MarketplaceRoute: MarketplaceRoute,
+  MyPropertiesRoute: MyPropertiesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
