@@ -1,5 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppHeader } from "@/components/layout/AppHeader";
+import { LenderPortal } from "@/components/lender/LenderPortal";
+
 import { PARTNER_LABEL, fullName, useAuth, type PartnerType } from "@/lib/auth";
 
 export const Route = createFileRoute("/partner")({
@@ -118,7 +120,18 @@ function PartnerPage() {
   }
 
   const type = user.partnerType ?? "other";
+
+  if (type === "lender") {
+    return (
+      <div className="min-h-screen bg-background">
+        <AppHeader active="Home" />
+        <LenderPortal lenderName={user.companyName || fullName(user)} />
+      </div>
+    );
+  }
+
   const board = BOARDS[type];
+
 
   return (
     <div className="min-h-screen bg-background">
