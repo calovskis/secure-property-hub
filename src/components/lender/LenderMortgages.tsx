@@ -97,11 +97,18 @@ function FileDetail({ lead }: { lead: MortgageLead }) {
 
 export function LenderMortgages({ canManage }: { canManage: boolean }) {
   const { leads } = useLeads();
+  const { scopedStates } = useLenderTeam();
   const [openId, setOpenId] = useState<string | null>(null);
   const [state, setState] = useState("all");
   const [stage, setStage] = useState<MortgageFileStage | "all">("all");
 
-  const files = useMemo(() => leads.filter(hasPricedOffer), [leads]);
+  const files = useMemo(
+    () =>
+      leads
+        .filter(hasPricedOffer)
+        .filter((l) => (scopedStates ? scopedStates.includes(leadState(l)) : true)),
+    [leads, scopedStates],
+  );
   const states = useMemo(() => Array.from(new Set(files.map(leadState))).sort(), [files]);
   const visible = files
     .filter((l) => (state === "all" ? true : leadState(l) === state))
