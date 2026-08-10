@@ -1,6 +1,13 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { homeRouteFor, useAuth, type LoqalUser, type Role } from "@/lib/auth";
+import {
+  PARTNER_LABEL,
+  homeRouteFor,
+  useAuth,
+  type LoqalUser,
+  type PartnerType,
+  type Role,
+} from "@/lib/auth";
 
 export const Route = createFileRoute("/auth")({
   component: AuthPage,
@@ -56,6 +63,7 @@ function AuthPage() {
   const [usPerson, setUsPerson] = useState<boolean | null>(null);
   const [showInternal, setShowInternal] = useState(false);
   const [loginRole, setLoginRole] = useState<Role>("client");
+  const [loginPartnerType, setLoginPartnerType] = useState<PartnerType>("lender");
   const [error, setError] = useState<string | null>(null);
 
   function complete(user: LoqalUser) {
@@ -74,7 +82,13 @@ function AuthPage() {
       phone: "",
       usPerson: false,
       role: loginRole,
-      ...(loginRole === "partner" ? { partnerType: "realtor" as const } : {}),
+      ...(loginRole === "partner"
+        ? {
+            partnerType: loginPartnerType,
+            companyName:
+              loginPartnerType === "lender" ? "Demo Mortgage Partners" : "Demo Partner Co.",
+          }
+        : {}),
     });
   }
 
@@ -267,6 +281,29 @@ function AuthPage() {
                       {r.label}
                     </button>
                   ))}
+                </div>
+              ) : null}
+              {showInternal && loginRole === "partner" ? (
+                <div className="mt-3">
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    Partner type
+                  </p>
+                  <div className="flex flex-wrap justify-center gap-2">
+                    {(Object.keys(PARTNER_LABEL) as PartnerType[]).map((t) => (
+                      <button
+                        key={t}
+                        type="button"
+                        onClick={() => setLoginPartnerType(t)}
+                        className={`rounded-full border px-4 py-1.5 text-xs font-semibold transition-colors ${
+                          loginPartnerType === t
+                            ? "border-gold bg-gold text-primary-foreground"
+                            : "border-border text-foreground hover:bg-gold-tint"
+                        }`}
+                      >
+                        {PARTNER_LABEL[t]}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               ) : null}
             </div>
