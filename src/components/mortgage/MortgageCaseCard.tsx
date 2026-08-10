@@ -342,9 +342,11 @@ export function MortgageCaseCard({ lead }: { lead: MortgageLead }) {
             <p className="mb-4 text-sm text-success">
               You are pre-qualified. Complete Step 2 to estimate your maximum purchase price.
             </p>
+            <ProceedPanel lead={lead} />
             <Step2Form lead={lead} />
           </>
         ) : null}
+
       </div>
     </section>
   );
