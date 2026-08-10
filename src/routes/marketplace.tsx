@@ -1,6 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { AppHeader } from "@/components/layout/AppHeader";
+import { allProperties, formatPrice, type Property } from "@/data/properties";
+
 
 export const Route = createFileRoute("/marketplace")({
   component: MarketplacePage,

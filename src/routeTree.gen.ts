@@ -16,6 +16,7 @@ import { Route as FinancialsRouteImport } from './routes/financials'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as MyPropertiesRouteImport } from './routes/my-properties'
 import { Route as MyServicesRouteImport } from './routes/my-services'
+import { Route as PropertyPropertyIdRouteImport } from './routes/property.$propertyId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -52,6 +53,11 @@ const MyServicesRoute = MyServicesRouteImport.update({
   path: '/my-services',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PropertyPropertyIdRoute = PropertyPropertyIdRouteImport.update({
+  id: '/property/$propertyId',
+  path: '/property/$propertyId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -61,6 +67,7 @@ export interface FileRoutesByFullPath {
   '/marketplace': typeof MarketplaceRoute
   '/my-properties': typeof MyPropertiesRoute
   '/my-services': typeof MyServicesRoute
+  '/property/$propertyId': typeof PropertyPropertyIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -70,6 +77,7 @@ export interface FileRoutesByTo {
   '/marketplace': typeof MarketplaceRoute
   '/my-properties': typeof MyPropertiesRoute
   '/my-services': typeof MyServicesRoute
+  '/property/$propertyId': typeof PropertyPropertyIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -80,6 +88,7 @@ export interface FileRoutesById {
   '/marketplace': typeof MarketplaceRoute
   '/my-properties': typeof MyPropertiesRoute
   '/my-services': typeof MyServicesRoute
+  '/property/$propertyId': typeof PropertyPropertyIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -91,6 +100,7 @@ export interface FileRouteTypes {
     | '/marketplace'
     | '/my-properties'
     | '/my-services'
+    | '/property/$propertyId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -100,6 +110,7 @@ export interface FileRouteTypes {
     | '/marketplace'
     | '/my-properties'
     | '/my-services'
+    | '/property/$propertyId'
   id:
     | '__root__'
     | '/'
@@ -109,6 +120,7 @@ export interface FileRouteTypes {
     | '/marketplace'
     | '/my-properties'
     | '/my-services'
+    | '/property/$propertyId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -119,6 +131,7 @@ export interface RootRouteChildren {
   MarketplaceRoute: typeof MarketplaceRoute
   MyPropertiesRoute: typeof MyPropertiesRoute
   MyServicesRoute: typeof MyServicesRoute
+  PropertyPropertyIdRoute: typeof PropertyPropertyIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -172,6 +185,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MyServicesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/property/$propertyId': {
+      id: '/property/$propertyId'
+      path: '/property/$propertyId'
+      fullPath: '/property/$propertyId'
+      preLoaderRoute: typeof PropertyPropertyIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -183,17 +203,8 @@ const rootRouteChildren: RootRouteChildren = {
   MarketplaceRoute: MarketplaceRoute,
   MyPropertiesRoute: MyPropertiesRoute,
   MyServicesRoute: MyServicesRoute,
+  PropertyPropertyIdRoute: PropertyPropertyIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
