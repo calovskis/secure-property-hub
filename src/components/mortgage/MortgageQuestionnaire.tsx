@@ -293,7 +293,102 @@ export function MortgageQuestionnaire({
                       className={inputClass}
                     />
                   </Field>
+
+                  <Field label="Double citizenship">
+                    <input
+                      placeholder="Second citizenship, if any"
+                      value={secondCitizenship}
+                      onChange={(e) => setSecondCitizenship(e.target.value)}
+                      className={inputClass}
+                    />
+                  </Field>
+
+                  <Field label="Is your US visa active?" required>
+                    <div className="flex gap-4 pt-1 text-sm text-foreground">
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="visaActive"
+                          checked={visaActive}
+                          onChange={() => setVisaActive(true)}
+                        />
+                        Yes
+                      </label>
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="visaActive"
+                          checked={!visaActive}
+                          onChange={() => {
+                            setVisaActive(false);
+                            setVisaIssued("");
+                            setVisaValidUntil("");
+                          }}
+                        />
+                        No
+                      </label>
+                    </div>
+                  </Field>
+
+                  {visaActive ? (
+                    <>
+                      <Field label="Visa issued on" required>
+                        <input
+                          type="date"
+                          value={visaIssued}
+                          onChange={(e) => setVisaIssued(e.target.value)}
+                          className={inputClass}
+                        />
+                      </Field>
+                      <Field label="Visa valid until" required>
+                        <input
+                          type="date"
+                          value={visaValidUntil}
+                          onChange={(e) => setVisaValidUntil(e.target.value)}
+                          className={inputClass}
+                        />
+                      </Field>
+                    </>
+                  ) : null}
+
+                  <Field label="How will you use the property?" required>
+                    <select
+                      value={propertyUse}
+                      onChange={(e) =>
+                        setPropertyUse(e.target.value as "vacation" | "investment" | "")
+                      }
+                      className={inputClass}
+                    >
+                      <option value="">Select…</option>
+                      <option value="vacation">Vacation home</option>
+                      <option value="investment">Investment property</option>
+                    </select>
+                  </Field>
+
+                  <Field label="Do you have a US bank account?" required>
+                    <div className="flex gap-4 pt-1 text-sm text-foreground">
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="usBank"
+                          checked={usBankAccount}
+                          onChange={() => setUsBankAccount(true)}
+                        />
+                        Yes
+                      </label>
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="usBank"
+                          checked={!usBankAccount}
+                          onChange={() => setUsBankAccount(false)}
+                        />
+                        No
+                      </label>
+                    </div>
+                  </Field>
                 </div>
+
               </section>
             ) : null}
 
