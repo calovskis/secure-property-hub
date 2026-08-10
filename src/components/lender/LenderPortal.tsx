@@ -8,10 +8,10 @@ import {
   type MortgageLead,
 } from "@/lib/leads";
 import { countryLabel } from "@/data/countries";
+import { formatDate, formatDateTime, isoToUsMonth } from "@/lib/dates";
 
 const money = (n: number) => `$${Math.round(n).toLocaleString()}`;
-const date = (iso?: string) =>
-  iso ? new Date(iso).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" }) : "—";
+const date = (iso?: string) => formatDateTime(iso);
 
 const STATUS_TONE: Record<LeadStatus, string> = {
   new: "bg-gold-tint text-gold",
