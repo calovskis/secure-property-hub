@@ -128,11 +128,13 @@ export function MortgageQuestionnaire({
         return setError("Please provide the visa issue and expiry dates.");
       if (!propertyUse) return setError("Please tell us how you will use the property.");
     }
-    if (!addresses[0]?.street || !addresses[0]?.city)
-      return setError("At least one address in your 2-year history is required.");
-    if (!employment[0]?.employer)
-      return setError("At least one employer in your 2-year history is required.");
-    if (!monthly) return setError("Current monthly gross income is required.");
+    if (showHistory) {
+      if (!addresses[0]?.street || !addresses[0]?.city)
+        return setError("At least one address in your 2-year history is required.");
+      if (!employment[0]?.employer)
+        return setError("At least one employer in your 2-year history is required.");
+      if (!monthly) return setError("Current monthly gross income is required.");
+    }
 
     const profile: MortgageProfile = {
       dateOfBirth: dob,
@@ -151,9 +153,9 @@ export function MortgageQuestionnaire({
             propertyUse: propertyUse as "vacation" | "investment",
             usBankAccount,
           }),
-      addresses,
-      employment,
-      monthlyGross: monthly,
+      ...(showHistory
+        ? { addresses, employment, monthlyGross: monthly }
+        : { addresses: [], employment: [], monthlyGross: 0 }),
       submittedAt: new Date().toISOString(),
     };
     setError(null);
