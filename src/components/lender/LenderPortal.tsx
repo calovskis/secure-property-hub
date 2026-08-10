@@ -558,13 +558,83 @@ function RequestsInbox({ canDecide }: { canDecide: boolean }) {
                   Marked not qualified{selected.creditScore ? ` (score ${selected.creditScore})` : ""}.
                   This decision is final for this application.
                 </div>
-              ) : (
+              ) : canDecide ? (
                 <DecisionPanel key={selected.id} lead={selected} />
+              ) : (
+                <div className="rounded-lg border border-border bg-card p-4 text-sm text-muted-foreground">
+                  Your seat can review this file but cannot issue a decision. Ask an underwriter or
+                  company admin to sign off.
+                </div>
               )}
             </>
           )}
         </div>
       </section>
+    </>
+  );
+}
+
+const TABS = [
+  { id: "home", label: "Home" },
+  { id: "requests", label: "Pre-approval Requests" },
+  { id: "mortgages", label: "Mortgages" },
+  { id: "analytics", label: "Analytics" },
+  { id: "other", label: "Other" },
+] as const;
+
+type TabId = (typeof TABS)[number]["id"];
+
+export function LenderPortal({ lenderName }: { lenderName: string }) {
+  const [tab, setTab] = useState<TabId>("home");
+  const { active, can } = useLenderTeam();
+
+  const allowed: Record<TabId, boolean> = {
+    home: true,
+    requests: can("requests.view"),
+    mortgages: can("mortgages.view"),
+    analytics: can("analytics.view"),
+    other: true,
+  };
+  const current = allowed[tab] ? tab : "home";
+
+  return (
+    <main className="mx-auto max-w-[1400px] px-4 py-8 md:px-7">
+      <div className="mb-6 flex flex-wrap items-center gap-3">
+        <span className="rounded-full bg-gold-tint px-3 py-1 text-xs font-semibold text-gold">
+          Mortgage lender portal
+        </span>
+        {active ? (
+          <span className="text-xs text-muted-foreground">
+            Signed in as {active.name} · {LENDER_ROLE_LABEL[active.role]}
+          </span>
+        ) : null}
+      </div>
+
+      <nav className="mb-8 flex flex-wrap gap-1.5 border-b border-border pb-3">
+        {TABS.filter((t) => allowed[t.id]).map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            onClick={() => setTab(t.id)}
+            className={`rounded-full px-4 py-2 text-sm font-semibold ${
+              current === t.id
+                ? "bg-brand text-background"
+                : "text-muted-foreground hover:bg-brand-tint"
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </nav>
+
+      {current === "home" ? (
+        <LenderHome lenderName={lenderName} onOpenRequests={() => setTab("requests")} />
+      ) : null}
+      {current === "requests" ? <RequestsInbox canDecide={can("requests.decide")} /> : null}
+      {current === "mortgages" ? <LenderMortgages canManage={can("mortgages.manage")} /> : null}
+      {current === "analytics" ? <LenderAnalytics /> : null}
+      {current === "other" ? <LenderTeam /> : null}
     </main>
   );
 }
+
