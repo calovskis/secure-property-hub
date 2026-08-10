@@ -1,7 +1,10 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useState } from "react";
 import { AppHeader } from "@/components/layout/AppHeader";
+import { MortgageQuestionnaire } from "@/components/mortgage/MortgageQuestionnaire";
+import { useAuth } from "@/lib/auth";
 import { buildInvestmentModel, formatPrice, getProperty } from "@/data/properties";
+
 
 export const Route = createFileRoute("/property/$propertyId")({
   component: PropertyDetailPage,
