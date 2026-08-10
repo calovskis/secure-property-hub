@@ -10,33 +10,115 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AnalyticsRouteImport } from './routes/analytics'
+import { Route as DocumentsRouteImport } from './routes/documents'
+import { Route as FinancialsRouteImport } from './routes/financials'
+import { Route as MarketplaceRouteImport } from './routes/marketplace'
+import { Route as MyPropertiesRouteImport } from './routes/my-properties'
+import { Route as MyServicesRouteImport } from './routes/my-services'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AnalyticsRoute = AnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocumentsRoute = DocumentsRouteImport.update({
+  id: '/documents',
+  path: '/documents',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FinancialsRoute = FinancialsRouteImport.update({
+  id: '/financials',
+  path: '/financials',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MarketplaceRoute = MarketplaceRouteImport.update({
+  id: '/marketplace',
+  path: '/marketplace',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MyPropertiesRoute = MyPropertiesRouteImport.update({
+  id: '/my-properties',
+  path: '/my-properties',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MyServicesRoute = MyServicesRouteImport.update({
+  id: '/my-services',
+  path: '/my-services',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/analytics': typeof AnalyticsRoute
+  '/documents': typeof DocumentsRoute
+  '/financials': typeof FinancialsRoute
+  '/marketplace': typeof MarketplaceRoute
+  '/my-properties': typeof MyPropertiesRoute
+  '/my-services': typeof MyServicesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/analytics': typeof AnalyticsRoute
+  '/documents': typeof DocumentsRoute
+  '/financials': typeof FinancialsRoute
+  '/marketplace': typeof MarketplaceRoute
+  '/my-properties': typeof MyPropertiesRoute
+  '/my-services': typeof MyServicesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/analytics': typeof AnalyticsRoute
+  '/documents': typeof DocumentsRoute
+  '/financials': typeof FinancialsRoute
+  '/marketplace': typeof MarketplaceRoute
+  '/my-properties': typeof MyPropertiesRoute
+  '/my-services': typeof MyServicesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/analytics'
+    | '/documents'
+    | '/financials'
+    | '/marketplace'
+    | '/my-properties'
+    | '/my-services'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/analytics'
+    | '/documents'
+    | '/financials'
+    | '/marketplace'
+    | '/my-properties'
+    | '/my-services'
+  id:
+    | '__root__'
+    | '/'
+    | '/analytics'
+    | '/documents'
+    | '/financials'
+    | '/marketplace'
+    | '/my-properties'
+    | '/my-services'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AnalyticsRoute: typeof AnalyticsRoute
+  DocumentsRoute: typeof DocumentsRoute
+  FinancialsRoute: typeof FinancialsRoute
+  MarketplaceRoute: typeof MarketplaceRoute
+  MyPropertiesRoute: typeof MyPropertiesRoute
+  MyServicesRoute: typeof MyServicesRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +130,59 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/analytics': {
+      id: '/analytics'
+      path: '/analytics'
+      fullPath: '/analytics'
+      preLoaderRoute: typeof AnalyticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/documents': {
+      id: '/documents'
+      path: '/documents'
+      fullPath: '/documents'
+      preLoaderRoute: typeof DocumentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/financials': {
+      id: '/financials'
+      path: '/financials'
+      fullPath: '/financials'
+      preLoaderRoute: typeof FinancialsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/marketplace': {
+      id: '/marketplace'
+      path: '/marketplace'
+      fullPath: '/marketplace'
+      preLoaderRoute: typeof MarketplaceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/my-properties': {
+      id: '/my-properties'
+      path: '/my-properties'
+      fullPath: '/my-properties'
+      preLoaderRoute: typeof MyPropertiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/my-services': {
+      id: '/my-services'
+      path: '/my-services'
+      fullPath: '/my-services'
+      preLoaderRoute: typeof MyServicesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AnalyticsRoute: AnalyticsRoute,
+  DocumentsRoute: DocumentsRoute,
+  FinancialsRoute: FinancialsRoute,
+  MarketplaceRoute: MarketplaceRoute,
+  MyPropertiesRoute: MyPropertiesRoute,
+  MyServicesRoute: MyServicesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
