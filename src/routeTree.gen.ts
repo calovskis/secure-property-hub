@@ -17,6 +17,7 @@ import { Route as FinancialsRouteImport } from './routes/financials'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as MyPropertiesRouteImport } from './routes/my-properties'
 import { Route as MyServicesRouteImport } from './routes/my-services'
+import { Route as PartnerRouteImport } from './routes/partner'
 import { Route as SsnTermsRouteImport } from './routes/ssn-terms'
 import { Route as PropertyPropertyIdRouteImport } from './routes/property.$propertyId'
 
@@ -60,6 +61,11 @@ const MyServicesRoute = MyServicesRouteImport.update({
   path: '/my-services',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PartnerRoute = PartnerRouteImport.update({
+  id: '/partner',
+  path: '/partner',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SsnTermsRoute = SsnTermsRouteImport.update({
   id: '/ssn-terms',
   path: '/ssn-terms',
@@ -80,6 +86,7 @@ export interface FileRoutesByFullPath {
   '/marketplace': typeof MarketplaceRoute
   '/my-properties': typeof MyPropertiesRoute
   '/my-services': typeof MyServicesRoute
+  '/partner': typeof PartnerRoute
   '/ssn-terms': typeof SsnTermsRoute
   '/property/$propertyId': typeof PropertyPropertyIdRoute
 }
@@ -92,6 +99,7 @@ export interface FileRoutesByTo {
   '/marketplace': typeof MarketplaceRoute
   '/my-properties': typeof MyPropertiesRoute
   '/my-services': typeof MyServicesRoute
+  '/partner': typeof PartnerRoute
   '/ssn-terms': typeof SsnTermsRoute
   '/property/$propertyId': typeof PropertyPropertyIdRoute
 }
@@ -105,6 +113,7 @@ export interface FileRoutesById {
   '/marketplace': typeof MarketplaceRoute
   '/my-properties': typeof MyPropertiesRoute
   '/my-services': typeof MyServicesRoute
+  '/partner': typeof PartnerRoute
   '/ssn-terms': typeof SsnTermsRoute
   '/property/$propertyId': typeof PropertyPropertyIdRoute
 }
@@ -119,6 +128,7 @@ export interface FileRouteTypes {
     | '/marketplace'
     | '/my-properties'
     | '/my-services'
+    | '/partner'
     | '/ssn-terms'
     | '/property/$propertyId'
   fileRoutesByTo: FileRoutesByTo
@@ -131,6 +141,7 @@ export interface FileRouteTypes {
     | '/marketplace'
     | '/my-properties'
     | '/my-services'
+    | '/partner'
     | '/ssn-terms'
     | '/property/$propertyId'
   id:
@@ -143,6 +154,7 @@ export interface FileRouteTypes {
     | '/marketplace'
     | '/my-properties'
     | '/my-services'
+    | '/partner'
     | '/ssn-terms'
     | '/property/$propertyId'
   fileRoutesById: FileRoutesById
@@ -156,6 +168,7 @@ export interface RootRouteChildren {
   MarketplaceRoute: typeof MarketplaceRoute
   MyPropertiesRoute: typeof MyPropertiesRoute
   MyServicesRoute: typeof MyServicesRoute
+  PartnerRoute: typeof PartnerRoute
   SsnTermsRoute: typeof SsnTermsRoute
   PropertyPropertyIdRoute: typeof PropertyPropertyIdRoute
 }
@@ -218,6 +231,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MyServicesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/partner': {
+      id: '/partner'
+      path: '/partner'
+      fullPath: '/partner'
+      preLoaderRoute: typeof PartnerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/ssn-terms': {
       id: '/ssn-terms'
       path: '/ssn-terms'
@@ -244,6 +264,7 @@ const rootRouteChildren: RootRouteChildren = {
   MarketplaceRoute: MarketplaceRoute,
   MyPropertiesRoute: MyPropertiesRoute,
   MyServicesRoute: MyServicesRoute,
+  PartnerRoute: PartnerRoute,
   SsnTermsRoute: SsnTermsRoute,
   PropertyPropertyIdRoute: PropertyPropertyIdRoute,
 }
