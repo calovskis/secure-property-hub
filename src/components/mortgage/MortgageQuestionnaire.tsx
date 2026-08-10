@@ -15,6 +15,7 @@ import {
 } from "@/lib/auth";
 import { useLeads } from "@/lib/leads";
 import { fullName } from "@/lib/auth";
+import { COUNTRIES } from "@/data/countries";
 
 const uid = () => Math.random().toString(36).slice(2, 9);
 
