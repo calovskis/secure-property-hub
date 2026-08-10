@@ -115,15 +115,10 @@ function MarketplacePage() {
     alert(`Property ${id} saved to your favorites!`);
   };
 
-  const moreInfo = (id: number) => {
-    const prop = allProperties.find((p) => p.id === id);
-    if (!prop) return;
-    alert(
-      `Property Details:\n${prop.address}\n${prop.location}\n\nType: ${prop.type}\nPrice: ${formatPrice(
-        prop.price,
-      )}\nBeds: ${prop.beds || "N/A"}\nBaths: ${prop.baths || "N/A"}\nSqft: ${prop.sqft.toLocaleString()}`,
-    );
+  const openProperty = (id: number) => {
+    navigate({ to: "/property/$propertyId", params: { propertyId: String(id) } });
   };
+
 
   const proceedWithProperty = (id: number) => {
     alert(
