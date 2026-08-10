@@ -182,6 +182,15 @@ function DecisionPanel({ lead }: { lead: MortgageLead }) {
   const [score, setScore] = useState(lead.creditScore ? String(lead.creditScore) : "");
   const [note, setNote] = useState(lead.lenderNote ?? "");
   const [dtiLimit, setDtiLimit] = useState(String(Math.round(lead.dtiLimit * 100)));
+  const [ratePct, setRatePct] = useState(lead.terms ? String(lead.terms.ratePct) : "");
+  const [termYears, setTermYears] = useState(lead.terms ? String(lead.terms.termYears) : "30");
+  const [downPct, setDownPct] = useState(lead.terms ? String(lead.terms.downPaymentPct) : "");
+  const [closingPct, setClosingPct] = useState(
+    lead.terms ? String(lead.terms.closingCostPct) : "2.5",
+  );
+  const [taxInsPct, setTaxInsPct] = useState(
+    lead.terms ? String(lead.terms.taxInsurancePct) : "1.45",
+  );
   const [question, setQuestion] = useState("");
   const [needsDoc, setNeedsDoc] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -196,6 +205,30 @@ function DecisionPanel({ lead }: { lead: MortgageLead }) {
       setError("Describe what the client must answer or upload.");
       return;
     }
+    const rate = Number(ratePct);
+    const years = Number(termYears);
+    const down = Number(downPct);
+    const closing = Number(closingPct);
+    const taxIns = Number(taxInsPct);
+    if (status === "qualified") {
+      const valid =
+        rate > 0 &&
+        rate < 25 &&
+        years >= 5 &&
+        years <= 40 &&
+        down >= 0 &&
+        down < 100 &&
+        closing >= 0 &&
+        closing < 20 &&
+        taxIns >= 0 &&
+        taxIns < 10;
+      if (!valid) {
+        setError(
+          "Approved pricing is required to unlock the client estimate: interest rate, loan term, down payment, closing costs and tax/insurance rate.",
+        );
+        return;
+      }
+    }
     setError(null);
     const limit = Math.min(Math.max(Number(dtiLimit) || 50, 20), 60) / 100;
     updateLead(lead.id, {
@@ -204,6 +237,19 @@ function DecisionPanel({ lead }: { lead: MortgageLead }) {
       lenderNote: note.trim(),
       dtiLimit: limit,
       decidedAt: new Date().toISOString(),
+      ...(status === "qualified"
+        ? {
+            terms: {
+              ratePct: rate,
+              termYears: years,
+              downPaymentPct: down,
+              closingCostPct: closing,
+              taxInsurancePct: taxIns,
+              issuedAt: new Date().toISOString(),
+            },
+          }
+        : {}),
+
     });
     if (status === "info_required") {
       addInfoRequest(lead.id, question.trim(), needsDoc);
@@ -243,6 +289,37 @@ function DecisionPanel({ lead }: { lead: MortgageLead }) {
           </span>
         </label>
       </div>
+
+      <div className="rounded-md border border-gold/40 bg-gold-tint/40 p-3">
+        <span className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Approved pricing (required for “Qualified” — unlocks the client estimate)
+        </span>
+        <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-5">
+          {(
+            [
+              ["Interest rate (%)", ratePct, setRatePct, "6.75"],
+              ["Loan term (years)", termYears, setTermYears, "30"],
+              ["Down payment (%)", downPct, setDownPct, "20"],
+              ["Closing costs (%)", closingPct, setClosingPct, "2.5"],
+              ["Taxes + insurance (%/yr)", taxInsPct, setTaxInsPct, "1.45"],
+            ] as [string, string, (v: string) => void, string][]
+          ).map(([label, value, setter, ph]) => (
+            <label key={label} className="block">
+              <span className="mb-1.5 block text-[11px] font-semibold text-muted-foreground">
+                {label}
+              </span>
+              <input
+                inputMode="decimal"
+                placeholder={ph}
+                value={value}
+                onChange={(e) => setter(e.target.value)}
+                className={inputClass}
+              />
+            </label>
+          ))}
+        </div>
+      </div>
+
 
       <label className="block">
         <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">

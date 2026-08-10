@@ -3,9 +3,15 @@ import { useState } from "react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { MortgageQuestionnaire } from "@/components/mortgage/MortgageQuestionnaire";
 import { MortgageCaseCard } from "@/components/mortgage/MortgageCaseCard";
-import { useLeads } from "@/lib/leads";
+import { useLeads, hasPricedOffer, toLoanTerms } from "@/lib/leads";
 import { useAuth } from "@/lib/auth";
-import { buildInvestmentModel, formatPrice, getProperty } from "@/data/properties";
+import {
+  buildInvestmentModel,
+  formatPrice,
+  getProperty,
+  INDICATIVE_TERMS,
+} from "@/data/properties";
+
 
 
 export const Route = createFileRoute("/property/$propertyId")({
@@ -88,10 +94,14 @@ const SCENARIO_KEYS = ["airbnb", "longterm", "hybrid"] as const;
 
 function Gated({
   locked,
+  message,
+  cta,
   onProvide,
   children,
 }: {
   locked: boolean;
+  message: string;
+  cta?: string;
   onProvide: () => void;
   children: React.ReactNode;
 }) {
@@ -102,16 +112,16 @@ function Gated({
         {children}
       </div>
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-lg bg-background/55 p-6 text-center">
-        <p className="max-w-xs text-xs font-medium text-muted-foreground">
-          To ensure the accuracy of the information provided, additional details are required before estimates can be calculated.
-        </p>
-        <button
-          type="button"
-          onClick={onProvide}
-          className="rounded-md bg-brand px-5 py-2.5 text-sm font-semibold text-background transition-colors hover:bg-brand-soft"
-        >
-          Provide information
-        </button>
+        <p className="max-w-xs text-xs font-medium text-muted-foreground">{message}</p>
+        {cta ? (
+          <button
+            type="button"
+            onClick={onProvide}
+            className="rounded-md bg-brand px-5 py-2.5 text-sm font-semibold text-background transition-colors hover:bg-brand-soft"
+          >
+            {cta}
+          </button>
+        ) : null}
       </div>
     </div>
   );
@@ -119,20 +129,37 @@ function Gated({
 
 function PropertyDetailPage() {
   const { property } = Route.useLoaderData();
-  const model = buildInvestmentModel(property);
   const [scenarioKey, setScenarioKey] = useState<(typeof SCENARIO_KEYS)[number]>("airbnb");
-  const scenario = model.scenarios[scenarioKey];
   const { user, canSeeEstimates } = useAuth();
   const { leadForProperty } = useLeads();
   const lead = user ? leadForProperty(user.email, property.id) : undefined;
   const [questionnaireOpen, setQuestionnaireOpen] = useState(false);
-  const locked = !canSeeEstimates;
+
+  const privileged = user?.role === "admin" || user?.role === "partner";
+  const priced = hasPricedOffer(lead);
+  /** Estimates are precise only on lender-issued pricing; otherwise stay locked. */
+  const terms = priced && lead?.terms ? toLoanTerms(lead.terms) : undefined;
+  const model = buildInvestmentModel(property, terms ?? INDICATIVE_TERMS);
+  const scenario = model.scenarios[scenarioKey];
+  const locked = !privileged && !priced;
+
+  const lockMessage = !canSeeEstimates
+    ? "To ensure the accuracy of the information provided, additional details are required before estimates can be calculated."
+    : !lead
+      ? "Submit a mortgage pre-qualification request for this property so a lender can price your loan. Estimates unlock once approved terms are issued."
+      : lead.status === "not_qualified"
+        ? "The lender could not pre-qualify this application, so no financing terms are available to base an estimate on."
+        : lead.status === "info_required"
+          ? "Your lender requested additional information. Estimates unlock once your file is complete and approved terms are issued."
+          : "Your application is with the lender. Estimates unlock once your credit score, down payment, rate, loan term and closing costs are confirmed.";
+  const lockCta = !canSeeEstimates || !lead ? "Provide information" : undefined;
   const openQuestionnaire = () => {
     if (!user) {
       window.location.href = "/auth";
       return;
     }
     setQuestionnaireOpen(true);
+
   };
 
   return (
@@ -297,19 +324,33 @@ function PropertyDetailPage() {
 
           <Card
             title="💳 Mortgage Estimate"
-            subtitle="Based on 20% down · 6.5% rate · 30yr fixed"
+            subtitle={
+              terms && lead?.terms
+                ? `Approved terms · ${lead.terms.downPaymentPct}% down · ${lead.terms.ratePct}% rate · ${lead.terms.termYears}yr`
+                : "Unlocks with lender-approved terms (down payment, rate, term, closing costs)"
+            }
             className="ring-2 ring-brand/10"
           >
-            <Gated locked={locked} onProvide={openQuestionnaire}>
+            <Gated
+              locked={locked}
+              message={lockMessage}
+              {...(lockCta ? { cta: lockCta } : {})}
+              onProvide={openQuestionnaire}
+            >
               <div className="mb-3 text-3xl font-bold text-brand">{money(model.mortgage)}/mo</div>
               <Rows
                 rows={[
                   ["Down payment", money(model.downPayment)],
                   ["Loan amount", money(model.loanAmount)],
+                  ["Interest rate", `${lead?.terms?.ratePct ?? 6.5}%`],
+                  ["Loan term", `${lead?.terms?.termYears ?? 30} years`],
+                  ["Taxes + insurance", `${money(model.taxInsurance)}/mo`],
                   ["Estimated closing costs", money(model.closingCosts)],
+                  ["Cash needed at closing", money(model.downPayment + model.closingCosts)],
                 ]}
               />
             </Gated>
+
             <button
               type="button"
               onClick={openQuestionnaire}
@@ -335,7 +376,13 @@ function PropertyDetailPage() {
           subtitle="Compare passive-income strategies for the same asset"
           className="mb-6"
         >
-          <Gated locked={locked} onProvide={openQuestionnaire}>
+          <Gated
+            locked={locked}
+            message={lockMessage}
+            {...(lockCta ? { cta: lockCta } : {})}
+            onProvide={openQuestionnaire}
+          >
+
           <div className="mb-5 flex flex-wrap gap-2 border-b border-border pb-3">
             {SCENARIO_KEYS.map((key) => (
               <button
