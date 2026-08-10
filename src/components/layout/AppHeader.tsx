@@ -120,16 +120,22 @@ export function AppHeader({ active = "Home" }: { active?: string }) {
 
                 {item.items && open === item.label ? (
                   <div className="absolute left-0 top-[calc(100%+8px)] w-56 rounded-lg border border-border bg-popover p-1.5 shadow-lg">
-                    {item.items.map((sub) => (
-                      <button
-                        key={sub.label}
-                        type="button"
-                        className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-brand-tint hover:text-brand"
-                      >
-                        <span aria-hidden>{sub.icon}</span>
-                        {sub.label}
-                      </button>
-                    ))}
+                    {item.items.map((sub) => {
+                      const cls =
+                        "flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-brand-tint hover:text-brand";
+                      return sub.to ? (
+                        <Link key={sub.label} to={sub.to} className={cls} onClick={() => setOpen(null)}>
+                          <span aria-hidden>{sub.icon}</span>
+                          {sub.label}
+                        </Link>
+                      ) : (
+                        <button key={sub.label} type="button" className={cls}>
+                          <span aria-hidden>{sub.icon}</span>
+                          {sub.label}
+                        </button>
+                      );
+                    })}
+
                   </div>
                 ) : null}
               </div>
