@@ -199,3 +199,37 @@ function PartnerPage() {
     </div>
   );
 }
+
+function LenderWorkspace({ lenderName }: { lenderName: string }) {
+  const [tab, setTab] = useState<LenderTabId>("home");
+  const tabs = useLenderTabs();
+  const current = tabs.some((t) => t.id === tab) ? tab : "home";
+
+  return (
+    <div className="min-h-screen bg-background">
+      <AppHeader
+        navSlot={
+          <>
+            {tabs.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setTab(t.id)}
+                className={`flex items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                  current === t.id
+                    ? "bg-brand-tint text-brand"
+                    : "text-muted-foreground hover:bg-brand-tint hover:text-brand"
+                }`}
+              >
+                <span aria-hidden>{t.icon}</span>
+                {t.label}
+              </button>
+            ))}
+          </>
+        }
+      />
+      <LenderPortal lenderName={lenderName} tab={current} onTabChange={setTab} />
+    </div>
+  );
+}
+
