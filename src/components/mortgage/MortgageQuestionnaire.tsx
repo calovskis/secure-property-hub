@@ -398,6 +398,8 @@ export function MortgageQuestionnaire({
 
 
 
+            {showHistory ? (
+            <>
             {/* ADDRESS HISTORY */}
             <section>
               <div className="mb-3 flex items-center justify-between">
