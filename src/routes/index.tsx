@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 
 import { AppHeader } from "@/components/layout/AppHeader";
 import { useAuth } from "@/lib/auth";
+import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -76,12 +77,13 @@ function SectionCard({
   action: string;
   children: React.ReactNode;
 }) {
+  const t = useT();
   return (
     <div className="rounded-lg border border-border bg-card shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
       <div className="flex items-center justify-between border-b border-border px-5 py-4">
-        <h2 className="text-base font-semibold text-foreground">{title}</h2>
+        <h2 className="text-base font-semibold text-foreground">{t(title)}</h2>
         <button type="button" className="text-xs font-semibold text-brand hover:underline">
-          {action}
+          {t(action)}
         </button>
       </div>
       <div className="p-5">{children}</div>
@@ -104,6 +106,7 @@ function ActivityRow({
   service?: boolean;
   right?: React.ReactNode;
 }) {
+  const t = useT();
   return (
     <div className="flex gap-4 border-b border-border py-4 first:pt-0 last:border-none last:pb-0">
       <div
@@ -115,9 +118,9 @@ function ActivityRow({
         {icon}
       </div>
       <div className="flex-1">
-        <div className="text-sm font-semibold text-foreground">{title}</div>
-        <div className="text-xs text-muted-foreground">{desc}</div>
-        <div className="mt-1 text-xs text-muted-foreground">{time}</div>
+        <div className="text-sm font-semibold text-foreground">{t(title)}</div>
+        <div className="text-xs text-muted-foreground">{t(desc)}</div>
+        <div className="mt-1 text-xs text-muted-foreground">{t(time)}</div>
       </div>
       {right}
     </div>
@@ -125,49 +128,48 @@ function ActivityRow({
 }
 
 function Landing() {
+  const t = useT();
   return (
     <div className="min-h-screen bg-background">
       <AppHeader active="Home" />
       <main className="mx-auto max-w-[1100px] px-4 py-16 md:px-7">
         <section className="rounded-2xl border border-border bg-gradient-to-br from-brand-tint via-card to-gold-tint p-8 md:p-14">
           <span className="rounded-full bg-card px-3 py-1 text-xs font-semibold text-brand">
-            White-glove concierge for real estate
+            {t("White-glove concierge for real estate")}
           </span>
           <h1 className="mt-5 max-w-2xl text-3xl font-bold leading-tight text-foreground md:text-5xl">
-            Own property anywhere. Run everything from one place.
+            {t("Own property anywhere. Run everything from one place.")}
           </h1>
           <p className="mt-4 max-w-xl text-sm text-muted-foreground md:text-base">
-            Loqal connects entity formation, banking, mortgage, inspections, management, legal and
-            utilities into a single operating layer for investors and owners.
+            {t("Loqal connects entity formation, banking, mortgage, inspections, management, legal and utilities into a single operating layer for investors and owners.")}
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
               to="/auth"
               className="rounded-md bg-brand px-6 py-3 text-sm font-semibold text-background transition-colors hover:bg-brand-soft"
             >
-              Become a Loqal
+              {t("Become a Loqal")}
             </Link>
             <Link
               to="/auth"
               className="rounded-md border border-border bg-card px-6 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-brand-tint"
             >
-              Log in
+              {t("Log in")}
             </Link>
             <Link
               to="/marketplace"
               className="rounded-md border border-gold/30 bg-gold-tint px-6 py-3 text-sm font-semibold text-gold"
             >
-              Browse properties
+              {t("Browse properties")}
             </Link>
           </div>
         </section>
 
         <section className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2">
           <div className="rounded-lg border border-border bg-card p-6">
-            <div className="text-sm font-semibold text-foreground">Client access</div>
+            <div className="text-sm font-semibold text-foreground">{t("Client access")}</div>
             <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-              Individual owners and investors managing a portfolio remotely. Create your profile in
-              a minute and start onboarding properties and services.
+              {t("Individual owners and investors managing a portfolio remotely. Create your profile in a minute and start onboarding properties and services.")}
             </p>
             <Link
               to="/auth"
@@ -178,18 +180,16 @@ function Landing() {
           </div>
           <div className="rounded-lg border border-gold/30 bg-gold-tint/40 p-6">
             <div className="text-sm font-semibold text-foreground">
-              Partner &amp; corporate access
+              {t("Partner & corporate access")}
             </div>
             <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-              Realtors, mortgage lenders, cleaning crews, other service providers and
-              company-held portfolios are onboarded by our team. Send us your company details and
-              we will set up your workspace.
+              {t("Realtors, mortgage lenders, cleaning crews, other service providers and company-held portfolios are onboarded by our team. Send us your company details and we will set up your workspace.")}
             </p>
             <Link
               to="/partner-access"
               className="mt-4 inline-flex rounded-md border border-gold/40 bg-card px-5 py-2.5 text-sm font-semibold text-gold transition-colors hover:bg-gold-tint"
             >
-              Request access
+              {t("Request access")}
             </Link>
           </div>
         </section>
@@ -201,8 +201,8 @@ function Landing() {
             ["Operations", "Property management, cleaning, maintenance, utilities, legal and reporting."],
           ].map(([title, text]) => (
             <div key={title} className="rounded-lg border border-border bg-card p-6">
-              <div className="text-sm font-semibold text-foreground">{title}</div>
-              <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{text}</p>
+              <div className="text-sm font-semibold text-foreground">{t(title!)}</div>
+              <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{t(text!)}</p>
             </div>
           ))}
         </section>
@@ -214,6 +214,7 @@ function Landing() {
 
 function Dashboard() {
   const { user, ready } = useAuth();
+  const t = useT();
 
   if (!ready) return <div className="min-h-screen bg-background" />;
   if (!user) return <Landing />;
@@ -225,10 +226,10 @@ function Dashboard() {
       <main className="mx-auto max-w-[1400px] px-4 py-8 md:px-7">
         <div className="mb-6">
           <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-[32px]">
-            Welcome back, {user.firstName}
+            {t("Welcome back")}, {user.firstName}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Here's what's happening with your properties today
+            {t("Here's what's happening with your properties today")}
           </p>
         </div>
 
@@ -238,12 +239,12 @@ function Dashboard() {
           </span>
           <input
             type="text"
-            aria-label="Search properties"
-            placeholder="Search for a property, address, city, or ID…"
+            aria-label={t("Search properties")}
+            placeholder={t("Search for a property, address, city, or ID…")}
             className="min-w-40 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
           />
           <span className="text-xs text-muted-foreground">
-            Start typing or <span className="cursor-pointer font-semibold text-brand">open full search</span>
+            {t("Start typing or")} <span className="cursor-pointer font-semibold text-brand">{t("open full search")}</span>
           </span>
         </div>
 
@@ -256,10 +257,10 @@ function Dashboard() {
               <div className={`mb-3 flex size-10 items-center justify-center rounded-md text-lg ${toneClass[m.tone]}`} aria-hidden>
                 {m.icon}
               </div>
-              <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{m.label}</div>
+              <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{t(m.label)}</div>
               <div className="mt-1 text-3xl font-bold text-foreground">{m.value}</div>
               <div className={`mt-1 text-xs font-medium ${m.positive ? "text-success" : "text-warning"}`}>
-                {m.change}
+                {t(m.change)}
               </div>
             </div>
           ))}
@@ -276,14 +277,14 @@ function Dashboard() {
                   <span aria-hidden>{p.emoji}</span>
                 </div>
                 <div className="mt-3">
-                  <div className="text-sm font-semibold text-foreground">{p.name}</div>
-                  <div className="text-xs text-muted-foreground">{p.loc}</div>
+                  <div className="text-sm font-semibold text-foreground">{t(p.name)}</div>
+                  <div className="text-xs text-muted-foreground">{t(p.loc)}</div>
                   <span
                     className={`mt-2 inline-block rounded px-2 py-1 text-[11px] font-semibold ${
                       p.pending ? "bg-warning/10 text-warning" : "bg-success/10 text-success"
                     }`}
                   >
-                    {p.status}
+                    {t(p.status)}
                   </span>
                 </div>
               </div>
@@ -308,7 +309,7 @@ function Dashboard() {
                   <span
                     className={`h-fit rounded px-2 py-1 text-[10px] font-semibold uppercase tracking-wider ${badgeTone[p.tone]}`}
                   >
-                    {p.badge}
+                    {t(p.badge)}
                   </span>
                 }
               />
@@ -322,11 +323,11 @@ function Dashboard() {
                 className="flex items-center justify-between border-b border-border py-3 first:pt-0 last:border-none last:pb-0"
               >
                 <div className="flex flex-col">
-                  <span className="text-[13px] font-medium text-foreground">{p.title}</span>
+                  <span className="text-[13px] font-medium text-foreground">{t(p.title)}</span>
                   <span className="text-[11px] text-muted-foreground">{p.meta}</span>
                 </div>
                 <span className="rounded border border-gold/40 bg-gold-tint px-2 py-1 text-[11px] font-semibold text-gold">
-                  ★ Saved
+                  {t("★ Saved")}
                 </span>
               </div>
             ))}
@@ -335,9 +336,9 @@ function Dashboard() {
 
         <div className="rounded-lg border border-border bg-card shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
           <div className="flex items-center justify-between border-b border-border px-5 py-4">
-            <h2 className="text-base font-semibold text-foreground">Recent Activity & Updates</h2>
+            <h2 className="text-base font-semibold text-foreground">{t("Recent Activity & Updates")}</h2>
             <button type="button" className="text-xs font-semibold text-brand hover:underline">
-              View all →
+              {t("View all →")}
             </button>
           </div>
           <div className="p-5">
