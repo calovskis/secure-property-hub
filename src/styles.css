@@ -149,7 +149,16 @@
   --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.551 0.027 264.364);
+  --brand: oklch(0.473 0.139 256.8);
+  --brand-soft: oklch(0.560 0.120 256.8);
+  --brand-tint: oklch(0.279 0.041 260.031);
+  --gold: oklch(0.767 0.139 91.1);
+  --gold-tint: oklch(0.310 0.045 82.4);
+  --success: oklch(0.696 0.149 162.5);
+  --warning: oklch(0.769 0.165 70.1);
+  --surface: oklch(0.208 0.042 265.755);
 }
+
 
 @layer base {
   * {
