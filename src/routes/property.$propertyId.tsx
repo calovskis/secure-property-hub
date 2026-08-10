@@ -283,13 +283,12 @@ function PropertyDetailPage() {
         {/* VALUE / PAYMENT / HISTORY */}
         <section className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
           <Card title="📈 Home Value Estimate" subtitle="Illustrative value and appreciation outlook">
-            <Gated locked={locked} onProvide={openQuestionnaire}>
-              <div className="text-3xl font-bold text-brand">{formatPrice(model.estimate)}</div>
-              <div className="mt-2 text-xs font-semibold text-success">
-                ↑ ~4.9% projected annual growth
-              </div>
-            </Gated>
+            <div className="text-3xl font-bold text-brand">{formatPrice(model.estimate)}</div>
+            <div className="mt-2 text-xs font-semibold text-success">
+              ↑ ~4.9% projected annual growth
+            </div>
           </Card>
+
           <Card
             title="💳 Mortgage Estimate"
             subtitle="Based on 20% down · 6.5% rate · 30yr fixed"
