@@ -215,7 +215,7 @@ export function AppHeader({ active = "Home" }: { active?: string }) {
                     }`}
                   >
                     <span aria-hidden>{item.icon}</span>
-                    {item.label}
+                    {t(item.label)}
                     <span className="text-[9px] opacity-60">▼</span>
                   </button>
                 ) : (
@@ -228,7 +228,7 @@ export function AppHeader({ active = "Home" }: { active?: string }) {
                     }`}
                   >
                     <span aria-hidden>{item.icon}</span>
-                    {item.label}
+                    {t(item.label)}
                   </Link>
                 )}
 
@@ -240,12 +240,12 @@ export function AppHeader({ active = "Home" }: { active?: string }) {
                       return sub.to ? (
                         <Link key={sub.label} to={sub.to} className={cls} onClick={() => setOpen(null)}>
                           <span aria-hidden>{sub.icon}</span>
-                          {sub.label}
+                          {t(sub.label)}
                         </Link>
                       ) : (
                         <button key={sub.label} type="button" className={cls}>
                           <span aria-hidden>{sub.icon}</span>
-                          {sub.label}
+                          {t(sub.label)}
                         </button>
                       );
                     })}
@@ -271,8 +271,8 @@ export function AppHeader({ active = "Home" }: { active?: string }) {
               <input
                 autoFocus
                 type="text"
-                placeholder="Search..."
-                aria-label="Search"
+                placeholder={t("Search...")}
+                aria-label={t("Search")}
                 className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
               />
             ) : null}
@@ -281,7 +281,7 @@ export function AppHeader({ active = "Home" }: { active?: string }) {
           <div className="relative hidden sm:block">
             <button
               type="button"
-              aria-label="Help"
+              aria-label={t("Help")}
               onClick={() => setHelpOpen(!helpOpen)}
               className="flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-brand-tint"
             >
@@ -295,7 +295,7 @@ export function AppHeader({ active = "Home" }: { active?: string }) {
                     type="button"
                     className="flex w-full rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-brand-tint hover:text-brand"
                   >
-                    {i}
+                    {t(i)}
                   </button>
                 ))}
               </div>
@@ -304,11 +304,13 @@ export function AppHeader({ active = "Home" }: { active?: string }) {
 
           <button
             type="button"
-            aria-label="Settings"
+            aria-label={t("Settings")}
             className="hidden size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-brand-tint sm:flex"
           >
             ⚙️
           </button>
+
+          <LanguageMenu />
 
           <AccountMenu />
 
@@ -323,7 +325,7 @@ export function AppHeader({ active = "Home" }: { active?: string }) {
               item.label === active ? "bg-brand-tint text-brand" : "text-muted-foreground"
             }`}
           >
-            {item.icon} {item.label}
+            {item.icon} {t(item.label)}
           </span>
         ))}
       </nav>
