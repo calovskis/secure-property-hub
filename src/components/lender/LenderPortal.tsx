@@ -13,6 +13,8 @@ import {
 } from "@/lib/leads";
 
 import { countryLabel } from "@/data/countries";
+import { ApplicantFile, Row } from "@/components/lender/ApplicantFile";
+
 import { formatDate, formatDateTime, isoToUsMonth } from "@/lib/dates";
 import { LENDER_ROLE_LABEL, useLenderTeam } from "@/lib/lender-team";
 import { LenderHome } from "@/components/lender/LenderHome";
