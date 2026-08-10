@@ -16,6 +16,7 @@ import {
 import { useLeads } from "@/lib/leads";
 import { fullName } from "@/lib/auth";
 import { CountryCombobox } from "@/components/form/CountryCombobox";
+import { DateInput, MonthInput } from "@/components/form/DateInput";
 
 const uid = () => Math.random().toString(36).slice(2, 9);
 
@@ -216,10 +217,9 @@ export function MortgageQuestionnaire({
           <form onSubmit={submit} className="space-y-6">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Field label="Date of birth" required hint="mm/dd/yyyy">
-                <input
-                  type="date"
+                <DateInput
                   value={dob}
-                  onChange={(e) => setDob(e.target.value)}
+                  onChange={(v) => setDob(v)}
                   className={inputClass}
                 />
               </Field>
@@ -354,18 +354,16 @@ export function MortgageQuestionnaire({
                   {visaActive ? (
                     <>
                       <Field label="Visa issued on" required>
-                        <input
-                          type="date"
+                        <DateInput
                           value={visaIssued}
-                          onChange={(e) => setVisaIssued(e.target.value)}
+                          onChange={(v) => setVisaIssued(v)}
                           className={inputClass}
                         />
                       </Field>
                       <Field label="Visa valid until" required>
-                        <input
-                          type="date"
+                        <DateInput
                           value={visaValidUntil}
-                          onChange={(e) => setVisaValidUntil(e.target.value)}
+                          onChange={(v) => setVisaValidUntil(v)}
                           className={inputClass}
                         />
                       </Field>
@@ -475,19 +473,17 @@ export function MortgageQuestionnaire({
                       </div>
                       <label className="text-[11px] text-muted-foreground">
                         From
-                        <input
-                          type="month"
+                        <MonthInput
                           value={a.from}
-                          onChange={(e) => patchAddress(a.id, { from: e.target.value })}
+                          onChange={(v) => patchAddress(a.id, { from: v })}
                           className={inputClass}
                         />
                       </label>
                       <label className="text-[11px] text-muted-foreground">
                         To
-                        <input
-                          type="month"
+                        <MonthInput
                           value={a.to}
-                          onChange={(e) => patchAddress(a.id, { to: e.target.value })}
+                          onChange={(v) => patchAddress(a.id, { to: v })}
                           className={inputClass}
                         />
                       </label>
@@ -541,20 +537,18 @@ export function MortgageQuestionnaire({
                       />
                       <label className="text-[11px] text-muted-foreground">
                         From
-                        <input
-                          type="month"
+                        <MonthInput
                           value={emp.from}
-                          onChange={(e) => patchEmployment(emp.id, { from: e.target.value })}
+                          onChange={(v) => patchEmployment(emp.id, { from: v })}
                           className={inputClass}
                         />
                       </label>
                       <label className="text-[11px] text-muted-foreground">
                         To
-                        <input
-                          type="month"
+                        <MonthInput
                           value={emp.to}
                           disabled={emp.current}
-                          onChange={(e) => patchEmployment(emp.id, { to: e.target.value })}
+                          onChange={(v) => patchEmployment(emp.id, { to: v })}
                           className={`${inputClass} disabled:opacity-50`}
                         />
                       </label>

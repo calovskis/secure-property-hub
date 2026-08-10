@@ -8,10 +8,10 @@ import {
   type MortgageLead,
 } from "@/lib/leads";
 import { countryLabel } from "@/data/countries";
+import { formatDate, formatDateTime, isoToUsMonth } from "@/lib/dates";
 
 const money = (n: number) => `$${Math.round(n).toLocaleString()}`;
-const date = (iso?: string) =>
-  iso ? new Date(iso).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" }) : "—";
+const date = (iso?: string) => formatDateTime(iso);
 
 const STATUS_TONE: Record<LeadStatus, string> = {
   new: "bg-gold-tint text-gold",
@@ -52,7 +52,7 @@ function ApplicantFile({ lead }: { lead: MortgageLead }) {
         <div className="mt-2 divide-y divide-border">
           <Row label="Name" value={lead.clientName} />
           <Row label="Email" value={lead.clientEmail} />
-          <Row label="Date of birth" value={p.dateOfBirth || "—"} />
+          <Row label="Date of birth" value={p.dateOfBirth ? formatDate(p.dateOfBirth) : "—"} />
           <Row
             label="US person"
             value={lead.usPerson ? "US citizen / green card holder" : "Non-US person"}
@@ -74,7 +74,9 @@ function ApplicantFile({ lead }: { lead: MortgageLead }) {
               <Row
                 label="US visa"
                 value={
-                  p.usVisaActive ? `Active · ${p.visaIssued} → ${p.visaValidUntil}` : "Not active"
+                  p.usVisaActive
+                    ? `Active · ${formatDate(p.visaIssued)} → ${formatDate(p.visaValidUntil)}`
+                    : "Not active"
                 }
               />
               <Row label="Intended use" value={p.propertyUse ?? "—"} />
@@ -103,7 +105,7 @@ function ApplicantFile({ lead }: { lead: MortgageLead }) {
                   {a.street}, {a.city} {a.state} {a.zip}
                 </div>
                 <div className="text-xs">
-                  {a.from} → {a.to}
+                  {isoToUsMonth(a.from) || "—"} → {isoToUsMonth(a.to) || "—"}
                 </div>
               </li>
             ))}
@@ -121,7 +123,7 @@ function ApplicantFile({ lead }: { lead: MortgageLead }) {
                   {e.title} — {e.employer}
                 </div>
                 <div className="text-xs">
-                  {e.from} → {e.current ? "Present" : e.to}
+                  {isoToUsMonth(e.from) || "—"} → {e.current ? "Present" : isoToUsMonth(e.to) || "—"}
                 </div>
               </li>
             ))}
