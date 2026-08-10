@@ -12,7 +12,7 @@ const activeServices = [
     status: "active" as const,
     info: [
       { label: "Monthly Cost", value: "$399" },
-      { label: "Renewal Date", value: "Feb 01, 2026" },
+      { label: "Renewal Date", value: "02/01/2026" },
       { label: "Billing Cycle", value: "Monthly" },
       { label: "Contract", value: "Active (12mo)" },
     ],
@@ -25,7 +25,7 @@ const activeServices = [
     status: "active" as const,
     info: [
       { label: "Monthly Cost", value: "$850" },
-      { label: "Renewal Date", value: "Feb 15, 2026" },
+      { label: "Renewal Date", value: "02/15/2026" },
       { label: "Billing Cycle", value: "Monthly" },
       { label: "Contract", value: "Active (6mo)" },
     ],
@@ -38,7 +38,7 @@ const activeServices = [
     status: "active" as const,
     info: [
       { label: "Monthly Cost", value: "$649" },
-      { label: "Renewal Date", value: "Mar 01, 2026" },
+      { label: "Renewal Date", value: "03/01/2026" },
       { label: "Billing Cycle", value: "Monthly" },
       { label: "Contract", value: "Active (12mo)" },
     ],
@@ -51,7 +51,7 @@ const activeServices = [
     status: "active" as const,
     info: [
       { label: "Quarterly Cost", value: "$150" },
-      { label: "Renewal Date", value: "Apr 01, 2026" },
+      { label: "Renewal Date", value: "04/01/2026" },
       { label: "Billing Cycle", value: "Quarterly" },
       { label: "Contract", value: "Active (12mo)" },
     ],
@@ -64,7 +64,7 @@ const activeServices = [
     status: "active" as const,
     info: [
       { label: "Monthly Cost", value: "$299" },
-      { label: "Renewal Date", value: "Jan 31, 2026" },
+      { label: "Renewal Date", value: "01/31/2026" },
       { label: "Billing Cycle", value: "Monthly" },
       { label: "Contract", value: "Active (24mo)" },
     ],
@@ -77,7 +77,7 @@ const activeServices = [
     status: "paused" as const,
     info: [
       { label: "Monthly Cost", value: "$500" },
-      { label: "Paused Date", value: "Jan 15, 2026" },
+      { label: "Paused Date", value: "01/15/2026" },
       { label: "Billing Cycle", value: "Monthly" },
       { label: "Contract", value: "Paused (12mo)" },
     ],
@@ -92,8 +92,8 @@ const historyServices = [
     property: "Pine Street House",
     info: [
       { label: "Total Cost", value: "$1,200" },
-      { label: "Start Date", value: "Oct 15, 2025" },
-      { label: "End Date", value: "Dec 20, 2025" },
+      { label: "Start Date", value: "10/15/2025" },
+      { label: "End Date", value: "12/20/2025" },
       { label: "Status", value: "Successfully Completed" },
     ],
   },
@@ -103,8 +103,8 @@ const historyServices = [
     property: "Downtown Plaza",
     info: [
       { label: "Total Cost", value: "$4,200" },
-      { label: "Start Date", value: "Sep 01, 2025" },
-      { label: "End Date", value: "Oct 15, 2025" },
+      { label: "Start Date", value: "09/01/2025" },
+      { label: "End Date", value: "10/15/2025" },
       { label: "Status", value: "Completed On Time" },
     ],
   },
@@ -114,8 +114,8 @@ const historyServices = [
     property: "Riverside Apartments",
     info: [
       { label: "Total Cost", value: "$2,500" },
-      { label: "Start Date", value: "Jun 01, 2025" },
-      { label: "End Date", value: "Aug 30, 2025" },
+      { label: "Start Date", value: "06/01/2025" },
+      { label: "End Date", value: "08/30/2025" },
       { label: "Status", value: "Completed Successfully" },
     ],
   },
