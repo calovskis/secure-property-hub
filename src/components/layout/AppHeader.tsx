@@ -13,7 +13,7 @@ import { LANGUAGES, useI18n } from "@/lib/i18n";
 function LanguageMenu() {
   const { lang, setLang } = useI18n();
   const [open, setOpen] = useState(false);
-  const current = LANGUAGES.find((l) => l.code === lang) ?? LANGUAGES[0];
+  const current = LANGUAGES.find((l) => l.code === lang)!;
 
   return (
     <div className="relative">
