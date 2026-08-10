@@ -48,6 +48,11 @@ export type MortgageProfile = {
   dateOfBirth: string;
   ssn?: string;
   ssnTermsAccepted: boolean;
+  /** Non-US persons only */
+  hasItin?: boolean;
+  itin?: string;
+  countryOfResidence?: string;
+  citizenship?: string;
   addresses: AddressEntry[];
   employment: EmploymentEntry[];
   monthlyGross: number;

@@ -88,6 +88,10 @@ export function MortgageQuestionnaire({
   const [monthlyGross, setMonthlyGross] = useState(
     existing?.monthlyGross ? String(existing.monthlyGross) : "",
   );
+  const [hasItin, setHasItin] = useState<boolean>(existing?.hasItin ?? false);
+  const [itin, setItin] = useState(existing?.itin ?? "");
+  const [countryOfResidence, setCountryOfResidence] = useState(existing?.countryOfResidence ?? "");
+  const [citizenship, setCitizenship] = useState(existing?.citizenship ?? "");
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
 
@@ -106,6 +110,11 @@ export function MortgageQuestionnaire({
     if (!dob) return setError("Date of birth is required.");
     if (showSsn && ssn && !ssnAccepted)
       return setError("Please confirm you have read the SSN processing terms.");
+    if (!showSsn) {
+      if (hasItin && !itin.trim()) return setError("Please provide your ITIN number.");
+      if (!countryOfResidence.trim()) return setError("Country of residence is required.");
+      if (!citizenship.trim()) return setError("Citizenship is required.");
+    }
     if (!addresses[0]?.street || !addresses[0]?.city)
       return setError("At least one address in your 2-year history is required.");
     if (!employment[0]?.employer)
@@ -116,6 +125,14 @@ export function MortgageQuestionnaire({
       dateOfBirth: dob,
       ...(showSsn && ssn ? { ssn } : {}),
       ssnTermsAccepted: ssnAccepted,
+      ...(showSsn
+        ? {}
+        : {
+            hasItin,
+            ...(hasItin ? { itin: itin.trim() } : {}),
+            countryOfResidence: countryOfResidence.trim(),
+            citizenship: citizenship.trim(),
+          }),
       addresses,
       employment,
       monthlyGross: monthly,
@@ -125,6 +142,7 @@ export function MortgageQuestionnaire({
     saveMortgageProfile(profile);
     setDone(true);
   }
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -197,6 +215,73 @@ export function MortgageQuestionnaire({
                 </span>
               </label>
             ) : null}
+
+            {!showSsn ? (
+              <section className="space-y-4 rounded-lg border border-border bg-brand-tint/30 p-4">
+                <h3 className="text-sm font-semibold text-foreground">
+                  Non-US resident details <span className="text-destructive">*</span>
+                </h3>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <Field label="Do you have an ITIN?" required>
+                    <div className="flex gap-4 pt-1 text-sm text-foreground">
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="hasItin"
+                          checked={hasItin}
+                          onChange={() => setHasItin(true)}
+                        />
+                        Yes
+                      </label>
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="hasItin"
+                          checked={!hasItin}
+                          onChange={() => {
+                            setHasItin(false);
+                            setItin("");
+                          }}
+                        />
+                        No
+                      </label>
+                    </div>
+                  </Field>
+
+                  {hasItin ? (
+                    <Field label="ITIN number" required>
+                      <input
+                        inputMode="numeric"
+                        placeholder="9XX-XX-XXXX"
+                        value={itin}
+                        onChange={(e) => setItin(e.target.value)}
+                        className={inputClass}
+                      />
+                    </Field>
+                  ) : null}
+
+                  <Field label="Country of residence" required>
+                    <input
+                      placeholder="e.g. Latvia"
+                      value={countryOfResidence}
+                      onChange={(e) => setCountryOfResidence(e.target.value)}
+                      className={inputClass}
+                    />
+                  </Field>
+
+                  <Field label="Citizenship" required>
+                    <input
+                      placeholder="e.g. Latvian"
+                      value={citizenship}
+                      onChange={(e) => setCitizenship(e.target.value)}
+                      className={inputClass}
+                    />
+                  </Field>
+                </div>
+              </section>
+            ) : null}
+
+
 
             {/* ADDRESS HISTORY */}
             <section>
