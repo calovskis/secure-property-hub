@@ -64,7 +64,7 @@ function AccountMenu() {
         to="/auth"
         className="rounded-md bg-brand px-4 py-2 text-sm font-semibold text-background transition-colors hover:bg-brand-soft"
       >
-        Log in
+        {t("Log in")}
       </Link>
     );
   }
@@ -73,7 +73,7 @@ function AccountMenu() {
     <div className="relative">
       <button
         type="button"
-        aria-label="Account"
+        aria-label={t("Account")}
         onClick={() => setOpen(!open)}
         className="flex size-9 items-center justify-center rounded-full bg-gradient-to-br from-brand to-brand-soft text-sm font-semibold text-primary-foreground"
       >
@@ -85,8 +85,8 @@ function AccountMenu() {
             <div className="text-sm font-semibold text-foreground">{fullName(user)}</div>
             <div className="text-xs text-muted-foreground">{user.email}</div>
             <span className="mt-2 inline-flex rounded-full bg-brand-tint px-2.5 py-1 text-[11px] font-semibold text-brand">
-              {ROLE_LABEL[user.role]}
-              {user.partnerType ? ` · ${PARTNER_LABEL[user.partnerType]}` : ""}
+              {t(ROLE_LABEL[user.role])}
+              {user.partnerType ? ` · ${t(PARTNER_LABEL[user.partnerType])}` : ""}
             </span>
           </div>
           <Link
@@ -94,7 +94,7 @@ function AccountMenu() {
             onClick={() => setOpen(false)}
             className="mt-1 flex w-full rounded-md px-3 py-2 text-left text-sm text-foreground hover:bg-brand-tint hover:text-brand"
           >
-            My workspace
+            {t("My workspace")}
           </Link>
           <button
             type="button"
@@ -105,7 +105,7 @@ function AccountMenu() {
             }}
             className="flex w-full rounded-md px-3 py-2 text-left text-sm text-foreground hover:bg-brand-tint hover:text-brand"
           >
-            Sign out
+            {t("Sign out")}
           </button>
         </div>
       ) : null}
