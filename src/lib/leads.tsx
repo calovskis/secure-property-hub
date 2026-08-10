@@ -162,6 +162,8 @@ type LeadsContextValue = {
     documents: string[],
   ) => void;
   saveDebts: (leadId: string, debts: DebtProfile) => void;
+  setClientDecision: (leadId: string, decision: ClientDecision) => void;
+
   leadsForClient: (email: string) => MortgageLead[];
   leadForProperty: (email: string, propertyId: number) => MortgageLead | undefined;
 };
