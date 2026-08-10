@@ -1,5 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppHeader } from "@/components/layout/AppHeader";
+import { LenderPortal } from "@/components/lender/LenderPortal";
+
 import { PARTNER_LABEL, fullName, useAuth, type PartnerType } from "@/lib/auth";
 
 export const Route = createFileRoute("/partner")({
