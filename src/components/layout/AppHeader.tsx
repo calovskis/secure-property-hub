@@ -1,5 +1,76 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
+import {
+  PARTNER_LABEL,
+  ROLE_LABEL,
+  fullName,
+  homeRouteFor,
+  initials,
+  useAuth,
+} from "@/lib/auth";
+
+function AccountMenu() {
+  const { user, ready, signOut } = useAuth();
+  const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
+
+  if (!ready) return <div className="size-9 rounded-full bg-muted" />;
+
+  if (!user) {
+    return (
+      <Link
+        to="/auth"
+        className="rounded-md bg-brand px-4 py-2 text-sm font-semibold text-background transition-colors hover:bg-brand-soft"
+      >
+        Log in
+      </Link>
+    );
+  }
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        aria-label="Account"
+        onClick={() => setOpen(!open)}
+        className="flex size-9 items-center justify-center rounded-full bg-gradient-to-br from-brand to-brand-soft text-sm font-semibold text-primary-foreground"
+      >
+        {initials(user)}
+      </button>
+      {open ? (
+        <div className="absolute right-0 top-[calc(100%+8px)] w-64 rounded-lg border border-border bg-popover p-2 shadow-lg">
+          <div className="border-b border-border px-2 pb-2">
+            <div className="text-sm font-semibold text-foreground">{fullName(user)}</div>
+            <div className="text-xs text-muted-foreground">{user.email}</div>
+            <span className="mt-2 inline-flex rounded-full bg-brand-tint px-2.5 py-1 text-[11px] font-semibold text-brand">
+              {ROLE_LABEL[user.role]}
+              {user.partnerType ? ` · ${PARTNER_LABEL[user.partnerType]}` : ""}
+            </span>
+          </div>
+          <Link
+            to={homeRouteFor(user.role)}
+            onClick={() => setOpen(false)}
+            className="mt-1 flex w-full rounded-md px-3 py-2 text-left text-sm text-foreground hover:bg-brand-tint hover:text-brand"
+          >
+            My workspace
+          </Link>
+          <button
+            type="button"
+            onClick={() => {
+              setOpen(false);
+              signOut();
+              navigate({ to: "/" });
+            }}
+            className="flex w-full rounded-md px-3 py-2 text-left text-sm text-foreground hover:bg-brand-tint hover:text-brand"
+          >
+            Sign out
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 
 type SubItem = { label: string; icon: string; to?: string };
 type NavItem = {
@@ -196,13 +267,8 @@ export function AppHeader({ active = "Home" }: { active?: string }) {
             ⚙️
           </button>
 
-          <button
-            type="button"
-            aria-label="Account"
-            className="flex size-9 items-center justify-center rounded-full bg-gradient-to-br from-brand to-brand-soft text-sm font-semibold text-primary-foreground"
-          >
-            A
-          </button>
+          <AccountMenu />
+
         </div>
       </div>
 

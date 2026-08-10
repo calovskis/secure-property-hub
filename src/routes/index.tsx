@@ -1,6 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 
 import { AppHeader } from "@/components/layout/AppHeader";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -123,7 +124,68 @@ function ActivityRow({
   );
 }
 
+function Landing() {
+  return (
+    <div className="min-h-screen bg-background">
+      <AppHeader active="Home" />
+      <main className="mx-auto max-w-[1100px] px-4 py-16 md:px-7">
+        <section className="rounded-2xl border border-border bg-gradient-to-br from-brand-tint via-card to-gold-tint p-8 md:p-14">
+          <span className="rounded-full bg-card px-3 py-1 text-xs font-semibold text-brand">
+            White-glove concierge for real estate
+          </span>
+          <h1 className="mt-5 max-w-2xl text-3xl font-bold leading-tight text-foreground md:text-5xl">
+            Own property anywhere. Run everything from one place.
+          </h1>
+          <p className="mt-4 max-w-xl text-sm text-muted-foreground md:text-base">
+            Loqal connects entity formation, banking, mortgage, inspections, management, legal and
+            utilities into a single operating layer for investors and owners.
+          </p>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link
+              to="/auth"
+              className="rounded-md bg-brand px-6 py-3 text-sm font-semibold text-background transition-colors hover:bg-brand-soft"
+            >
+              Become a Loqal
+            </Link>
+            <Link
+              to="/auth"
+              className="rounded-md border border-border bg-card px-6 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-brand-tint"
+            >
+              Log in
+            </Link>
+            <Link
+              to="/marketplace"
+              className="rounded-md border border-gold/30 bg-gold-tint px-6 py-3 text-sm font-semibold text-gold"
+            >
+              Browse properties
+            </Link>
+          </div>
+        </section>
+
+        <section className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-4">
+          {[
+            ["Client", "Individual owners and investors managing a portfolio remotely."],
+            ["Corporate", "Company-held portfolios with multiple users and entities."],
+            ["Partner", "Realtors, mortgage lenders, cleaning crews and service providers."],
+            ["Admin", "Loqal employees operating accounts, compliance and delivery."],
+          ].map(([title, text]) => (
+            <div key={title} className="rounded-lg border border-border bg-card p-5">
+              <div className="text-sm font-semibold text-foreground">{title} access</div>
+              <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{text}</p>
+            </div>
+          ))}
+        </section>
+      </main>
+    </div>
+  );
+}
+
 function Dashboard() {
+  const { user, ready } = useAuth();
+
+  if (!ready) return <div className="min-h-screen bg-background" />;
+  if (!user) return <Landing />;
+
   return (
     <div className="min-h-screen bg-background">
       <AppHeader active="Home" />
@@ -131,7 +193,7 @@ function Dashboard() {
       <main className="mx-auto max-w-[1400px] px-4 py-8 md:px-7">
         <div className="mb-6">
           <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-[32px]">
-            Welcome back, Alex
+            Welcome back, {user.firstName}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Here's what's happening with your properties today

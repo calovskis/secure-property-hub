@@ -10,12 +10,16 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DocumentsRouteImport } from './routes/documents'
 import { Route as FinancialsRouteImport } from './routes/financials'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as MyPropertiesRouteImport } from './routes/my-properties'
 import { Route as MyServicesRouteImport } from './routes/my-services'
+import { Route as PartnerRouteImport } from './routes/partner'
+import { Route as SsnTermsRouteImport } from './routes/ssn-terms'
 import { Route as PropertyPropertyIdRouteImport } from './routes/property.$propertyId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -23,9 +27,19 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AnalyticsRoute = AnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DocumentsRoute = DocumentsRouteImport.update({
@@ -53,6 +67,16 @@ const MyServicesRoute = MyServicesRouteImport.update({
   path: '/my-services',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PartnerRoute = PartnerRouteImport.update({
+  id: '/partner',
+  path: '/partner',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SsnTermsRoute = SsnTermsRouteImport.update({
+  id: '/ssn-terms',
+  path: '/ssn-terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PropertyPropertyIdRoute = PropertyPropertyIdRouteImport.update({
   id: '/property/$propertyId',
   path: '/property/$propertyId',
@@ -61,76 +85,104 @@ const PropertyPropertyIdRoute = PropertyPropertyIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/analytics': typeof AnalyticsRoute
+  '/auth': typeof AuthRoute
   '/documents': typeof DocumentsRoute
   '/financials': typeof FinancialsRoute
   '/marketplace': typeof MarketplaceRoute
   '/my-properties': typeof MyPropertiesRoute
   '/my-services': typeof MyServicesRoute
+  '/partner': typeof PartnerRoute
+  '/ssn-terms': typeof SsnTermsRoute
   '/property/$propertyId': typeof PropertyPropertyIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/analytics': typeof AnalyticsRoute
+  '/auth': typeof AuthRoute
   '/documents': typeof DocumentsRoute
   '/financials': typeof FinancialsRoute
   '/marketplace': typeof MarketplaceRoute
   '/my-properties': typeof MyPropertiesRoute
   '/my-services': typeof MyServicesRoute
+  '/partner': typeof PartnerRoute
+  '/ssn-terms': typeof SsnTermsRoute
   '/property/$propertyId': typeof PropertyPropertyIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/analytics': typeof AnalyticsRoute
+  '/auth': typeof AuthRoute
   '/documents': typeof DocumentsRoute
   '/financials': typeof FinancialsRoute
   '/marketplace': typeof MarketplaceRoute
   '/my-properties': typeof MyPropertiesRoute
   '/my-services': typeof MyServicesRoute
+  '/partner': typeof PartnerRoute
+  '/ssn-terms': typeof SsnTermsRoute
   '/property/$propertyId': typeof PropertyPropertyIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/analytics'
+    | '/auth'
     | '/documents'
     | '/financials'
     | '/marketplace'
     | '/my-properties'
     | '/my-services'
+    | '/partner'
+    | '/ssn-terms'
     | '/property/$propertyId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin'
     | '/analytics'
+    | '/auth'
     | '/documents'
     | '/financials'
     | '/marketplace'
     | '/my-properties'
     | '/my-services'
+    | '/partner'
+    | '/ssn-terms'
     | '/property/$propertyId'
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/analytics'
+    | '/auth'
     | '/documents'
     | '/financials'
     | '/marketplace'
     | '/my-properties'
     | '/my-services'
+    | '/partner'
+    | '/ssn-terms'
     | '/property/$propertyId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
   AnalyticsRoute: typeof AnalyticsRoute
+  AuthRoute: typeof AuthRoute
   DocumentsRoute: typeof DocumentsRoute
   FinancialsRoute: typeof FinancialsRoute
   MarketplaceRoute: typeof MarketplaceRoute
   MyPropertiesRoute: typeof MyPropertiesRoute
   MyServicesRoute: typeof MyServicesRoute
+  PartnerRoute: typeof PartnerRoute
+  SsnTermsRoute: typeof SsnTermsRoute
   PropertyPropertyIdRoute: typeof PropertyPropertyIdRoute
 }
 
@@ -143,11 +195,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/analytics': {
       id: '/analytics'
       path: '/analytics'
       fullPath: '/analytics'
       preLoaderRoute: typeof AnalyticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/documents': {
@@ -185,6 +251,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MyServicesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/partner': {
+      id: '/partner'
+      path: '/partner'
+      fullPath: '/partner'
+      preLoaderRoute: typeof PartnerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ssn-terms': {
+      id: '/ssn-terms'
+      path: '/ssn-terms'
+      fullPath: '/ssn-terms'
+      preLoaderRoute: typeof SsnTermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/property/$propertyId': {
       id: '/property/$propertyId'
       path: '/property/$propertyId'
@@ -197,24 +277,18 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
   AnalyticsRoute: AnalyticsRoute,
+  AuthRoute: AuthRoute,
   DocumentsRoute: DocumentsRoute,
   FinancialsRoute: FinancialsRoute,
   MarketplaceRoute: MarketplaceRoute,
   MyPropertiesRoute: MyPropertiesRoute,
   MyServicesRoute: MyServicesRoute,
+  PartnerRoute: PartnerRoute,
+  SsnTermsRoute: SsnTermsRoute,
   PropertyPropertyIdRoute: PropertyPropertyIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
