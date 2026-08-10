@@ -84,11 +84,52 @@ function Rows({ rows }: { rows: [string, string][] }) {
 
 const SCENARIO_KEYS = ["airbnb", "longterm", "hybrid"] as const;
 
+function Gated({
+  locked,
+  onProvide,
+  children,
+}: {
+  locked: boolean;
+  onProvide: () => void;
+  children: React.ReactNode;
+}) {
+  if (!locked) return <>{children}</>;
+  return (
+    <div className="relative">
+      <div aria-hidden className="pointer-events-none select-none blur-[6px]">
+        {children}
+      </div>
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-lg bg-background/55 p-6 text-center">
+        <p className="max-w-xs text-xs font-medium text-muted-foreground">
+          To view — to get access to information we need additional information from you.
+        </p>
+        <button
+          type="button"
+          onClick={onProvide}
+          className="rounded-md bg-brand px-5 py-2.5 text-sm font-semibold text-background transition-colors hover:bg-brand-soft"
+        >
+          Provide information
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function PropertyDetailPage() {
   const { property } = Route.useLoaderData();
   const model = buildInvestmentModel(property);
   const [scenarioKey, setScenarioKey] = useState<(typeof SCENARIO_KEYS)[number]>("airbnb");
   const scenario = model.scenarios[scenarioKey];
+  const { user, canSeeEstimates } = useAuth();
+  const [questionnaireOpen, setQuestionnaireOpen] = useState(false);
+  const locked = !canSeeEstimates;
+  const openQuestionnaire = () => {
+    if (!user) {
+      window.location.href = "/auth";
+      return;
+    }
+    setQuestionnaireOpen(true);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -124,7 +165,11 @@ function PropertyDetailPage() {
             <button className="rounded-md border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-brand-tint">
               Edit Property
             </button>
-            <button className="rounded-md border border-gold/30 bg-gold-tint px-4 py-2.5 text-sm font-semibold text-gold hover:bg-gold/20">
+            <button
+              type="button"
+              onClick={openQuestionnaire}
+              className="rounded-md border border-gold/30 bg-gold-tint px-4 py-2.5 text-sm font-semibold text-gold hover:bg-gold/20"
+            >
               Request Mortgage Info
             </button>
             <button className="rounded-md bg-brand px-4 py-2.5 text-sm font-semibold text-background hover:bg-brand-soft">
@@ -244,18 +289,27 @@ function PropertyDetailPage() {
             </div>
           </Card>
           <Card
-            title="💳 Payment Estimate"
+            title="💳 Mortgage Estimate"
             subtitle="Based on 20% down · 6.5% rate · 30yr fixed"
             className="ring-2 ring-brand/10"
           >
-            <div className="mb-3 text-3xl font-bold text-brand">{money(model.mortgage)}/mo</div>
-            <Rows
-              rows={[
-                ["Down payment", money(model.downPayment)],
-                ["Loan amount", money(model.loanAmount)],
-                ["Estimated closing costs", money(model.closingCosts)],
-              ]}
-            />
+            <Gated locked={locked} onProvide={openQuestionnaire}>
+              <div className="mb-3 text-3xl font-bold text-brand">{money(model.mortgage)}/mo</div>
+              <Rows
+                rows={[
+                  ["Down payment", money(model.downPayment)],
+                  ["Loan amount", money(model.loanAmount)],
+                  ["Estimated closing costs", money(model.closingCosts)],
+                ]}
+              />
+            </Gated>
+            <button
+              type="button"
+              onClick={openQuestionnaire}
+              className="mt-4 w-full rounded-md bg-gold px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+            >
+              Request Mortgage
+            </button>
           </Card>
           <Card title="🗂️ Property History" subtitle="Platform and record timeline">
             <Rows
