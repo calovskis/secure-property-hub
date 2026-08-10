@@ -82,7 +82,13 @@ function AuthPage() {
       phone: "",
       usPerson: false,
       role: loginRole,
-      ...(loginRole === "partner" ? { partnerType: "realtor" as const } : {}),
+      ...(loginRole === "partner"
+        ? {
+            partnerType: loginPartnerType,
+            companyName:
+              loginPartnerType === "lender" ? "Demo Mortgage Partners" : "Demo Partner Co.",
+          }
+        : {}),
     });
   }
 
