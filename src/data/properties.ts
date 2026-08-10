@@ -34,18 +34,40 @@ export function getProperty(id: number) {
   return allProperties.find((p) => p.id === id);
 }
 
-/** Illustrative investment model derived from the listing price. */
-export function buildInvestmentModel(prop: Property) {
+/** Lender-issued pricing used to turn a listing into a precise estimate. */
+export type LoanTerms = {
+  /** Annual interest rate, e.g. 0.0675 */
+  rate: number;
+  termYears: number;
+  /** Share of the purchase price the borrower must put down, e.g. 0.25 */
+  downPaymentPct: number;
+  /** Closing costs (fees, taxes, title) as a share of the purchase price. */
+  closingCostPct: number;
+  /** Annual property taxes + hazard insurance as a share of the price. */
+  taxInsurancePct: number;
+};
+
+export const INDICATIVE_TERMS: LoanTerms = {
+  rate: 0.065,
+  termYears: 30,
+  downPaymentPct: 0.2,
+  closingCostPct: 0.025,
+  taxInsurancePct: 0.0145,
+};
+
+/** Investment model derived from the listing price and the applicable loan terms. */
+export function buildInvestmentModel(prop: Property, terms: LoanTerms = INDICATIVE_TERMS) {
   const price = prop.price;
-  const downPayment = price * 0.2;
+  const downPayment = price * terms.downPaymentPct;
   const loanAmount = price - downPayment;
-  const monthlyRate = 0.065 / 12;
-  const n = 360;
+  const monthlyRate = terms.rate / 12;
+  const n = Math.max(1, Math.round(terms.termYears * 12));
   const mortgage =
     (loanAmount * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -n));
-  const closingCosts = price * 0.025;
+  const closingCosts = price * terms.closingCostPct;
   const furnishing = 18000;
-  const taxInsurance = (price * 0.0145) / 12;
+  const taxInsurance = (price * terms.taxInsurancePct) / 12;
+
   const hoa = Math.round((prop.sqft > 0 ? Math.min(prop.sqft, 3000) : 1000) * 0.3);
 
   // Short-term rental
