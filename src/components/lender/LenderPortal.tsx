@@ -74,7 +74,9 @@ function ApplicantFile({ lead }: { lead: MortgageLead }) {
               <Row
                 label="US visa"
                 value={
-                  p.usVisaActive ? `Active · ${p.visaIssued} → ${p.visaValidUntil}` : "Not active"
+                  p.usVisaActive
+                    ? `Active · ${formatDate(p.visaIssued)} → ${formatDate(p.visaValidUntil)}`
+                    : "Not active"
                 }
               />
               <Row label="Intended use" value={p.propertyUse ?? "—"} />
@@ -103,7 +105,7 @@ function ApplicantFile({ lead }: { lead: MortgageLead }) {
                   {a.street}, {a.city} {a.state} {a.zip}
                 </div>
                 <div className="text-xs">
-                  {a.from} → {a.to}
+                  {isoToUsMonth(a.from) || "—"} → {isoToUsMonth(a.to) || "—"}
                 </div>
               </li>
             ))}
@@ -121,7 +123,7 @@ function ApplicantFile({ lead }: { lead: MortgageLead }) {
                   {e.title} — {e.employer}
                 </div>
                 <div className="text-xs">
-                  {e.from} → {e.current ? "Present" : e.to}
+                  {isoToUsMonth(e.from) || "—"} → {e.current ? "Present" : isoToUsMonth(e.to) || "—"}
                 </div>
               </li>
             ))}
