@@ -53,6 +53,12 @@ export type MortgageProfile = {
   itin?: string;
   countryOfResidence?: string;
   citizenship?: string;
+  secondCitizenship?: string;
+  usVisaActive?: boolean;
+  visaIssued?: string;
+  visaValidUntil?: string;
+  propertyUse?: "vacation" | "investment";
+  usBankAccount?: boolean;
   addresses: AddressEntry[];
   employment: EmploymentEntry[];
   monthlyGross: number;

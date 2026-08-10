@@ -92,6 +92,14 @@ export function MortgageQuestionnaire({
   const [itin, setItin] = useState(existing?.itin ?? "");
   const [countryOfResidence, setCountryOfResidence] = useState(existing?.countryOfResidence ?? "");
   const [citizenship, setCitizenship] = useState(existing?.citizenship ?? "");
+  const [secondCitizenship, setSecondCitizenship] = useState(existing?.secondCitizenship ?? "");
+  const [visaActive, setVisaActive] = useState<boolean>(existing?.usVisaActive ?? false);
+  const [visaIssued, setVisaIssued] = useState(existing?.visaIssued ?? "");
+  const [visaValidUntil, setVisaValidUntil] = useState(existing?.visaValidUntil ?? "");
+  const [propertyUse, setPropertyUse] = useState<"vacation" | "investment" | "">(
+    existing?.propertyUse ?? "",
+  );
+  const [usBankAccount, setUsBankAccount] = useState<boolean>(existing?.usBankAccount ?? false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
 
@@ -114,6 +122,9 @@ export function MortgageQuestionnaire({
       if (hasItin && !itin.trim()) return setError("Please provide your ITIN number.");
       if (!countryOfResidence.trim()) return setError("Country of residence is required.");
       if (!citizenship.trim()) return setError("Citizenship is required.");
+      if (visaActive && (!visaIssued || !visaValidUntil))
+        return setError("Please provide the visa issue and expiry dates.");
+      if (!propertyUse) return setError("Please tell us how you will use the property.");
     }
     if (!addresses[0]?.street || !addresses[0]?.city)
       return setError("At least one address in your 2-year history is required.");
@@ -132,6 +143,11 @@ export function MortgageQuestionnaire({
             ...(hasItin ? { itin: itin.trim() } : {}),
             countryOfResidence: countryOfResidence.trim(),
             citizenship: citizenship.trim(),
+            ...(secondCitizenship.trim() ? { secondCitizenship: secondCitizenship.trim() } : {}),
+            usVisaActive: visaActive,
+            ...(visaActive ? { visaIssued, visaValidUntil } : {}),
+            propertyUse: propertyUse as "vacation" | "investment",
+            usBankAccount,
           }),
       addresses,
       employment,
@@ -277,7 +293,102 @@ export function MortgageQuestionnaire({
                       className={inputClass}
                     />
                   </Field>
+
+                  <Field label="Double citizenship">
+                    <input
+                      placeholder="Second citizenship, if any"
+                      value={secondCitizenship}
+                      onChange={(e) => setSecondCitizenship(e.target.value)}
+                      className={inputClass}
+                    />
+                  </Field>
+
+                  <Field label="Is your US visa active?" required>
+                    <div className="flex gap-4 pt-1 text-sm text-foreground">
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="visaActive"
+                          checked={visaActive}
+                          onChange={() => setVisaActive(true)}
+                        />
+                        Yes
+                      </label>
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="visaActive"
+                          checked={!visaActive}
+                          onChange={() => {
+                            setVisaActive(false);
+                            setVisaIssued("");
+                            setVisaValidUntil("");
+                          }}
+                        />
+                        No
+                      </label>
+                    </div>
+                  </Field>
+
+                  {visaActive ? (
+                    <>
+                      <Field label="Visa issued on" required>
+                        <input
+                          type="date"
+                          value={visaIssued}
+                          onChange={(e) => setVisaIssued(e.target.value)}
+                          className={inputClass}
+                        />
+                      </Field>
+                      <Field label="Visa valid until" required>
+                        <input
+                          type="date"
+                          value={visaValidUntil}
+                          onChange={(e) => setVisaValidUntil(e.target.value)}
+                          className={inputClass}
+                        />
+                      </Field>
+                    </>
+                  ) : null}
+
+                  <Field label="How will you use the property?" required>
+                    <select
+                      value={propertyUse}
+                      onChange={(e) =>
+                        setPropertyUse(e.target.value as "vacation" | "investment" | "")
+                      }
+                      className={inputClass}
+                    >
+                      <option value="">Select…</option>
+                      <option value="vacation">Vacation home</option>
+                      <option value="investment">Investment property</option>
+                    </select>
+                  </Field>
+
+                  <Field label="Do you have a US bank account?" required>
+                    <div className="flex gap-4 pt-1 text-sm text-foreground">
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="usBank"
+                          checked={usBankAccount}
+                          onChange={() => setUsBankAccount(true)}
+                        />
+                        Yes
+                      </label>
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="usBank"
+                          checked={!usBankAccount}
+                          onChange={() => setUsBankAccount(false)}
+                        />
+                        No
+                      </label>
+                    </div>
+                  </Field>
                 </div>
+
               </section>
             ) : null}
 
