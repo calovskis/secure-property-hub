@@ -122,12 +122,6 @@ function MarketplacePage() {
   };
 
 
-  const proceedWithProperty = (id: number) => {
-    alert(
-      `Proceeding with Property ${id}...\n\nNext Steps:\n1. Direct Purchase - Purchase the property directly\n2. Request Mortgage - Get financing assistance\n3. Custom Request - Submit custom inquiry\n\nPlease select your preferred option to continue.`,
-    );
-  };
-
   return (
     <div className="min-h-screen bg-background">
       <AppHeader active="Properties" />
