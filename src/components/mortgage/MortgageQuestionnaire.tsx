@@ -122,6 +122,9 @@ export function MortgageQuestionnaire({
       if (hasItin && !itin.trim()) return setError("Please provide your ITIN number.");
       if (!countryOfResidence.trim()) return setError("Country of residence is required.");
       if (!citizenship.trim()) return setError("Citizenship is required.");
+      if (visaActive && (!visaIssued || !visaValidUntil))
+        return setError("Please provide the visa issue and expiry dates.");
+      if (!propertyUse) return setError("Please tell us how you will use the property.");
     }
     if (!addresses[0]?.street || !addresses[0]?.city)
       return setError("At least one address in your 2-year history is required.");
