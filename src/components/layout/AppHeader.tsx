@@ -1,22 +1,22 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 
+type SubItem = { label: string; icon: string; to?: string };
 type NavItem = {
   label: string;
   icon: string;
   to?: string;
-  items?: { label: string; icon: string; to?: string }[];
+  items?: SubItem[];
 };
 
 const NAV: NavItem[] = [
   { label: "Home", icon: "🏠", to: "/" },
-  { label: "Properties", icon: "🏢", to: "/" },
-
+  { label: "Properties", icon: "🏢", to: "/marketplace" },
   {
     label: "Services",
     icon: "🔧",
     items: [
-      { label: "All Services", icon: "📋" },
+      { label: "All Services", icon: "📋", to: "/my-services" },
       { label: "Maintenance", icon: "🔨" },
       { label: "Cleaning", icon: "🧹" },
       { label: "Security", icon: "🔐" },
@@ -30,11 +30,11 @@ const NAV: NavItem[] = [
     label: "My Portfolio",
     icon: "📁",
     items: [
-      { label: "My Properties", icon: "🏘️" },
-      { label: "My Services", icon: "📋" },
-      { label: "My Financials", icon: "💳" },
-      { label: "Analytics", icon: "📈" },
-      { label: "Documents", icon: "📋" },
+      { label: "My Properties", icon: "🏘️", to: "/my-properties" },
+      { label: "My Services", icon: "📋", to: "/my-services" },
+      { label: "My Financials", icon: "💳", to: "/financials" },
+      { label: "Analytics", icon: "📈", to: "/analytics" },
+      { label: "Documents", icon: "📋", to: "/documents" },
     ],
   },
   {
@@ -50,6 +50,7 @@ const NAV: NavItem[] = [
     ],
   },
 ];
+
 
 export function AppHeader({ active = "Home" }: { active?: string }) {
   const [open, setOpen] = useState<string | null>(null);
