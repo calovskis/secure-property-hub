@@ -1,6 +1,13 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { homeRouteFor, useAuth, type LoqalUser, type Role } from "@/lib/auth";
+import {
+  PARTNER_LABEL,
+  homeRouteFor,
+  useAuth,
+  type LoqalUser,
+  type PartnerType,
+  type Role,
+} from "@/lib/auth";
 
 export const Route = createFileRoute("/auth")({
   component: AuthPage,
@@ -56,6 +63,7 @@ function AuthPage() {
   const [usPerson, setUsPerson] = useState<boolean | null>(null);
   const [showInternal, setShowInternal] = useState(false);
   const [loginRole, setLoginRole] = useState<Role>("client");
+  const [loginPartnerType, setLoginPartnerType] = useState<PartnerType>("lender");
   const [error, setError] = useState<string | null>(null);
 
   function complete(user: LoqalUser) {
