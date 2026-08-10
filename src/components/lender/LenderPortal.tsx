@@ -579,18 +579,41 @@ function RequestsInbox({ canDecide }: { canDecide: boolean }) {
   );
 }
 
-const TABS = [
-  { id: "home", label: "Home" },
-  { id: "requests", label: "Pre-approval Requests" },
-  { id: "mortgages", label: "Mortgages" },
-  { id: "analytics", label: "Analytics" },
-  { id: "other", label: "Other" },
+export const TABS = [
+  { id: "home", label: "Home", icon: "🏠" },
+  { id: "requests", label: "Pre-approval Requests", icon: "📥" },
+  { id: "mortgages", label: "Mortgages", icon: "🏦" },
+  { id: "analytics", label: "Analytics", icon: "📈" },
+  { id: "other", label: "Other", icon: "⚙️" },
 ] as const;
 
-type TabId = (typeof TABS)[number]["id"];
+export type LenderTabId = (typeof TABS)[number]["id"];
+type TabId = LenderTabId;
 
-export function LenderPortal({ lenderName }: { lenderName: string }) {
-  const [tab, setTab] = useState<TabId>("home");
+export function useLenderTabs() {
+  const { can } = useLenderTeam();
+  const allowed: Record<TabId, boolean> = {
+    home: true,
+    requests: can("requests.view"),
+    mortgages: can("mortgages.view"),
+    analytics: can("analytics.view"),
+    other: true,
+  };
+  return TABS.filter((t) => allowed[t.id]);
+}
+
+export function LenderPortal({
+  lenderName,
+  tab: tabProp,
+  onTabChange,
+}: {
+  lenderName: string;
+  tab?: TabId;
+  onTabChange?: (tab: TabId) => void;
+}) {
+  const [tabState, setTabState] = useState<TabId>("home");
+  const tab = tabProp ?? tabState;
+  const setTab = onTabChange ?? setTabState;
   const { active, can } = useLenderTeam();
 
   const allowed: Record<TabId, boolean> = {
@@ -615,22 +638,7 @@ export function LenderPortal({ lenderName }: { lenderName: string }) {
         ) : null}
       </div>
 
-      <nav className="mb-8 flex flex-wrap gap-1.5 border-b border-border pb-3">
-        {TABS.filter((t) => allowed[t.id]).map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            onClick={() => setTab(t.id)}
-            className={`rounded-full px-4 py-2 text-sm font-semibold ${
-              current === t.id
-                ? "bg-brand text-background"
-                : "text-muted-foreground hover:bg-brand-tint"
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </nav>
+
 
       {current === "home" ? (
         <LenderHome lenderName={lenderName} onOpenRequests={() => setTab("requests")} />

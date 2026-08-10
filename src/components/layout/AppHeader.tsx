@@ -165,8 +165,19 @@ const NAV: NavItem[] = [
 ];
 
 
-export function AppHeader({ active = "Home" }: { active?: string }) {
+export function AppHeader({
+  active = "Home",
+  navItems,
+  navSlot,
+}: {
+  active?: string;
+  /** Replace the default client navigation (e.g. partner workspaces). */
+  navItems?: NavItem[];
+  /** Fully custom nav content rendered instead of any nav items. */
+  navSlot?: React.ReactNode;
+}) {
   const { t } = useI18n();
+  const nav = navItems ?? NAV;
   const [open, setOpen] = useState<string | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -200,7 +211,8 @@ export function AppHeader({ active = "Home" }: { active?: string }) {
         </Link>
 
         <nav className="hidden items-center gap-1 lg:flex">
-          {NAV.map((item) => {
+          {navSlot}
+          {(navSlot ? [] : nav).map((item) => {
             const isActive = item.label === active;
             return (
               <div key={item.label} className="relative">
@@ -318,7 +330,8 @@ export function AppHeader({ active = "Home" }: { active?: string }) {
       </div>
 
       <nav className="flex gap-1 overflow-x-auto border-t border-border px-4 py-2 lg:hidden">
-        {NAV.map((item) => (
+        {navSlot}
+        {(navSlot ? [] : nav).map((item) => (
           <span
             key={item.label}
             className={`whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-medium ${
@@ -330,5 +343,6 @@ export function AppHeader({ active = "Home" }: { active?: string }) {
         ))}
       </nav>
     </header>
+
   );
 }

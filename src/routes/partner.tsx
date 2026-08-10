@@ -1,8 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
 import { AppHeader } from "@/components/layout/AppHeader";
-import { LenderPortal } from "@/components/lender/LenderPortal";
+import {
+  LenderPortal,
+  useLenderTabs,
+  type LenderTabId,
+} from "@/components/lender/LenderPortal";
 
 import { PARTNER_LABEL, fullName, useAuth, type PartnerType } from "@/lib/auth";
+
 
 export const Route = createFileRoute("/partner")({
   component: PartnerPage,
@@ -122,12 +128,7 @@ function PartnerPage() {
   const type = user.partnerType ?? "other";
 
   if (type === "lender") {
-    return (
-      <div className="min-h-screen bg-background">
-        <AppHeader active="Home" />
-        <LenderPortal lenderName={user.companyName || fullName(user)} />
-      </div>
-    );
+    return <LenderWorkspace lenderName={user.companyName || fullName(user)} />;
   }
 
   const board = BOARDS[type];
@@ -135,8 +136,9 @@ function PartnerPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <AppHeader active="Home" />
+      <AppHeader navSlot={<span className="text-sm font-semibold text-brand">Partner workspace</span>} />
       <main className="mx-auto max-w-[1400px] px-4 py-8 md:px-7">
+
         <div className="mb-8">
           <span className="rounded-full bg-gold-tint px-3 py-1 text-xs font-semibold text-gold">
             {PARTNER_LABEL[type]}
@@ -197,3 +199,37 @@ function PartnerPage() {
     </div>
   );
 }
+
+function LenderWorkspace({ lenderName }: { lenderName: string }) {
+  const [tab, setTab] = useState<LenderTabId>("home");
+  const tabs = useLenderTabs();
+  const current = tabs.some((t) => t.id === tab) ? tab : "home";
+
+  return (
+    <div className="min-h-screen bg-background">
+      <AppHeader
+        navSlot={
+          <>
+            {tabs.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setTab(t.id)}
+                className={`flex items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                  current === t.id
+                    ? "bg-brand-tint text-brand"
+                    : "text-muted-foreground hover:bg-brand-tint hover:text-brand"
+                }`}
+              >
+                <span aria-hidden>{t.icon}</span>
+                {t.label}
+              </button>
+            ))}
+          </>
+        }
+      />
+      <LenderPortal lenderName={lenderName} tab={current} onTabChange={setTab} />
+    </div>
+  );
+}
+
