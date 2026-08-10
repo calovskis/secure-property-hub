@@ -162,19 +162,38 @@ function Landing() {
           </div>
         </section>
 
-        <section className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-4">
-          {[
-            ["Client", "Individual owners and investors managing a portfolio remotely."],
-            ["Corporate", "Company-held portfolios with multiple users and entities."],
-            ["Partner", "Realtors, mortgage lenders, cleaning crews and service providers."],
-            ["Admin", "Loqal employees operating accounts, compliance and delivery."],
-          ].map(([title, text]) => (
-            <div key={title} className="rounded-lg border border-border bg-card p-5">
-              <div className="text-sm font-semibold text-foreground">{title} access</div>
-              <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{text}</p>
+        <section className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div className="rounded-lg border border-border bg-card p-6">
+            <div className="text-sm font-semibold text-foreground">Client access</div>
+            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+              Individual owners and investors managing a portfolio remotely. Create your profile in
+              a minute and start onboarding properties and services.
+            </p>
+            <Link
+              to="/auth"
+              className="mt-4 inline-flex rounded-md bg-brand px-5 py-2.5 text-sm font-semibold text-background transition-colors hover:bg-brand-soft"
+            >
+              Become a Loqal
+            </Link>
+          </div>
+          <div className="rounded-lg border border-gold/30 bg-gold-tint/40 p-6">
+            <div className="text-sm font-semibold text-foreground">
+              Partner &amp; corporate access
             </div>
-          ))}
+            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+              Realtors, mortgage lenders, cleaning crews, other service providers and
+              company-held portfolios are onboarded by our team. Send us your company details and
+              we will set up your workspace.
+            </p>
+            <Link
+              to="/partner-access"
+              className="mt-4 inline-flex rounded-md border border-gold/40 bg-card px-5 py-2.5 text-sm font-semibold text-gold transition-colors hover:bg-gold-tint"
+            >
+              Request access
+            </Link>
+          </div>
         </section>
+
       </main>
     </div>
   );
