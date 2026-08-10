@@ -118,7 +118,18 @@ function PartnerPage() {
   }
 
   const type = user.partnerType ?? "other";
+
+  if (type === "lender") {
+    return (
+      <div className="min-h-screen bg-background">
+        <AppHeader active="Home" />
+        <LenderPortal lenderName={user.companyName || fullName(user)} />
+      </div>
+    );
+  }
+
   const board = BOARDS[type];
+
 
   return (
     <div className="min-h-screen bg-background">
