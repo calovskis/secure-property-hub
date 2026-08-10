@@ -321,22 +321,23 @@ function AnalyticsPage() {
               ))}
             </div>
           </div>
-          <div className="flex h-[300px] items-end gap-2">
+          <div className="flex h-[300px] gap-2">
             {revenueMonthly.map((r) => (
               <div
                 key={r.label}
-                className="flex flex-1 flex-col items-center justify-end gap-2"
+                className="flex h-full flex-1 flex-col items-center justify-end gap-2"
               >
                 <div className="text-[11px] text-muted-foreground">
                   ${Math.round(r.value / 1000)}k
                 </div>
                 <div
-                  className="w-full rounded-t-md bg-brand"
-                  style={{ height: `${(r.value / maxRevenue) * 100}%` }}
+                  className="w-full min-h-1 rounded-t-md bg-brand"
+                  style={{ height: `${(r.value / maxRevenue) * 80}%` }}
                 />
                 <div className="text-xs text-muted-foreground">{r.label}</div>
               </div>
             ))}
+
           </div>
         </div>
 
