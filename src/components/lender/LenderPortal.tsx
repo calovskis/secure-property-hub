@@ -12,7 +12,6 @@ import {
   type MortgageLead,
 } from "@/lib/leads";
 
-import { countryLabel } from "@/data/countries";
 import { ApplicantFile, Row } from "@/components/lender/ApplicantFile";
 import { formatDateTime } from "@/lib/dates";
 
