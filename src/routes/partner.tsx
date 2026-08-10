@@ -128,12 +128,7 @@ function PartnerPage() {
   const type = user.partnerType ?? "other";
 
   if (type === "lender") {
-    return (
-      <div className="min-h-screen bg-background">
-        <AppHeader active="Home" />
-        <LenderPortal lenderName={user.companyName || fullName(user)} />
-      </div>
-    );
+    return <LenderWorkspace lenderName={user.companyName || fullName(user)} />;
   }
 
   const board = BOARDS[type];
@@ -141,8 +136,9 @@ function PartnerPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <AppHeader active="Home" />
+      <AppHeader navSlot={<span className="text-sm font-semibold text-brand">Partner workspace</span>} />
       <main className="mx-auto max-w-[1400px] px-4 py-8 md:px-7">
+
         <div className="mb-8">
           <span className="rounded-full bg-gold-tint px-3 py-1 text-xs font-semibold text-gold">
             {PARTNER_LABEL[type]}
