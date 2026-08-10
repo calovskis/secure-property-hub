@@ -330,7 +330,8 @@ export function AppHeader({
       </div>
 
       <nav className="flex gap-1 overflow-x-auto border-t border-border px-4 py-2 lg:hidden">
-        {NAV.map((item) => (
+        {navSlot}
+        {(navSlot ? [] : nav).map((item) => (
           <span
             key={item.label}
             className={`whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-medium ${
@@ -342,5 +343,6 @@ export function AppHeader({
         ))}
       </nav>
     </header>
+
   );
 }
