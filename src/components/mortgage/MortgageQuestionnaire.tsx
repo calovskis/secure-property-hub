@@ -13,6 +13,8 @@ import {
   type EmploymentEntry,
   type MortgageProfile,
 } from "@/lib/auth";
+import { useLeads } from "@/lib/leads";
+import { fullName } from "@/lib/auth";
 
 const uid = () => Math.random().toString(36).slice(2, 9);
 
@@ -68,12 +70,15 @@ export function MortgageQuestionnaire({
   open,
   onOpenChange,
   propertyLabel,
+  property,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   propertyLabel?: string;
+  property?: { id: number; price: number };
 }) {
   const { user, saveMortgageProfile } = useAuth();
+  const { createLead } = useLeads();
   const existing = user?.mortgageProfile;
 
   const [dob, setDob] = useState(existing?.dateOfBirth ?? "");
@@ -160,6 +165,17 @@ export function MortgageQuestionnaire({
     };
     setError(null);
     saveMortgageProfile(profile);
+    if (user && property) {
+      createLead({
+        clientEmail: user.email,
+        clientName: fullName(user),
+        usPerson: user.usPerson,
+        propertyId: property.id,
+        propertyLabel: propertyLabel ?? `Property #${property.id}`,
+        propertyPrice: property.price,
+        profile,
+      });
+    }
     setDone(true);
   }
 
@@ -183,7 +199,9 @@ export function MortgageQuestionnaire({
               Information received
             </div>
             <p className="mt-1 text-sm text-muted-foreground">
-              Your financial insights are now unlocked and a mortgage specialist will follow up.
+              Your financial insights are now unlocked and your pre-approval application has been
+              sent to a Loqal mortgage lending partner. You will be notified here as soon as they
+              respond.
             </p>
             <button
               type="button"

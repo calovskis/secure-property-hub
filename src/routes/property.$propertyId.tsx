@@ -2,6 +2,8 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useState } from "react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { MortgageQuestionnaire } from "@/components/mortgage/MortgageQuestionnaire";
+import { MortgageCaseCard } from "@/components/mortgage/MortgageCaseCard";
+import { useLeads } from "@/lib/leads";
 import { useAuth } from "@/lib/auth";
 import { buildInvestmentModel, formatPrice, getProperty } from "@/data/properties";
 
@@ -121,6 +123,8 @@ function PropertyDetailPage() {
   const [scenarioKey, setScenarioKey] = useState<(typeof SCENARIO_KEYS)[number]>("airbnb");
   const scenario = model.scenarios[scenarioKey];
   const { user, canSeeEstimates } = useAuth();
+  const { leadForProperty } = useLeads();
+  const lead = user ? leadForProperty(user.email, property.id) : undefined;
   const [questionnaireOpen, setQuestionnaireOpen] = useState(false);
   const locked = !canSeeEstimates;
   const openQuestionnaire = () => {
@@ -177,6 +181,8 @@ function PropertyDetailPage() {
             </button>
           </div>
         </section>
+
+        {lead ? <MortgageCaseCard lead={lead} /> : null}
 
         {/* TOP METRICS */}
         <section className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-3">
@@ -491,6 +497,7 @@ function PropertyDetailPage() {
         open={questionnaireOpen}
         onOpenChange={setQuestionnaireOpen}
         propertyLabel={`${property.address}, ${property.location}`}
+        property={{ id: property.id, price: property.price }}
       />
     </div>
   );
