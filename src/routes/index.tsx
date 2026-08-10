@@ -194,7 +194,20 @@ function Landing() {
           </div>
         </section>
 
+        <section className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-3">
+          {[
+            ["Entity & banking", "LLC formation, EIN, US bank accounts and compliance handled end to end."],
+            ["Acquisition & mortgage", "Marketplace listings, inspections, valuations and lender introductions."],
+            ["Operations", "Property management, cleaning, maintenance, utilities, legal and reporting."],
+          ].map(([title, text]) => (
+            <div key={title} className="rounded-lg border border-border bg-card p-6">
+              <div className="text-sm font-semibold text-foreground">{title}</div>
+              <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{text}</p>
+            </div>
+          ))}
+        </section>
       </main>
+
     </div>
   );
 }
