@@ -114,7 +114,7 @@ export function MortgageQuestionnaire({
 
     const profile: MortgageProfile = {
       dateOfBirth: dob,
-      ssn: showSsn && ssn ? ssn : undefined,
+      ...(showSsn && ssn ? { ssn } : {}),
       ssnTermsAccepted: ssnAccepted,
       addresses,
       employment,
