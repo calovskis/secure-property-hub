@@ -211,7 +211,8 @@ export function AppHeader({
         </Link>
 
         <nav className="hidden items-center gap-1 lg:flex">
-          {NAV.map((item) => {
+          {navSlot}
+          {(navSlot ? [] : nav).map((item) => {
             const isActive = item.label === active;
             return (
               <div key={item.label} className="relative">
