@@ -300,48 +300,28 @@ export function MortgageQuestionnaire({
                   ) : null}
 
                   <Field label="Country of residence" required>
-                    <select
+                    <CountryCombobox
                       value={countryOfResidence}
-                      onChange={(e) => setCountryOfResidence(e.target.value)}
-                      className={inputClass}
-                    >
-                      <option value="">Select a country</option>
-                      {COUNTRIES.map((c) => (
-                        <option key={c.code} value={c.code}>
-                          {c.name}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={setCountryOfResidence}
+                      placeholder="Start typing a country…"
+                    />
                   </Field>
 
                   <Field label="Citizenship" required>
-                    <select
+                    <CountryCombobox
                       value={citizenship}
-                      onChange={(e) => setCitizenship(e.target.value)}
-                      className={inputClass}
-                    >
-                      <option value="">Select a country of citizenship</option>
-                      {COUNTRIES.map((c) => (
-                        <option key={c.code} value={c.code}>
-                          {c.name}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={setCitizenship}
+                      placeholder="Start typing a citizenship country…"
+                    />
                   </Field>
 
                   <Field label="Double citizenship">
-                    <select
+                    <CountryCombobox
                       value={secondCitizenship}
-                      onChange={(e) => setSecondCitizenship(e.target.value)}
-                      className={inputClass}
-                    >
-                      <option value="">None</option>
-                      {COUNTRIES.filter((c) => c.code !== citizenship).map((c) => (
-                        <option key={c.code} value={c.code}>
-                          {c.name}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={setSecondCitizenship}
+                      placeholder="None"
+                      allowClear
+                    />
                   </Field>
 
                   <Field label="Is your US visa active?" required>
