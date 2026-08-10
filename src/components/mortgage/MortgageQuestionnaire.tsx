@@ -92,6 +92,14 @@ export function MortgageQuestionnaire({
   const [itin, setItin] = useState(existing?.itin ?? "");
   const [countryOfResidence, setCountryOfResidence] = useState(existing?.countryOfResidence ?? "");
   const [citizenship, setCitizenship] = useState(existing?.citizenship ?? "");
+  const [secondCitizenship, setSecondCitizenship] = useState(existing?.secondCitizenship ?? "");
+  const [visaActive, setVisaActive] = useState<boolean>(existing?.usVisaActive ?? false);
+  const [visaIssued, setVisaIssued] = useState(existing?.visaIssued ?? "");
+  const [visaValidUntil, setVisaValidUntil] = useState(existing?.visaValidUntil ?? "");
+  const [propertyUse, setPropertyUse] = useState<"vacation" | "investment" | "">(
+    existing?.propertyUse ?? "",
+  );
+  const [usBankAccount, setUsBankAccount] = useState<boolean>(existing?.usBankAccount ?? false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
 
