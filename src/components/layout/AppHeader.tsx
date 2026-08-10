@@ -196,13 +196,8 @@ export function AppHeader({ active = "Home" }: { active?: string }) {
             ⚙️
           </button>
 
-          <button
-            type="button"
-            aria-label="Account"
-            className="flex size-9 items-center justify-center rounded-full bg-gradient-to-br from-brand to-brand-soft text-sm font-semibold text-primary-foreground"
-          >
-            A
-          </button>
+          <AccountMenu />
+
         </div>
       </div>
 
