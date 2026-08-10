@@ -44,6 +44,17 @@ export type DebtProfile = {
   submittedAt: string;
 };
 
+/** Pricing the lender returns with a decision — required before any estimate. */
+export type LenderTerms = {
+  /** Annual interest rate as a percentage, e.g. 6.75 */
+  ratePct: number;
+  termYears: number;
+  downPaymentPct: number;
+  closingCostPct: number;
+  taxInsurancePct: number;
+  issuedAt: string;
+};
+
 export type MortgageLead = {
   id: string;
   clientEmail: string;
@@ -60,9 +71,28 @@ export type MortgageLead = {
   decidedAt?: string;
   /** Lender may tighten or relax the DTI ceiling per applicant. */
   dtiLimit: number;
+  /** Lender-issued loan pricing. Estimates stay locked until this exists. */
+  terms?: LenderTerms;
   infoRequests: InfoRequest[];
   debts?: DebtProfile;
 };
+
+/** Estimates unlock only when the lender returned a score AND full pricing. */
+export function hasPricedOffer(lead?: MortgageLead): lead is MortgageLead {
+  return Boolean(lead && lead.status === "qualified" && lead.creditScore && lead.terms);
+}
+
+/** Convert lender terms into the loan terms used by the investment model. */
+export function toLoanTerms(terms: LenderTerms) {
+  return {
+    rate: terms.ratePct / 100,
+    termYears: terms.termYears,
+    downPaymentPct: terms.downPaymentPct / 100,
+    closingCostPct: terms.closingCostPct / 100,
+    taxInsurancePct: terms.taxInsurancePct / 100,
+  };
+}
+
 
 const STORAGE_KEY = "loqal.leads.v1";
 export const DEFAULT_DTI_LIMIT = 0.5;
