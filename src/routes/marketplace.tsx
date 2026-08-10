@@ -292,8 +292,10 @@ function MarketplacePage() {
             {pagingProperties.map((prop) => (
               <div
                 key={prop.id}
-                className="overflow-hidden rounded-lg border border-border bg-card transition-all hover:border-brand-soft hover:shadow-md"
+                onClick={() => openProperty(prop.id)}
+                className="cursor-pointer overflow-hidden rounded-lg border border-border bg-card transition-all hover:border-brand-soft hover:shadow-md"
               >
+
                 <div className="relative flex h-[220px] items-center justify-center bg-gradient-to-br from-brand-tint to-gold-tint text-7xl">
                   <span aria-hidden="true">{prop.icon}</span>
                   {prop.featured ? (
