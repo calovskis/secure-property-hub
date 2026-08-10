@@ -175,7 +175,7 @@ function Landing() {
               to="/auth"
               className="mt-4 inline-flex rounded-md bg-brand px-5 py-2.5 text-sm font-semibold text-background transition-colors hover:bg-brand-soft"
             >
-              Become a Loqal
+              {t("Become a Loqal")}
             </Link>
           </div>
           <div className="rounded-lg border border-gold/30 bg-gold-tint/40 p-6">
