@@ -55,6 +55,9 @@ export type LenderTerms = {
   issuedAt: string;
 };
 
+/** What the client decided about the lender's priced pre-approval offer. */
+export type ClientDecision = "accepted" | "declined";
+
 export type MortgageLead = {
   id: string;
   clientEmail: string;
@@ -73,6 +76,9 @@ export type MortgageLead = {
   dtiLimit: number;
   /** Lender-issued loan pricing. Estimates stay locked until this exists. */
   terms?: LenderTerms;
+  /** Set once the client accepts or declines the priced pre-approval terms. */
+  clientDecision?: ClientDecision;
+  clientDecisionAt?: string;
   infoRequests: InfoRequest[];
   debts?: DebtProfile;
 };
@@ -80,6 +86,44 @@ export type MortgageLead = {
 /** Estimates unlock only when the lender returned a score AND full pricing. */
 export function hasPricedOffer(lead?: MortgageLead): lead is MortgageLead {
   return Boolean(lead && lead.status === "qualified" && lead.creditScore && lead.terms);
+}
+
+/** Still being worked on the pre-approval desk. */
+export function isOpenRequest(lead: MortgageLead) {
+  return lead.status === "new" || lead.status === "info_required";
+}
+
+/** Qualified + client accepted → a live mortgage file. */
+export function isMortgageFile(lead: MortgageLead) {
+  return hasPricedOffer(lead) && lead.clientDecision === "accepted";
+}
+
+/** Qualified but the client has not (yet) accepted the terms. */
+export function isQualifiedNotApproved(lead: MortgageLead) {
+  return lead.status === "qualified" && lead.clientDecision !== "accepted";
+}
+
+export type MortgageFileStage =
+  | "awaiting_client"
+  | "client_declined"
+  | "in_underwriting";
+
+export function mortgageStage(lead: MortgageLead): MortgageFileStage {
+  if (lead.clientDecision === "accepted") return "in_underwriting";
+  if (lead.clientDecision === "declined") return "client_declined";
+  return "awaiting_client";
+}
+
+export const MORTGAGE_STAGE_LABEL: Record<MortgageFileStage, string> = {
+  awaiting_client: "Awaiting client confirmation",
+  client_declined: "Qualified — not approved by client",
+  in_underwriting: "Open mortgage file (hard check)",
+};
+
+/** Two-letter state parsed from the property label, e.g. "New York, NY". */
+export function leadState(lead: MortgageLead) {
+  const m = lead.propertyLabel.match(/\b([A-Z]{2})\b\s*$/);
+  return m ? m[1] : "—";
 }
 
 /** Convert lender terms into the loan terms used by the investment model. */
@@ -92,6 +136,7 @@ export function toLoanTerms(terms: LenderTerms) {
     taxInsurancePct: terms.taxInsurancePct / 100,
   };
 }
+
 
 
 const STORAGE_KEY = "loqal.leads.v1";
