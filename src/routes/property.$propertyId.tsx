@@ -283,10 +283,12 @@ function PropertyDetailPage() {
         {/* VALUE / PAYMENT / HISTORY */}
         <section className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
           <Card title="📈 Home Value Estimate" subtitle="Illustrative value and appreciation outlook">
-            <div className="text-3xl font-bold text-brand">{formatPrice(model.estimate)}</div>
-            <div className="mt-2 text-xs font-semibold text-success">
-              ↑ ~4.9% projected annual growth
-            </div>
+            <Gated locked={locked} onProvide={openQuestionnaire}>
+              <div className="text-3xl font-bold text-brand">{formatPrice(model.estimate)}</div>
+              <div className="mt-2 text-xs font-semibold text-success">
+                ↑ ~4.9% projected annual growth
+              </div>
+            </Gated>
           </Card>
           <Card
             title="💳 Mortgage Estimate"
@@ -328,6 +330,7 @@ function PropertyDetailPage() {
           subtitle="Compare passive-income strategies for the same asset"
           className="mb-6"
         >
+          <Gated locked={locked} onProvide={openQuestionnaire}>
           <div className="mb-5 flex flex-wrap gap-2 border-b border-border pb-3">
             {SCENARIO_KEYS.map((key) => (
               <button
@@ -398,6 +401,7 @@ function PropertyDetailPage() {
               ]}
             />
           </div>
+          </Gated>
         </Card>
 
         {/* ACQUISITION + RISK */}
@@ -484,6 +488,11 @@ function PropertyDetailPage() {
           </div>
         </Card>
       </main>
+      <MortgageQuestionnaire
+        open={questionnaireOpen}
+        onOpenChange={setQuestionnaireOpen}
+        propertyLabel={`${property.address}, ${property.location}`}
+      />
     </div>
   );
 }
