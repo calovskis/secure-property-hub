@@ -364,24 +364,25 @@ function AnalyticsPage() {
               ))}
             </div>
           </div>
-          <div className="flex h-[300px] items-end gap-3">
+          <div className="flex h-[300px] gap-3">
             {occupancyData.map((o) => (
               <div
                 key={o.label}
-                className="flex flex-1 flex-col items-center justify-end gap-2"
+                className="flex h-full flex-1 flex-col items-center justify-end gap-2"
               >
                 <div className="text-[11px] text-muted-foreground">
                   {o.value.toFixed(1)}%
                 </div>
                 <div
-                  className={`w-full rounded-t-md ${o.color}`}
-                  style={{ height: `${o.value}%` }}
+                  className={`w-full min-h-1 rounded-t-md ${o.color}`}
+                  style={{ height: `${o.value * 0.8}%` }}
                 />
                 <div className="text-center text-[11px] text-muted-foreground">
                   {o.label}
                 </div>
               </div>
             ))}
+
           </div>
         </div>
 
