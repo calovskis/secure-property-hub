@@ -104,6 +104,8 @@ export function MortgageQuestionnaire({
   const [done, setDone] = useState(false);
 
   const showSsn = Boolean(user?.usPerson);
+  // Non-US applicants only provide address/employment/income history if they hold an ITIN.
+  const showHistory = showSsn || hasItin;
   const monthly = Number(monthlyGross.replace(/[^0-9.]/g, "")) || 0;
 
   function patchAddress(id: string, patch: Partial<AddressEntry>) {
@@ -126,11 +128,13 @@ export function MortgageQuestionnaire({
         return setError("Please provide the visa issue and expiry dates.");
       if (!propertyUse) return setError("Please tell us how you will use the property.");
     }
-    if (!addresses[0]?.street || !addresses[0]?.city)
-      return setError("At least one address in your 2-year history is required.");
-    if (!employment[0]?.employer)
-      return setError("At least one employer in your 2-year history is required.");
-    if (!monthly) return setError("Current monthly gross income is required.");
+    if (showHistory) {
+      if (!addresses[0]?.street || !addresses[0]?.city)
+        return setError("At least one address in your 2-year history is required.");
+      if (!employment[0]?.employer)
+        return setError("At least one employer in your 2-year history is required.");
+      if (!monthly) return setError("Current monthly gross income is required.");
+    }
 
     const profile: MortgageProfile = {
       dateOfBirth: dob,
@@ -149,9 +153,9 @@ export function MortgageQuestionnaire({
             propertyUse: propertyUse as "vacation" | "investment",
             usBankAccount,
           }),
-      addresses,
-      employment,
-      monthlyGross: monthly,
+      ...(showHistory
+        ? { addresses, employment, monthlyGross: monthly }
+        : { addresses: [], employment: [], monthlyGross: 0 }),
       submittedAt: new Date().toISOString(),
     };
     setError(null);
@@ -394,6 +398,8 @@ export function MortgageQuestionnaire({
 
 
 
+            {showHistory ? (
+            <>
             {/* ADDRESS HISTORY */}
             <section>
               <div className="mb-3 flex items-center justify-between">
@@ -567,6 +573,8 @@ export function MortgageQuestionnaire({
                 <strong className="text-lg font-bold text-brand">{money(monthly * 12)}</strong>
               </div>
             </section>
+            </>
+            ) : null}
 
             {error ? (
               <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
