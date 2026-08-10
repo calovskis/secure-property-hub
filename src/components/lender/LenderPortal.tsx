@@ -421,7 +421,7 @@ function Thread({ lead }: { lead: MortgageLead }) {
   );
 }
 
-export function LenderPortal({ lenderName }: { lenderName: string }) {
+function RequestsInbox({ canDecide }: { canDecide: boolean }) {
   const { leads } = useLeads();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [filter, setFilter] = useState<LeadStatus | "all">("all");
@@ -442,19 +442,17 @@ export function LenderPortal({ lenderName }: { lenderName: string }) {
   );
 
   return (
-    <main className="mx-auto max-w-[1400px] px-4 py-8 md:px-7">
+    <>
       <div className="mb-6">
-        <span className="rounded-full bg-gold-tint px-3 py-1 text-xs font-semibold text-gold">
-          Mortgage lender portal
-        </span>
-        <h1 className="mt-3 text-2xl font-bold text-foreground md:text-[32px]">
-          Pre-approval inbox
+        <h1 className="text-2xl font-bold text-foreground md:text-[30px]">
+          Pre-approval requests
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          {lenderName} · Every Loqal client pre-approval application lands here. Review the file,
-          run your own underwriting, then return a decision with the soft credit score.
+          Review the client file, run your own underwriting, then return a decision with the soft
+          credit score.
         </p>
       </div>
+
 
       {counts.new > 0 ? (
         <div className="mb-6 flex items-center gap-3 rounded-lg border border-gold/40 bg-gold-tint px-4 py-3">
