@@ -348,7 +348,7 @@ function MarketplacePage() {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                  <div className="flex gap-2">
+
                     <button
                       className="flex-1 rounded-md border border-gold/30 bg-gold-tint px-2.5 py-2.5 text-xs font-semibold text-gold hover:bg-gold/20"
                       onClick={() => saveProperty(prop.id)}
