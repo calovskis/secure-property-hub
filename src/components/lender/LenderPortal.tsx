@@ -194,7 +194,7 @@ function DecisionPanel({ lead }: { lead: MortgageLead }) {
     updateLead(lead.id, {
       status,
       creditScore: parsed,
-      lenderNote: note.trim() || undefined,
+      lenderNote: note.trim(),
       dtiLimit: limit,
       decidedAt: new Date().toISOString(),
     });
