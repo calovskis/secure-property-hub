@@ -9,6 +9,11 @@ import {
 } from "@/lib/leads";
 import { countryLabel } from "@/data/countries";
 import { formatDate, formatDateTime, isoToUsMonth } from "@/lib/dates";
+import { LENDER_ROLE_LABEL, useLenderTeam } from "@/lib/lender-team";
+import { LenderHome } from "@/components/lender/LenderHome";
+import { LenderAnalytics } from "@/components/lender/LenderAnalytics";
+import { LenderMortgages } from "@/components/lender/LenderMortgages";
+import { LenderTeam } from "@/components/lender/LenderTeam";
 
 const money = (n: number) => `$${Math.round(n).toLocaleString()}`;
 const date = (iso?: string) => formatDateTime(iso);
