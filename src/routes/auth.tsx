@@ -283,6 +283,29 @@ function AuthPage() {
                   ))}
                 </div>
               ) : null}
+              {showInternal && loginRole === "partner" ? (
+                <div className="mt-3">
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    Partner type
+                  </p>
+                  <div className="flex flex-wrap justify-center gap-2">
+                    {(Object.keys(PARTNER_LABEL) as PartnerType[]).map((t) => (
+                      <button
+                        key={t}
+                        type="button"
+                        onClick={() => setLoginPartnerType(t)}
+                        className={`rounded-full border px-4 py-1.5 text-xs font-semibold transition-colors ${
+                          loginPartnerType === t
+                            ? "border-gold bg-gold text-primary-foreground"
+                            : "border-border text-foreground hover:bg-gold-tint"
+                        }`}
+                      >
+                        {PARTNER_LABEL[t]}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
             </div>
           )}
 
