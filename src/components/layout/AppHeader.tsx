@@ -8,13 +8,55 @@ import {
   initials,
   useAuth,
 } from "@/lib/auth";
+import { LANGUAGES, useI18n } from "@/lib/i18n";
+
+function LanguageMenu() {
+  const { lang, setLang } = useI18n();
+  const [open, setOpen] = useState(false);
+  const current = LANGUAGES.find((l) => l.code === lang) ?? LANGUAGES[0];
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        aria-label="Language"
+        onClick={() => setOpen(!open)}
+        className="flex h-9 items-center gap-1 rounded-full border border-border px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-brand-tint hover:text-brand"
+      >
+        🌐 {current.short}
+      </button>
+      {open ? (
+        <div className="absolute right-0 top-[calc(100%+8px)] w-40 rounded-lg border border-border bg-popover p-1.5 shadow-lg">
+          {LANGUAGES.map((l) => (
+            <button
+              key={l.code}
+              type="button"
+              onClick={() => {
+                setLang(l.code);
+                setOpen(false);
+              }}
+              className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-brand-tint hover:text-brand ${
+                l.code === lang ? "font-semibold text-brand" : "text-foreground"
+              }`}
+            >
+              {l.label}
+              {l.code === lang ? <span aria-hidden>✓</span> : null}
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 function AccountMenu() {
   const { user, ready, signOut } = useAuth();
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
 
   if (!ready) return <div className="size-9 rounded-full bg-muted" />;
+
 
   if (!user) {
     return (
