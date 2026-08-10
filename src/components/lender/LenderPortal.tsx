@@ -61,10 +61,14 @@ function ApplicantFile({ lead }: { lead: MortgageLead }) {
           ) : (
             <>
               <Row label="ITIN" value={p.hasItin ? p.itin || "Provided" : "No ITIN"} />
-              <Row label="Country of residence" value={p.countryOfResidence || "—"} />
+              <Row label="Country of residence" value={countryLabel(p.countryOfResidence) || "—"} />
               <Row
                 label="Citizenship"
-                value={[p.citizenship, p.secondCitizenship].filter(Boolean).join(" / ") || "—"}
+                value={
+                  [countryLabel(p.citizenship), countryLabel(p.secondCitizenship)]
+                    .filter(Boolean)
+                    .join(" / ") || "—"
+                }
               />
               <Row
                 label="US visa"
