@@ -11,6 +11,7 @@ import {
 } from "@/lib/leads";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import { ApplicantFile, Row } from "@/components/lender/ApplicantFile";
+import { useLenderTeam } from "@/lib/lender-team";
 
 const money = (n: number) => `$${Math.round(n).toLocaleString()}`;
 
