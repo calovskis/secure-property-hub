@@ -370,7 +370,13 @@ function PropertyDetailPage() {
           subtitle="Compare passive-income strategies for the same asset"
           className="mb-6"
         >
-          <Gated locked={locked} onProvide={openQuestionnaire}>
+          <Gated
+            locked={locked}
+            message={lockMessage}
+            {...(lockCta ? { cta: lockCta } : {})}
+            onProvide={openQuestionnaire}
+          >
+
           <div className="mb-5 flex flex-wrap gap-2 border-b border-border pb-3">
             {SCENARIO_KEYS.map((key) => (
               <button
