@@ -166,6 +166,7 @@ const NAV: NavItem[] = [
 
 
 export function AppHeader({ active = "Home" }: { active?: string }) {
+  const { t } = useI18n();
   const [open, setOpen] = useState<string | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
