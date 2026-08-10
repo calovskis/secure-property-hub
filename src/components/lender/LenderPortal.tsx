@@ -9,6 +9,11 @@ import {
 } from "@/lib/leads";
 import { countryLabel } from "@/data/countries";
 import { formatDate, formatDateTime, isoToUsMonth } from "@/lib/dates";
+import { LENDER_ROLE_LABEL, useLenderTeam } from "@/lib/lender-team";
+import { LenderHome } from "@/components/lender/LenderHome";
+import { LenderAnalytics } from "@/components/lender/LenderAnalytics";
+import { LenderMortgages } from "@/components/lender/LenderMortgages";
+import { LenderTeam } from "@/components/lender/LenderTeam";
 
 const money = (n: number) => `$${Math.round(n).toLocaleString()}`;
 const date = (iso?: string) => formatDateTime(iso);
@@ -421,7 +426,7 @@ function Thread({ lead }: { lead: MortgageLead }) {
   );
 }
 
-export function LenderPortal({ lenderName }: { lenderName: string }) {
+function RequestsInbox({ canDecide }: { canDecide: boolean }) {
   const { leads } = useLeads();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [filter, setFilter] = useState<LeadStatus | "all">("all");
@@ -442,19 +447,17 @@ export function LenderPortal({ lenderName }: { lenderName: string }) {
   );
 
   return (
-    <main className="mx-auto max-w-[1400px] px-4 py-8 md:px-7">
+    <>
       <div className="mb-6">
-        <span className="rounded-full bg-gold-tint px-3 py-1 text-xs font-semibold text-gold">
-          Mortgage lender portal
-        </span>
-        <h1 className="mt-3 text-2xl font-bold text-foreground md:text-[32px]">
-          Pre-approval inbox
+        <h1 className="text-2xl font-bold text-foreground md:text-[30px]">
+          Pre-approval requests
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          {lenderName} · Every Loqal client pre-approval application lands here. Review the file,
-          run your own underwriting, then return a decision with the soft credit score.
+          Review the client file, run your own underwriting, then return a decision with the soft
+          credit score.
         </p>
       </div>
+
 
       {counts.new > 0 ? (
         <div className="mb-6 flex items-center gap-3 rounded-lg border border-gold/40 bg-gold-tint px-4 py-3">
@@ -560,13 +563,83 @@ export function LenderPortal({ lenderName }: { lenderName: string }) {
                   Marked not qualified{selected.creditScore ? ` (score ${selected.creditScore})` : ""}.
                   This decision is final for this application.
                 </div>
-              ) : (
+              ) : canDecide ? (
                 <DecisionPanel key={selected.id} lead={selected} />
+              ) : (
+                <div className="rounded-lg border border-border bg-card p-4 text-sm text-muted-foreground">
+                  Your seat can review this file but cannot issue a decision. Ask an underwriter or
+                  company admin to sign off.
+                </div>
               )}
             </>
           )}
         </div>
       </section>
+    </>
+  );
+}
+
+const TABS = [
+  { id: "home", label: "Home" },
+  { id: "requests", label: "Pre-approval Requests" },
+  { id: "mortgages", label: "Mortgages" },
+  { id: "analytics", label: "Analytics" },
+  { id: "other", label: "Other" },
+] as const;
+
+type TabId = (typeof TABS)[number]["id"];
+
+export function LenderPortal({ lenderName }: { lenderName: string }) {
+  const [tab, setTab] = useState<TabId>("home");
+  const { active, can } = useLenderTeam();
+
+  const allowed: Record<TabId, boolean> = {
+    home: true,
+    requests: can("requests.view"),
+    mortgages: can("mortgages.view"),
+    analytics: can("analytics.view"),
+    other: true,
+  };
+  const current = allowed[tab] ? tab : "home";
+
+  return (
+    <main className="mx-auto max-w-[1400px] px-4 py-8 md:px-7">
+      <div className="mb-6 flex flex-wrap items-center gap-3">
+        <span className="rounded-full bg-gold-tint px-3 py-1 text-xs font-semibold text-gold">
+          Mortgage lender portal
+        </span>
+        {active ? (
+          <span className="text-xs text-muted-foreground">
+            Signed in as {active.name} · {LENDER_ROLE_LABEL[active.role]}
+          </span>
+        ) : null}
+      </div>
+
+      <nav className="mb-8 flex flex-wrap gap-1.5 border-b border-border pb-3">
+        {TABS.filter((t) => allowed[t.id]).map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            onClick={() => setTab(t.id)}
+            className={`rounded-full px-4 py-2 text-sm font-semibold ${
+              current === t.id
+                ? "bg-brand text-background"
+                : "text-muted-foreground hover:bg-brand-tint"
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </nav>
+
+      {current === "home" ? (
+        <LenderHome lenderName={lenderName} onOpenRequests={() => setTab("requests")} />
+      ) : null}
+      {current === "requests" ? <RequestsInbox canDecide={can("requests.decide")} /> : null}
+      {current === "mortgages" ? <LenderMortgages canManage={can("mortgages.manage")} /> : null}
+      {current === "analytics" ? <LenderAnalytics /> : null}
+      {current === "other" ? <LenderTeam /> : null}
     </main>
   );
 }
+
