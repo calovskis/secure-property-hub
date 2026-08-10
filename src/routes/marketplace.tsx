@@ -348,25 +348,29 @@ function MarketplacePage() {
                     </div>
                   </div>
                   <div className="flex gap-2">
+                  <div className="flex gap-2">
                     <button
                       className="flex-1 rounded-md border border-gold/30 bg-gold-tint px-2.5 py-2.5 text-xs font-semibold text-gold hover:bg-gold/20"
                       onClick={() => saveProperty(prop.id)}
                     >
                       <span aria-hidden="true">★</span> Save
                     </button>
-                    <button
-                      className="flex-1 rounded-md bg-brand-tint px-2.5 py-2.5 text-xs font-semibold text-brand hover:bg-brand/15"
-                      onClick={() => moreInfo(prop.id)}
+                    <Link
+                      to="/property/$propertyId"
+                      params={{ propertyId: String(prop.id) }}
+                      className="flex-1 rounded-md bg-brand-tint px-2.5 py-2.5 text-center text-xs font-semibold text-brand hover:bg-brand/15"
                     >
                       <span aria-hidden="true">ℹ️</span> Details
-                    </button>
-                    <button
-                      className="flex-1 rounded-md bg-brand px-2.5 py-2.5 text-xs font-semibold text-background hover:bg-brand-soft"
-                      onClick={() => proceedWithProperty(prop.id)}
+                    </Link>
+                    <Link
+                      to="/property/$propertyId"
+                      params={{ propertyId: String(prop.id) }}
+                      className="flex-1 rounded-md bg-brand px-2.5 py-2.5 text-center text-xs font-semibold text-background hover:bg-brand-soft"
                     >
                       → Proceed
-                    </button>
+                    </Link>
                   </div>
+
                 </div>
               </div>
             ))}
