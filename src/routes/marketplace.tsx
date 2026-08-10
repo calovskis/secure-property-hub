@@ -24,39 +24,8 @@ export const Route = createFileRoute("/marketplace")({
   }),
 });
 
-type Property = {
-  id: number;
-  featured: boolean;
-  type: string;
-  price: number;
-  address: string;
-  location: string;
-  beds: number;
-  baths: number;
-  sqft: number;
-  icon: string;
-};
-
-const allProperties: Property[] = [
-  { id: 1, featured: true, type: "Residential", price: 850000, address: "255 Park Avenue", location: "New York, NY", beds: 3, baths: 2, sqft: 2450, icon: "🏢" },
-  { id: 2, featured: false, type: "Commercial", price: 1200000, address: "500 5th Avenue", location: "Los Angeles, CA", beds: 8, baths: 6, sqft: 12000, icon: "🏪" },
-  { id: 3, featured: false, type: "Residential", price: 750000, address: "1825 Oak Street", location: "Chicago, IL", beds: 4, baths: 3, sqft: 3200, icon: "🏠" },
-  { id: 4, featured: true, type: "Multi-Family", price: 2500000, address: "3030 Valley Road", location: "Houston, TX", beds: 24, baths: 18, sqft: 45000, icon: "🏘️" },
-  { id: 5, featured: false, type: "Residential", price: 520000, address: "450 Bay Street", location: "Miami, FL", beds: 2, baths: 2, sqft: 1750, icon: "🏢" },
-  { id: 6, featured: true, type: "Commercial", price: 3800000, address: "101 Market Street", location: "San Francisco, CA", beds: 0, baths: 0, sqft: 85000, icon: "🏢" },
-  { id: 7, featured: false, type: "Residential", price: 1950000, address: "2001 Ocean Drive", location: "Miami Beach, FL", beds: 5, baths: 4, sqft: 5800, icon: "🏖️" },
-  { id: 8, featured: false, type: "Industrial", price: 1400000, address: "5000 Industrial Way", location: "Dallas, TX", beds: 0, baths: 0, sqft: 50000, icon: "🏭" },
-  { id: 9, featured: false, type: "Land", price: 425000, address: "Lot 45 Green Hills", location: "Austin, TX", beds: 0, baths: 0, sqft: 2.5, icon: "🌳" },
-  { id: 10, featured: false, type: "Residential", price: 2200000, address: "1 Central Park South", location: "New York, NY", beds: 4, baths: 3, sqft: 4100, icon: "🏢" },
-  { id: 11, featured: false, type: "Commercial", price: 900000, address: "2400 Shopping Center Drive", location: "Phoenix, AZ", beds: 6, baths: 6, sqft: 18000, icon: "🏪" },
-  { id: 12, featured: true, type: "Multi-Family", price: 1750000, address: "450 Residential Lane", location: "Denver, CO", beds: 12, baths: 10, sqft: 20000, icon: "🏘️" },
-];
-
 const PROPERTIES_PER_PAGE = 6;
 
-function formatPrice(price: number) {
-  return "$" + price.toLocaleString();
-}
 
 function MarketplacePage() {
   const [locationInput, setLocationInput] = useState("");
