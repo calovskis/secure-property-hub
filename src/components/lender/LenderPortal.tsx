@@ -52,7 +52,7 @@ function ApplicantFile({ lead }: { lead: MortgageLead }) {
         <div className="mt-2 divide-y divide-border">
           <Row label="Name" value={lead.clientName} />
           <Row label="Email" value={lead.clientEmail} />
-          <Row label="Date of birth" value={p.dateOfBirth || "—"} />
+          <Row label="Date of birth" value={p.dateOfBirth ? formatDate(p.dateOfBirth) : "—"} />
           <Row
             label="US person"
             value={lead.usPerson ? "US citizen / green card holder" : "Non-US person"}

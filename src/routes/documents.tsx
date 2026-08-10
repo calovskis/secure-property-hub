@@ -50,7 +50,7 @@ const DOCUMENTS: Doc[] = [
     meta: "PDF • 2.4 MB",
     category: "leases",
     badgeLabel: "Lease",
-    date: "Modified: Mar 10, 2026",
+    date: "Modified: 03/10/2026",
   },
   {
     id: "financial-2026-q1",
@@ -59,7 +59,7 @@ const DOCUMENTS: Doc[] = [
     meta: "XLSX • 1.8 MB",
     category: "financial",
     badgeLabel: "Financial",
-    date: "Modified: Mar 8, 2026",
+    date: "Modified: 03/08/2026",
   },
   {
     id: "inspection-riverside-2026",
@@ -68,7 +68,7 @@ const DOCUMENTS: Doc[] = [
     meta: "PDF • 3.2 MB",
     category: "inspections",
     badgeLabel: "Inspection",
-    date: "Modified: Mar 5, 2026",
+    date: "Modified: 03/05/2026",
   },
   {
     id: "tax-2025-form",
@@ -77,7 +77,7 @@ const DOCUMENTS: Doc[] = [
     meta: "PDF • 1.1 MB",
     category: "tax",
     badgeLabel: "Tax",
-    date: "Modified: Feb 28, 2026",
+    date: "Modified: 02/28/2026",
   },
   {
     id: "legal-insurance-policy",
@@ -86,7 +86,7 @@ const DOCUMENTS: Doc[] = [
     meta: "PDF • 890 KB",
     category: "legal",
     badgeLabel: "Legal",
-    date: "Modified: Feb 15, 2026",
+    date: "Modified: 02/15/2026",
   },
   {
     id: "lease-maple-tower-12b",
@@ -95,7 +95,7 @@ const DOCUMENTS: Doc[] = [
     meta: "PDF • 2.1 MB",
     category: "leases",
     badgeLabel: "Lease",
-    date: "Modified: Feb 12, 2026",
+    date: "Modified: 02/12/2026",
   },
   {
     id: "financial-jan-2026",
@@ -104,7 +104,7 @@ const DOCUMENTS: Doc[] = [
     meta: "PDF • 645 KB",
     category: "financial",
     badgeLabel: "Financial",
-    date: "Modified: Feb 1, 2026",
+    date: "Modified: 02/01/2026",
   },
   {
     id: "inspection-commerce-plaza",
@@ -113,7 +113,7 @@ const DOCUMENTS: Doc[] = [
     meta: "PDF • 1.5 MB",
     category: "inspections",
     badgeLabel: "Inspection",
-    date: "Modified: Jan 28, 2026",
+    date: "Modified: 01/28/2026",
   },
   {
     id: "legal-deed-oak-street",
@@ -122,7 +122,7 @@ const DOCUMENTS: Doc[] = [
     meta: "PDF • 2.8 MB",
     category: "legal",
     badgeLabel: "Legal",
-    date: "Modified: Jan 15, 2026",
+    date: "Modified: 01/15/2026",
   },
 ];
 
