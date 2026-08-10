@@ -3,9 +3,15 @@ import { useState } from "react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { MortgageQuestionnaire } from "@/components/mortgage/MortgageQuestionnaire";
 import { MortgageCaseCard } from "@/components/mortgage/MortgageCaseCard";
-import { useLeads } from "@/lib/leads";
+import { useLeads, hasPricedOffer, toLoanTerms } from "@/lib/leads";
 import { useAuth } from "@/lib/auth";
-import { buildInvestmentModel, formatPrice, getProperty } from "@/data/properties";
+import {
+  buildInvestmentModel,
+  formatPrice,
+  getProperty,
+  INDICATIVE_TERMS,
+} from "@/data/properties";
+
 
 
 export const Route = createFileRoute("/property/$propertyId")({
