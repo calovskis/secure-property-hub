@@ -8,13 +8,55 @@ import {
   initials,
   useAuth,
 } from "@/lib/auth";
+import { LANGUAGES, useI18n } from "@/lib/i18n";
+
+function LanguageMenu() {
+  const { lang, setLang } = useI18n();
+  const [open, setOpen] = useState(false);
+  const current = LANGUAGES.find((l) => l.code === lang)!;
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        aria-label="Language"
+        onClick={() => setOpen(!open)}
+        className="flex h-9 items-center gap-1 rounded-full border border-border px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-brand-tint hover:text-brand"
+      >
+        🌐 {current.short}
+      </button>
+      {open ? (
+        <div className="absolute right-0 top-[calc(100%+8px)] w-40 rounded-lg border border-border bg-popover p-1.5 shadow-lg">
+          {LANGUAGES.map((l) => (
+            <button
+              key={l.code}
+              type="button"
+              onClick={() => {
+                setLang(l.code);
+                setOpen(false);
+              }}
+              className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-brand-tint hover:text-brand ${
+                l.code === lang ? "font-semibold text-brand" : "text-foreground"
+              }`}
+            >
+              {l.label}
+              {l.code === lang ? <span aria-hidden>✓</span> : null}
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 function AccountMenu() {
   const { user, ready, signOut } = useAuth();
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
 
   if (!ready) return <div className="size-9 rounded-full bg-muted" />;
+
 
   if (!user) {
     return (
@@ -22,7 +64,7 @@ function AccountMenu() {
         to="/auth"
         className="rounded-md bg-brand px-4 py-2 text-sm font-semibold text-background transition-colors hover:bg-brand-soft"
       >
-        Log in
+        {t("Log in")}
       </Link>
     );
   }
@@ -31,7 +73,7 @@ function AccountMenu() {
     <div className="relative">
       <button
         type="button"
-        aria-label="Account"
+        aria-label={t("Account")}
         onClick={() => setOpen(!open)}
         className="flex size-9 items-center justify-center rounded-full bg-gradient-to-br from-brand to-brand-soft text-sm font-semibold text-primary-foreground"
       >
@@ -43,8 +85,8 @@ function AccountMenu() {
             <div className="text-sm font-semibold text-foreground">{fullName(user)}</div>
             <div className="text-xs text-muted-foreground">{user.email}</div>
             <span className="mt-2 inline-flex rounded-full bg-brand-tint px-2.5 py-1 text-[11px] font-semibold text-brand">
-              {ROLE_LABEL[user.role]}
-              {user.partnerType ? ` · ${PARTNER_LABEL[user.partnerType]}` : ""}
+              {t(ROLE_LABEL[user.role])}
+              {user.partnerType ? ` · ${t(PARTNER_LABEL[user.partnerType])}` : ""}
             </span>
           </div>
           <Link
@@ -52,7 +94,7 @@ function AccountMenu() {
             onClick={() => setOpen(false)}
             className="mt-1 flex w-full rounded-md px-3 py-2 text-left text-sm text-foreground hover:bg-brand-tint hover:text-brand"
           >
-            My workspace
+            {t("My workspace")}
           </Link>
           <button
             type="button"
@@ -63,7 +105,7 @@ function AccountMenu() {
             }}
             className="flex w-full rounded-md px-3 py-2 text-left text-sm text-foreground hover:bg-brand-tint hover:text-brand"
           >
-            Sign out
+            {t("Sign out")}
           </button>
         </div>
       ) : null}
@@ -124,6 +166,7 @@ const NAV: NavItem[] = [
 
 
 export function AppHeader({ active = "Home" }: { active?: string }) {
+  const { t } = useI18n();
   const [open, setOpen] = useState<string | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -172,7 +215,7 @@ export function AppHeader({ active = "Home" }: { active?: string }) {
                     }`}
                   >
                     <span aria-hidden>{item.icon}</span>
-                    {item.label}
+                    {t(item.label)}
                     <span className="text-[9px] opacity-60">▼</span>
                   </button>
                 ) : (
@@ -185,7 +228,7 @@ export function AppHeader({ active = "Home" }: { active?: string }) {
                     }`}
                   >
                     <span aria-hidden>{item.icon}</span>
-                    {item.label}
+                    {t(item.label)}
                   </Link>
                 )}
 
@@ -197,12 +240,12 @@ export function AppHeader({ active = "Home" }: { active?: string }) {
                       return sub.to ? (
                         <Link key={sub.label} to={sub.to} className={cls} onClick={() => setOpen(null)}>
                           <span aria-hidden>{sub.icon}</span>
-                          {sub.label}
+                          {t(sub.label)}
                         </Link>
                       ) : (
                         <button key={sub.label} type="button" className={cls}>
                           <span aria-hidden>{sub.icon}</span>
-                          {sub.label}
+                          {t(sub.label)}
                         </button>
                       );
                     })}
@@ -228,8 +271,8 @@ export function AppHeader({ active = "Home" }: { active?: string }) {
               <input
                 autoFocus
                 type="text"
-                placeholder="Search..."
-                aria-label="Search"
+                placeholder={t("Search...")}
+                aria-label={t("Search")}
                 className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
               />
             ) : null}
@@ -238,7 +281,7 @@ export function AppHeader({ active = "Home" }: { active?: string }) {
           <div className="relative hidden sm:block">
             <button
               type="button"
-              aria-label="Help"
+              aria-label={t("Help")}
               onClick={() => setHelpOpen(!helpOpen)}
               className="flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-brand-tint"
             >
@@ -252,7 +295,7 @@ export function AppHeader({ active = "Home" }: { active?: string }) {
                     type="button"
                     className="flex w-full rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-brand-tint hover:text-brand"
                   >
-                    {i}
+                    {t(i)}
                   </button>
                 ))}
               </div>
@@ -261,11 +304,13 @@ export function AppHeader({ active = "Home" }: { active?: string }) {
 
           <button
             type="button"
-            aria-label="Settings"
+            aria-label={t("Settings")}
             className="hidden size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-brand-tint sm:flex"
           >
             ⚙️
           </button>
+
+          <LanguageMenu />
 
           <AccountMenu />
 
@@ -280,7 +325,7 @@ export function AppHeader({ active = "Home" }: { active?: string }) {
               item.label === active ? "bg-brand-tint text-brand" : "text-muted-foreground"
             }`}
           >
-            {item.icon} {item.label}
+            {item.icon} {t(item.label)}
           </span>
         ))}
       </nav>
