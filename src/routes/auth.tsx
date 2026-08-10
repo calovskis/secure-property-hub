@@ -1,13 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import {
-  PARTNER_LABEL,
-  homeRouteFor,
-  useAuth,
-  type LoqalUser,
-  type PartnerType,
-  type Role,
-} from "@/lib/auth";
+import { homeRouteFor, useAuth, type LoqalUser, type Role } from "@/lib/auth";
 
 export const Route = createFileRoute("/auth")({
   component: AuthPage,
@@ -17,29 +10,22 @@ export const Route = createFileRoute("/auth")({
       {
         name: "description",
         content:
-          "Log in to your Loqal account or create a profile as a client, corporate owner, partner or administrator.",
+          "Log in to your Loqal account or create your client profile to manage properties, services and payments in one place.",
       },
       { property: "og:title", content: "Sign in or become a Loqal" },
       {
         property: "og:description",
         content:
-          "Access the Loqal concierge platform for real estate investors, corporates, partners and administrators.",
+          "Access the Loqal concierge platform for real estate investors and property owners.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
 });
 
 const inputClass =
   "w-full rounded-md border border-input bg-background px-3 py-2.5 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-brand";
-
-const ROLES: { value: Role; label: string; desc: string }[] = [
-  { value: "client", label: "Client", desc: "Individual property owner or investor" },
-  { value: "corporate", label: "Corporate", desc: "Company-owned portfolio" },
-  { value: "partner", label: "Partner", desc: "Realtor, lender or service provider" },
-  { value: "admin", label: "Admin", desc: "Loqal employee access" },
-];
-
-const PARTNER_TYPES = Object.keys(PARTNER_LABEL) as PartnerType[];
 
 function Label({ children, required }: { children: React.ReactNode; required?: boolean }) {
   return (
@@ -48,6 +34,14 @@ function Label({ children, required }: { children: React.ReactNode; required?: b
     </span>
   );
 }
+
+/** Prototype-only: lets internal staff and onboarded partners land on their workspace. */
+const INTERNAL_ROLES: { value: Role; label: string }[] = [
+  { value: "client", label: "Client" },
+  { value: "corporate", label: "Corporate" },
+  { value: "partner", label: "Partner" },
+  { value: "admin", label: "Admin" },
+];
 
 function AuthPage() {
   const { signIn } = useAuth();
@@ -60,9 +54,8 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [usPerson, setUsPerson] = useState<boolean | null>(null);
-  const [role, setRole] = useState<Role>("client");
-  const [partnerType, setPartnerType] = useState<PartnerType>("realtor");
-  const [companyName, setCompanyName] = useState("");
+  const [showInternal, setShowInternal] = useState(false);
+  const [loginRole, setLoginRole] = useState<Role>("client");
   const [error, setError] = useState<string | null>(null);
 
   function complete(user: LoqalUser) {
@@ -79,9 +72,9 @@ function AuthPage() {
       lastName: "Member",
       email,
       phone: "",
-      usPerson: usPerson ?? false,
-      role,
-      ...(role === "partner" ? { partnerType } : {}),
+      usPerson: false,
+      role: loginRole,
+      ...(loginRole === "partner" ? { partnerType: "realtor" as const } : {}),
     });
   }
 
@@ -92,7 +85,6 @@ function AuthPage() {
     if (!phone) return setError("Phone number is required.");
     if (usPerson === null)
       return setError("Please tell us whether you are a US citizen or green card holder.");
-    if (role === "corporate" && !companyName) return setError("Company name is required.");
     setError(null);
     complete({
       firstName,
@@ -100,10 +92,8 @@ function AuthPage() {
       email,
       phone,
       usPerson,
-      role,
+      role: "client",
       ...(middleName ? { middleName } : {}),
-      ...(role === "partner" ? { partnerType } : {}),
-      ...(role === "corporate" ? { companyName } : {}),
     });
   }
 
@@ -231,60 +221,6 @@ function AuthPage() {
               </div>
             ) : null}
 
-            <div>
-              <Label required>Access type</Label>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                {ROLES.map((r) => (
-                  <button
-                    key={r.value}
-                    type="button"
-                    onClick={() => setRole(r.value)}
-                    className={`rounded-lg border p-3 text-left transition-colors ${
-                      role === r.value
-                        ? "border-brand bg-brand-tint"
-                        : "border-border hover:bg-brand-tint/50"
-                    }`}
-                  >
-                    <div className="text-sm font-semibold text-foreground">{r.label}</div>
-                    <div className="text-[11px] text-muted-foreground">{r.desc}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {role === "partner" ? (
-              <div>
-                <Label required>Partner category</Label>
-                <div className="flex flex-wrap gap-2">
-                  {PARTNER_TYPES.map((p) => (
-                    <button
-                      key={p}
-                      type="button"
-                      onClick={() => setPartnerType(p)}
-                      className={`rounded-full border px-4 py-1.5 text-xs font-semibold transition-colors ${
-                        partnerType === p
-                          ? "border-brand bg-brand text-background"
-                          : "border-border text-foreground hover:bg-brand-tint"
-                      }`}
-                    >
-                      {PARTNER_LABEL[p]}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-
-            {role === "corporate" && mode === "register" ? (
-              <label className="block">
-                <Label required>Company name</Label>
-                <input
-                  value={companyName}
-                  onChange={(e) => setCompanyName(e.target.value)}
-                  className={inputClass}
-                />
-              </label>
-            ) : null}
-
             {error ? (
               <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
                 {error}
@@ -297,10 +233,48 @@ function AuthPage() {
             >
               {mode === "login" ? "Log in" : "Create my Loqal profile"}
             </button>
-            <p className="text-center text-[11px] text-muted-foreground">
-              Prototype access — accounts are stored locally on this device only.
-            </p>
           </form>
+
+          {mode === "register" ? (
+            <p className="mt-4 text-center text-xs text-muted-foreground">
+              Registering a company or a service business?{" "}
+              <Link to="/partner-access" className="font-semibold text-brand">
+                Request partner or corporate access
+              </Link>
+            </p>
+          ) : (
+            <div className="mt-6 border-t border-border pt-4 text-center">
+              <button
+                type="button"
+                onClick={() => setShowInternal((v) => !v)}
+                className="text-[11px] text-muted-foreground underline-offset-2 hover:underline"
+              >
+                Partner or internal sign-in
+              </button>
+              {showInternal ? (
+                <div className="mt-3 flex flex-wrap justify-center gap-2">
+                  {INTERNAL_ROLES.map((r) => (
+                    <button
+                      key={r.value}
+                      type="button"
+                      onClick={() => setLoginRole(r.value)}
+                      className={`rounded-full border px-4 py-1.5 text-xs font-semibold transition-colors ${
+                        loginRole === r.value
+                          ? "border-brand bg-brand text-background"
+                          : "border-border text-foreground hover:bg-brand-tint"
+                      }`}
+                    >
+                      {r.label}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          )}
+
+          <p className="mt-4 text-center text-[11px] text-muted-foreground">
+            Prototype access — accounts are stored locally on this device only.
+          </p>
         </div>
       </div>
     </div>
