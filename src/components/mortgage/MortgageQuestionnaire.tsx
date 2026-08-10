@@ -104,6 +104,8 @@ export function MortgageQuestionnaire({
   const [done, setDone] = useState(false);
 
   const showSsn = Boolean(user?.usPerson);
+  // Non-US applicants only provide address/employment/income history if they hold an ITIN.
+  const showHistory = showSsn || hasItin;
   const monthly = Number(monthlyGross.replace(/[^0-9.]/g, "")) || 0;
 
   function patchAddress(id: string, patch: Partial<AddressEntry>) {
