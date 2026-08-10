@@ -3,12 +3,18 @@ import {
   computeDti,
   totalMonthlyObligations,
   LEAD_STATUS_LABEL,
+  MORTGAGE_STAGE_LABEL,
+  isOpenRequest,
+  leadState,
+  mortgageStage,
   useLeads,
   type LeadStatus,
   type MortgageLead,
 } from "@/lib/leads";
-import { countryLabel } from "@/data/countries";
-import { formatDate, formatDateTime, isoToUsMonth } from "@/lib/dates";
+
+import { ApplicantFile, Row } from "@/components/lender/ApplicantFile";
+import { formatDateTime } from "@/lib/dates";
+
 import { LENDER_ROLE_LABEL, useLenderTeam } from "@/lib/lender-team";
 import { LenderHome } from "@/components/lender/LenderHome";
 import { LenderAnalytics } from "@/components/lender/LenderAnalytics";
@@ -35,115 +41,6 @@ function StatusPill({ status }: { status: LeadStatus }) {
     >
       {LEAD_STATUS_LABEL[status]}
     </span>
-  );
-}
-
-function Row({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="flex items-start justify-between gap-4 py-2 text-sm">
-      <span className="text-muted-foreground">{label}</span>
-      <strong className="text-right font-semibold text-foreground">{value}</strong>
-    </div>
-  );
-}
-
-function ApplicantFile({ lead }: { lead: MortgageLead }) {
-  const p = lead.profile;
-  const annual = p.monthlyGross * 12;
-  return (
-    <div className="space-y-6">
-      <section>
-        <h3 className="text-sm font-semibold text-foreground">Applicant</h3>
-        <div className="mt-2 divide-y divide-border">
-          <Row label="Name" value={lead.clientName} />
-          <Row label="Email" value={lead.clientEmail} />
-          <Row label="Date of birth" value={p.dateOfBirth ? formatDate(p.dateOfBirth) : "—"} />
-          <Row
-            label="US person"
-            value={lead.usPerson ? "US citizen / green card holder" : "Non-US person"}
-          />
-          {lead.usPerson ? (
-            <Row label="SSN" value={p.ssn ? `••• •• ${p.ssn.slice(-4)}` : "Not provided"} />
-          ) : (
-            <>
-              <Row label="ITIN" value={p.hasItin ? p.itin || "Provided" : "No ITIN"} />
-              <Row label="Country of residence" value={countryLabel(p.countryOfResidence) || "—"} />
-              <Row
-                label="Citizenship"
-                value={
-                  [countryLabel(p.citizenship), countryLabel(p.secondCitizenship)]
-                    .filter(Boolean)
-                    .join(" / ") || "—"
-                }
-              />
-              <Row
-                label="US visa"
-                value={
-                  p.usVisaActive
-                    ? `Active · ${formatDate(p.visaIssued)} → ${formatDate(p.visaValidUntil)}`
-                    : "Not active"
-                }
-              />
-              <Row label="Intended use" value={p.propertyUse ?? "—"} />
-              <Row label="US bank account" value={p.usBankAccount ? "Yes" : "No"} />
-            </>
-          )}
-        </div>
-      </section>
-
-      <section>
-        <h3 className="text-sm font-semibold text-foreground">Subject property</h3>
-        <div className="mt-2 divide-y divide-border">
-          <Row label="Property" value={lead.propertyLabel} />
-          <Row label="List price" value={money(lead.propertyPrice)} />
-          <Row label="Submitted" value={date(lead.submittedAt)} />
-        </div>
-      </section>
-
-      {p.addresses.length > 0 ? (
-        <section>
-          <h3 className="text-sm font-semibold text-foreground">Address history (2 years)</h3>
-          <ul className="mt-2 space-y-2 text-sm text-muted-foreground">
-            {p.addresses.map((a) => (
-              <li key={a.id} className="rounded-md border border-border bg-background p-3">
-                <div className="font-semibold text-foreground">
-                  {a.street}, {a.city} {a.state} {a.zip}
-                </div>
-                <div className="text-xs">
-                  {isoToUsMonth(a.from) || "—"} → {isoToUsMonth(a.to) || "—"}
-                </div>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
-
-      {p.employment.length > 0 ? (
-        <section>
-          <h3 className="text-sm font-semibold text-foreground">Employment history (2 years)</h3>
-          <ul className="mt-2 space-y-2 text-sm text-muted-foreground">
-            {p.employment.map((e) => (
-              <li key={e.id} className="rounded-md border border-border bg-background p-3">
-                <div className="font-semibold text-foreground">
-                  {e.title} — {e.employer}
-                </div>
-                <div className="text-xs">
-                  {isoToUsMonth(e.from) || "—"} → {e.current ? "Present" : isoToUsMonth(e.to) || "—"}
-                </div>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
-
-      <section>
-        <h3 className="text-sm font-semibold text-foreground">Income</h3>
-        <div className="mt-2 divide-y divide-border">
-          <Row label="Monthly gross" value={p.monthlyGross ? money(p.monthlyGross) : "Not provided"} />
-          <Row label="Annual gross" value={annual ? money(annual) : "Not provided"} />
-        </div>
-      </section>
-    </div>
   );
 }
 
@@ -254,7 +151,6 @@ function DecisionPanel({ lead }: { lead: MortgageLead }) {
             },
           }
         : {}),
-
     });
     if (status === "info_required") {
       addInfoRequest(lead.id, question.trim(), needsDoc);
@@ -324,7 +220,6 @@ function DecisionPanel({ lead }: { lead: MortgageLead }) {
           ))}
         </div>
       </div>
-
 
       <label className="block">
         <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -429,19 +324,32 @@ function Thread({ lead }: { lead: MortgageLead }) {
 function RequestsInbox({ canDecide }: { canDecide: boolean }) {
   const { leads } = useLeads();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [view, setView] = useState<"open" | "past">("open");
   const [filter, setFilter] = useState<LeadStatus | "all">("all");
+  const [state, setState] = useState<string>("all");
+
+  const states = useMemo(() => Array.from(new Set(leads.map(leadState))).sort(), [leads]);
+
+  const pool = useMemo(
+    () => leads.filter((l) => (view === "open" ? isOpenRequest(l) : !isOpenRequest(l))),
+    [leads, view],
+  );
 
   const visible = useMemo(
-    () => (filter === "all" ? leads : leads.filter((l) => l.status === filter)),
-    [leads, filter],
+    () =>
+      pool
+        .filter((l) => (view === "past" && filter !== "all" ? l.status === filter : true))
+        .filter((l) => (state === "all" ? true : leadState(l) === state)),
+    [pool, filter, state, view],
   );
-  const selected = leads.find((l) => l.id === selectedId) ?? visible[0];
+  const selected = visible.find((l) => l.id === selectedId) ?? visible[0];
 
   const counts = useMemo(
     () => ({
       new: leads.filter((l) => l.status === "new").length,
       info: leads.filter((l) => l.status === "info_required").length,
       qualified: leads.filter((l) => l.status === "qualified").length,
+      past: leads.filter((l) => !isOpenRequest(l)).length,
     }),
     [leads],
   );
@@ -449,15 +357,12 @@ function RequestsInbox({ canDecide }: { canDecide: boolean }) {
   return (
     <>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground md:text-[30px]">
-          Pre-approval requests
-        </h1>
+        <h1 className="text-2xl font-bold text-foreground md:text-[30px]">Pre-approval requests</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Review the client file, run your own underwriting, then return a decision with the soft
-          credit score.
+          credit score. Decided files move to past pre-approval requests.
         </p>
       </div>
-
 
       {counts.new > 0 ? (
         <div className="mb-6 flex items-center gap-3 rounded-lg border border-gold/40 bg-gold-tint px-4 py-3">
@@ -473,7 +378,7 @@ function RequestsInbox({ canDecide }: { canDecide: boolean }) {
         {[
           ["New inquiries", String(counts.new), "Pinned for immediate review"],
           ["Awaiting client info", String(counts.info), "Documents or answers requested"],
-          ["Qualified", String(counts.qualified), "Moved to Step 2 affordability"],
+          ["Past requests", String(counts.past), "Qualified or declined — decision issued"],
         ].map(([label, value, note]) => (
           <div key={label} className="rounded-lg border border-border bg-card p-6">
             <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -485,24 +390,70 @@ function RequestsInbox({ canDecide }: { canDecide: boolean }) {
         ))}
       </section>
 
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        {(
+          [
+            ["open", `Open requests (${leads.filter(isOpenRequest).length})`],
+            ["past", `Past pre-approval requests (${counts.past})`],
+          ] as const
+        ).map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => {
+              setView(id);
+              setSelectedId(null);
+              setFilter("all");
+            }}
+            className={`rounded-md px-4 py-2 text-xs font-semibold ${
+              view === id
+                ? "bg-brand text-background"
+                : "border border-border text-muted-foreground hover:bg-brand-tint"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+        <label className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
+          State
+          <select
+            value={state}
+            onChange={(e) => {
+              setState(e.target.value);
+              setSelectedId(null);
+            }}
+            className="rounded-md border border-input bg-background px-3 py-2 text-xs text-foreground"
+          >
+            <option value="all">All states</option>
+            {states.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
       <section className="grid grid-cols-1 gap-6 lg:grid-cols-[360px_1fr]">
         <div className="rounded-lg border border-border bg-card p-4">
-          <div className="mb-3 flex flex-wrap gap-1.5">
-            {(["all", "new", "info_required", "qualified", "not_qualified"] as const).map((f) => (
-              <button
-                key={f}
-                type="button"
-                onClick={() => setFilter(f)}
-                className={`rounded-full px-3 py-1 text-[11px] font-semibold ${
-                  filter === f
-                    ? "bg-brand text-background"
-                    : "border border-border text-muted-foreground hover:bg-brand-tint"
-                }`}
-              >
-                {f === "all" ? "All" : LEAD_STATUS_LABEL[f]}
-              </button>
-            ))}
-          </div>
+          {view === "past" ? (
+            <div className="mb-3 flex flex-wrap gap-1.5">
+              {(["all", "qualified", "not_qualified"] as const).map((f) => (
+                <button
+                  key={f}
+                  type="button"
+                  onClick={() => setFilter(f)}
+                  className={`rounded-full px-3 py-1 text-[11px] font-semibold ${
+                    filter === f
+                      ? "bg-brand text-background"
+                      : "border border-border text-muted-foreground hover:bg-brand-tint"
+                  }`}
+                >
+                  {f === "all" ? "All" : LEAD_STATUS_LABEL[f]}
+                </button>
+              ))}
+            </div>
+          ) : null}
           {visible.length === 0 ? (
             <p className="py-8 text-center text-sm text-muted-foreground">
               No applications in this view yet.
@@ -525,7 +476,17 @@ function RequestsInbox({ canDecide }: { canDecide: boolean }) {
                     <div className="text-xs text-muted-foreground">
                       {l.propertyLabel} · {money(l.propertyPrice)}
                     </div>
-                    <div className="text-[11px] text-muted-foreground">{date(l.submittedAt)}</div>
+                    <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                      <span className="rounded bg-brand-tint px-1.5 py-0.5 font-semibold text-brand">
+                        {leadState(l)}
+                      </span>
+                      {date(l.submittedAt)}
+                    </div>
+                    {l.status === "qualified" ? (
+                      <div className="mt-1 text-[11px] font-semibold text-muted-foreground">
+                        {MORTGAGE_STAGE_LABEL[mortgageStage(l)]}
+                      </div>
+                    ) : null}
                   </button>
                 </li>
               ))}
@@ -560,8 +521,23 @@ function RequestsInbox({ canDecide }: { canDecide: boolean }) {
               <Thread lead={selected} />
               {selected.status === "not_qualified" ? (
                 <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
-                  Marked not qualified{selected.creditScore ? ` (score ${selected.creditScore})` : ""}.
-                  This decision is final for this application.
+                  Marked not qualified
+                  {selected.creditScore ? ` (score ${selected.creditScore})` : ""}. This decision is
+                  final for this application.
+                </div>
+              ) : selected.status === "qualified" ? (
+                <div className="rounded-lg border border-success/30 bg-success/10 p-4 text-sm">
+                  <div className="font-semibold text-success">
+                    Qualified with priced terms
+                    {selected.terms
+                      ? ` — ${selected.terms.ratePct}% · ${selected.terms.termYears}y · ${selected.terms.downPaymentPct}% down`
+                      : ""}
+                    .
+                  </div>
+                  <p className="mt-1 text-muted-foreground">
+                    {MORTGAGE_STAGE_LABEL[mortgageStage(selected)]} — this file is tracked under
+                    Mortgages.
+                  </p>
                 </div>
               ) : canDecide ? (
                 <DecisionPanel key={selected.id} lead={selected} />
@@ -638,8 +614,6 @@ export function LenderPortal({
         ) : null}
       </div>
 
-
-
       {current === "home" ? (
         <LenderHome lenderName={lenderName} onOpenRequests={() => setTab("requests")} />
       ) : null}
@@ -650,4 +624,3 @@ export function LenderPortal({
     </main>
   );
 }
-
