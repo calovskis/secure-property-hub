@@ -429,19 +429,35 @@ function Thread({ lead }: { lead: MortgageLead }) {
 function RequestsInbox({ canDecide }: { canDecide: boolean }) {
   const { leads } = useLeads();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [view, setView] = useState<"open" | "past">("open");
   const [filter, setFilter] = useState<LeadStatus | "all">("all");
+  const [state, setState] = useState<string>("all");
+
+  const states = useMemo(
+    () => Array.from(new Set(leads.map(leadState))).sort(),
+    [leads],
+  );
+
+  const pool = useMemo(
+    () => leads.filter((l) => (view === "open" ? isOpenRequest(l) : !isOpenRequest(l))),
+    [leads, view],
+  );
 
   const visible = useMemo(
-    () => (filter === "all" ? leads : leads.filter((l) => l.status === filter)),
-    [leads, filter],
+    () =>
+      pool
+        .filter((l) => (view === "past" && filter !== "all" ? l.status === filter : true))
+        .filter((l) => (state === "all" ? true : leadState(l) === state)),
+    [pool, filter, state, view],
   );
-  const selected = leads.find((l) => l.id === selectedId) ?? visible[0];
+  const selected = visible.find((l) => l.id === selectedId) ?? visible[0];
 
   const counts = useMemo(
     () => ({
       new: leads.filter((l) => l.status === "new").length,
       info: leads.filter((l) => l.status === "info_required").length,
       qualified: leads.filter((l) => l.status === "qualified").length,
+      past: leads.filter((l) => !isOpenRequest(l)).length,
     }),
     [leads],
   );
@@ -454,10 +470,9 @@ function RequestsInbox({ canDecide }: { canDecide: boolean }) {
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Review the client file, run your own underwriting, then return a decision with the soft
-          credit score.
+          credit score. Decided files move to past pre-approval requests.
         </p>
       </div>
-
 
       {counts.new > 0 ? (
         <div className="mb-6 flex items-center gap-3 rounded-lg border border-gold/40 bg-gold-tint px-4 py-3">
@@ -473,7 +488,7 @@ function RequestsInbox({ canDecide }: { canDecide: boolean }) {
         {[
           ["New inquiries", String(counts.new), "Pinned for immediate review"],
           ["Awaiting client info", String(counts.info), "Documents or answers requested"],
-          ["Qualified", String(counts.qualified), "Moved to Step 2 affordability"],
+          ["Past requests", String(counts.past), "Qualified or declined — decision issued"],
         ].map(([label, value, note]) => (
           <div key={label} className="rounded-lg border border-border bg-card p-6">
             <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -485,24 +500,70 @@ function RequestsInbox({ canDecide }: { canDecide: boolean }) {
         ))}
       </section>
 
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        {(
+          [
+            ["open", `Open requests (${leads.filter(isOpenRequest).length})`],
+            ["past", `Past pre-approval requests (${counts.past})`],
+          ] as const
+        ).map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => {
+              setView(id);
+              setSelectedId(null);
+              setFilter("all");
+            }}
+            className={`rounded-md px-4 py-2 text-xs font-semibold ${
+              view === id
+                ? "bg-brand text-background"
+                : "border border-border text-muted-foreground hover:bg-brand-tint"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+        <label className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
+          State
+          <select
+            value={state}
+            onChange={(e) => {
+              setState(e.target.value);
+              setSelectedId(null);
+            }}
+            className="rounded-md border border-input bg-background px-3 py-2 text-xs text-foreground"
+          >
+            <option value="all">All states</option>
+            {states.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
       <section className="grid grid-cols-1 gap-6 lg:grid-cols-[360px_1fr]">
         <div className="rounded-lg border border-border bg-card p-4">
-          <div className="mb-3 flex flex-wrap gap-1.5">
-            {(["all", "new", "info_required", "qualified", "not_qualified"] as const).map((f) => (
-              <button
-                key={f}
-                type="button"
-                onClick={() => setFilter(f)}
-                className={`rounded-full px-3 py-1 text-[11px] font-semibold ${
-                  filter === f
-                    ? "bg-brand text-background"
-                    : "border border-border text-muted-foreground hover:bg-brand-tint"
-                }`}
-              >
-                {f === "all" ? "All" : LEAD_STATUS_LABEL[f]}
-              </button>
-            ))}
-          </div>
+          {view === "past" ? (
+            <div className="mb-3 flex flex-wrap gap-1.5">
+              {(["all", "qualified", "not_qualified"] as const).map((f) => (
+                <button
+                  key={f}
+                  type="button"
+                  onClick={() => setFilter(f)}
+                  className={`rounded-full px-3 py-1 text-[11px] font-semibold ${
+                    filter === f
+                      ? "bg-brand text-background"
+                      : "border border-border text-muted-foreground hover:bg-brand-tint"
+                  }`}
+                >
+                  {f === "all" ? "All" : LEAD_STATUS_LABEL[f]}
+                </button>
+              ))}
+            </div>
+          ) : null}
           {visible.length === 0 ? (
             <p className="py-8 text-center text-sm text-muted-foreground">
               No applications in this view yet.
@@ -525,7 +586,17 @@ function RequestsInbox({ canDecide }: { canDecide: boolean }) {
                     <div className="text-xs text-muted-foreground">
                       {l.propertyLabel} · {money(l.propertyPrice)}
                     </div>
-                    <div className="text-[11px] text-muted-foreground">{date(l.submittedAt)}</div>
+                    <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                      <span className="rounded bg-brand-tint px-1.5 py-0.5 font-semibold text-brand">
+                        {leadState(l)}
+                      </span>
+                      {date(l.submittedAt)}
+                    </div>
+                    {l.status === "qualified" ? (
+                      <div className="mt-1 text-[11px] font-semibold text-muted-foreground">
+                        {MORTGAGE_STAGE_LABEL[mortgageStage(l)]}
+                      </div>
+                    ) : null}
                   </button>
                 </li>
               ))}
@@ -563,6 +634,19 @@ function RequestsInbox({ canDecide }: { canDecide: boolean }) {
                   Marked not qualified{selected.creditScore ? ` (score ${selected.creditScore})` : ""}.
                   This decision is final for this application.
                 </div>
+              ) : selected.status === "qualified" ? (
+                <div className="rounded-lg border border-success/30 bg-success/10 p-4 text-sm">
+                  <div className="font-semibold text-success">
+                    Qualified with priced terms{selected.terms
+                      ? ` — ${selected.terms.ratePct}% · ${selected.terms.termYears}y · ${selected.terms.downPaymentPct}% down`
+                      : ""}
+                    .
+                  </div>
+                  <p className="mt-1 text-muted-foreground">
+                    {MORTGAGE_STAGE_LABEL[mortgageStage(selected)]} — this file is tracked under
+                    Mortgages.
+                  </p>
+                </div>
               ) : canDecide ? (
                 <DecisionPanel key={selected.id} lead={selected} />
               ) : (
@@ -578,6 +662,7 @@ function RequestsInbox({ canDecide }: { canDecide: boolean }) {
     </>
   );
 }
+
 
 export const TABS = [
   { id: "home", label: "Home", icon: "🏠" },
