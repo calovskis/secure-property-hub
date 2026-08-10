@@ -253,6 +253,13 @@ export function LeadsProvider({ children }: { children: ReactNode }) {
           ),
         })),
       saveDebts: (leadId, debts) => patchLead(leadId, (l) => ({ ...l, debts })),
+      setClientDecision: (leadId, decision) =>
+        patchLead(leadId, (l) => ({
+          ...l,
+          clientDecision: decision,
+          clientDecisionAt: new Date().toISOString(),
+        })),
+
       leadsForClient: (email) => leads.filter((l) => l.clientEmail === email),
       leadForProperty: (email, propertyId) =>
         leads.find((l) => l.clientEmail === email && l.propertyId === propertyId),
