@@ -216,6 +216,73 @@ export function MortgageQuestionnaire({
               </label>
             ) : null}
 
+            {!showSsn ? (
+              <section className="space-y-4 rounded-lg border border-border bg-brand-tint/30 p-4">
+                <h3 className="text-sm font-semibold text-foreground">
+                  Non-US resident details <span className="text-destructive">*</span>
+                </h3>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <Field label="Do you have an ITIN?" required>
+                    <div className="flex gap-4 pt-1 text-sm text-foreground">
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="hasItin"
+                          checked={hasItin}
+                          onChange={() => setHasItin(true)}
+                        />
+                        Yes
+                      </label>
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="hasItin"
+                          checked={!hasItin}
+                          onChange={() => {
+                            setHasItin(false);
+                            setItin("");
+                          }}
+                        />
+                        No
+                      </label>
+                    </div>
+                  </Field>
+
+                  {hasItin ? (
+                    <Field label="ITIN number" required>
+                      <input
+                        inputMode="numeric"
+                        placeholder="9XX-XX-XXXX"
+                        value={itin}
+                        onChange={(e) => setItin(e.target.value)}
+                        className={inputClass}
+                      />
+                    </Field>
+                  ) : null}
+
+                  <Field label="Country of residence" required>
+                    <input
+                      placeholder="e.g. Latvia"
+                      value={countryOfResidence}
+                      onChange={(e) => setCountryOfResidence(e.target.value)}
+                      className={inputClass}
+                    />
+                  </Field>
+
+                  <Field label="Citizenship" required>
+                    <input
+                      placeholder="e.g. Latvian"
+                      value={citizenship}
+                      onChange={(e) => setCitizenship(e.target.value)}
+                      className={inputClass}
+                    />
+                  </Field>
+                </div>
+              </section>
+            ) : null}
+
+
+
             {/* ADDRESS HISTORY */}
             <section>
               <div className="mb-3 flex items-center justify-between">
