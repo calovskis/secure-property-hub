@@ -85,39 +85,55 @@ export function memberCoversState(member: LenderMember | null, code: string) {
 
 type TeamState = { members: LenderMember[]; activeId: string };
 
-const STORAGE_KEY = "loqal.lender.team.v1";
+const STORAGE_KEY = "loqal.lender.team.v2";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
 const DEFAULT_STATE = (): TeamState => {
+  const now = new Date().toISOString();
   const members: LenderMember[] = [
     {
       id: "seed-admin",
       name: "You (signed-in seat)",
       email: "admin@lender.example",
       role: "admin",
-      addedAt: new Date().toISOString(),
+      addedAt: now,
+      allStates: true,
+      states: [],
+      licenses: [{ state: "NY", number: "NMLS-1180422" }],
     },
     {
       id: uid(),
       name: "Dana Whitfield",
       email: "dana@lender.example",
       role: "underwriter",
-      addedAt: new Date().toISOString(),
+      addedAt: now,
+      allStates: false,
+      states: ["NY", "NJ"],
+      licenses: [
+        { state: "NY", number: "NMLS-2044118" },
+        { state: "NJ", number: "NMLS-2044118-NJ" },
+      ],
     },
     {
       id: uid(),
       name: "Marcus Reyes",
       email: "marcus@lender.example",
       role: "loan_officer",
-      addedAt: new Date().toISOString(),
+      addedAt: now,
+      allStates: false,
+      states: ["FL"],
+      licenses: [{ state: "FL", number: "NMLS-1877301" }],
     },
     {
       id: uid(),
       name: "Priya Anand",
       email: "priya@lender.example",
       role: "processor",
-      addedAt: new Date().toISOString(),
+      addedAt: now,
+      allStates: true,
+      states: [],
+      licenses: [],
     },
   ];
   return { members, activeId: "seed-admin" };
@@ -126,12 +142,25 @@ const DEFAULT_STATE = (): TeamState => {
 let state: TeamState | null = null;
 const listeners = new Set<() => void>();
 
+/** Older stored members may predate state scoping / licences. */
+function normalise(next: TeamState): TeamState {
+  return {
+    ...next,
+    members: (next.members ?? []).map((m) => ({
+      ...m,
+      allStates: m.allStates ?? true,
+      states: m.states ?? [],
+      licenses: m.licenses ?? [],
+    })),
+  };
+}
+
 function load(): TeamState {
   if (state) return state;
   let next = DEFAULT_STATE();
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (raw) next = JSON.parse(raw) as TeamState;
+    if (raw) next = normalise(JSON.parse(raw) as TeamState);
   } catch {
     /* ignore */
   }
@@ -161,22 +190,86 @@ export function useLenderTeam() {
     () => SERVER_SNAPSHOT,
   );
 
-  const addMember = useCallback((name: string, email: string, role: LenderRole) => {
+  const addMember = useCallback(
+    (
+      name: string,
+      email: string,
+      role: LenderRole,
+      scope?: { allStates?: boolean; states?: string[]; licenses?: LenderLicense[] },
+    ) => {
+      const cur = load();
+      commit({
+        ...cur,
+        members: [
+          ...cur.members,
+          {
+            id: uid(),
+            name,
+            email,
+            role,
+            addedAt: new Date().toISOString(),
+            allStates: scope?.allStates ?? true,
+            states: scope?.states ?? [],
+            licenses: scope?.licenses ?? [],
+          },
+        ],
+      });
+    },
+    [],
+  );
+
+  const update = useCallback((id: string, patch: Partial<LenderMember>) => {
     const cur = load();
     commit({
       ...cur,
-      members: [
-        ...cur.members,
-        { id: uid(), name, email, role, addedAt: new Date().toISOString() },
-      ],
+      members: cur.members.map((m) => (m.id === id ? { ...m, ...patch } : m)),
     });
   }, []);
 
-  const setRole = useCallback((id: string, role: LenderRole) => {
+  const setRole = useCallback(
+    (id: string, role: LenderRole) => update(id, { role }),
+    [update],
+  );
+
+  const setAllStates = useCallback(
+    (id: string, allStates: boolean) => update(id, { allStates }),
+    [update],
+  );
+
+  const toggleState = useCallback((id: string, code: string) => {
     const cur = load();
     commit({
       ...cur,
-      members: cur.members.map((m) => (m.id === id ? { ...m, role } : m)),
+      members: cur.members.map((m) =>
+        m.id === id
+          ? {
+              ...m,
+              states: m.states.includes(code)
+                ? m.states.filter((s) => s !== code)
+                : [...m.states, code].sort(),
+            }
+          : m,
+      ),
+    });
+  }, []);
+
+  const addLicense = useCallback((id: string, license: LenderLicense) => {
+    const cur = load();
+    commit({
+      ...cur,
+      members: cur.members.map((m) =>
+        m.id === id ? { ...m, licenses: [...m.licenses, license] } : m,
+      ),
+    });
+  }, []);
+
+  const removeLicense = useCallback((id: string, index: number) => {
+    const cur = load();
+    commit({
+      ...cur,
+      members: cur.members.map((m) =>
+        m.id === id ? { ...m, licenses: m.licenses.filter((_, i) => i !== index) } : m,
+      ),
     });
   }, []);
 
@@ -202,8 +295,15 @@ export function useLenderTeam() {
     active,
     adminCount: snapshot.members.filter((m) => m.role === "admin").length,
     can: (p: LenderPermission) => perms.includes(p),
+    /** null → every state; otherwise the codes the signed-in seat may see. */
+    scopedStates: active && !active.allStates ? active.states : null,
+    coversState: (code: string) => memberCoversState(active, code),
     addMember,
     setRole,
+    setAllStates,
+    toggleState,
+    addLicense,
+    removeLicense,
     removeMember,
     setActive,
   };
