@@ -300,6 +300,7 @@ export function useLenderTeam() {
     coversState: (code: string) => memberCoversState(active, code),
     addMember,
     setRole,
+    updateMember: update,
     setAllStates,
     toggleState,
     addLicense,
