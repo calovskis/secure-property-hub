@@ -57,13 +57,31 @@ export function permissionsFor(role: LenderRole): LenderPermission[] {
   return ROLE_PERMISSIONS[role];
 }
 
+/** An individual licence held by a team member in one state. */
+export type LenderLicense = {
+  state: string;
+  number: string;
+};
+
 export type LenderMember = {
   id: string;
   name: string;
   email: string;
   role: LenderRole;
   addedAt: string;
+  /** true → oversees every state; false → limited to `states`. */
+  allStates: boolean;
+  /** Two-letter state codes this member can see when `allStates` is false. */
+  states: string[];
+  licenses: LenderLicense[];
 };
+
+/** Can this member see work located in `code` (a two-letter state)? */
+export function memberCoversState(member: LenderMember | null, code: string) {
+  if (!member) return false;
+  if (member.allStates) return true;
+  return member.states.includes(code);
+}
 
 type TeamState = { members: LenderMember[]; activeId: string };
 
