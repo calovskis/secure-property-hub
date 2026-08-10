@@ -101,7 +101,7 @@ function Gated({
       </div>
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-lg bg-background/55 p-6 text-center">
         <p className="max-w-xs text-xs font-medium text-muted-foreground">
-          To view — to get access to information we need additional information from you.
+          To ensure the accuracy of the information provided, additional details are required before estimates can be calculated.
         </p>
         <button
           type="button"
