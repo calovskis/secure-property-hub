@@ -322,11 +322,18 @@ function Thread({ lead }: { lead: MortgageLead }) {
 }
 
 function RequestsInbox({ canDecide }: { canDecide: boolean }) {
-  const { leads } = useLeads();
+  const { leads: allLeads } = useLeads();
+  const { scopedStates } = useLenderTeam();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [view, setView] = useState<"open" | "past">("open");
   const [filter, setFilter] = useState<LeadStatus | "all">("all");
   const [state, setState] = useState<string>("all");
+
+  // Seats limited to specific states only ever see work located there.
+  const leads = useMemo(
+    () => (scopedStates ? allLeads.filter((l) => scopedStates.includes(leadState(l))) : allLeads),
+    [allLeads, scopedStates],
+  );
 
   const states = useMemo(() => Array.from(new Set(leads.map(leadState))).sort(), [leads]);
 
