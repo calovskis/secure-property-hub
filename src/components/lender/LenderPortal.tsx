@@ -237,17 +237,19 @@ function DecisionPanel({ lead }: { lead: MortgageLead }) {
       lenderNote: note.trim(),
       dtiLimit: limit,
       decidedAt: new Date().toISOString(),
-      terms:
-        status === "qualified"
-          ? {
+      ...(status === "qualified"
+        ? {
+            terms: {
               ratePct: rate,
               termYears: years,
               downPaymentPct: down,
               closingCostPct: closing,
               taxInsurancePct: taxIns,
               issuedAt: new Date().toISOString(),
-            }
-          : undefined,
+            },
+          }
+        : {}),
+
     });
     if (status === "info_required") {
       addInfoRequest(lead.id, question.trim(), needsDoc);
