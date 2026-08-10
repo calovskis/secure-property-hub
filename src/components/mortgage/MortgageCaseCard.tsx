@@ -160,19 +160,14 @@ function Step2Form({ lead }: { lead: MortgageLead }) {
           Step 2 — maximum purchase price estimate
         </h4>
         <p className="mt-1 text-xs text-muted-foreground">
-          Tell us your current monthly obligations. We apply a{" "}
-          {Math.round(lead.dtiLimit * 100)}% debt-to-income ceiling set by your lender: the new
-          mortgage payment, interest, taxes and insurance plus your existing obligations must stay
-          within that share of your gross income.
+          Tell us your current monthly obligations. We apply a {Math.round(lead.dtiLimit * 100)}%
+          debt-to-income ceiling set by your lender: the new mortgage payment, interest, taxes and
+          insurance plus your existing obligations must stay within that share of your gross income.
         </p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <Amount
-          label="Property loan payments"
-          value={propertyLoans}
-          onChange={setPropertyLoans}
-        />
+        <Amount label="Property loan payments" value={propertyLoans} onChange={setPropertyLoans} />
         <Amount label="Vehicle / car loans" value={vehicleLoans} onChange={setVehicleLoans} />
         <Amount label="Total insurance costs" value={insurance} onChange={setInsurance} />
       </div>
@@ -271,9 +266,7 @@ function Step2Form({ lead }: { lead: MortgageLead }) {
       >
         {lead.debts ? "Update and resend to lender" : "Send to lender"}
       </button>
-      {lead.debts ? (
-        <p className="text-xs text-success">Shared with your lender.</p>
-      ) : null}
+      {lead.debts ? <p className="text-xs text-success">Shared with your lender.</p> : null}
     </div>
   );
 }
@@ -358,7 +351,6 @@ function ProceedPanel({ lead }: { lead: MortgageLead }) {
 }
 
 export function MortgageCaseCard({ lead }: { lead: MortgageLead }) {
-
   const openRequests = lead.infoRequests.filter((r) => !r.answeredAt).length;
 
   return (
@@ -426,7 +418,6 @@ export function MortgageCaseCard({ lead }: { lead: MortgageLead }) {
             <Step2Form lead={lead} />
           </>
         ) : null}
-
       </div>
     </section>
   );

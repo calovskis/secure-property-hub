@@ -22,9 +22,7 @@ export function useLenderStats() {
     const now = new Date();
     const weekEnd = new Date(now.getTime() + 7 * DAY);
     const open = leads.filter((l) => l.status === "new" || l.status === "info_required");
-    const closedToday = leads.filter(
-      (l) => l.decidedAt && isSameDay(new Date(l.decidedAt), now),
-    );
+    const closedToday = leads.filter((l) => l.decidedAt && isSameDay(new Date(l.decidedAt), now));
     const requestedToday = leads.filter((l) => isSameDay(new Date(l.submittedAt), now));
     const dueThisWeek = open
       .map((l) => ({ lead: l, due: slaDueDate(l) }))
@@ -58,8 +56,7 @@ export function useLenderStats() {
       dueThisWeek,
       overdue: open.filter((l) => slaDueDate(l) < now),
       avgHours,
-      approvalRate:
-        decided.length === 0 ? 0 : (qualified.length / decided.length) * 100,
+      approvalRate: decided.length === 0 ? 0 : (qualified.length / decided.length) * 100,
       pipelineValue: open.reduce((s, l) => s + l.propertyPrice, 0),
       approvedVolume: priced.reduce(
         (s, l) => s + l.propertyPrice * (1 - (l.terms?.downPaymentPct ?? 20) / 100),
@@ -212,9 +209,7 @@ export function LenderHome({
                     </div>
                     <span
                       className={`shrink-0 rounded-full px-3 py-1 text-[11px] font-semibold ${
-                        late
-                          ? "bg-destructive/10 text-destructive"
-                          : "bg-brand-tint text-brand"
+                        late ? "bg-destructive/10 text-destructive" : "bg-brand-tint text-brand"
                       }`}
                     >
                       {late ? "Overdue" : "Due"} {formatDate(due)}

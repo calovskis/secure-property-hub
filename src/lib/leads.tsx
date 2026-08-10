@@ -103,10 +103,7 @@ export function isQualifiedNotApproved(lead: MortgageLead) {
   return lead.status === "qualified" && lead.clientDecision !== "accepted";
 }
 
-export type MortgageFileStage =
-  | "awaiting_client"
-  | "client_declined"
-  | "in_underwriting";
+export type MortgageFileStage = "awaiting_client" | "client_declined" | "in_underwriting";
 
 export function mortgageStage(lead: MortgageLead): MortgageFileStage {
   if (lead.clientDecision === "accepted") return "in_underwriting";
@@ -137,8 +134,6 @@ export function toLoanTerms(terms: LenderTerms) {
   };
 }
 
-
-
 const STORAGE_KEY = "loqal.leads.v1";
 export const DEFAULT_DTI_LIMIT = 0.5;
 
@@ -148,10 +143,7 @@ type LeadsContextValue = {
   leads: MortgageLead[];
   ready: boolean;
   createLead: (
-    input: Omit<
-      MortgageLead,
-      "id" | "status" | "infoRequests" | "submittedAt" | "dtiLimit"
-    >,
+    input: Omit<MortgageLead, "id" | "status" | "infoRequests" | "submittedAt" | "dtiLimit">,
   ) => MortgageLead;
   updateLead: (id: string, patch: Partial<MortgageLead>) => void;
   addInfoRequest: (id: string, question: string, needsDocument: boolean) => void;

@@ -44,9 +44,6 @@ function StatusPill({ status }: { status: LeadStatus }) {
   );
 }
 
-
-
-
 function Step2Summary({ lead }: { lead: MortgageLead }) {
   if (!lead.debts) return null;
   const obligations = totalMonthlyObligations(lead.debts);
@@ -154,7 +151,6 @@ function DecisionPanel({ lead }: { lead: MortgageLead }) {
             },
           }
         : {}),
-
     });
     if (status === "info_required") {
       addInfoRequest(lead.id, question.trim(), needsDoc);
@@ -224,7 +220,6 @@ function DecisionPanel({ lead }: { lead: MortgageLead }) {
           ))}
         </div>
       </div>
-
 
       <label className="block">
         <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -333,10 +328,7 @@ function RequestsInbox({ canDecide }: { canDecide: boolean }) {
   const [filter, setFilter] = useState<LeadStatus | "all">("all");
   const [state, setState] = useState<string>("all");
 
-  const states = useMemo(
-    () => Array.from(new Set(leads.map(leadState))).sort(),
-    [leads],
-  );
+  const states = useMemo(() => Array.from(new Set(leads.map(leadState))).sort(), [leads]);
 
   const pool = useMemo(
     () => leads.filter((l) => (view === "open" ? isOpenRequest(l) : !isOpenRequest(l))),
@@ -365,9 +357,7 @@ function RequestsInbox({ canDecide }: { canDecide: boolean }) {
   return (
     <>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground md:text-[30px]">
-          Pre-approval requests
-        </h1>
+        <h1 className="text-2xl font-bold text-foreground md:text-[30px]">Pre-approval requests</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Review the client file, run your own underwriting, then return a decision with the soft
           credit score. Decided files move to past pre-approval requests.
@@ -531,13 +521,15 @@ function RequestsInbox({ canDecide }: { canDecide: boolean }) {
               <Thread lead={selected} />
               {selected.status === "not_qualified" ? (
                 <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
-                  Marked not qualified{selected.creditScore ? ` (score ${selected.creditScore})` : ""}.
-                  This decision is final for this application.
+                  Marked not qualified
+                  {selected.creditScore ? ` (score ${selected.creditScore})` : ""}. This decision is
+                  final for this application.
                 </div>
               ) : selected.status === "qualified" ? (
                 <div className="rounded-lg border border-success/30 bg-success/10 p-4 text-sm">
                   <div className="font-semibold text-success">
-                    Qualified with priced terms{selected.terms
+                    Qualified with priced terms
+                    {selected.terms
                       ? ` — ${selected.terms.ratePct}% · ${selected.terms.termYears}y · ${selected.terms.downPaymentPct}% down`
                       : ""}
                     .
@@ -562,7 +554,6 @@ function RequestsInbox({ canDecide }: { canDecide: boolean }) {
     </>
   );
 }
-
 
 export const TABS = [
   { id: "home", label: "Home", icon: "🏠" },
@@ -623,8 +614,6 @@ export function LenderPortal({
         ) : null}
       </div>
 
-
-
       {current === "home" ? (
         <LenderHome lenderName={lenderName} onOpenRequests={() => setTab("requests")} />
       ) : null}
@@ -635,4 +624,3 @@ export function LenderPortal({
     </main>
   );
 }
-

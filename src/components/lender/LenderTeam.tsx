@@ -155,9 +155,7 @@ export function LenderTeam() {
               Invite
             </button>
           </div>
-          <p className="mt-3 text-xs text-muted-foreground">
-            {LENDER_ROLE_DESCRIPTION[role]}
-          </p>
+          <p className="mt-3 text-xs text-muted-foreground">{LENDER_ROLE_DESCRIPTION[role]}</p>
         </form>
       ) : (
         <p className="text-xs text-muted-foreground">

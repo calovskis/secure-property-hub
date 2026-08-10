@@ -95,7 +95,8 @@ export function ApplicantFile({ lead }: { lead: MortgageLead }) {
                   {e.title} — {e.employer}
                 </div>
                 <div className="text-xs">
-                  {isoToUsMonth(e.from) || "—"} → {e.current ? "Present" : isoToUsMonth(e.to) || "—"}
+                  {isoToUsMonth(e.from) || "—"} →{" "}
+                  {e.current ? "Present" : isoToUsMonth(e.to) || "—"}
                 </div>
               </li>
             ))}
@@ -106,7 +107,10 @@ export function ApplicantFile({ lead }: { lead: MortgageLead }) {
       <section>
         <h3 className="text-sm font-semibold text-foreground">Income</h3>
         <div className="mt-2 divide-y divide-border">
-          <Row label="Monthly gross" value={p.monthlyGross ? money(p.monthlyGross) : "Not provided"} />
+          <Row
+            label="Monthly gross"
+            value={p.monthlyGross ? money(p.monthlyGross) : "Not provided"}
+          />
           <Row label="Annual gross" value={annual ? money(annual) : "Not provided"} />
         </div>
       </section>

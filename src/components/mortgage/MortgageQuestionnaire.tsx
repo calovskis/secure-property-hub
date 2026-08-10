@@ -7,12 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  useAuth,
-  type AddressEntry,
-  type EmploymentEntry,
-  type MortgageProfile,
-} from "@/lib/auth";
+import { useAuth, type AddressEntry, type EmploymentEntry, type MortgageProfile } from "@/lib/auth";
 import { useLeads } from "@/lib/leads";
 import { fullName } from "@/lib/auth";
 import { CountryCombobox } from "@/components/form/CountryCombobox";
@@ -181,7 +176,6 @@ export function MortgageQuestionnaire({
     setDone(true);
   }
 
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
@@ -197,9 +191,7 @@ export function MortgageQuestionnaire({
         {done ? (
           <div className="rounded-lg border border-success/30 bg-success/10 p-6 text-center">
             <div className="text-3xl">✅</div>
-            <div className="mt-2 text-base font-semibold text-foreground">
-              Information received
-            </div>
+            <div className="mt-2 text-base font-semibold text-foreground">Information received</div>
             <p className="mt-1 text-sm text-muted-foreground">
               Your financial insights are now unlocked and your pre-approval application has been
               sent to a Loqal mortgage lending partner. You will be notified here as soon as they
@@ -217,11 +209,7 @@ export function MortgageQuestionnaire({
           <form onSubmit={submit} className="space-y-6">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Field label="Date of birth" required hint="mm/dd/yyyy">
-                <DateInput
-                  value={dob}
-                  onChange={(v) => setDob(v)}
-                  className={inputClass}
-                />
+                <DateInput value={dob} onChange={(v) => setDob(v)} className={inputClass} />
               </Field>
 
               {showSsn ? (
@@ -407,184 +395,183 @@ export function MortgageQuestionnaire({
                     </div>
                   </Field>
                 </div>
-
               </section>
             ) : null}
 
-
-
             {showHistory ? (
-            <>
-            {/* ADDRESS HISTORY */}
-            <section>
-              <div className="mb-3 flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-foreground">
-                  2 years of address history <span className="text-destructive">*</span>
-                </h3>
-                <button
-                  type="button"
-                  onClick={() => setAddresses((p) => [...p, emptyAddress()])}
-                  className="rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-brand hover:bg-brand-tint"
-                >
-                  + Add address
-                </button>
-              </div>
-              <div className="space-y-4">
-                {addresses.map((a, i) => (
-                  <div key={a.id} className="rounded-lg border border-border p-4">
-                    <div className="mb-3 flex items-center justify-between text-xs font-semibold text-muted-foreground">
-                      <span>{i === 0 ? "Current address" : `Previous address ${i}`}</span>
-                      {addresses.length > 1 ? (
-                        <button
-                          type="button"
-                          onClick={() => setAddresses((p) => p.filter((x) => x.id !== a.id))}
-                          className="text-destructive hover:underline"
-                        >
-                          Remove
-                        </button>
-                      ) : null}
-                    </div>
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                      <input
-                        placeholder="Street address"
-                        value={a.street}
-                        onChange={(e) => patchAddress(a.id, { street: e.target.value })}
-                        className={`${inputClass} sm:col-span-2`}
-                      />
-                      <input
-                        placeholder="City"
-                        value={a.city}
-                        onChange={(e) => patchAddress(a.id, { city: e.target.value })}
-                        className={inputClass}
-                      />
-                      <div className="grid grid-cols-2 gap-3">
-                        <input
-                          placeholder="State"
-                          value={a.state}
-                          onChange={(e) => patchAddress(a.id, { state: e.target.value })}
-                          className={inputClass}
-                        />
-                        <input
-                          placeholder="ZIP"
-                          value={a.zip}
-                          onChange={(e) => patchAddress(a.id, { zip: e.target.value })}
-                          className={inputClass}
-                        />
+              <>
+                {/* ADDRESS HISTORY */}
+                <section>
+                  <div className="mb-3 flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-foreground">
+                      2 years of address history <span className="text-destructive">*</span>
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => setAddresses((p) => [...p, emptyAddress()])}
+                      className="rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-brand hover:bg-brand-tint"
+                    >
+                      + Add address
+                    </button>
+                  </div>
+                  <div className="space-y-4">
+                    {addresses.map((a, i) => (
+                      <div key={a.id} className="rounded-lg border border-border p-4">
+                        <div className="mb-3 flex items-center justify-between text-xs font-semibold text-muted-foreground">
+                          <span>{i === 0 ? "Current address" : `Previous address ${i}`}</span>
+                          {addresses.length > 1 ? (
+                            <button
+                              type="button"
+                              onClick={() => setAddresses((p) => p.filter((x) => x.id !== a.id))}
+                              className="text-destructive hover:underline"
+                            >
+                              Remove
+                            </button>
+                          ) : null}
+                        </div>
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                          <input
+                            placeholder="Street address"
+                            value={a.street}
+                            onChange={(e) => patchAddress(a.id, { street: e.target.value })}
+                            className={`${inputClass} sm:col-span-2`}
+                          />
+                          <input
+                            placeholder="City"
+                            value={a.city}
+                            onChange={(e) => patchAddress(a.id, { city: e.target.value })}
+                            className={inputClass}
+                          />
+                          <div className="grid grid-cols-2 gap-3">
+                            <input
+                              placeholder="State"
+                              value={a.state}
+                              onChange={(e) => patchAddress(a.id, { state: e.target.value })}
+                              className={inputClass}
+                            />
+                            <input
+                              placeholder="ZIP"
+                              value={a.zip}
+                              onChange={(e) => patchAddress(a.id, { zip: e.target.value })}
+                              className={inputClass}
+                            />
+                          </div>
+                          <label className="text-[11px] text-muted-foreground">
+                            From
+                            <MonthInput
+                              value={a.from}
+                              onChange={(v) => patchAddress(a.id, { from: v })}
+                              className={inputClass}
+                            />
+                          </label>
+                          <label className="text-[11px] text-muted-foreground">
+                            To
+                            <MonthInput
+                              value={a.to}
+                              onChange={(v) => patchAddress(a.id, { to: v })}
+                              className={inputClass}
+                            />
+                          </label>
+                        </div>
                       </div>
-                      <label className="text-[11px] text-muted-foreground">
-                        From
-                        <MonthInput
-                          value={a.from}
-                          onChange={(v) => patchAddress(a.id, { from: v })}
-                          className={inputClass}
-                        />
-                      </label>
-                      <label className="text-[11px] text-muted-foreground">
-                        To
-                        <MonthInput
-                          value={a.to}
-                          onChange={(v) => patchAddress(a.id, { to: v })}
-                          className={inputClass}
-                        />
-                      </label>
-                    </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </section>
+                </section>
 
-            {/* EMPLOYMENT HISTORY */}
-            <section>
-              <div className="mb-3 flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-foreground">
-                  2 years of employment history <span className="text-destructive">*</span>
-                </h3>
-                <button
-                  type="button"
-                  onClick={() => setEmployment((p) => [...p, emptyEmployment()])}
-                  className="rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-brand hover:bg-brand-tint"
-                >
-                  + Add employer
-                </button>
-              </div>
-              <div className="space-y-4">
-                {employment.map((emp, i) => (
-                  <div key={emp.id} className="rounded-lg border border-border p-4">
-                    <div className="mb-3 flex items-center justify-between text-xs font-semibold text-muted-foreground">
-                      <span>{i === 0 ? "Current employer" : `Previous employer ${i}`}</span>
-                      {employment.length > 1 ? (
-                        <button
-                          type="button"
-                          onClick={() => setEmployment((p) => p.filter((x) => x.id !== emp.id))}
-                          className="text-destructive hover:underline"
-                        >
-                          Remove
-                        </button>
-                      ) : null}
-                    </div>
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                      <input
-                        placeholder="Employer name"
-                        value={emp.employer}
-                        onChange={(e) => patchEmployment(emp.id, { employer: e.target.value })}
-                        className={inputClass}
-                      />
-                      <input
-                        placeholder="Job title"
-                        value={emp.title}
-                        onChange={(e) => patchEmployment(emp.id, { title: e.target.value })}
-                        className={inputClass}
-                      />
-                      <label className="text-[11px] text-muted-foreground">
-                        From
-                        <MonthInput
-                          value={emp.from}
-                          onChange={(v) => patchEmployment(emp.id, { from: v })}
-                          className={inputClass}
-                        />
-                      </label>
-                      <label className="text-[11px] text-muted-foreground">
-                        To
-                        <MonthInput
-                          value={emp.to}
-                          disabled={emp.current}
-                          onChange={(v) => patchEmployment(emp.id, { to: v })}
-                          className={`${inputClass} disabled:opacity-50`}
-                        />
-                      </label>
-                      <label className="flex items-center gap-2 text-xs text-muted-foreground sm:col-span-2">
-                        <input
-                          type="checkbox"
-                          checked={emp.current}
-                          onChange={(e) => patchEmployment(emp.id, { current: e.target.checked })}
-                        />
-                        I currently work here
-                      </label>
-                    </div>
+                {/* EMPLOYMENT HISTORY */}
+                <section>
+                  <div className="mb-3 flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-foreground">
+                      2 years of employment history <span className="text-destructive">*</span>
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => setEmployment((p) => [...p, emptyEmployment()])}
+                      className="rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-brand hover:bg-brand-tint"
+                    >
+                      + Add employer
+                    </button>
                   </div>
-                ))}
-              </div>
-            </section>
+                  <div className="space-y-4">
+                    {employment.map((emp, i) => (
+                      <div key={emp.id} className="rounded-lg border border-border p-4">
+                        <div className="mb-3 flex items-center justify-between text-xs font-semibold text-muted-foreground">
+                          <span>{i === 0 ? "Current employer" : `Previous employer ${i}`}</span>
+                          {employment.length > 1 ? (
+                            <button
+                              type="button"
+                              onClick={() => setEmployment((p) => p.filter((x) => x.id !== emp.id))}
+                              className="text-destructive hover:underline"
+                            >
+                              Remove
+                            </button>
+                          ) : null}
+                        </div>
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                          <input
+                            placeholder="Employer name"
+                            value={emp.employer}
+                            onChange={(e) => patchEmployment(emp.id, { employer: e.target.value })}
+                            className={inputClass}
+                          />
+                          <input
+                            placeholder="Job title"
+                            value={emp.title}
+                            onChange={(e) => patchEmployment(emp.id, { title: e.target.value })}
+                            className={inputClass}
+                          />
+                          <label className="text-[11px] text-muted-foreground">
+                            From
+                            <MonthInput
+                              value={emp.from}
+                              onChange={(v) => patchEmployment(emp.id, { from: v })}
+                              className={inputClass}
+                            />
+                          </label>
+                          <label className="text-[11px] text-muted-foreground">
+                            To
+                            <MonthInput
+                              value={emp.to}
+                              disabled={emp.current}
+                              onChange={(v) => patchEmployment(emp.id, { to: v })}
+                              className={`${inputClass} disabled:opacity-50`}
+                            />
+                          </label>
+                          <label className="flex items-center gap-2 text-xs text-muted-foreground sm:col-span-2">
+                            <input
+                              type="checkbox"
+                              checked={emp.current}
+                              onChange={(e) =>
+                                patchEmployment(emp.id, { current: e.target.checked })
+                              }
+                            />
+                            I currently work here
+                          </label>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
 
-            {/* INCOME */}
-            <section className="rounded-lg border border-border bg-brand-tint/40 p-4">
-              <Field label="Monthly gross income — current employer" required>
-                <input
-                  inputMode="decimal"
-                  placeholder="8,500"
-                  value={monthlyGross}
-                  onChange={(e) => setMonthlyGross(e.target.value)}
-                  className={inputClass}
-                />
-              </Field>
-              <div className="mt-3 flex items-center justify-between rounded-md bg-card p-3">
-                <span className="text-xs uppercase tracking-wide text-muted-foreground">
-                  Annual gross income
-                </span>
-                <strong className="text-lg font-bold text-brand">{money(monthly * 12)}</strong>
-              </div>
-            </section>
-            </>
+                {/* INCOME */}
+                <section className="rounded-lg border border-border bg-brand-tint/40 p-4">
+                  <Field label="Monthly gross income — current employer" required>
+                    <input
+                      inputMode="decimal"
+                      placeholder="8,500"
+                      value={monthlyGross}
+                      onChange={(e) => setMonthlyGross(e.target.value)}
+                      className={inputClass}
+                    />
+                  </Field>
+                  <div className="mt-3 flex items-center justify-between rounded-md bg-card p-3">
+                    <span className="text-xs uppercase tracking-wide text-muted-foreground">
+                      Annual gross income
+                    </span>
+                    <strong className="text-lg font-bold text-brand">{money(monthly * 12)}</strong>
+                  </div>
+                </section>
+              </>
             ) : null}
 
             {error ? (
