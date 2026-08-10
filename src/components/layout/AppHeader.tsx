@@ -165,8 +165,19 @@ const NAV: NavItem[] = [
 ];
 
 
-export function AppHeader({ active = "Home" }: { active?: string }) {
+export function AppHeader({
+  active = "Home",
+  navItems,
+  navSlot,
+}: {
+  active?: string;
+  /** Replace the default client navigation (e.g. partner workspaces). */
+  navItems?: NavItem[];
+  /** Fully custom nav content rendered instead of any nav items. */
+  navSlot?: React.ReactNode;
+}) {
   const { t } = useI18n();
+  const nav = navItems ?? NAV;
   const [open, setOpen] = useState<string | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
