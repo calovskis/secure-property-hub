@@ -318,19 +318,33 @@ function PropertyDetailPage() {
 
           <Card
             title="💳 Mortgage Estimate"
-            subtitle="Based on 20% down · 6.5% rate · 30yr fixed"
+            subtitle={
+              terms && lead?.terms
+                ? `Approved terms · ${lead.terms.downPaymentPct}% down · ${lead.terms.ratePct}% rate · ${lead.terms.termYears}yr`
+                : "Unlocks with lender-approved terms (down payment, rate, term, closing costs)"
+            }
             className="ring-2 ring-brand/10"
           >
-            <Gated locked={locked} onProvide={openQuestionnaire}>
+            <Gated
+              locked={locked}
+              message={lockMessage}
+              {...(lockCta ? { cta: lockCta } : {})}
+              onProvide={openQuestionnaire}
+            >
               <div className="mb-3 text-3xl font-bold text-brand">{money(model.mortgage)}/mo</div>
               <Rows
                 rows={[
                   ["Down payment", money(model.downPayment)],
                   ["Loan amount", money(model.loanAmount)],
+                  ["Interest rate", `${lead?.terms?.ratePct ?? 6.5}%`],
+                  ["Loan term", `${lead?.terms?.termYears ?? 30} years`],
+                  ["Taxes + insurance", `${money(model.taxInsurance)}/mo`],
                   ["Estimated closing costs", money(model.closingCosts)],
+                  ["Cash needed at closing", money(model.downPayment + model.closingCosts)],
                 ]}
               />
             </Gated>
+
             <button
               type="button"
               onClick={openQuestionnaire}
