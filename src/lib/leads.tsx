@@ -123,7 +123,7 @@ export const MORTGAGE_STAGE_LABEL: Record<MortgageFileStage, string> = {
 /** Two-letter state parsed from the property label, e.g. "New York, NY". */
 export function leadState(lead: MortgageLead) {
   const m = lead.propertyLabel.match(/\b([A-Z]{2})\b\s*$/);
-  return m ? m[1] : "—";
+  return m?.[1] ?? "—";
 }
 
 /** Convert lender terms into the loan terms used by the investment model. */
