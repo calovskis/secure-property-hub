@@ -278,7 +278,87 @@ function Step2Form({ lead }: { lead: MortgageLead }) {
   );
 }
 
+function ProceedPanel({ lead }: { lead: MortgageLead }) {
+  const { setClientDecision } = useLeads();
+  const t = lead.terms;
+  if (!t) {
+    return (
+      <div className="mb-4 rounded-lg border border-border bg-background p-4 text-sm text-muted-foreground">
+        Your lender is finalising the pricing for your pre-approval. You will be asked to confirm
+        the terms as soon as they arrive.
+      </div>
+    );
+  }
+
+  const loan = lead.propertyPrice * (1 - t.downPaymentPct / 100);
+
+  return (
+    <div className="mb-6 rounded-lg border border-success/40 bg-success/5 p-4">
+      <h4 className="text-sm font-semibold text-foreground">Your pre-approval terms</h4>
+      <div className="mt-2 divide-y divide-border">
+        {[
+          ["Indicative loan amount", money(loan)],
+          ["Interest rate", `${t.ratePct}%`],
+          ["Term", `${t.termYears} years`],
+          ["Down payment", `${t.downPaymentPct}%`],
+          ["Closing costs", `${t.closingCostPct}%`],
+          ["Taxes + insurance", `${t.taxInsurancePct}% / yr`],
+        ].map(([label, value]) => (
+          <div key={label} className="flex items-center justify-between py-2 text-sm">
+            <span className="text-muted-foreground">{label}</span>
+            <strong className="font-semibold text-foreground">{value}</strong>
+          </div>
+        ))}
+      </div>
+
+      {lead.clientDecision === "accepted" ? (
+        <p className="mt-3 text-sm font-semibold text-success">
+          You confirmed these terms — your lender is now running the hard credit check and preparing
+          the mortgage proposal.
+        </p>
+      ) : lead.clientDecision === "declined" ? (
+        <div className="mt-3">
+          <p className="text-sm text-muted-foreground">
+            You declined these terms. The pre-approval stays valid — you can still proceed later.
+          </p>
+          <button
+            type="button"
+            onClick={() => setClientDecision(lead.id, "accepted")}
+            className="mt-3 rounded-md bg-success px-5 py-2.5 text-sm font-semibold text-background hover:opacity-90"
+          >
+            Proceed with the mortgage agreement
+          </button>
+        </div>
+      ) : (
+        <div className="mt-3">
+          <p className="text-sm text-muted-foreground">
+            To move forward, confirm these terms. That authorises a hard credit check and a formal
+            mortgage proposal from your lender.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setClientDecision(lead.id, "accepted")}
+              className="rounded-md bg-success px-5 py-2.5 text-sm font-semibold text-background hover:opacity-90"
+            >
+              Proceed with the mortgage agreement
+            </button>
+            <button
+              type="button"
+              onClick={() => setClientDecision(lead.id, "declined")}
+              className="rounded-md border border-border px-5 py-2.5 text-sm font-semibold text-muted-foreground hover:text-destructive"
+            >
+              Not right now
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function MortgageCaseCard({ lead }: { lead: MortgageLead }) {
+
   const openRequests = lead.infoRequests.filter((r) => !r.answeredAt).length;
 
   return (

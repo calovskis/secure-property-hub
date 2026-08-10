@@ -14,8 +14,8 @@ import {
 
 import { countryLabel } from "@/data/countries";
 import { ApplicantFile, Row } from "@/components/lender/ApplicantFile";
+import { formatDateTime } from "@/lib/dates";
 
-import { formatDate, formatDateTime, isoToUsMonth } from "@/lib/dates";
 import { LENDER_ROLE_LABEL, useLenderTeam } from "@/lib/lender-team";
 import { LenderHome } from "@/components/lender/LenderHome";
 import { LenderAnalytics } from "@/components/lender/LenderAnalytics";
