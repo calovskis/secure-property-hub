@@ -571,6 +571,8 @@ export function MortgageQuestionnaire({
                 <strong className="text-lg font-bold text-brand">{money(monthly * 12)}</strong>
               </div>
             </section>
+            </>
+            ) : null}
 
             {error ? (
               <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
