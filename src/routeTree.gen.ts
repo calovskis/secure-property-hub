@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as MyPropertiesRouteImport } from './routes/my-properties'
+import { Route as MyServicesRouteImport } from './routes/my-services'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -28,35 +29,44 @@ const MyPropertiesRoute = MyPropertiesRouteImport.update({
   path: '/my-properties',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MyServicesRoute = MyServicesRouteImport.update({
+  id: '/my-services',
+  path: '/my-services',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/marketplace': typeof MarketplaceRoute
   '/my-properties': typeof MyPropertiesRoute
+  '/my-services': typeof MyServicesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/marketplace': typeof MarketplaceRoute
   '/my-properties': typeof MyPropertiesRoute
+  '/my-services': typeof MyServicesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/marketplace': typeof MarketplaceRoute
   '/my-properties': typeof MyPropertiesRoute
+  '/my-services': typeof MyServicesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/marketplace' | '/my-properties'
+  fullPaths: '/' | '/marketplace' | '/my-properties' | '/my-services'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/marketplace' | '/my-properties'
-  id: '__root__' | '/' | '/marketplace' | '/my-properties'
+  to: '/' | '/marketplace' | '/my-properties' | '/my-services'
+  id: '__root__' | '/' | '/marketplace' | '/my-properties' | '/my-services'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   MarketplaceRoute: typeof MarketplaceRoute
   MyPropertiesRoute: typeof MyPropertiesRoute
+  MyServicesRoute: typeof MyServicesRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -82,6 +92,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MyPropertiesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/my-services': {
+      id: '/my-services'
+      path: '/my-services'
+      fullPath: '/my-services'
+      preLoaderRoute: typeof MyServicesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -89,6 +106,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   MarketplaceRoute: MarketplaceRoute,
   MyPropertiesRoute: MyPropertiesRoute,
+  MyServicesRoute: MyServicesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
