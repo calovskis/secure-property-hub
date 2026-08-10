@@ -305,7 +305,7 @@ export function LenderTeam() {
         states: draft.states,
         licenses: draft.licenses,
       });
-    } else if (editing.length === 1) {
+    } else if (editing.length === 1 && editing[0]) {
       updateMember(editing[0], {
         name: draft.name.trim(),
         email: draft.email.trim(),
