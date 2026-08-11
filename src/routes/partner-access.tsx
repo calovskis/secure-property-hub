@@ -62,9 +62,6 @@ function PartnerAccessPage() {
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
 
-  function toggleState(s: string) {
-    setStates((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]));
-  }
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
