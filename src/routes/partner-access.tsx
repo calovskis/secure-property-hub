@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { PARTNER_LABEL, type PartnerType } from "@/lib/auth";
-import { US_STATES } from "@/data/us-states";
+import { StateCombobox, StateMultiSelect } from "@/components/form/StateCombobox";
+import { CountryCombobox } from "@/components/form/CountryCombobox";
 
 export const Route = createFileRoute("/partner-access")({
   component: PartnerAccessPage,
@@ -159,14 +160,34 @@ function PartnerAccessPage() {
                   />
                 </label>
                 <label>
-                  <Label required>Address</Label>
+                  <Label required>Street address</Label>
                   <input
-                    placeholder="Street, city, state, ZIP"
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
+                    placeholder="Street and number"
+                    value={street}
+                    onChange={(e) => setStreet(e.target.value)}
                     className={inputClass}
                   />
                 </label>
+                <label>
+                  <Label required>City</Label>
+                  <input
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    className={inputClass}
+                  />
+                </label>
+                <div>
+                  <Label required>State</Label>
+                  <StateCombobox value={addressState} onChange={setAddressState} />
+                </div>
+                <label>
+                  <Label required>ZIP code</Label>
+                  <input value={zip} onChange={(e) => setZip(e.target.value)} className={inputClass} />
+                </label>
+                <div>
+                  <Label required>Country</Label>
+                  <CountryCombobox value={country} onChange={setCountry} />
+                </div>
               </div>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -276,24 +297,13 @@ function PartnerAccessPage() {
                       ) : null}
                     </div>
                     {!allStates ? (
-                      <div className="max-h-56 overflow-y-auto rounded-lg border border-border p-3">
-                        <div className="flex flex-wrap gap-2">
-                          {US_STATES.map((s) => (
-                            <button
-                              key={s}
-                              type="button"
-                              onClick={() => toggleState(s)}
-                              className={`rounded-full border px-3 py-1 text-[11px] font-semibold transition-colors ${
-                                states.includes(s)
-                                  ? "border-brand bg-brand-tint text-brand"
-                                  : "border-border text-muted-foreground hover:bg-brand-tint/50"
-                              }`}
-                            >
-                              {s}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
+                      <StateMultiSelect
+                        values={states}
+                        onAdd={(c) => setStates((prev) => [...prev, c])}
+                        onRemove={(c) => setStates((prev) => prev.filter((x) => x !== c))}
+                        placeholder="Add a state — type to search…"
+                        emptyLabel="No states selected yet."
+                      />
                     ) : null}
                   </div>
                 </>

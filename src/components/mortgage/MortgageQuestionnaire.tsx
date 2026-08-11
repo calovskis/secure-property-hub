@@ -132,8 +132,8 @@ export function MortgageQuestionnaire({
       if (!propertyUse) return setError("Please tell us how you will use the property.");
     }
     if (showHistory) {
-      if (!addresses[0]?.street || !addresses[0]?.city)
-        return setError("At least one address in your 2-year history is required.");
+      if (!addresses[0]?.street || !addresses[0]?.city || !addresses[0]?.state)
+        return setError("At least one full address (street, city, state) is required.");
       if (!employment[0]?.employer)
         return setError("At least one employer in your 2-year history is required.");
       if (!monthly) return setError("Current monthly gross income is required.");
