@@ -1,5 +1,6 @@
 import { useMemo } from "react";
-import { useLeads, hasPricedOffer, type MortgageLead } from "@/lib/leads";
+import { useLeads, hasPricedOffer, leadState, type MortgageLead } from "@/lib/leads";
+import { useLenderTeam } from "@/lib/lender-team";
 import { formatDate, formatDateTime } from "@/lib/dates";
 
 const money = (n: number) => `$${Math.round(n).toLocaleString()}`;
@@ -17,8 +18,14 @@ function isSameDay(a: Date, b: Date) {
 }
 
 export function useLenderStats() {
-  const { leads } = useLeads();
+  const { leads: allLeads } = useLeads();
+  const { scopedStates } = useLenderTeam();
   return useMemo(() => {
+    // Seats limited to specific states only ever count work located there.
+    const leads = scopedStates
+      ? allLeads.filter((l) => scopedStates.includes(leadState(l)))
+      : allLeads;
+    const hiddenByScope = allLeads.length - leads.length;
     const now = new Date();
     const weekEnd = new Date(now.getTime() + 7 * DAY);
     const open = leads.filter((l) => l.status === "new" || l.status === "info_required");
@@ -44,6 +51,7 @@ export function useLenderStats() {
 
     return {
       leads,
+      hiddenByScope,
       total: leads.length,
       open,
       inProgress: leads.filter((l) => l.status === "info_required"),
@@ -71,7 +79,7 @@ export function useLenderStats() {
         0,
       ),
     };
-  }, [leads]);
+  }, [allLeads, scopedStates]);
 }
 
 export function StatCard({
@@ -107,7 +115,7 @@ export function LenderHome({
   onOpenRequests,
 }: {
   lenderName: string;
-  onOpenRequests: () => void;
+  onOpenRequests: (leadId?: string) => void;
 }) {
   const s = useLenderStats();
 
@@ -120,6 +128,14 @@ export function LenderHome({
         </p>
       </div>
 
+      {s.hiddenByScope > 0 ? (
+        <div className="rounded-lg border border-border bg-card px-4 py-3 text-xs text-muted-foreground">
+          {s.hiddenByScope} {s.hiddenByScope === 1 ? "request is" : "requests are"} outside your
+          licensed state coverage and hidden from this seat. A portal admin can widen your state
+          scope in Other → Team.
+        </div>
+      ) : null}
+
       {s.newCount > 0 || s.overdue.length > 0 ? (
         <div className="flex flex-wrap items-center gap-3 rounded-lg border border-gold/40 bg-gold-tint px-4 py-3">
           <span className="text-lg">🔔</span>
@@ -129,7 +145,7 @@ export function LenderHome({
           </p>
           <button
             type="button"
-            onClick={onOpenRequests}
+            onClick={() => onOpenRequests()}
             className="ml-auto rounded-md bg-brand px-4 py-1.5 text-xs font-semibold text-background"
           >
             Open queue
@@ -200,7 +216,12 @@ export function LenderHome({
               {s.dueThisWeek.map(({ lead, due }) => {
                 const late = due < new Date();
                 return (
-                  <li key={lead.id} className="flex items-center justify-between gap-4 py-3">
+                  <li key={lead.id} className="py-1">
+                    <button
+                      type="button"
+                      onClick={() => onOpenRequests(lead.id)}
+                      className="flex w-full items-center justify-between gap-4 rounded-md px-2 py-2 text-left hover:bg-brand-tint/40"
+                    >
                     <div>
                       <div className="text-sm font-semibold text-foreground">{lead.clientName}</div>
                       <div className="text-xs text-muted-foreground">
@@ -214,6 +235,7 @@ export function LenderHome({
                     >
                       {late ? "Overdue" : "Due"} {formatDate(due)}
                     </span>
+                    </button>
                   </li>
                 );
               })}
@@ -231,6 +253,11 @@ export function LenderHome({
             <ul className="mt-3 space-y-3">
               {s.leads.slice(0, 6).map((l) => (
                 <li key={l.id} className="text-sm">
+                  <button
+                    type="button"
+                    onClick={() => onOpenRequests(l.id)}
+                    className="w-full rounded-md px-2 py-1.5 text-left hover:bg-brand-tint/40"
+                  >
                   <div className="font-semibold text-foreground">{l.clientName}</div>
                   <div className="text-xs text-muted-foreground">
                     {l.status === "new"
@@ -242,6 +269,7 @@ export function LenderHome({
                           : "Declined"}{" "}
                     · {formatDateTime(l.decidedAt ?? l.submittedAt)}
                   </div>
+                  </button>
                 </li>
               ))}
             </ul>
