@@ -11,6 +11,7 @@ import { useAuth, type AddressEntry, type EmploymentEntry, type MortgageProfile 
 import { useLeads } from "@/lib/leads";
 import { fullName } from "@/lib/auth";
 import { CountryCombobox } from "@/components/form/CountryCombobox";
+import { StateCombobox } from "@/components/form/StateCombobox";
 import { DateInput, MonthInput } from "@/components/form/DateInput";
 
 const uid = () => Math.random().toString(36).slice(2, 9);
@@ -443,11 +444,10 @@ export function MortgageQuestionnaire({
                             className={inputClass}
                           />
                           <div className="grid grid-cols-2 gap-3">
-                            <input
-                              placeholder="State"
+                            <StateCombobox
                               value={a.state}
-                              onChange={(e) => patchAddress(a.id, { state: e.target.value })}
-                              className={inputClass}
+                              placeholder="State"
+                              onChange={(code) => patchAddress(a.id, { state: code })}
                             />
                             <input
                               placeholder="ZIP"
