@@ -321,7 +321,13 @@ function Thread({ lead }: { lead: MortgageLead }) {
   );
 }
 
-function RequestsInbox({ canDecide }: { canDecide: boolean }) {
+function RequestsInbox({
+  canDecide,
+  focusLeadId,
+}: {
+  canDecide: boolean;
+  focusLeadId?: string | null;
+}) {
   const { leads: allLeads } = useLeads();
   const { scopedStates } = useLenderTeam();
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -334,6 +340,19 @@ function RequestsInbox({ canDecide }: { canDecide: boolean }) {
     () => (scopedStates ? allLeads.filter((l) => scopedStates.includes(leadState(l))) : allLeads),
     [allLeads, scopedStates],
   );
+
+  const hiddenByScope = allLeads.length - leads.length;
+
+  // Opening a file from the dashboard jumps straight to it, in the right list.
+  useEffect(() => {
+    if (!focusLeadId) return;
+    const lead = leads.find((l) => l.id === focusLeadId);
+    if (!lead) return;
+    setView(isOpenRequest(lead) ? "open" : "past");
+    setFilter("all");
+    setState("all");
+    setSelectedId(focusLeadId);
+  }, [focusLeadId, leads]);
 
   const states = useMemo(() => Array.from(new Set(leads.map(leadState))).sort(), [leads]);
 
@@ -370,6 +389,14 @@ function RequestsInbox({ canDecide }: { canDecide: boolean }) {
           credit score. Decided files move to past pre-approval requests.
         </p>
       </div>
+
+      {hiddenByScope > 0 ? (
+        <div className="mb-4 rounded-lg border border-border bg-card px-4 py-3 text-xs text-muted-foreground">
+          {hiddenByScope} {hiddenByScope === 1 ? "request is" : "requests are"} outside your licensed
+          state coverage and hidden from this seat. A portal admin can widen your state scope in
+          Other → Team.
+        </div>
+      ) : null}
 
       {counts.new > 0 ? (
         <div className="mb-6 flex items-center gap-3 rounded-lg border border-gold/40 bg-gold-tint px-4 py-3">
@@ -595,6 +622,7 @@ export function LenderPortal({
   onTabChange?: (tab: TabId) => void;
 }) {
   const [tabState, setTabState] = useState<TabId>("home");
+  const [focusLeadId, setFocusLeadId] = useState<string | null>(null);
   const tab = tabProp ?? tabState;
   const setTab = onTabChange ?? setTabState;
   const { active, can } = useLenderTeam();
@@ -622,9 +650,17 @@ export function LenderPortal({
       </div>
 
       {current === "home" ? (
-        <LenderHome lenderName={lenderName} onOpenRequests={() => setTab("requests")} />
+        <LenderHome
+          lenderName={lenderName}
+          onOpenRequests={(leadId) => {
+            setFocusLeadId(leadId ?? null);
+            setTab("requests");
+          }}
+        />
       ) : null}
-      {current === "requests" ? <RequestsInbox canDecide={can("requests.decide")} /> : null}
+      {current === "requests" ? (
+        <RequestsInbox canDecide={can("requests.decide")} focusLeadId={focusLeadId} />
+      ) : null}
       {current === "mortgages" ? <LenderMortgages canManage={can("mortgages.manage")} /> : null}
       {current === "analytics" ? <LenderAnalytics /> : null}
       {current === "other" ? <LenderTeam /> : null}
