@@ -71,7 +71,10 @@ function PartnerAccessPage() {
     if (!companyName.trim()) return setError("Company name is required.");
     if (!companyType.trim()) return setError("Company type is required.");
     if (!registrationNumber.trim()) return setError("Registration number is required.");
-    if (!address.trim()) return setError("Address is required.");
+    if (!street.trim() || !city.trim() || !zip.trim() || !country.trim())
+      return setError("Full address (street, city, ZIP, country) is required.");
+    if (country === "US" && !addressState.trim())
+      return setError("Please select the state of your address.");
     if (!firstName.trim() || !lastName.trim())
       return setError("Contact name and surname are required.");
     if (!position.trim()) return setError("Position is required.");
