@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { PARTNER_LABEL, type PartnerType } from "@/lib/auth";
-import { US_STATES } from "@/data/us-states";
+import { StateCombobox, StateMultiSelect } from "@/components/form/StateCombobox";
+import { CountryCombobox } from "@/components/form/CountryCombobox";
 
 export const Route = createFileRoute("/partner-access")({
   component: PartnerAccessPage,
@@ -44,7 +45,11 @@ function PartnerAccessPage() {
   const [companyName, setCompanyName] = useState("");
   const [companyType, setCompanyType] = useState("");
   const [registrationNumber, setRegistrationNumber] = useState("");
-  const [address, setAddress] = useState("");
+  const [street, setStreet] = useState("");
+  const [city, setCity] = useState("");
+  const [addressState, setAddressState] = useState("");
+  const [zip, setZip] = useState("");
+  const [country, setCountry] = useState("US");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [position, setPosition] = useState("");
@@ -57,16 +62,16 @@ function PartnerAccessPage() {
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
 
-  function toggleState(s: string) {
-    setStates((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]));
-  }
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!companyName.trim()) return setError("Company name is required.");
     if (!companyType.trim()) return setError("Company type is required.");
     if (!registrationNumber.trim()) return setError("Registration number is required.");
-    if (!address.trim()) return setError("Address is required.");
+    if (!street.trim() || !city.trim() || !zip.trim() || !country.trim())
+      return setError("Full address (street, city, ZIP, country) is required.");
+    if (country === "US" && !addressState.trim())
+      return setError("Please select the state of your address.");
     if (!firstName.trim() || !lastName.trim())
       return setError("Contact name and surname are required.");
     if (!position.trim()) return setError("Position is required.");
@@ -159,14 +164,34 @@ function PartnerAccessPage() {
                   />
                 </label>
                 <label>
-                  <Label required>Address</Label>
+                  <Label required>Street address</Label>
                   <input
-                    placeholder="Street, city, state, ZIP"
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
+                    placeholder="Street and number"
+                    value={street}
+                    onChange={(e) => setStreet(e.target.value)}
                     className={inputClass}
                   />
                 </label>
+                <label>
+                  <Label required>City</Label>
+                  <input
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    className={inputClass}
+                  />
+                </label>
+                <div>
+                  <Label required>State</Label>
+                  <StateCombobox value={addressState} onChange={setAddressState} />
+                </div>
+                <label>
+                  <Label required>ZIP code</Label>
+                  <input value={zip} onChange={(e) => setZip(e.target.value)} className={inputClass} />
+                </label>
+                <div>
+                  <Label required>Country</Label>
+                  <CountryCombobox value={country} onChange={setCountry} />
+                </div>
               </div>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -276,24 +301,13 @@ function PartnerAccessPage() {
                       ) : null}
                     </div>
                     {!allStates ? (
-                      <div className="max-h-56 overflow-y-auto rounded-lg border border-border p-3">
-                        <div className="flex flex-wrap gap-2">
-                          {US_STATES.map((s) => (
-                            <button
-                              key={s}
-                              type="button"
-                              onClick={() => toggleState(s)}
-                              className={`rounded-full border px-3 py-1 text-[11px] font-semibold transition-colors ${
-                                states.includes(s)
-                                  ? "border-brand bg-brand-tint text-brand"
-                                  : "border-border text-muted-foreground hover:bg-brand-tint/50"
-                              }`}
-                            >
-                              {s}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
+                      <StateMultiSelect
+                        values={states}
+                        onAdd={(c) => setStates((prev) => [...prev, c])}
+                        onRemove={(c) => setStates((prev) => prev.filter((x) => x !== c))}
+                        placeholder="Add a state — type to search…"
+                        emptyLabel="No states selected yet."
+                      />
                     ) : null}
                   </div>
                 </>

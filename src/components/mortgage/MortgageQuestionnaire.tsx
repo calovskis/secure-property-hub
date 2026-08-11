@@ -11,6 +11,7 @@ import { useAuth, type AddressEntry, type EmploymentEntry, type MortgageProfile 
 import { useLeads } from "@/lib/leads";
 import { fullName } from "@/lib/auth";
 import { CountryCombobox } from "@/components/form/CountryCombobox";
+import { StateCombobox } from "@/components/form/StateCombobox";
 import { DateInput, MonthInput } from "@/components/form/DateInput";
 
 const uid = () => Math.random().toString(36).slice(2, 9);
@@ -131,8 +132,8 @@ export function MortgageQuestionnaire({
       if (!propertyUse) return setError("Please tell us how you will use the property.");
     }
     if (showHistory) {
-      if (!addresses[0]?.street || !addresses[0]?.city)
-        return setError("At least one address in your 2-year history is required.");
+      if (!addresses[0]?.street || !addresses[0]?.city || !addresses[0]?.state)
+        return setError("At least one full address (street, city, state) is required.");
       if (!employment[0]?.employer)
         return setError("At least one employer in your 2-year history is required.");
       if (!monthly) return setError("Current monthly gross income is required.");
@@ -443,11 +444,10 @@ export function MortgageQuestionnaire({
                             className={inputClass}
                           />
                           <div className="grid grid-cols-2 gap-3">
-                            <input
-                              placeholder="State"
+                            <StateCombobox
                               value={a.state}
-                              onChange={(e) => patchAddress(a.id, { state: e.target.value })}
-                              className={inputClass}
+                              placeholder="State"
+                              onChange={(code) => patchAddress(a.id, { state: code })}
                             />
                             <input
                               placeholder="ZIP"
