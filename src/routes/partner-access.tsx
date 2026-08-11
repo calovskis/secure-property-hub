@@ -45,7 +45,11 @@ function PartnerAccessPage() {
   const [companyName, setCompanyName] = useState("");
   const [companyType, setCompanyType] = useState("");
   const [registrationNumber, setRegistrationNumber] = useState("");
-  const [address, setAddress] = useState("");
+  const [street, setStreet] = useState("");
+  const [city, setCity] = useState("");
+  const [addressState, setAddressState] = useState("");
+  const [zip, setZip] = useState("");
+  const [country, setCountry] = useState("US");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [position, setPosition] = useState("");
