@@ -324,7 +324,65 @@ function Thread({ lead }: { lead: MortgageLead }) {
   );
 }
 
+/** One key-fact cell in the compact request row. */
+function Cell({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div className="text-sm text-foreground">{children}</div>
+    </div>
+  );
+}
+
+/** Assign the inquiry to a licensed member of the lender company. */
+function AssignBar({ lead }: { lead: MortgageLead }) {
+  const { updateLead } = useLeads();
+  const { members, coversState } = useLenderTeam();
+  const state = leadState(lead);
+  const eligible = members.filter((m) => m.allStates || m.states.includes(state));
+
+  return (
+    <div className="flex flex-wrap items-center gap-3 rounded-md border border-border bg-brand-tint/30 px-4 py-3">
+      <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        Assigned reviewer
+      </span>
+      <select
+        value={lead.assignedToId ?? ""}
+        onChange={(e) => {
+          const member = members.find((m) => m.id === e.target.value);
+          updateLead(lead.id, {
+            assignedToId: member?.id,
+            assignedToName: member?.name,
+            assignedAt: member ? new Date().toISOString() : undefined,
+          });
+        }}
+        className="rounded-md border border-input bg-background px-3 py-2 text-xs text-foreground"
+      >
+        <option value="">Unassigned</option>
+        {eligible.map((m) => (
+          <option key={m.id} value={m.id}>
+            {m.name} · {LENDER_ROLE_LABEL[m.role]}
+          </option>
+        ))}
+      </select>
+      <span className="text-xs text-muted-foreground">
+        Process status:{" "}
+        <strong className="text-foreground">
+          {lead.status === "qualified"
+            ? MORTGAGE_STAGE_LABEL[mortgageStage(lead)]
+            : LEAD_STATUS_LABEL[lead.status]}
+        </strong>
+        {lead.assignedAt ? ` · assigned ${date(lead.assignedAt)}` : ""}
+      </span>
+      {!coversState(state) ? (
+        <span className="text-[11px] text-gold">Your seat is not licensed in {state}.</span>
+      ) : null}
+    </div>
+  );
+}
+
 function RequestsInbox({
+
   canDecide,
   focusLeadId,
 }: {
