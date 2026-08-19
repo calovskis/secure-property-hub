@@ -20,6 +20,7 @@ import { Route as MyPropertiesRouteImport } from './routes/my-properties'
 import { Route as MyServicesRouteImport } from './routes/my-services'
 import { Route as PartnerRouteImport } from './routes/partner'
 import { Route as PartnerAccessRouteImport } from './routes/partner-access'
+import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as SsnTermsRouteImport } from './routes/ssn-terms'
 import { Route as PropertyPropertyIdRouteImport } from './routes/property.$propertyId'
 
@@ -78,6 +79,11 @@ const PartnerAccessRoute = PartnerAccessRouteImport.update({
   path: '/partner-access',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SsnTermsRoute = SsnTermsRouteImport.update({
   id: '/ssn-terms',
   path: '/ssn-terms',
@@ -101,6 +107,7 @@ export interface FileRoutesByFullPath {
   '/my-services': typeof MyServicesRoute
   '/partner': typeof PartnerRoute
   '/partner-access': typeof PartnerAccessRoute
+  '/profile': typeof ProfileRoute
   '/ssn-terms': typeof SsnTermsRoute
   '/property/$propertyId': typeof PropertyPropertyIdRoute
 }
@@ -116,6 +123,7 @@ export interface FileRoutesByTo {
   '/my-services': typeof MyServicesRoute
   '/partner': typeof PartnerRoute
   '/partner-access': typeof PartnerAccessRoute
+  '/profile': typeof ProfileRoute
   '/ssn-terms': typeof SsnTermsRoute
   '/property/$propertyId': typeof PropertyPropertyIdRoute
 }
@@ -132,6 +140,7 @@ export interface FileRoutesById {
   '/my-services': typeof MyServicesRoute
   '/partner': typeof PartnerRoute
   '/partner-access': typeof PartnerAccessRoute
+  '/profile': typeof ProfileRoute
   '/ssn-terms': typeof SsnTermsRoute
   '/property/$propertyId': typeof PropertyPropertyIdRoute
 }
@@ -149,6 +158,7 @@ export interface FileRouteTypes {
     | '/my-services'
     | '/partner'
     | '/partner-access'
+    | '/profile'
     | '/ssn-terms'
     | '/property/$propertyId'
   fileRoutesByTo: FileRoutesByTo
@@ -164,6 +174,7 @@ export interface FileRouteTypes {
     | '/my-services'
     | '/partner'
     | '/partner-access'
+    | '/profile'
     | '/ssn-terms'
     | '/property/$propertyId'
   id:
@@ -179,6 +190,7 @@ export interface FileRouteTypes {
     | '/my-services'
     | '/partner'
     | '/partner-access'
+    | '/profile'
     | '/ssn-terms'
     | '/property/$propertyId'
   fileRoutesById: FileRoutesById
@@ -195,6 +207,7 @@ export interface RootRouteChildren {
   MyServicesRoute: typeof MyServicesRoute
   PartnerRoute: typeof PartnerRoute
   PartnerAccessRoute: typeof PartnerAccessRoute
+  ProfileRoute: typeof ProfileRoute
   SsnTermsRoute: typeof SsnTermsRoute
   PropertyPropertyIdRoute: typeof PropertyPropertyIdRoute
 }
@@ -278,6 +291,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PartnerAccessRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/ssn-terms': {
       id: '/ssn-terms'
       path: '/ssn-terms'
@@ -307,6 +327,7 @@ const rootRouteChildren: RootRouteChildren = {
   MyServicesRoute: MyServicesRoute,
   PartnerRoute: PartnerRoute,
   PartnerAccessRoute: PartnerAccessRoute,
+  ProfileRoute: ProfileRoute,
   SsnTermsRoute: SsnTermsRoute,
   PropertyPropertyIdRoute: PropertyPropertyIdRoute,
 }

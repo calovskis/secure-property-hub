@@ -74,6 +74,7 @@ const keyFor = (email: string, propertyId: number) => `${email.toLowerCase()}::$
 type DraftContextValue = {
   ready: boolean;
   getDraft: (email: string, propertyId: number) => MortgageDraft | undefined;
+  drafts: (email: string) => MortgageDraft[];
   saveDraft: (
     email: string,
     draft: Omit<MortgageDraft, "updatedAt" | "remindersSent" | "submitted"> &
@@ -166,6 +167,11 @@ export function MortgageDraftProvider({ children }: { children: ReactNode }) {
     () => ({
       ready,
       getDraft: (email, propertyId) => state.drafts[keyFor(email, propertyId)],
+      drafts: (email) =>
+        Object.entries(state.drafts)
+          .filter(([k]) => k.startsWith(`${email.toLowerCase()}::`))
+          .map(([, d]) => d)
+          .sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1)),
       saveDraft: (email, draft) => {
         const key = keyFor(email, draft.propertyId);
         const prev = state.drafts[key];
