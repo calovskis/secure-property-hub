@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -7,61 +6,35 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useAuth, type AddressEntry, type EmploymentEntry, type MortgageProfile } from "@/lib/auth";
+import { useAuth, fullName, type MortgageProfile } from "@/lib/auth";
 import { useLeads } from "@/lib/leads";
-import { fullName } from "@/lib/auth";
-import { CountryCombobox } from "@/components/form/CountryCombobox";
-import { StateCombobox } from "@/components/form/StateCombobox";
-import { DateInput, MonthInput } from "@/components/form/DateInput";
+import { useMortgageDrafts } from "@/lib/mortgage-draft";
+import {
+  QUESTIONNAIRE_STEPS,
+  totalMonthlyIncome,
+  type MaritalStatus,
+} from "@/lib/mortgage-form";
+import {
+  emptyQuestionnaire,
+  type QuestionnaireData,
+} from "@/components/mortgage/questionnaire-state";
+import { Step1Personal } from "@/components/mortgage/steps/Step1Personal";
+import { Step2Income } from "@/components/mortgage/steps/Step2Income";
+import { Step3Declarations } from "@/components/mortgage/steps/Step3Declarations";
+import { Step4Demographics } from "@/components/mortgage/steps/Step4Demographics";
 
-const uid = () => Math.random().toString(36).slice(2, 9);
-
-const emptyAddress = (): AddressEntry => ({
-  id: uid(),
-  street: "",
-  city: "",
-  state: "",
-  zip: "",
-  from: "",
-  to: "",
-});
-
-const emptyEmployment = (): EmploymentEntry => ({
-  id: uid(),
-  employer: "",
-  title: "",
-  from: "",
-  to: "",
-  current: false,
-});
-
-const inputClass =
-  "w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-brand";
-
-function Field({
-  label,
-  hint,
-  required,
-  children,
-}: {
-  label: string;
-  hint?: string;
-  required?: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <label className="block">
-      <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        {label} {required ? <span className="text-destructive">*</span> : "(optional)"}
-      </span>
-      {children}
-      {hint ? <span className="mt-1 block text-[11px] text-muted-foreground">{hint}</span> : null}
-    </label>
-  );
-}
-
-function money(n: number) {
-  return `$${Math.round(n).toLocaleString()}`;
+/** Rough completion signal used for draft reminders. */
+function completionOf(data: QuestionnaireData, usPerson: boolean): number {
+  const checks = [
+    Boolean(data.dob),
+    Boolean(data.maritalStatus),
+    Boolean(data.addresses[0]?.street && data.addresses[0]?.city && data.addresses[0]?.state),
+    Boolean(data.incomes[0]?.employer),
+    totalMonthlyIncome(data.incomes) > 0,
+    usPerson ? true : Boolean(data.countryOfResidence && data.citizenship),
+    Boolean(data.demographics.sex),
+  ];
+  return Math.round((checks.filter(Boolean).length / checks.length) * 100);
 }
 
 export function MortgageQuestionnaire({
@@ -77,90 +50,145 @@ export function MortgageQuestionnaire({
 }) {
   const { user, saveMortgageProfile } = useAuth();
   const { createLead } = useLeads();
-  const existing = user?.mortgageProfile;
+  const { getDraft, saveDraft, clearDraft } = useMortgageDrafts();
 
-  const [dob, setDob] = useState(existing?.dateOfBirth ?? "");
-  const [ssn, setSsn] = useState(existing?.ssn ?? "");
-  const [ssnAccepted, setSsnAccepted] = useState(existing?.ssnTermsAccepted ?? false);
-  const [addresses, setAddresses] = useState<AddressEntry[]>(
-    existing?.addresses?.length ? existing.addresses : [emptyAddress()],
-  );
-  const [employment, setEmployment] = useState<EmploymentEntry[]>(
-    existing?.employment?.length ? existing.employment : [emptyEmployment()],
-  );
-  const [monthlyGross, setMonthlyGross] = useState(
-    existing?.monthlyGross ? String(existing.monthlyGross) : "",
-  );
-  const [hasItin, setHasItin] = useState<boolean>(existing?.hasItin ?? false);
-  const [itin, setItin] = useState(existing?.itin ?? "");
-  const [countryOfResidence, setCountryOfResidence] = useState(existing?.countryOfResidence ?? "");
-  const [citizenship, setCitizenship] = useState(existing?.citizenship ?? "");
-  const [secondCitizenship, setSecondCitizenship] = useState(existing?.secondCitizenship ?? "");
-  const [visaActive, setVisaActive] = useState<boolean>(existing?.usVisaActive ?? false);
-  const [visaIssued, setVisaIssued] = useState(existing?.visaIssued ?? "");
-  const [visaValidUntil, setVisaValidUntil] = useState(existing?.visaValidUntil ?? "");
-  const [propertyUse, setPropertyUse] = useState<"vacation" | "investment" | "">(
-    existing?.propertyUse ?? "",
-  );
-  const [usBankAccount, setUsBankAccount] = useState<boolean>(existing?.usBankAccount ?? false);
+  const propertyId = property?.id ?? 0;
+  const usPerson = Boolean(user?.usPerson);
+
+  const initial = useMemo<{ data: QuestionnaireData; step: number }>(() => {
+    const draft = user ? getDraft(user.email, propertyId) : undefined;
+    if (draft && !draft.submitted) {
+      return {
+        data: { ...emptyQuestionnaire(), ...(draft.data as Partial<QuestionnaireData>) },
+        step: draft.step,
+      };
+    }
+    return { data: emptyQuestionnaire(), step: 1 };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.email, propertyId, open]);
+
+  const [data, setData] = useState<QuestionnaireData>(initial.data);
+  const [step, setStep] = useState(initial.step);
+  const [furthest, setFurthest] = useState(initial.step);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [savedNote, setSavedNote] = useState(false);
 
-  const showSsn = Boolean(user?.usPerson);
-  // Non-US applicants only provide address/employment/income history if they hold an ITIN.
-  const showHistory = showSsn || hasItin;
-  const monthly = Number(monthlyGross.replace(/[^0-9.]/g, "")) || 0;
+  const patch = (p: Partial<QuestionnaireData>) => {
+    setData((prev) => ({ ...prev, ...p }));
+    setError(null);
+  };
 
-  function patchAddress(id: string, patch: Partial<AddressEntry>) {
-    setAddresses((prev) => prev.map((a) => (a.id === id ? { ...a, ...patch } : a)));
+  const persistDraft = (nextStep: number, nextData: QuestionnaireData) => {
+    if (!user) return;
+    saveDraft(user.email, {
+      propertyId,
+      ...(propertyLabel ? { propertyLabel } : {}),
+      step: nextStep,
+      furthestStep: Math.max(furthest, nextStep),
+      data: nextData as unknown as Record<string, unknown>,
+      completion: completionOf(nextData, usPerson),
+    });
+    setSavedNote(true);
+    window.setTimeout(() => setSavedNote(false), 2000);
+  };
+
+  function validateStep(s: number): string | null {
+    if (s === 1) {
+      if (!data.dob) return "Date of birth is required.";
+      if (!data.maritalStatus) return "Please select your marital status.";
+      if (data.maritalStatus === "unmarried" && data.unmarried.hasSpousalEquivalent) {
+        if (!data.unmarried.relationship) return "Please select the type of relationship.";
+        if (!data.unmarried.stateFormed)
+          return "Please select the state the relationship was formed in.";
+      }
+      if (!usPerson) {
+        if (data.hasItin && !data.itin.trim()) return "Please provide your ITIN number.";
+        if (!data.countryOfResidence) return "Country of residence is required.";
+        if (!data.citizenship) return "Citizenship is required.";
+        if (data.visaActive && (!data.visaIssued || !data.visaValidUntil))
+          return "Please provide the visa issue and expiry dates.";
+        if (!data.propertyUse) return "Please tell us how you will use the property.";
+      }
+      const a = data.addresses[0];
+      if (!a?.street || !a.city || !a.state)
+        return "At least one full address (street, city, state) is required.";
+      return null;
+    }
+    if (s === 2) {
+      if (usPerson && data.ssn && !data.ssnAccepted)
+        return "Please confirm you have read the SSN processing terms.";
+      if (!data.incomes[0]?.employer)
+        return "At least one employer or business in your 2-year history is required.";
+      if (totalMonthlyIncome(data.incomes) <= 0)
+        return "Please provide the income details for at least one source.";
+      return null;
+    }
+    return null;
   }
-  function patchEmployment(id: string, patch: Partial<EmploymentEntry>) {
-    setEmployment((prev) => prev.map((e) => (e.id === id ? { ...e, ...patch } : e)));
+
+  function goTo(next: number) {
+    if (next > step) {
+      const problem = validateStep(step);
+      if (problem) return setError(problem);
+    }
+    setError(null);
+    setStep(next);
+    setFurthest((f) => Math.max(f, next));
+    persistDraft(next, data);
   }
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!dob) return setError("Date of birth is required.");
-    if (showSsn && ssn && !ssnAccepted)
-      return setError("Please confirm you have read the SSN processing terms.");
-    if (!showSsn) {
-      if (hasItin && !itin.trim()) return setError("Please provide your ITIN number.");
-      if (!countryOfResidence.trim()) return setError("Country of residence is required.");
-      if (!citizenship.trim()) return setError("Citizenship is required.");
-      if (visaActive && (!visaIssued || !visaValidUntil))
-        return setError("Please provide the visa issue and expiry dates.");
-      if (!propertyUse) return setError("Please tell us how you will use the property.");
-    }
-    if (showHistory) {
-      if (!addresses[0]?.street || !addresses[0]?.city || !addresses[0]?.state)
-        return setError("At least one full address (street, city, state) is required.");
-      if (!employment[0]?.employer)
-        return setError("At least one employer in your 2-year history is required.");
-      if (!monthly) return setError("Current monthly gross income is required.");
+    for (const s of [1, 2, 3]) {
+      const problem = validateStep(s);
+      if (problem) {
+        setStep(s);
+        return setError(problem);
+      }
     }
 
+    const monthly = totalMonthlyIncome(data.incomes);
     const profile: MortgageProfile = {
-      dateOfBirth: dob,
-      ...(showSsn && ssn ? { ssn } : {}),
-      ssnTermsAccepted: ssnAccepted,
-      ...(showSsn
+      dateOfBirth: data.dob,
+      ...(usPerson && data.ssn ? { ssn: data.ssn } : {}),
+      ssnTermsAccepted: data.ssnAccepted,
+      ...(usPerson
         ? {}
         : {
-            hasItin,
-            ...(hasItin ? { itin: itin.trim() } : {}),
-            countryOfResidence: countryOfResidence.trim(),
-            citizenship: citizenship.trim(),
-            ...(secondCitizenship.trim() ? { secondCitizenship: secondCitizenship.trim() } : {}),
-            usVisaActive: visaActive,
-            ...(visaActive ? { visaIssued, visaValidUntil } : {}),
-            propertyUse: propertyUse as "vacation" | "investment",
-            usBankAccount,
+            hasItin: data.hasItin,
+            ...(data.hasItin ? { itin: data.itin.trim() } : {}),
+            countryOfResidence: data.countryOfResidence,
+            citizenship: data.citizenship,
+            ...(data.secondCitizenship ? { secondCitizenship: data.secondCitizenship } : {}),
+            usVisaActive: data.visaActive,
+            ...(data.visaActive
+              ? { visaIssued: data.visaIssued, visaValidUntil: data.visaValidUntil }
+              : {}),
+            propertyUse: data.propertyUse as "vacation" | "investment",
+            usBankAccount: data.usBankAccount,
           }),
-      ...(showHistory
-        ? { addresses, employment, monthlyGross: monthly }
-        : { addresses: [], employment: [], monthlyGross: 0 }),
+      maritalStatus: data.maritalStatus as MaritalStatus,
+      unmarriedAddendum: data.unmarried,
+      dependents: data.dependents,
+      addresses: data.addresses,
+      employment: data.incomes.map((s) => ({
+        id: s.id,
+        employer: s.employer,
+        title: s.title,
+        from: s.from,
+        to: s.to,
+        current: s.current,
+      })),
+      incomes: data.incomes,
+      liabilities: data.liabilities,
+      declarations: data.declarations,
+      military: data.military,
+      demographics: data.demographics,
+      monthlyGross: monthly,
       submittedAt: new Date().toISOString(),
     };
+
     setError(null);
     saveMortgageProfile(profile);
     if (user && property) {
@@ -174,8 +202,11 @@ export function MortgageQuestionnaire({
         profile,
       });
     }
+    if (user) clearDraft(user.email, propertyId);
     setDone(true);
   }
+
+  const stepProps = { data, patch, usPerson };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -194,9 +225,8 @@ export function MortgageQuestionnaire({
             <div className="text-3xl">✅</div>
             <div className="mt-2 text-base font-semibold text-foreground">Information received</div>
             <p className="mt-1 text-sm text-muted-foreground">
-              Your financial insights are now unlocked and your pre-approval application has been
-              sent to a Loqal mortgage lending partner. You will be notified here as soon as they
-              respond.
+              Your pre-approval application has been sent to a Loqal mortgage lending partner. You
+              will be notified here as soon as they respond.
             </p>
             <button
               type="button"
@@ -208,371 +238,37 @@ export function MortgageQuestionnaire({
           </div>
         ) : (
           <form onSubmit={submit} className="space-y-6">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field label="Date of birth" required hint="mm/dd/yyyy">
-                <DateInput value={dob} onChange={(v) => setDob(v)} className={inputClass} />
-              </Field>
-
-              {showSsn ? (
-                <Field label="Social Security Number">
-                  <input
-                    inputMode="numeric"
-                    placeholder="123-45-6789"
-                    value={ssn}
-                    onChange={(e) => setSsn(e.target.value)}
-                    className={inputClass}
-                  />
-                </Field>
-              ) : null}
-            </div>
-
-            {showSsn ? (
-              <label className="flex items-start gap-2 rounded-md bg-brand-tint/60 p-3 text-xs text-muted-foreground">
-                <input
-                  type="checkbox"
-                  checked={ssnAccepted}
-                  onChange={(e) => setSsnAccepted(e.target.checked)}
-                  className="mt-0.5"
-                />
-                <span>
-                  By providing my Social Security Number I confirm that I have read and accept the{" "}
-                  <Link to="/ssn-terms" className="font-semibold text-brand underline">
-                    SSN processing terms
-                  </Link>
-                  .
-                </span>
-              </label>
-            ) : null}
-
-            {!showSsn ? (
-              <section className="space-y-4 rounded-lg border border-border bg-brand-tint/30 p-4">
-                <h3 className="text-sm font-semibold text-foreground">
-                  Non-US resident details <span className="text-destructive">*</span>
-                </h3>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <Field label="Do you have an ITIN?" required>
-                    <div className="flex gap-4 pt-1 text-sm text-foreground">
-                      <label className="flex items-center gap-2">
-                        <input
-                          type="radio"
-                          name="hasItin"
-                          checked={hasItin}
-                          onChange={() => setHasItin(true)}
-                        />
-                        Yes
-                      </label>
-                      <label className="flex items-center gap-2">
-                        <input
-                          type="radio"
-                          name="hasItin"
-                          checked={!hasItin}
-                          onChange={() => {
-                            setHasItin(false);
-                            setItin("");
-                          }}
-                        />
-                        No
-                      </label>
-                    </div>
-                  </Field>
-
-                  {hasItin ? (
-                    <Field label="ITIN number" required>
-                      <input
-                        inputMode="numeric"
-                        placeholder="9XX-XX-XXXX"
-                        value={itin}
-                        onChange={(e) => setItin(e.target.value)}
-                        className={inputClass}
-                      />
-                    </Field>
-                  ) : null}
-
-                  <Field label="Country of residence" required>
-                    <CountryCombobox
-                      value={countryOfResidence}
-                      onChange={setCountryOfResidence}
-                      placeholder="Start typing a country…"
-                    />
-                  </Field>
-
-                  <Field label="Citizenship" required>
-                    <CountryCombobox
-                      value={citizenship}
-                      onChange={setCitizenship}
-                      placeholder="Start typing a citizenship country…"
-                    />
-                  </Field>
-
-                  <Field label="Double citizenship">
-                    <CountryCombobox
-                      value={secondCitizenship}
-                      onChange={setSecondCitizenship}
-                      placeholder="None"
-                      allowClear
-                    />
-                  </Field>
-
-                  <Field label="Is your US visa active?" required>
-                    <div className="flex gap-4 pt-1 text-sm text-foreground">
-                      <label className="flex items-center gap-2">
-                        <input
-                          type="radio"
-                          name="visaActive"
-                          checked={visaActive}
-                          onChange={() => setVisaActive(true)}
-                        />
-                        Yes
-                      </label>
-                      <label className="flex items-center gap-2">
-                        <input
-                          type="radio"
-                          name="visaActive"
-                          checked={!visaActive}
-                          onChange={() => {
-                            setVisaActive(false);
-                            setVisaIssued("");
-                            setVisaValidUntil("");
-                          }}
-                        />
-                        No
-                      </label>
-                    </div>
-                  </Field>
-
-                  {visaActive ? (
-                    <>
-                      <Field label="Visa issued on" required>
-                        <DateInput
-                          value={visaIssued}
-                          onChange={(v) => setVisaIssued(v)}
-                          className={inputClass}
-                        />
-                      </Field>
-                      <Field label="Visa valid until" required>
-                        <DateInput
-                          value={visaValidUntil}
-                          onChange={(v) => setVisaValidUntil(v)}
-                          className={inputClass}
-                        />
-                      </Field>
-                    </>
-                  ) : null}
-
-                  <Field label="How will you use the property?" required>
-                    <select
-                      value={propertyUse}
-                      onChange={(e) =>
-                        setPropertyUse(e.target.value as "vacation" | "investment" | "")
-                      }
-                      className={inputClass}
-                    >
-                      <option value="">Select…</option>
-                      <option value="vacation">Vacation home</option>
-                      <option value="investment">Investment property</option>
-                    </select>
-                  </Field>
-
-                  <Field label="Do you have a US bank account?" required>
-                    <div className="flex gap-4 pt-1 text-sm text-foreground">
-                      <label className="flex items-center gap-2">
-                        <input
-                          type="radio"
-                          name="usBank"
-                          checked={usBankAccount}
-                          onChange={() => setUsBankAccount(true)}
-                        />
-                        Yes
-                      </label>
-                      <label className="flex items-center gap-2">
-                        <input
-                          type="radio"
-                          name="usBank"
-                          checked={!usBankAccount}
-                          onChange={() => setUsBankAccount(false)}
-                        />
-                        No
-                      </label>
-                    </div>
-                  </Field>
-                </div>
-              </section>
-            ) : null}
-
-            {showHistory ? (
-              <>
-                {/* ADDRESS HISTORY */}
-                <section>
-                  <div className="mb-3 flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-foreground">
-                      2 years of address history <span className="text-destructive">*</span>
-                    </h3>
+            {/* STEPPER */}
+            <ol className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {QUESTIONNAIRE_STEPS.map((s) => {
+                const reachable = s.id <= furthest;
+                const active = s.id === step;
+                return (
+                  <li key={s.id}>
                     <button
                       type="button"
-                      onClick={() => setAddresses((p) => [...p, emptyAddress()])}
-                      className="rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-brand hover:bg-brand-tint"
+                      disabled={!reachable}
+                      onClick={() => goTo(s.id)}
+                      className={`w-full rounded-md border px-3 py-2 text-left text-[11px] font-semibold transition-colors ${
+                        active
+                          ? "border-brand bg-brand-tint text-brand"
+                          : reachable
+                            ? "border-border text-muted-foreground hover:bg-brand-tint/50"
+                            : "border-border/60 text-muted-foreground/50"
+                      }`}
                     >
-                      + Add address
+                      <span className="block">Step {s.id}</span>
+                      <span className="block font-medium">{s.title}</span>
                     </button>
-                  </div>
-                  <div className="space-y-4">
-                    {addresses.map((a, i) => (
-                      <div key={a.id} className="rounded-lg border border-border p-4">
-                        <div className="mb-3 flex items-center justify-between text-xs font-semibold text-muted-foreground">
-                          <span>{i === 0 ? "Current address" : `Previous address ${i}`}</span>
-                          {addresses.length > 1 ? (
-                            <button
-                              type="button"
-                              onClick={() => setAddresses((p) => p.filter((x) => x.id !== a.id))}
-                              className="text-destructive hover:underline"
-                            >
-                              Remove
-                            </button>
-                          ) : null}
-                        </div>
-                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                          <input
-                            placeholder="Street address"
-                            value={a.street}
-                            onChange={(e) => patchAddress(a.id, { street: e.target.value })}
-                            className={`${inputClass} sm:col-span-2`}
-                          />
-                          <input
-                            placeholder="City"
-                            value={a.city}
-                            onChange={(e) => patchAddress(a.id, { city: e.target.value })}
-                            className={inputClass}
-                          />
-                          <div className="grid grid-cols-2 gap-3">
-                            <StateCombobox
-                              value={a.state}
-                              placeholder="State"
-                              onChange={(code) => patchAddress(a.id, { state: code })}
-                            />
-                            <input
-                              placeholder="ZIP"
-                              value={a.zip}
-                              onChange={(e) => patchAddress(a.id, { zip: e.target.value })}
-                              className={inputClass}
-                            />
-                          </div>
-                          <label className="text-[11px] text-muted-foreground">
-                            From
-                            <MonthInput
-                              value={a.from}
-                              onChange={(v) => patchAddress(a.id, { from: v })}
-                              className={inputClass}
-                            />
-                          </label>
-                          <label className="text-[11px] text-muted-foreground">
-                            To
-                            <MonthInput
-                              value={a.to}
-                              onChange={(v) => patchAddress(a.id, { to: v })}
-                              className={inputClass}
-                            />
-                          </label>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </section>
+                  </li>
+                );
+              })}
+            </ol>
 
-                {/* EMPLOYMENT HISTORY */}
-                <section>
-                  <div className="mb-3 flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-foreground">
-                      2 years of employment history <span className="text-destructive">*</span>
-                    </h3>
-                    <button
-                      type="button"
-                      onClick={() => setEmployment((p) => [...p, emptyEmployment()])}
-                      className="rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-brand hover:bg-brand-tint"
-                    >
-                      + Add employer
-                    </button>
-                  </div>
-                  <div className="space-y-4">
-                    {employment.map((emp, i) => (
-                      <div key={emp.id} className="rounded-lg border border-border p-4">
-                        <div className="mb-3 flex items-center justify-between text-xs font-semibold text-muted-foreground">
-                          <span>{i === 0 ? "Current employer" : `Previous employer ${i}`}</span>
-                          {employment.length > 1 ? (
-                            <button
-                              type="button"
-                              onClick={() => setEmployment((p) => p.filter((x) => x.id !== emp.id))}
-                              className="text-destructive hover:underline"
-                            >
-                              Remove
-                            </button>
-                          ) : null}
-                        </div>
-                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                          <input
-                            placeholder="Employer name"
-                            value={emp.employer}
-                            onChange={(e) => patchEmployment(emp.id, { employer: e.target.value })}
-                            className={inputClass}
-                          />
-                          <input
-                            placeholder="Job title"
-                            value={emp.title}
-                            onChange={(e) => patchEmployment(emp.id, { title: e.target.value })}
-                            className={inputClass}
-                          />
-                          <label className="text-[11px] text-muted-foreground">
-                            From
-                            <MonthInput
-                              value={emp.from}
-                              onChange={(v) => patchEmployment(emp.id, { from: v })}
-                              className={inputClass}
-                            />
-                          </label>
-                          <label className="text-[11px] text-muted-foreground">
-                            To
-                            <MonthInput
-                              value={emp.to}
-                              disabled={emp.current}
-                              onChange={(v) => patchEmployment(emp.id, { to: v })}
-                              className={`${inputClass} disabled:opacity-50`}
-                            />
-                          </label>
-                          <label className="flex items-center gap-2 text-xs text-muted-foreground sm:col-span-2">
-                            <input
-                              type="checkbox"
-                              checked={emp.current}
-                              onChange={(e) =>
-                                patchEmployment(emp.id, { current: e.target.checked })
-                              }
-                            />
-                            I currently work here
-                          </label>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-
-                {/* INCOME */}
-                <section className="rounded-lg border border-border bg-brand-tint/40 p-4">
-                  <Field label="Monthly gross income — current employer" required>
-                    <input
-                      inputMode="decimal"
-                      placeholder="8,500"
-                      value={monthlyGross}
-                      onChange={(e) => setMonthlyGross(e.target.value)}
-                      className={inputClass}
-                    />
-                  </Field>
-                  <div className="mt-3 flex items-center justify-between rounded-md bg-card p-3">
-                    <span className="text-xs uppercase tracking-wide text-muted-foreground">
-                      Annual gross income
-                    </span>
-                    <strong className="text-lg font-bold text-brand">{money(monthly * 12)}</strong>
-                  </div>
-                </section>
-              </>
-            ) : null}
+            {step === 1 ? <Step1Personal {...stepProps} /> : null}
+            {step === 2 ? <Step2Income {...stepProps} /> : null}
+            {step === 3 ? <Step3Declarations {...stepProps} /> : null}
+            {step === 4 ? <Step4Demographics {...stepProps} /> : null}
 
             {error ? (
               <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
@@ -580,20 +276,44 @@ export function MortgageQuestionnaire({
               </p>
             ) : null}
 
-            <div className="flex flex-wrap justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => onOpenChange(false)}
-                className="rounded-md border border-border px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-brand-tint"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="rounded-md bg-brand px-5 py-2.5 text-sm font-semibold text-background hover:bg-brand-soft"
-              >
-                Submit information
-              </button>
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+              <div className="text-[11px] text-muted-foreground">
+                {savedNote ? "Draft saved ✓" : "Answers are saved automatically as a draft."}
+              </div>
+              <div className="flex gap-2">
+                {step > 1 ? (
+                  <button
+                    type="button"
+                    onClick={() => goTo(step - 1)}
+                    className="rounded-md border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-brand-tint"
+                  >
+                    Back
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => persistDraft(step, data)}
+                  className="rounded-md border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-brand-tint"
+                >
+                  Save & finish later
+                </button>
+                {step < QUESTIONNAIRE_STEPS.length ? (
+                  <button
+                    type="button"
+                    onClick={() => goTo(step + 1)}
+                    className="rounded-md bg-brand px-5 py-2 text-sm font-semibold text-background hover:bg-brand-soft"
+                  >
+                    Save & continue
+                  </button>
+                ) : (
+                  <button
+                    type="submit"
+                    className="rounded-md bg-brand px-5 py-2 text-sm font-semibold text-background hover:bg-brand-soft"
+                  >
+                    Submit application
+                  </button>
+                )}
+              </div>
             </div>
           </form>
         )}
