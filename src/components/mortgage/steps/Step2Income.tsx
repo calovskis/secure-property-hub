@@ -24,6 +24,8 @@ export function Step2Income({ data, patch, usPerson }: StepProps) {
     patch({ incomes: data.incomes.map((s) => (s.id === id ? { ...s, ...p } : s)) });
 
   const total = totalMonthlyIncome(data.incomes);
+  const { fx, loading: fxLoading } = useFxRates();
+
 
   return (
     <div className="space-y-6">
