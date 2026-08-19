@@ -80,9 +80,10 @@ export type MortgageLead = {
   clientDecision?: ClientDecision;
   clientDecisionAt?: string;
   /** Team member inside the lender company reviewing this inquiry. */
-  assignedToId?: string;
-  assignedToName?: string;
-  assignedAt?: string;
+  assignedToId?: string | undefined;
+  assignedToName?: string | undefined;
+  assignedAt?: string | undefined;
+
   infoRequests: InfoRequest[];
   debts?: DebtProfile;
 };
