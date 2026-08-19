@@ -14,7 +14,7 @@ export function CurrencyCombobox({
   value: string;
   onChange: (code: string) => void;
   placeholder?: string;
-  disabled?: boolean;
+  disabled?: boolean | undefined;
 }) {
   return (
     <Typeahead
