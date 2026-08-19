@@ -128,6 +128,14 @@ export function leadState(lead: MortgageLead) {
   return m?.[1] ?? "—";
 }
 
+/** City parsed from the property label, e.g. "Austin, TX" → "Austin". */
+export function leadCity(lead: MortgageLead) {
+  const parts = lead.propertyLabel.split(",").map((s) => s.trim());
+  return parts.length > 1 ? parts[parts.length - 2]! : (parts[0] ?? "—");
+}
+
+
+
 /** Convert lender terms into the loan terms used by the investment model. */
 export function toLoanTerms(terms: LenderTerms) {
   return {
