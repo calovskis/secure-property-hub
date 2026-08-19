@@ -4,6 +4,7 @@ import { AppHeader } from "@/components/layout/AppHeader";
 import { MortgageQuestionnaire } from "@/components/mortgage/MortgageQuestionnaire";
 import { PARTNER_LABEL, ROLE_LABEL, fullName, useAuth } from "@/lib/auth";
 import { formatDate, formatDateTime, isoToUsDate } from "@/lib/dates";
+import { countryLabel } from "@/data/countries";
 import {
   LEAD_STATUS_LABEL,
   hasPricedOffer,
@@ -288,7 +289,9 @@ function ProfilePage() {
                     {profile.addresses.map((a) => (
                       <li key={a.id} className="rounded-md border border-border p-3 text-sm">
                         <div className="text-foreground">
-                          {[a.street, a.city, a.state, a.zip].filter(Boolean).join(", ")}
+                          {[a.street, a.city, a.state, a.zip, countryLabel(a.country ?? "")]
+                            .filter(Boolean)
+                            .join(", ")}
                         </div>
                         <div className="text-xs text-muted-foreground">
                           {isoToUsDate(a.from) || a.from || "—"} —{" "}
