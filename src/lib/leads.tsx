@@ -79,9 +79,14 @@ export type MortgageLead = {
   /** Set once the client accepts or declines the priced pre-approval terms. */
   clientDecision?: ClientDecision;
   clientDecisionAt?: string;
+  /** Team member inside the lender company reviewing this inquiry. */
+  assignedToId?: string;
+  assignedToName?: string;
+  assignedAt?: string;
   infoRequests: InfoRequest[];
   debts?: DebtProfile;
 };
+
 
 /** Estimates unlock only when the lender returned a score AND full pricing. */
 export function hasPricedOffer(lead?: MortgageLead): lead is MortgageLead {
