@@ -97,8 +97,11 @@ function DecisionPanel({ lead }: { lead: MortgageLead }) {
     lead.terms ? String(lead.terms.taxInsurancePct) : "1.45",
   );
   const [question, setQuestion] = useState("");
-  const [needsDoc, setNeedsDoc] = useState(false);
+  const [docChoice, setDocChoice] = useState<"yes" | "no" | null>(null);
+  const [infoMode, setInfoMode] = useState<null | "compose" | "confirm">(null);
   const [error, setError] = useState<string | null>(null);
+  const needsDoc = docChoice === "yes";
+
 
   function decide(status: LeadStatus) {
     const parsed = Number(score);
