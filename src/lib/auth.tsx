@@ -25,6 +25,17 @@ export const PARTNER_LABEL: Record<PartnerType, string> = {
   other: "Other service provider",
 };
 
+import type {
+  Declarations,
+  Demographics,
+  Dependent,
+  IncomeSource,
+  Liabilities,
+  MaritalStatus,
+  MilitaryService,
+  UnmarriedAddendum,
+} from "@/lib/mortgage-form";
+
 export type AddressEntry = {
   id: string;
   street: string;
@@ -33,6 +44,8 @@ export type AddressEntry = {
   zip: string;
   from: string;
   to: string;
+  /** Ticked instead of a "to" date when this is where the applicant lives now. */
+  present?: boolean;
 };
 
 export type EmploymentEntry = {
@@ -59,8 +72,18 @@ export type MortgageProfile = {
   visaValidUntil?: string;
   propertyUse?: "vacation" | "investment";
   usBankAccount?: boolean;
+  /** Marital status + URLA unmarried addendum */
+  maritalStatus?: MaritalStatus;
+  unmarriedAddendum?: UnmarriedAddendum;
+  dependents?: Dependent[];
   addresses: AddressEntry[];
   employment: EmploymentEntry[];
+  /** Layered income sources (W-2, self-employed, foreign, seasonal). */
+  incomes?: IncomeSource[];
+  liabilities?: Liabilities;
+  declarations?: Declarations;
+  military?: MilitaryService;
+  demographics?: Demographics;
   monthlyGross: number;
   submittedAt: string;
 };
