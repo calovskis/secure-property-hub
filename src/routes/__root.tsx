@@ -14,6 +14,9 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider } from "@/lib/auth";
 import { I18nProvider } from "@/lib/i18n";
 import { LeadsProvider } from "@/lib/leads";
+import { MortgageDraftProvider } from "@/lib/mortgage-draft";
+import { Toaster } from "@/components/ui/sonner";
+
 
 
 
@@ -127,9 +130,13 @@ function RootComponent() {
       <I18nProvider>
         <AuthProvider>
           <LeadsProvider>
-            {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-            <Outlet />
+            <MortgageDraftProvider>
+              {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+              <Outlet />
+              <Toaster />
+            </MortgageDraftProvider>
           </LeadsProvider>
+
         </AuthProvider>
 
       </I18nProvider>
