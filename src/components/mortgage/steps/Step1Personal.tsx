@@ -78,16 +78,14 @@ export function Step1Personal({ data, patch, usPerson }: StepProps) {
                 <Field label="Type of relationship" required>
                   <select
                     value={data.unmarried.relationship ?? ""}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      const { relationship: _drop, ...rest } = data.unmarried;
+                      const v = e.target.value as UnmarriedRelationship | "";
                       patch({
-                        unmarried: {
-                          ...data.unmarried,
-                          relationship: (e.target.value || undefined) as
-                            | UnmarriedRelationship
-                            | undefined,
-                        },
-                      })
-                    }
+                        unmarried: v ? { ...rest, relationship: v } : rest,
+                      });
+                    }}
+
                     className={inputClass}
                   >
                     <option value="">Select…</option>
