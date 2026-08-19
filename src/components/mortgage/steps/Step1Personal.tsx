@@ -324,7 +324,7 @@ export function Step1Personal({ data, patch, usPerson }: StepProps) {
                   To
                   <MonthInput
                     value={a.to}
-                    disabled={a.present}
+                    disabled={Boolean(a.present)}
                     onChange={(v) => patchAddress(a.id, { to: v })}
                     className={`${inputClass} disabled:opacity-50`}
                   />
@@ -338,7 +338,7 @@ export function Step1Personal({ data, patch, usPerson }: StepProps) {
                         addresses: data.addresses.map((x) =>
                           x.id === a.id
                             ? { ...x, present: e.target.checked, to: e.target.checked ? "" : x.to }
-                            : { ...x, present: e.target.checked ? false : x.present },
+                            : { ...x, present: e.target.checked ? false : Boolean(x.present) },
                         ),
                       })
                     }
