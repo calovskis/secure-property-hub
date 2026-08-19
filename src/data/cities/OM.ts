@@ -1,0 +1,2 @@
+/** Generated city names by subdivision code. */
+export default {"BA":["Barkā’","Bayt al ‘Awābī","Oman Smart Future City","Rustaq"],"BS":["Al Khābūrah","As Suwayq","Liwá","Şaḩam","Shināş","Sohar"],"BU":["Al Buraymī"],"DA":["Adam","Bahlā’","Bidbid","Izkī","Nizwá","Sufālat Samā’il"],"MA":["Bawshar","Muscat","Seeb"],"MU":["Dib Dibba","Khasab","Madḩā’ al Jadīdah"],"SH":["Sur"],"WU":["Haymā’"],"ZA":["‘Ibrī","Yanqul"],"ZU":["Şalālah"]} as Record<string, string[]>;

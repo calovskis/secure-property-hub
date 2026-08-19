@@ -1,0 +1,2 @@
+/** Generated city names by subdivision code. */
+export default {"13":["Jidd Ḩafş","Manama","Sitrah"],"14":["Ar Rifā‘","Dār Kulayb","Madīnat ‘Īsá"],"15":["Al Ḩadd","Al Muharraq"],"16":["Madīnat Ḩamad"]} as Record<string, string[]>;

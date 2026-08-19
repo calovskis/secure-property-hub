@@ -1,0 +1,2 @@
+/** Generated city names by subdivision code. */
+export default {"01":["‘Ohonua"],"02":["Pangai"],"03":["Hihifo"],"04":["Haveluloto","Kolonga","Nuku‘alofa","Vaini"],"05":["Neiafu"]} as Record<string, string[]>;

@@ -1,0 +1,2 @@
+/** Generated city names by subdivision code. */
+export default {"C":["Naitasiri Province","Namosi Province","Rewa Province","Serua Province","Suva","Tailevu Province"],"E":["Kadavu Province","Lau Province","Levuka","Lomaiviti Province"],"N":["Bua Province","Cakaudrove Province","Labasa","Macuata Province"],"W":["Ba","Ba Province","Lautoka","Nadi","Nandronga and Navosa Province","Ra Province"]} as Record<string, string[]>;

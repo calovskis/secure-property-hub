@@ -1,0 +1,2 @@
+/** Generated city names by subdivision code. */
+export default {"10":["Codrington"],"03":["Piggotts"],"04":["Potters Village","Saint John’s"],"05":["Bolands"],"06":["Falmouth","Liberta"],"07":["All Saints","Parham"]} as Record<string, string[]>;

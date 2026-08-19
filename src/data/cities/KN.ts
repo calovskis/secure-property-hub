@@ -1,0 +1,2 @@
+/** Generated city names by subdivision code. */
+export default {"10":["Charlestown"],"11":["Monkey Hill"],"12":["Cotton Ground"],"13":["Middle Island"],"15":["Trinity"],"01":["Nicola Town"],"02":["Sandy Point Town"],"04":["Market Shop"],"05":["Newcastle"],"06":["Dieppe Bay Town"],"07":["Fig Tree"],"08":["Cayon"],"09":["Saint Paul’s"]} as Record<string, string[]>;

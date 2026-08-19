@@ -1,0 +1,2 @@
+/** Generated city names by subdivision code. */
+export default {"10":["Hillsborough"],"01":["Grenville"],"02":["Saint David’s"],"03":["Saint George's"],"04":["Gouyave"],"05":["Victoria"],"06":["Sauteurs"]} as Record<string, string[]>;

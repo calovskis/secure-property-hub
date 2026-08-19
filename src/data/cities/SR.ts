@@ -1,0 +1,2 @@
+/** Generated city names by subdivision code. */
+export default {"BR":["Brokopondo","Brownsweg"],"CM":["Mariënburg","Nieuw Amsterdam"],"CR":["Totness"],"MA":["Albina","Moengo"],"NI":["Nieuw Nickerie","Wageningen"],"PM":["Paramaribo"],"PR":["Onverwacht"],"SA":["Groningen"],"WA":["Lelydorp"]} as Record<string, string[]>;

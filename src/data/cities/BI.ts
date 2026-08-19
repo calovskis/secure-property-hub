@@ -1,0 +1,2 @@
+/** Generated city names by subdivision code. */
+export default {"BB":["Bubanza"],"BM":["Bujumbura"],"BR":["Bururi"],"CA":["Cankuzo"],"CI":["Cibitoke"],"GI":["Gitega"],"KI":["Kirundo"],"KR":["Karuzi"],"KY":["Kayanza"],"MA":["Makamba"],"MU":["Muramvya"],"MW":["Mwaro"],"MY":["Muyinga"],"NG":["Ngozi"],"RM":["Rumonge"],"RT":["Rutana"],"RY":["Ruyigi"]} as Record<string, string[]>;

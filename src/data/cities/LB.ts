@@ -1,0 +1,2 @@
+/** Generated city names by subdivision code. */
+export default {"AK":["Caza de Aakkar"],"AS":["Batroûn","Bcharré","Tripoli"],"BA":["Beirut","Ra’s Bayrūt"],"BH":["Baalbek","Caza de Baalbek"],"BI":["Aanjar","Zahlé"],"JA":["En Nâqoûra","Ghazieh","Sidon","Tyre"],"JL":["Baabda","Bhamdoun","Bhamdoûn el Mhatta","Caza de Baabda","Jbaïl","Jounieh"],"NA":["Ain Ebel","Caza de Bent Jbaïl","Caza de Nabatîyé","Habboûch","Marjayoûn","Nabatîyé et Tahta"]} as Record<string, string[]>;

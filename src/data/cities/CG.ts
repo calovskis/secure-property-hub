@@ -1,0 +1,2 @@
+/** Generated city names by subdivision code. */
+export default {"2":["Sibiti"],"7":["Impfondo"],"8":["Makoua","Owando"],"9":["Dolisie","Mossendjo"],"11":["Kayes","Madingou"],"12":["Kinkala"],"13":["Ouésso","Sémbé"],"14":["Djambala","Gamboma"],"15":["Ewo"],"16":["Loandjili","Pointe-Noire"],"BZV":["Brazzaville"]} as Record<string, string[]>;

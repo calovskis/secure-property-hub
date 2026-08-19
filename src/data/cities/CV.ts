@@ -1,0 +1,2 @@
+/** Generated city names by subdivision code. */
+export default {"BR":["Nova Sintra"],"BV":["Sal Rei"],"CA":["Assomada"],"CF":["Cova Figueira"],"CR":["Pedra Badejo","Santa Cruz"],"MA":["Vila do Maio"],"MO":["Igreja"],"PA":["Pombas"],"PN":["Porto Novo"],"PR":["Praia"],"RB":["Ribeira Brava"],"RG":["Ponta do Sol","Ribeira Grande"],"RS":["Cidade Velha"],"SD":["São Domingos"],"SF":["São Filipe"],"SL":["Espargos","Santa Maria"],"SM":["Calheta"],"SO":["João Teves"],"SV":["Mindelo"],"TA":["Tarrafal"],"TS":["Tarrafal de São Nicolau"]} as Record<string, string[]>;

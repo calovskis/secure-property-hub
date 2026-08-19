@@ -1,0 +1,2 @@
+/** Generated city names by subdivision code. */
+export default {"AN":["San Antonio de Palé"],"BN":["Malabo","Rebola","Santiago de Baney"],"BS":["Luba"],"CS":["Acurenam","Bicurga","Evinayong"],"KN":["Ebebiyin","Mikomeseng","Ncue","Nsang"],"LI":["Bata","Bitica","Cogo","Machinda","Mbini","Río Campo"],"WN":["Aconibe","Añisoc","Ayene","Mengomeyén","Mongomo","Nsok"]} as Record<string, string[]>;

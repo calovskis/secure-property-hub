@@ -1,0 +1,2 @@
+/** Generated city names by subdivision code. */
+export default {"BG":["Gbarnga"],"BM":["Tubmanburg"],"CM":["Robertsport"],"GB":["Buchanan"],"GG":["Zwedru"],"GK":["Barclayville"],"GP":["Bopolu"],"LO":["Voinjama"],"MG":["Kakata"],"MO":["Bensonville","Monrovia"],"MY":["Harper"],"NI":["Ganta","New Yekepa","Sanniquellie"],"RG":["Fish Town"],"RI":["Cestos City"],"SI":["Greenville"]} as Record<string, string[]>;

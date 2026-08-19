@@ -1,0 +1,2 @@
+/** Generated city names by subdivision code. */
+export default {"1":["Cocobeach","Libreville","Ntoum"],"2":["Franceville","Lékoni","Moanda","Mounana","Okondja"],"3":["Lambaréné","Ndjolé"],"4":["Fougamou","Mbigou","Mimongo","Mouila","Ndendé"],"5":["Mayumba","Tchibanga"],"6":["Booué","Makokou","Zadie"],"7":["Koulamoutou","Lastoursville"],"8":["Gamba","Omboué","Port-Gentil"],"9":["Bitam","Mitzic","Oyem"]} as Record<string, string[]>;

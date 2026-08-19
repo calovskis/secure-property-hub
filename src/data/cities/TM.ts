@@ -1,0 +1,2 @@
+/** Generated city names by subdivision code. */
+export default {"A":["Abadan","Annau","Arçabil","Baharly","Kaka","Tejen"],"B":["Balkanabat","Bereket","Gumdag","Magtymguly","Serdar","Türkmenbaşy"],"D":["Akdepe","Boldumsaz","Daşoguz","Köneürgench","Tagta","Yylanly"],"L":["Atamyrat","Farap","Gazojak","Gowurdak","Saýat","Türkmenabat"],"M":["Bayramaly","Mary","Serhetabat","Seydi","Yolöten"],"S":["Ashgabat"]} as Record<string, string[]>;

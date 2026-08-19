@@ -1,0 +1,2 @@
+/** Generated city names by subdivision code. */
+export default {"10":["Sélibaby"],"11":["Zouerate"],"12":["Akjoujt"],"01":["Néma"],"02":["Aioun"],"03":["Barkéwol","Kiffa"],"04":["Kaédi"],"05":["’Elb el Jmel","Aleg"],"06":["Rosso","Tékane"],"07":["Atar","Chingueṭṭi"],"08":["Nouadhibou"]} as Record<string, string[]>;
