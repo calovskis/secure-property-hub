@@ -350,11 +350,17 @@ function AssignBar({ lead }: { lead: MortgageLead }) {
         value={lead.assignedToId ?? ""}
         onChange={(e) => {
           const member = members.find((m) => m.id === e.target.value);
-          updateLead(lead.id, {
-            assignedToId: member?.id,
-            assignedToName: member?.name,
-            assignedAt: member ? new Date().toISOString() : undefined,
-          });
+          updateLead(
+            lead.id,
+            member
+              ? {
+                  assignedToId: member.id,
+                  assignedToName: member.name,
+                  assignedAt: new Date().toISOString(),
+                }
+              : ({ assignedToId: undefined, assignedToName: undefined, assignedAt: undefined } as Partial<MortgageLead>),
+          );
+
         }}
         className="rounded-md border border-input bg-background px-3 py-2 text-xs text-foreground"
       >
