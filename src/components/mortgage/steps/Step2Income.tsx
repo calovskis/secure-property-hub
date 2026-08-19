@@ -1,6 +1,9 @@
 import { Link } from "@tanstack/react-router";
 import { CountryCombobox } from "@/components/form/CountryCombobox";
 import { AddressFields } from "@/components/form/AddressFields";
+import { CurrencyCombobox } from "@/components/form/CurrencyCombobox";
+import { useFxRates, usdPerUnit } from "@/lib/fx";
+
 import { MonthInput } from "@/components/form/DateInput";
 import { Field, Section, inputClass, money } from "@/components/mortgage/form-ui";
 import type { StepProps } from "@/components/mortgage/questionnaire-state";
@@ -21,6 +24,8 @@ export function Step2Income({ data, patch, usPerson }: StepProps) {
     patch({ incomes: data.incomes.map((s) => (s.id === id ? { ...s, ...p } : s)) });
 
   const total = totalMonthlyIncome(data.incomes);
+  const { fx, loading: fxLoading } = useFxRates();
+
 
   return (
     <div className="space-y-6">
@@ -327,33 +332,56 @@ export function Step2Income({ data, patch, usPerson }: StepProps) {
                 ) : null}
 
                 {s.type === "foreign" ? (
-                  <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <Field label="Currency" required hint="e.g. EUR, GBP, AED">
-                      <input
-                        value={s.currency}
-                        onChange={(e) => patchIncome(s.id, { currency: e.target.value })}
-                        className={inputClass}
-                      />
-                    </Field>
-                    <Field label="Monthly gross (in that currency)" required>
-                      <input
-                        inputMode="decimal"
-                        value={s.monthlyGrossForeign}
-                        onChange={(e) => patchIncome(s.id, { monthlyGrossForeign: e.target.value })}
-                        className={inputClass}
-                      />
-                    </Field>
-                    <Field label="Exchange rate to USD" required hint="1 unit = ? USD">
-                      <input
-                        inputMode="decimal"
-                        placeholder="1.08"
-                        value={s.fxRate}
-                        onChange={(e) => patchIncome(s.id, { fxRate: e.target.value })}
-                        className={inputClass}
-                      />
-                    </Field>
+                  <div className="mt-4 space-y-3">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <Field label="Currency" required hint="Pick from the supported currencies">
+                        <CurrencyCombobox
+                          value={s.currency}
+                          onChange={(code) => {
+                            const rate = usdPerUnit(fx, code);
+                            patchIncome(s.id, {
+                              currency: code,
+                              ...(rate ? { fxRate: rate.toFixed(6) } : {}),
+                            });
+                          }}
+                        />
+                      </Field>
+                      <Field label="Monthly gross (in that currency)" required>
+                        <input
+                          inputMode="decimal"
+                          value={s.monthlyGrossForeign}
+                          onChange={(e) =>
+                            patchIncome(s.id, { monthlyGrossForeign: e.target.value })
+                          }
+                          className={inputClass}
+                        />
+                      </Field>
+                      <Field
+                        label="Exchange rate to USD"
+                        required
+                        hint={
+                          s.currency
+                            ? `Today's rate: 1 ${s.currency} = ${(usdPerUnit(fx, s.currency) ?? 0).toFixed(4)} USD`
+                            : "1 unit = ? USD"
+                        }
+                      >
+                        <input
+                          inputMode="decimal"
+                          placeholder="1.08"
+                          value={s.fxRate}
+                          onChange={(e) => patchIncome(s.id, { fxRate: e.target.value })}
+                          className={inputClass}
+                        />
+                      </Field>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Rates update daily from the European/global reference feed
+                      {fxLoading ? " (refreshing…)" : ` (last update: ${fx.updatedAt})`}. You can
+                      override the rate if your lender uses a different one.
+                    </p>
                   </div>
                 ) : null}
+
 
                 <div className="mt-4 grid grid-cols-2 gap-3 rounded-md bg-card p-3 text-sm">
                   <div>
