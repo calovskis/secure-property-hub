@@ -358,7 +358,7 @@ function AssignBar({ lead }: { lead: MortgageLead }) {
                   assignedToName: member.name,
                   assignedAt: new Date().toISOString(),
                 }
-              : ({ assignedToId: undefined, assignedToName: undefined, assignedAt: undefined } as Partial<MortgageLead>),
+              : { assignedToId: undefined, assignedToName: undefined, assignedAt: undefined },
           );
 
         }}
