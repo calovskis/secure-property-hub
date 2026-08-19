@@ -14,6 +14,9 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider } from "@/lib/auth";
 import { I18nProvider } from "@/lib/i18n";
 import { LeadsProvider } from "@/lib/leads";
+import { MortgageDraftProvider } from "@/lib/mortgage-draft";
+import { Toaster } from "@/components/ui/sonner";
+
 
 
 
