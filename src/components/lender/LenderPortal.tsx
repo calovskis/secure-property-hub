@@ -97,8 +97,11 @@ function DecisionPanel({ lead }: { lead: MortgageLead }) {
     lead.terms ? String(lead.terms.taxInsurancePct) : "1.45",
   );
   const [question, setQuestion] = useState("");
-  const [needsDoc, setNeedsDoc] = useState(false);
+  const [docChoice, setDocChoice] = useState<"yes" | "no" | null>(null);
+  const [infoMode, setInfoMode] = useState<null | "compose" | "confirm">(null);
   const [error, setError] = useState<string | null>(null);
+  const needsDoc = docChoice === "yes";
+
 
   function decide(status: LeadStatus) {
     const parsed = Number(score);
@@ -158,8 +161,10 @@ function DecisionPanel({ lead }: { lead: MortgageLead }) {
     if (status === "info_required") {
       addInfoRequest(lead.id, question.trim(), needsDoc);
       setQuestion("");
-      setNeedsDoc(false);
+      setDocChoice(null);
+      setInfoMode(null);
     }
+
   }
 
   return (
@@ -236,52 +241,153 @@ function DecisionPanel({ lead }: { lead: MortgageLead }) {
         />
       </label>
 
-      <div className="rounded-md border border-border bg-brand-tint/30 p-3">
-        <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Information request (used with “More information required”)
-        </span>
-        <textarea
-          rows={2}
-          placeholder="e.g. Please upload your last two pay stubs and confirm your bonus structure."
-          value={question}
-          onChange={(e) => setQuestion(e.target.value)}
-          className={inputClass}
-        />
-        <label className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-          <input
-            type="checkbox"
-            checked={needsDoc}
-            onChange={(e) => setNeedsDoc(e.target.checked)}
-          />
-          A document upload is required
-        </label>
-      </div>
-
       {error ? <p className="text-xs font-medium text-destructive">{error}</p> : null}
 
-      <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={() => decide("qualified")}
-          className="rounded-md bg-success px-4 py-2.5 text-sm font-semibold text-background hover:opacity-90"
-        >
-          Qualified
-        </button>
-        <button
-          type="button"
-          onClick={() => decide("info_required")}
-          className="rounded-md bg-brand px-4 py-2.5 text-sm font-semibold text-background hover:bg-brand-soft"
-        >
-          More information required
-        </button>
-        <button
-          type="button"
-          onClick={() => decide("not_qualified")}
-          className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-2.5 text-sm font-semibold text-destructive hover:bg-destructive/20"
-        >
-          Not qualified
-        </button>
-      </div>
+      {infoMode === null ? (
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => decide("qualified")}
+            className="rounded-md bg-success px-4 py-2.5 text-sm font-semibold text-background hover:opacity-90"
+          >
+            Qualified
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setError(null);
+              setInfoMode("compose");
+            }}
+            className="rounded-md bg-brand px-4 py-2.5 text-sm font-semibold text-background hover:bg-brand-soft"
+          >
+            Information request
+          </button>
+          <button
+            type="button"
+            onClick={() => decide("not_qualified")}
+            className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-2.5 text-sm font-semibold text-destructive hover:bg-destructive/20"
+          >
+            Not qualified
+          </button>
+        </div>
+      ) : infoMode === "compose" ? (
+        <div className="space-y-3 rounded-md border border-border bg-brand-tint/30 p-4">
+          <span className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            New information request
+          </span>
+          <textarea
+            rows={3}
+            autoFocus
+            placeholder="e.g. Please confirm your bonus structure and upload your last two pay stubs."
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            className={inputClass}
+          />
+          <div>
+            <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Is a document upload required?
+            </span>
+            <div className="flex gap-2">
+              {(
+                [
+                  ["yes", "Yes — client must upload"],
+                  ["no", "No — written answer only"],
+                ] as const
+              ).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setDocChoice(value)}
+                  className={`rounded-md px-3 py-2 text-xs font-semibold ${
+                    docChoice === value
+                      ? "bg-brand text-background"
+                      : "border border-border text-muted-foreground hover:bg-brand-tint"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2 pt-1">
+            <button
+              type="button"
+              onClick={() => {
+                if (!question.trim()) {
+                  setError("Describe what the client must answer or upload.");
+                  return;
+                }
+                if (docChoice === null) {
+                  setError("Choose whether a document upload is required.");
+                  return;
+                }
+                setError(null);
+                setInfoMode("confirm");
+              }}
+              className="rounded-md bg-brand px-4 py-2.5 text-sm font-semibold text-background hover:bg-brand-soft"
+            >
+              Review request
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setInfoMode(null);
+                setQuestion("");
+                setDocChoice(null);
+                setError(null);
+              }}
+              className="rounded-md border border-border px-4 py-2.5 text-sm font-semibold text-muted-foreground hover:bg-brand-tint"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-3 rounded-md border border-gold/40 bg-gold-tint/40 p-4">
+          <span className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Confirm the request before it is sent to the client
+          </span>
+          <p className="whitespace-pre-wrap rounded-md border border-border bg-card p-3 text-sm text-foreground">
+            {question.trim()}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Document upload:{" "}
+            <strong className="text-foreground">
+              {docChoice === "yes" ? "required" : "not required"}
+            </strong>{" "}
+            · The file moves to “More information required”.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => decide("info_required")}
+              className="rounded-md bg-brand px-4 py-2.5 text-sm font-semibold text-background hover:bg-brand-soft"
+            >
+              Confirm &amp; send request
+            </button>
+            <button
+              type="button"
+              onClick={() => setInfoMode("compose")}
+              className="rounded-md border border-border px-4 py-2.5 text-sm font-semibold text-muted-foreground hover:bg-brand-tint"
+            >
+              Back to edit
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setInfoMode(null);
+                setQuestion("");
+                setDocChoice(null);
+                setError(null);
+              }}
+              className="rounded-md border border-border px-4 py-2.5 text-sm font-semibold text-muted-foreground hover:bg-brand-tint"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
