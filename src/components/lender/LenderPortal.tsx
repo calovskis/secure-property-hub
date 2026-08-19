@@ -5,6 +5,7 @@ import {
   LEAD_STATUS_LABEL,
   MORTGAGE_STAGE_LABEL,
   isOpenRequest,
+  leadCity,
   leadState,
   mortgageStage,
   useLeads,
@@ -13,7 +14,9 @@ import {
 } from "@/lib/leads";
 
 import { ApplicantFile, Row } from "@/components/lender/ApplicantFile";
-import { formatDateTime } from "@/lib/dates";
+import { countryLabel } from "@/data/countries";
+import { formatDate, formatDateTime } from "@/lib/dates";
+
 
 import { LENDER_ROLE_LABEL, useLenderTeam } from "@/lib/lender-team";
 import { LenderHome } from "@/components/lender/LenderHome";
@@ -321,7 +324,71 @@ function Thread({ lead }: { lead: MortgageLead }) {
   );
 }
 
+/** One key-fact cell in the compact request row. */
+function Cell({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div className="text-sm text-foreground">{children}</div>
+    </div>
+  );
+}
+
+/** Assign the inquiry to a licensed member of the lender company. */
+function AssignBar({ lead }: { lead: MortgageLead }) {
+  const { updateLead } = useLeads();
+  const { members, coversState } = useLenderTeam();
+  const state = leadState(lead);
+  const eligible = members.filter((m) => m.allStates || m.states.includes(state));
+
+  return (
+    <div className="flex flex-wrap items-center gap-3 rounded-md border border-border bg-brand-tint/30 px-4 py-3">
+      <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        Assigned reviewer
+      </span>
+      <select
+        value={lead.assignedToId ?? ""}
+        onChange={(e) => {
+          const member = members.find((m) => m.id === e.target.value);
+          updateLead(
+            lead.id,
+            member
+              ? {
+                  assignedToId: member.id,
+                  assignedToName: member.name,
+                  assignedAt: new Date().toISOString(),
+                }
+              : { assignedToId: undefined, assignedToName: undefined, assignedAt: undefined },
+          );
+
+        }}
+        className="rounded-md border border-input bg-background px-3 py-2 text-xs text-foreground"
+      >
+        <option value="">Unassigned</option>
+        {eligible.map((m) => (
+          <option key={m.id} value={m.id}>
+            {m.name} · {LENDER_ROLE_LABEL[m.role]}
+          </option>
+        ))}
+      </select>
+      <span className="text-xs text-muted-foreground">
+        Process status:{" "}
+        <strong className="text-foreground">
+          {lead.status === "qualified"
+            ? MORTGAGE_STAGE_LABEL[mortgageStage(lead)]
+            : LEAD_STATUS_LABEL[lead.status]}
+        </strong>
+        {lead.assignedAt ? ` · assigned ${date(lead.assignedAt)}` : ""}
+      </span>
+      {!coversState(state) ? (
+        <span className="text-[11px] text-gold">Your seat is not licensed in {state}.</span>
+      ) : null}
+    </div>
+  );
+}
+
 function RequestsInbox({
+
   canDecide,
   focusLeadId,
 }: {
@@ -368,7 +435,7 @@ function RequestsInbox({
         .filter((l) => (state === "all" ? true : leadState(l) === state)),
     [pool, filter, state, view],
   );
-  const selected = visible.find((l) => l.id === selectedId) ?? visible[0];
+  const selected = selectedId ? visible.find((l) => l.id === selectedId) : undefined;
 
   const counts = useMemo(
     () => ({
@@ -468,10 +535,70 @@ function RequestsInbox({
         </label>
       </div>
 
-      <section className="grid grid-cols-1 gap-6 lg:grid-cols-[360px_1fr]">
-        <div className="rounded-lg border border-border bg-card p-4">
+      {selected ? (
+        <section className="space-y-6">
+          <button
+            type="button"
+            onClick={() => setSelectedId(null)}
+            className="rounded-md border border-border px-3 py-2 text-xs font-semibold text-muted-foreground hover:bg-brand-tint"
+          >
+            ← Back to {view === "open" ? "open requests" : "past requests"}
+          </button>
+
+          <div className="rounded-lg border border-border bg-card p-6">
+            <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-bold text-foreground">
+                  Pre-approval application — {selected.clientName}
+                </h2>
+                <p className="text-xs text-muted-foreground">
+                  {selected.propertyLabel}
+                  {selected.creditScore ? ` · soft score ${selected.creditScore}` : ""}
+                </p>
+              </div>
+              <StatusPill status={selected.status} />
+            </div>
+            <AssignBar lead={selected} />
+            <div className="mt-6">
+              <ApplicantFile lead={selected} />
+            </div>
+          </div>
+
+          {selected.debts ? <Step2Summary lead={selected} /> : null}
+          <Thread lead={selected} />
+          {selected.status === "not_qualified" ? (
+            <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
+              Marked not qualified
+              {selected.creditScore ? ` (score ${selected.creditScore})` : ""}. This decision is
+              final for this application.
+            </div>
+          ) : selected.status === "qualified" ? (
+            <div className="rounded-lg border border-success/30 bg-success/10 p-4 text-sm">
+              <div className="font-semibold text-success">
+                Qualified with priced terms
+                {selected.terms
+                  ? ` — ${selected.terms.ratePct}% · ${selected.terms.termYears}y · ${selected.terms.downPaymentPct}% down`
+                  : ""}
+                .
+              </div>
+              <p className="mt-1 text-muted-foreground">
+                {MORTGAGE_STAGE_LABEL[mortgageStage(selected)]} — this file is tracked under
+                Mortgages.
+              </p>
+            </div>
+          ) : canDecide ? (
+            <DecisionPanel key={selected.id} lead={selected} />
+          ) : (
+            <div className="rounded-lg border border-border bg-card p-4 text-sm text-muted-foreground">
+              Your seat can review this file but cannot issue a decision. Ask an underwriter or
+              company admin to sign off.
+            </div>
+          )}
+        </section>
+      ) : (
+        <section className="rounded-lg border border-border bg-card">
           {view === "past" ? (
-            <div className="mb-3 flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-1.5 border-b border-border p-4">
               {(["all", "qualified", "not_qualified"] as const).map((f) => (
                 <button
                   key={f}
@@ -488,8 +615,9 @@ function RequestsInbox({
               ))}
             </div>
           ) : null}
+
           {visible.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">
+            <p className="py-10 text-center text-sm text-muted-foreground">
               No applications in this view yet.
             </p>
           ) : (
@@ -499,92 +627,51 @@ function RequestsInbox({
                   <button
                     type="button"
                     onClick={() => setSelectedId(l.id)}
-                    className={`w-full py-3 text-left ${
-                      selected?.id === l.id ? "opacity-100" : "opacity-80 hover:opacity-100"
-                    }`}
+                    className="grid w-full grid-cols-1 gap-3 p-4 text-left transition-colors hover:bg-brand-tint/40 md:grid-cols-[1.3fr_1fr_0.9fr_0.9fr_1.1fr_auto] md:items-center"
                   >
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="text-sm font-semibold text-foreground">{l.clientName}</span>
-                      <StatusPill status={l.status} />
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {l.propertyLabel} · {money(l.propertyPrice)}
-                    </div>
-                    <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                      <span className="rounded bg-brand-tint px-1.5 py-0.5 font-semibold text-brand">
-                        {leadState(l)}
-                      </span>
-                      {date(l.submittedAt)}
-                    </div>
-                    {l.status === "qualified" ? (
-                      <div className="mt-1 text-[11px] font-semibold text-muted-foreground">
-                        {MORTGAGE_STAGE_LABEL[mortgageStage(l)]}
+                    <div>
+                      <div className="text-sm font-semibold text-foreground">{l.clientName}</div>
+                      <div className="text-[11px] text-muted-foreground">
+                        Submitted {date(l.submittedAt)}
                       </div>
-                    ) : null}
+                    </div>
+
+                    <Cell label="State & city of interest">
+                      {leadCity(l)}, {leadState(l)}
+                    </Cell>
+                    <Cell label="Requested price">{money(l.propertyPrice)}</Cell>
+                    <Cell label="Date of birth">
+                      {l.profile.dateOfBirth ? formatDate(l.profile.dateOfBirth) : "—"}
+                    </Cell>
+                    <Cell label="Citizenship">
+                      {l.usPerson
+                        ? "US citizen / green card"
+                        : [countryLabel(l.profile.citizenship), countryLabel(l.profile.secondCitizenship)]
+                            .filter(Boolean)
+                            .join(" / ") || "Non-US person"}
+                    </Cell>
+
+                    <div className="flex flex-col items-start gap-1 md:items-end">
+                      <StatusPill status={l.status} />
+                      {l.assignedToName ? (
+                        <span className="text-[11px] text-muted-foreground">
+                          {l.status === "qualified"
+                            ? MORTGAGE_STAGE_LABEL[mortgageStage(l)]
+                            : LEAD_STATUS_LABEL[l.status]}{" "}
+                          · {l.assignedToName}
+                        </span>
+                      ) : (
+                        <span className="text-[11px] font-semibold text-gold">Unassigned</span>
+                      )}
+                    </div>
                   </button>
                 </li>
               ))}
             </ul>
           )}
-        </div>
+        </section>
+      )}
 
-        <div className="space-y-6">
-          {!selected ? (
-            <div className="rounded-lg border border-border bg-card p-10 text-center text-sm text-muted-foreground">
-              Select an application to review the full client file.
-            </div>
-          ) : (
-            <>
-              <div className="rounded-lg border border-border bg-card p-6">
-                <div className="mb-4 flex items-center justify-between gap-3">
-                  <div>
-                    <h2 className="text-lg font-bold text-foreground">
-                      Pre-approval application — {selected.clientName}
-                    </h2>
-                    <p className="text-xs text-muted-foreground">
-                      {selected.propertyLabel}
-                      {selected.creditScore ? ` · soft score ${selected.creditScore}` : ""}
-                    </p>
-                  </div>
-                  <StatusPill status={selected.status} />
-                </div>
-                <ApplicantFile lead={selected} />
-              </div>
-
-              {selected.debts ? <Step2Summary lead={selected} /> : null}
-              <Thread lead={selected} />
-              {selected.status === "not_qualified" ? (
-                <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
-                  Marked not qualified
-                  {selected.creditScore ? ` (score ${selected.creditScore})` : ""}. This decision is
-                  final for this application.
-                </div>
-              ) : selected.status === "qualified" ? (
-                <div className="rounded-lg border border-success/30 bg-success/10 p-4 text-sm">
-                  <div className="font-semibold text-success">
-                    Qualified with priced terms
-                    {selected.terms
-                      ? ` — ${selected.terms.ratePct}% · ${selected.terms.termYears}y · ${selected.terms.downPaymentPct}% down`
-                      : ""}
-                    .
-                  </div>
-                  <p className="mt-1 text-muted-foreground">
-                    {MORTGAGE_STAGE_LABEL[mortgageStage(selected)]} — this file is tracked under
-                    Mortgages.
-                  </p>
-                </div>
-              ) : canDecide ? (
-                <DecisionPanel key={selected.id} lead={selected} />
-              ) : (
-                <div className="rounded-lg border border-border bg-card p-4 text-sm text-muted-foreground">
-                  Your seat can review this file but cannot issue a decision. Ask an underwriter or
-                  company admin to sign off.
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      </section>
     </>
   );
 }

@@ -79,9 +79,15 @@ export type MortgageLead = {
   /** Set once the client accepts or declines the priced pre-approval terms. */
   clientDecision?: ClientDecision;
   clientDecisionAt?: string;
+  /** Team member inside the lender company reviewing this inquiry. */
+  assignedToId?: string | undefined;
+  assignedToName?: string | undefined;
+  assignedAt?: string | undefined;
+
   infoRequests: InfoRequest[];
   debts?: DebtProfile;
 };
+
 
 /** Estimates unlock only when the lender returned a score AND full pricing. */
 export function hasPricedOffer(lead?: MortgageLead): lead is MortgageLead {
@@ -122,6 +128,14 @@ export function leadState(lead: MortgageLead) {
   const m = lead.propertyLabel.match(/\b([A-Z]{2})\b\s*$/);
   return m?.[1] ?? "—";
 }
+
+/** City parsed from the property label, e.g. "Austin, TX" → "Austin". */
+export function leadCity(lead: MortgageLead) {
+  const parts = lead.propertyLabel.split(",").map((s) => s.trim());
+  return parts.length > 1 ? parts[parts.length - 2]! : (parts[0] ?? "—");
+}
+
+
 
 /** Convert lender terms into the loan terms used by the investment model. */
 export function toLoanTerms(terms: LenderTerms) {
