@@ -1,6 +1,9 @@
 import { Link } from "@tanstack/react-router";
 import { CountryCombobox } from "@/components/form/CountryCombobox";
 import { AddressFields } from "@/components/form/AddressFields";
+import { CurrencyCombobox } from "@/components/form/CurrencyCombobox";
+import { useFxRates, usdPerUnit } from "@/lib/fx";
+
 import { MonthInput } from "@/components/form/DateInput";
 import { Field, Section, inputClass, money } from "@/components/mortgage/form-ui";
 import type { StepProps } from "@/components/mortgage/questionnaire-state";
