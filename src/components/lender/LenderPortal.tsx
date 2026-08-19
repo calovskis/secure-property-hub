@@ -161,8 +161,10 @@ function DecisionPanel({ lead }: { lead: MortgageLead }) {
     if (status === "info_required") {
       addInfoRequest(lead.id, question.trim(), needsDoc);
       setQuestion("");
-      setNeedsDoc(false);
+      setDocChoice(null);
+      setInfoMode(null);
     }
+
   }
 
   return (
