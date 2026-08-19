@@ -23,7 +23,7 @@ export function CurrencyCombobox({
       options={CURRENCY_OPTIONS}
       onChange={onChange}
       placeholder={placeholder}
-      disabled={disabled}
+      disabled={disabled ?? false}
       emptyHint="No matching currency. We support the currencies listed here."
     />
   );
