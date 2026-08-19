@@ -1,0 +1,2 @@
+/** Generated city names by subdivision code. */
+export default {"10":["Crane"],"01":["Oistins"],"02":["Greenland"],"04":["Holetown"],"06":["Bathsheba"],"08":["Bridgetown"],"09":["Speightstown"]} as Record<string, string[]>;

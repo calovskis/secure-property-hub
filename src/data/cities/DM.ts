@@ -1,0 +1,2 @@
+/** Generated city names by subdivision code. */
+export default {"10":["Mahaut","Pont Cassé"],"11":["Colihaut"],"02":["Calibishie","Marigot","Wesley","Woodford Hill"],"03":["Castle Bruce","Rosalie"],"04":["Roseau"],"05":["Portsmouth"],"06":["Saint Joseph","Salisbury"],"07":["Pointe Michel"],"08":["Soufrière"],"09":["Berekua","La Plaine"]} as Record<string, string[]>;

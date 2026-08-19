@@ -1,0 +1,2 @@
+/** Generated city names by subdivision code. */
+export default {"DA":["Doha"],"KH":["Al Ghuwayrīyah","Al Khawr"],"MS":["Ar Ruways","Fuwayriţ","Madīnat ash Shamāl"],"RA":["Ar Rayyān","Umm Bāb"],"SH":["Al Jumaylīyah","Ash Shīḩānīyah","Dukhān"],"US":["Umm Şalāl Muḩammad"],"WA":["Al Wakrah","Al Wukayr","Musay‘īd"]} as Record<string, string[]>;

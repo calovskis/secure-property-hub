@@ -38,6 +38,8 @@ import type {
 
 export type AddressEntry = {
   id: string;
+  /** ISO 3166-1 alpha-2 country code. */
+  country?: string;
   street: string;
   city: string;
   state: string;

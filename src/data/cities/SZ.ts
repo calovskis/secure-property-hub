@@ -1,0 +1,2 @@
+/** Generated city names by subdivision code. */
+export default {"HH":["Bulembu","Hhukwini","Lobamba","Mbabane","Nkhaba","Piggs Peak"],"LU":["Big Bend","Dvokodvweni Inkhundla","Lomashasha","Mhlume","Nsoko","Siteki","Tshaneni","Vuvulane"],"MA":["Bhunya","Ekukhanyeni","Kwaluseni","Malkerns","Manzini","Manzini South","Mhlambanyatsi","Ngwempisi","Ntondozi","Sidvokodvo"],"SH":["Hlatikulu","Hluti","Kubuta","Lavumisa","Matsanjeni","Ngudzeni","Nhlangano","Nkwene","Sigwe Inkhundla","Zombodze Ikhundla"]} as Record<string, string[]>;

@@ -1,0 +1,2 @@
+/** Generated city names by subdivision code. */
+export default {"01":["Acquaviva"],"02":["Poggio di Chiesanuova"],"03":["Domagnano"],"04":["Faetano"],"05":["Fiorentino"],"06":["Borgo Maggiore"],"07":["San Marino"],"08":["Monte Giardino"],"09":["Serravalle"]} as Record<string, string[]>;

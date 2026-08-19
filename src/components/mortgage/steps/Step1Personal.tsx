@@ -1,5 +1,6 @@
 import { CountryCombobox } from "@/components/form/CountryCombobox";
 import { StateCombobox } from "@/components/form/StateCombobox";
+import { AddressFields } from "@/components/form/AddressFields";
 import { DateInput, MonthInput } from "@/components/form/DateInput";
 import { Field, Section, YesNo, inputClass } from "@/components/mortgage/form-ui";
 import { emptyAddress, type StepProps } from "@/components/mortgage/questionnaire-state";
@@ -287,29 +288,16 @@ export function Step1Personal({ data, patch, usPerson }: StepProps) {
                 ) : null}
               </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <input
-                  placeholder="Street address"
-                  value={a.street}
-                  onChange={(e) => patchAddress(a.id, { street: e.target.value })}
-                  className={`${inputClass} sm:col-span-2`}
-                />
-                <input
-                  placeholder="City"
-                  value={a.city}
-                  onChange={(e) => patchAddress(a.id, { city: e.target.value })}
-                  className={inputClass}
-                />
-                <div className="grid grid-cols-2 gap-3">
-                  <StateCombobox
-                    value={a.state}
-                    placeholder="State"
-                    onChange={(code) => patchAddress(a.id, { state: code })}
-                  />
-                  <input
-                    placeholder="ZIP"
-                    value={a.zip}
-                    onChange={(e) => patchAddress(a.id, { zip: e.target.value })}
-                    className={inputClass}
+                <div className="sm:col-span-2">
+                  <AddressFields
+                    value={{
+                      country: a.country ?? "US",
+                      state: a.state,
+                      city: a.city,
+                      street: a.street,
+                      zip: a.zip,
+                    }}
+                    onChange={(p) => patchAddress(a.id, p)}
                   />
                 </div>
                 <label className="text-[11px] text-muted-foreground">

@@ -1,0 +1,2 @@
+/** Generated city names by subdivision code. */
+export default {"100":["Kayangel"],"150":["Koror","Koror Town"],"212":["Melekeok Village"],"214":["Ulimang"],"218":["Mengellang"],"222":["Ngardmau"],"226":["Ngchesar Hamlet"],"227":["Imeong Hamlet"],"228":["Ngerkeai"],"350":["Kloulklubed"],"370":["Sonsorol Village"],"002":["Ngchemiangel"],"004":["Ngetkib"],"010":["Angaur State"],"050":["Tobi Village"]} as Record<string, string[]>;

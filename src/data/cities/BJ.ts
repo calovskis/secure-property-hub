@@ -1,0 +1,2 @@
+/** Generated city names by subdivision code. */
+export default {"AK":["Guilmaro","Natitingou","Tanguieta"],"AL":["Banikoara","Kandi","Malanville"],"AQ":["Abomey-Calavi","Allada","Hévié","Hinvi","Ouidah"],"BO":["Bembèrèkè","Bétérou","Nikki","Parakou","Tchaourou"],"CO":["Comé","Dassa-Zoumé","Savalou","Savé"],"DO":["Bassila","Commune of Djougou","Djougou"],"KO":["Djakotomey","Dogbo"],"LI":["Cotonou"],"MO":["Commune of Athieme","Lokossa"],"OU":["Porto-Novo"],"PL":["Kétou","Pobé","Sakété"],"ZO":["Abomey","Bohicon","Commune of Agbangnizoun","Cové"]} as Record<string, string[]>;

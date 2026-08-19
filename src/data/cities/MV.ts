@@ -1,0 +1,2 @@
+/** Generated city names by subdivision code. */
+export default {"12":["Muli"],"13":["Ugoofaaru"],"17":["Kudahuvadhoo"],"23":["Kulhudhuffushi"],"24":["Funadhoo"],"25":["Manadhoo"],"26":["Guraidhoo","Hulhumale","Maafushi","Male"],"27":["Viligili"],"28":["Thinadhoo"],"29":["Fuvahmulah"],"01":["Hithadhoo","Meedhoo"],"03":["Naifaru"],"04":["Felidhoo"],"05":["Fonadhoo"],"07":["Dhidhdhoo"],"08":["Veymandoo"],"SC":["Mahibadhoo"]} as Record<string, string[]>;

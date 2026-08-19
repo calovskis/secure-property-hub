@@ -4,12 +4,8 @@ import { AppHeader } from "@/components/layout/AppHeader";
 import { MortgageQuestionnaire } from "@/components/mortgage/MortgageQuestionnaire";
 import { PARTNER_LABEL, ROLE_LABEL, fullName, useAuth } from "@/lib/auth";
 import { formatDate, formatDateTime, isoToUsDate } from "@/lib/dates";
-import {
-  LEAD_STATUS_LABEL,
-  hasPricedOffer,
-  useLeads,
-  type MortgageLead,
-} from "@/lib/leads";
+import { countryLabel } from "@/data/countries";
+import { LEAD_STATUS_LABEL, hasPricedOffer, useLeads, type MortgageLead } from "@/lib/leads";
 import { useMortgageDrafts } from "@/lib/mortgage-draft";
 import { useI18n } from "@/lib/i18n";
 
@@ -202,7 +198,9 @@ function ProfilePage() {
     );
   }
 
-  const leads = leadsForClient(user.email).slice().sort((a, b) => (a.submittedAt < b.submittedAt ? 1 : -1));
+  const leads = leadsForClient(user.email)
+    .slice()
+    .sort((a, b) => (a.submittedAt < b.submittedAt ? 1 : -1));
   const profile = user.mortgageProfile;
   const unfinished = allDrafts(user.email).filter((d) => !d.submitted);
 
@@ -235,10 +233,7 @@ function ProfilePage() {
                 <Row label="Full name" value={fullName(user)} />
                 <Row label="Email" value={user.email} />
                 <Row label="Phone" value={user.phone} />
-                <Row
-                  label="US citizen / green card"
-                  value={user.usPerson ? "Yes" : "No"}
-                />
+                <Row label="US citizen / green card" value={user.usPerson ? "Yes" : "No"} />
                 <Row
                   label="Access"
                   value={`${ROLE_LABEL[user.role]}${
@@ -288,7 +283,9 @@ function ProfilePage() {
                     {profile.addresses.map((a) => (
                       <li key={a.id} className="rounded-md border border-border p-3 text-sm">
                         <div className="text-foreground">
-                          {[a.street, a.city, a.state, a.zip].filter(Boolean).join(", ")}
+                          {[a.street, a.city, a.state, a.zip, countryLabel(a.country ?? "")]
+                            .filter(Boolean)
+                            .join(", ")}
                         </div>
                         <div className="text-xs text-muted-foreground">
                           {isoToUsDate(a.from) || a.from || "—"} —{" "}

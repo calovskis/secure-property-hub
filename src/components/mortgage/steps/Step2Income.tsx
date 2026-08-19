@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { CountryCombobox } from "@/components/form/CountryCombobox";
-import { StateCombobox } from "@/components/form/StateCombobox";
+import { AddressFields } from "@/components/form/AddressFields";
 import { MonthInput } from "@/components/form/DateInput";
 import { Field, Section, inputClass, money } from "@/components/mortgage/form-ui";
 import type { StepProps } from "@/components/mortgage/questionnaire-state";
@@ -166,48 +166,24 @@ export function Step2Income({ data, patch, usPerson }: StepProps) {
                   <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                     {s.type === "self_employed" ? "Business address" : "Employer address"}
                   </div>
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <input
-                      placeholder="Street address"
-                      value={s.address.street}
-                      onChange={(e) =>
-                        patchIncome(s.id, { address: { ...s.address, street: e.target.value } })
-                      }
-                      className={`${inputClass} sm:col-span-2`}
-                    />
-                    <input
-                      placeholder="City"
-                      value={s.address.city}
-                      onChange={(e) =>
-                        patchIncome(s.id, { address: { ...s.address, city: e.target.value } })
-                      }
-                      className={inputClass}
-                    />
-                    <div className="grid grid-cols-2 gap-3">
-                      <StateCombobox
-                        value={s.address.state}
-                        placeholder="State"
-                        onChange={(code) =>
-                          patchIncome(s.id, { address: { ...s.address, state: code } })
-                        }
-                      />
-                      <input
-                        placeholder="ZIP"
-                        value={s.address.zip}
-                        onChange={(e) =>
-                          patchIncome(s.id, { address: { ...s.address, zip: e.target.value } })
-                        }
-                        className={inputClass}
-                      />
-                    </div>
-                    <div className="sm:col-span-2">
-                      <CountryCombobox
-                        value={s.address.country}
-                        onChange={(v) => patchIncome(s.id, { address: { ...s.address, country: v } })}
-                        placeholder="Country"
-                      />
-                    </div>
-                  </div>
+                  <AddressFields
+                    value={{
+                      country: s.address.country || "US",
+                      state: s.address.state,
+                      city: s.address.city,
+                      street: s.address.street,
+                      zip: s.address.zip,
+                    }}
+                    onChange={(p) =>
+                      patchIncome(s.id, {
+                        address: {
+                          ...s.address,
+                          ...p,
+                          ...(p.country !== undefined ? { country: p.country } : {}),
+                        },
+                      })
+                    }
+                  />
                 </div>
 
                 {/* Type-specific questions */}

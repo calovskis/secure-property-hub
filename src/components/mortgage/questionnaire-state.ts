@@ -18,6 +18,7 @@ import {
 
 export const emptyAddress = (): AddressEntry => ({
   id: uid(),
+  country: "US",
   street: "",
   city: "",
   state: "",

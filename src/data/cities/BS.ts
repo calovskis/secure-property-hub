@@ -1,0 +1,2 @@
+/** Generated city names by subdivision code. */
+export default {"BI":["Alice Town"],"CI":["Arthur’s Town"],"CK":["Colonel Hill"],"CO":["Marsh Harbour"],"EG":["High Rock"],"EX":["George Town"],"FP":["Freeport","Lucaya"],"HI":["Dunmore Town"],"IN":["Matthew Town"],"LI":["Clarence Town"],"MG":["Abraham’s Bay"],"NO":["Cooper’s Town"],"NP":["Nassau"],"NS":["Andros Town","San Andros"],"RC":["Port Nelson"],"RI":["Duncan Town"],"SS":["Cockburn Town"],"SW":["Spanish Wells"],"WG":["West End"]} as Record<string, string[]>;

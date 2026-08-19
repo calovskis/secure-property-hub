@@ -1,0 +1,2 @@
+/** Generated city names by subdivision code. */
+export default {"A":["Maseru","Nako"],"B":["Butha-Buthe"],"C":["Leribe","Maputsoe"],"D":["Teyateyaneng"],"E":["Mafeteng"],"F":["Mohale’s Hoek"],"G":["Quthing"],"H":["Qacha’s Nek"],"J":["Mokhotlong"],"K":["Thaba-Tseka"]} as Record<string, string[]>;

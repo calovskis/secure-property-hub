@@ -1,0 +1,2 @@
+/** Generated city names by subdivision code. */
+export default {"ARI":["Arima"],"CHA":["Chaguanas","Ward of Chaguanas"],"CTT":["Couva","Tabaquite"],"DMN":["Petit Valley","Ward of Diego Martin"],"ETO":["Scarborough"],"PED":["Debe","Peñal"],"POS":["Mucurapo","Port of Spain"],"PRT":["Princes Town"],"PTF":["Point Fortin"],"SFO":["Marabella","Mon Repos","San Fernando"],"SGE":["Sangre Grande"],"SIP":["Siparia","Ward of Siparia"],"SJL":["Laventille"],"TUP":["Arouca","Paradise","Tunapuna"],"WTO":["Rio Claro"]} as Record<string, string[]>;
