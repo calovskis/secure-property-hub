@@ -368,7 +368,7 @@ function RequestsInbox({
         .filter((l) => (state === "all" ? true : leadState(l) === state)),
     [pool, filter, state, view],
   );
-  const selected = visible.find((l) => l.id === selectedId) ?? visible[0];
+  const selected = selectedId ? visible.find((l) => l.id === selectedId) : undefined;
 
   const counts = useMemo(
     () => ({
