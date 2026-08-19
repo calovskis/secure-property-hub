@@ -90,6 +90,13 @@ function AccountMenu() {
             </span>
           </div>
           <Link
+            to="/profile"
+            onClick={() => setOpen(false)}
+            className="mt-1 flex w-full rounded-md px-3 py-2 text-left text-sm text-foreground hover:bg-brand-tint hover:text-brand"
+          >
+            {t("My profile")}
+          </Link>
+          <Link
             to={homeRouteFor(user.role)}
             onClick={() => setOpen(false)}
             className="mt-1 flex w-full rounded-md px-3 py-2 text-left text-sm text-foreground hover:bg-brand-tint hover:text-brand"
@@ -143,6 +150,7 @@ const NAV: NavItem[] = [
     label: "My Portfolio",
     icon: "📁",
     items: [
+      { label: "My Profile", icon: "👤", to: "/profile" },
       { label: "My Properties", icon: "🏘️", to: "/my-properties" },
       { label: "My Services", icon: "📋", to: "/my-services" },
       { label: "My Financials", icon: "💳", to: "/financials" },

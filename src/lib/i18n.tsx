@@ -37,6 +37,8 @@ const RU: Record<string, string> = {
   "Tenant Management": "Управление арендаторами",
   "Service Requests": "Заявки на услуги",
   "My Properties": "Мои объекты",
+  "My Profile": "Мой профиль",
+  "My profile": "Мой профиль",
   "My Services": "Мои услуги",
   "My Financials": "Мои финансы",
   Analytics: "Аналитика",
