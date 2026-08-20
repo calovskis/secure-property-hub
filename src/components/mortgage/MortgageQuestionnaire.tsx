@@ -78,6 +78,7 @@ export function MortgageQuestionnaire({
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [savedNote, setSavedNote] = useState(false);
+  const [visaDoc, setVisaDoc] = useState<string | null>(null);
 
   const patch = (p: Partial<QuestionnaireData>) => {
     setData((prev) => ({ ...prev, ...p }));
@@ -122,7 +123,7 @@ export function MortgageQuestionnaire({
         return "Please select which visa or status you hold.";
       if (
         !hasTwoYearCoverage(
-          data.addresses.map((x) => ({ from: x.from, to: x.to, current: x.present })),
+          data.addresses.map((x) => ({ from: x.from, to: x.to, current: Boolean(x.present) })),
         )
       )
         return "Less than 2 years of address history provided — please add earlier addresses covering at least the last 2 years.";
@@ -151,8 +152,8 @@ export function MortgageQuestionnaire({
   const lastStepId = steps[steps.length - 1]?.id ?? 5;
 
   /** Next/previous visible step id. */
-  const shift = (from: number, dir: 1 | -1) => {
-    const ids = steps.map((s) => s.id);
+  const shift = (from: number, dir: 1 | -1): number => {
+    const ids: number[] = steps.map((s) => s.id);
     const i = ids.indexOf(from);
     return ids[Math.min(ids.length - 1, Math.max(0, i + dir))] ?? from;
   };
