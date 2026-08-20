@@ -135,3 +135,36 @@ export function CheckboxList({
 }
 
 export const money = (n: number) => `$${Math.round(n).toLocaleString()}`;
+
+export function Note({ children }: { children: ReactNode }) {
+  return (
+    <p className="rounded-md bg-brand-tint/60 p-3 text-xs text-muted-foreground">{children}</p>
+  );
+}
+
+export function InlineAddButton({
+  label,
+  onClick,
+}: {
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="mt-3 w-full rounded-md border border-dashed border-border px-3 py-2 text-xs font-semibold text-brand hover:bg-brand-tint"
+    >
+      {label}
+    </button>
+  );
+}
+
+export function HistoryWarning({ message }: { message: string | null }) {
+  if (!message) return null;
+  return (
+    <p className="rounded-md bg-destructive/10 px-3 py-2 text-xs font-medium text-destructive">
+      {message}
+    </p>
+  );
+}

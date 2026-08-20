@@ -1,12 +1,8 @@
-import { CheckboxList, Field, Section, inputClass } from "@/components/mortgage/form-ui";
+import { CheckboxList, Field, Note, Section, inputClass } from "@/components/mortgage/form-ui";
 import type { StepProps } from "@/components/mortgage/questionnaire-state";
-import {
-  ETHNICITY_OPTIONS,
-  RACE_OPTIONS,
-  type Demographics,
-} from "@/lib/mortgage-form";
+import { ETHNICITY_OPTIONS, RACE_OPTIONS, type Demographics } from "@/lib/mortgage-form";
 
-export function Step4Demographics({ data, patch }: StepProps) {
+export function Step5Demographics({ data, patch }: StepProps) {
   const g = data.demographics;
   const patchG = (p: Partial<Demographics>) => patch({ demographics: { ...g, ...p } });
 
@@ -19,13 +15,23 @@ export function Step4Demographics({ data, patch }: StepProps) {
 
   return (
     <div className="space-y-6">
-      <p className="rounded-md bg-brand-tint/60 p-3 text-xs text-muted-foreground">
-        The law requires lenders to ask for this information to monitor compliance with equal
-        credit opportunity and fair housing laws. You are not required to provide it, and it does
-        not affect your pre-approval decision.
-      </p>
+      <Note>
+        This information is requested by the federal government under the Equal Credit
+        Opportunity Act, in order to monitor compliance with equal credit opportunity and fair
+        housing laws. You are not required to provide it, and it does not affect your pre-approval
+        decision.{" "}
+        <a
+          href="https://www.justice.gov/crt/equal-credit-opportunity-act-3"
+          target="_blank"
+          rel="noreferrer"
+          className="font-semibold text-brand underline"
+        >
+          Learn more
+        </a>
+        .
+      </Note>
 
-      <Section title="Ethnicity">
+      <Section title="Ethnicity" subtitle="Select all that apply.">
         <CheckboxList
           options={ETHNICITY_OPTIONS}
           selected={g.ethnicity}
@@ -58,7 +64,7 @@ export function Step4Demographics({ data, patch }: StepProps) {
         </label>
       </Section>
 
-      <Section title="Race">
+      <Section title="Race" subtitle="Select all that apply.">
         <CheckboxList
           options={RACE_OPTIONS}
           selected={g.race}

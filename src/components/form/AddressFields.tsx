@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { CountryCombobox } from "@/components/form/CountryCombobox";
 import { Typeahead } from "@/components/form/Typeahead";
 import {
@@ -6,8 +6,10 @@ import {
   hasSubdivisions,
   loadCities,
   regionTerm,
+  searchAddress,
   subdivisionLabel,
   subdivisionsFor,
+  type AddressSuggestion,
 } from "@/lib/geo";
 
 const inputClass =
@@ -20,6 +22,8 @@ export type AddressValue = {
   street: string;
   zip: string;
 };
+
+const SEARCH_DEBOUNCE_MS = 350;
 
 /** Country → state/region → city, with a postal code. Works worldwide. */
 export function AddressFields({
@@ -53,13 +57,88 @@ export function AddressFields({
     [country],
   );
 
-  const cityOptions = useMemo(
-    () => citiesFor(cityMap, value.state).map((c) => ({ value: c, label: c })),
-    [cityMap, value.state],
+  const regionName = useMemo(
+    () => subdivisionsFor(country).find((s) => s.code === value.state)?.name,
+    [country, value.state],
   );
+
+  const cityList = useMemo(
+    () => citiesFor(cityMap, value.state, regionName),
+    [cityMap, value.state, regionName],
+  );
+  const cityOptions = useMemo(() => cityList.map((c) => ({ value: c, label: c })), [cityList]);
 
   const regionsKnown = hasSubdivisions(country);
   const term = regionTerm(country);
+
+  const cityEmptyHint =
+    value.state && cityList.length === 0
+      ? "No listed cities for this region yet — type your city as it is written locally."
+      : "No match — you can type your city as it is written locally.";
+
+  /* --------------------------- address autocomplete --------------------------- */
+  const [addressQuery, setAddressQuery] = useState(value.street);
+  const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const abortRef = useRef<AbortController | undefined>(undefined);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setAddressQuery(value.street);
+  }, [value.street]);
+
+  useEffect(() => {
+    function onDocClick(e: MouseEvent) {
+      if (!wrapRef.current?.contains(e.target as Node)) setShowSuggestions(false);
+    }
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, []);
+
+  function handleStreetChange(text: string) {
+    setAddressQuery(text);
+    onChange({ street: text });
+    setShowSuggestions(true);
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    abortRef.current?.abort();
+
+    const query = text.trim();
+    if (query.length < 3) {
+      setSuggestions([]);
+      return;
+    }
+
+    debounceRef.current = setTimeout(() => {
+      const controller = new AbortController();
+      abortRef.current = controller;
+      searchAddress(query, country, controller.signal).then((results) => {
+        if (!controller.signal.aborted) setSuggestions(results);
+      });
+    }, SEARCH_DEBOUNCE_MS);
+  }
+
+  function resolveStateCode(stateName: string): string {
+    if (!stateName) return "";
+    const bare = stateName.trim().toLowerCase();
+    const hit = subdivisionsFor(country).find(
+      (sub) => sub.name.toLowerCase() === bare || sub.name.toLowerCase().startsWith(bare),
+    );
+    return hit ? hit.code : stateName;
+  }
+
+  function pickSuggestion(s: AddressSuggestion) {
+    setAddressQuery(s.street || s.label);
+    setSuggestions([]);
+    setShowSuggestions(false);
+    onChange({
+      street: s.street || s.label,
+      ...(s.city ? { city: s.city } : {}),
+      ...(s.state ? { state: resolveStateCode(s.state) } : {}),
+      ...(s.zip ? { zip: s.zip } : {}),
+    });
+  }
 
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -95,15 +174,36 @@ export function AddressFields({
         allowFreeText
         placeholder="City"
         onChange={(city) => onChange({ city })}
-        emptyHint="No match — you can type your city as it is written locally."
+        emptyHint={cityEmptyHint}
       />
 
-      <input
-        placeholder={streetPlaceholder}
-        value={value.street}
-        onChange={(e) => onChange({ street: e.target.value })}
-        className={`${inputClass} sm:col-span-2`}
-      />
+      <div ref={wrapRef} className="relative sm:col-span-2">
+        <input
+          placeholder={streetPlaceholder}
+          value={addressQuery}
+          autoComplete="off"
+          onFocus={() => setShowSuggestions(true)}
+          onChange={(e) => handleStreetChange(e.target.value)}
+          className={inputClass}
+        />
+
+        {showSuggestions && suggestions.length ? (
+          <ul className="absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-md border border-border bg-popover p-1 shadow-lg">
+            {suggestions.map((s, i) => (
+              <li key={`${s.label}-${i}`}>
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => pickSuggestion(s)}
+                  className="flex w-full rounded-md px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-brand-tint"
+                >
+                  {s.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </div>
 
       <input
         placeholder={country === "US" ? "ZIP" : "Postal code"}

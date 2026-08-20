@@ -1,26 +1,9 @@
 import { DateInput } from "@/components/form/DateInput";
-import { Field, QuestionRow, Section, inputClass, money } from "@/components/mortgage/form-ui";
+import { Field, QuestionRow, Section, inputClass } from "@/components/mortgage/form-ui";
 import type { StepProps } from "@/components/mortgage/questionnaire-state";
-import {
-  totalLiabilities,
-  uid,
-  type Declarations,
-  type Liabilities,
-  type MilitaryService,
-} from "@/lib/mortgage-form";
+import type { Declarations, MilitaryService } from "@/lib/mortgage-form";
 
-const LIABILITY_ROWS: { key: keyof Liabilities; label: string }[] = [
-  { key: "propertyLoans", label: "Property loans / rent" },
-  { key: "vehicleLoans", label: "Vehicle loans & leases" },
-  { key: "creditCards", label: "Credit cards (minimum payments)" },
-  { key: "studentLoans", label: "Student loans" },
-  { key: "alimonyChildSupport", label: "Alimony / child support" },
-  { key: "insurance", label: "Insurance premiums" },
-];
-
-export function Step3Declarations({ data, patch }: StepProps) {
-  const l = data.liabilities;
-  const patchL = (p: Partial<Liabilities>) => patch({ liabilities: { ...l, ...p } });
+export function Step4Declarations({ data, patch }: StepProps) {
   const d = data.declarations;
   const patchD = (p: Partial<Declarations>) => patch({ declarations: { ...d, ...p } });
   const m = data.military;
@@ -35,84 +18,6 @@ export function Step3Declarations({ data, patch }: StepProps) {
 
   return (
     <div className="space-y-6">
-      <Section
-        title="Monthly existing liabilities"
-        subtitle="Current monthly payments — used for your debt-to-income ratio."
-        action={
-          <button
-            type="button"
-            onClick={() =>
-              patchL({ other: [...l.other, { id: uid(), label: "", amount: "" }] })
-            }
-            className="rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-brand hover:bg-brand-tint"
-          >
-            + Add obligation
-          </button>
-        }
-      >
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {LIABILITY_ROWS.map((row) => (
-            <Field key={row.key} label={row.label}>
-              <input
-                inputMode="decimal"
-                placeholder="0"
-                value={l[row.key] as string}
-                onChange={(e) => patchL({ [row.key]: e.target.value } as Partial<Liabilities>)}
-                className={inputClass}
-              />
-            </Field>
-          ))}
-        </div>
-
-        {l.other.length ? (
-          <div className="mt-3 space-y-2">
-            {l.other.map((o) => (
-              <div key={o.id} className="flex gap-2">
-                <input
-                  placeholder="Obligation"
-                  value={o.label}
-                  onChange={(e) =>
-                    patchL({
-                      other: l.other.map((x) =>
-                        x.id === o.id ? { ...x, label: e.target.value } : x,
-                      ),
-                    })
-                  }
-                  className={inputClass}
-                />
-                <input
-                  inputMode="decimal"
-                  placeholder="Monthly"
-                  value={o.amount}
-                  onChange={(e) =>
-                    patchL({
-                      other: l.other.map((x) =>
-                        x.id === o.id ? { ...x, amount: e.target.value } : x,
-                      ),
-                    })
-                  }
-                  className={`${inputClass} max-w-[150px]`}
-                />
-                <button
-                  type="button"
-                  onClick={() => patchL({ other: l.other.filter((x) => x.id !== o.id) })}
-                  className="shrink-0 rounded-md border border-border px-3 text-xs font-semibold text-destructive hover:bg-destructive/10"
-                >
-                  Remove
-                </button>
-              </div>
-            ))}
-          </div>
-        ) : null}
-
-        <div className="mt-4 flex items-center justify-between rounded-md bg-brand-tint/60 p-3">
-          <span className="text-xs uppercase tracking-wide text-muted-foreground">
-            Total monthly obligations
-          </span>
-          <strong className="text-lg font-bold text-brand">{money(totalLiabilities(l))}</strong>
-        </div>
-      </Section>
-
       <Section title="Military service" subtitle="US Armed Forces service history.">
         <QuestionRow
           question="Did you (or your deceased spouse) ever serve, or are you currently serving, in the United States Armed Forces?"
@@ -168,12 +73,6 @@ export function Step3Declarations({ data, patch }: StepProps) {
 
       <Section title="Declarations — about this property and your money">
         <QuestionRow
-          question="Will you occupy the property as your primary residence?"
-          name="primaryResidence"
-          value={d.primaryResidence}
-          onChange={(v) => patchD({ primaryResidence: v })}
-        />
-        <QuestionRow
           question="Have you had an ownership interest in another property in the last three years?"
           name="ownership3y"
           value={d.ownershipInterestLast3Years}
@@ -196,12 +95,6 @@ export function Step3Declarations({ data, patch }: StepProps) {
             </Field>
           </div>
         </QuestionRow>
-        <QuestionRow
-          question="Do you have a family relationship or business affiliation with the seller of the property?"
-          name="sellerRelation"
-          value={d.familyOrBusinessWithSeller}
-          onChange={(v) => patchD({ familyOrBusinessWithSeller: v })}
-        />
         <QuestionRow
           question="Are you borrowing any money for this transaction that is not disclosed on this application?"
           name="otherMoney"

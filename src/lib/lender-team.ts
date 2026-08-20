@@ -4,6 +4,7 @@
  * seats are scoped to the functions their job actually needs.
  */
 import { useCallback, useSyncExternalStore } from "react";
+import { usDateToIso } from "@/lib/dates";
 
 export type LenderRole =
   | "admin"
@@ -23,9 +24,9 @@ export type LenderPermission =
 
 export const LENDER_ROLE_LABEL: Record<LenderRole, string> = {
   admin: "Company admin",
-  loan_officer: "Loan officer",
+  loan_officer: "Loan Officer",
   underwriter: "Underwriter",
-  processor: "Loan processor",
+  processor: "Loan Officer",
   analyst: "Analyst",
 };
 
@@ -74,6 +75,10 @@ export type LenderMember = {
   /** Two-letter state codes this member can see when `allStates` is false. */
   states: string[];
   licenses: LenderLicense[];
+  /** Loan officer vacation mode — excluded from auto-assignment while active. */
+  vacationFrom?: string;
+  vacationUntil?: string;
+  vacationReason?: string;
 };
 
 /** Can this member see work located in `code` (a two-letter state)? */
@@ -83,7 +88,85 @@ export function memberCoversState(member: LenderMember | null, code: string) {
   return member.states.includes(code);
 }
 
-type TeamState = { members: LenderMember[]; activeId: string };
+/** Is this member licensed to originate business in `code`? */
+export function memberLicensedIn(member: LenderMember, code: string) {
+  if (member.allStates) return true;
+  return member.licenses.some((l) => l.state === code);
+}
+
+function inRange(iso: string, from?: string, until?: string) {
+  if (!from || !until) return false;
+  return iso >= from && iso <= until;
+}
+
+/** Is this member currently on vacation (excluded from auto-assignment)? */
+export function isMemberOnVacation(member: LenderMember, todayIso = new Date().toISOString().slice(0, 10)) {
+  return inRange(todayIso, member.vacationFrom, member.vacationUntil);
+}
+
+/* ---------------------------------------------------- assignment settings */
+
+export type AssignmentStrategy = "license_capacity" | "random" | "manual" | "custom";
+
+export const ASSIGNMENT_STRATEGY_LABEL: Record<AssignmentStrategy, string> = {
+  license_capacity: "Automatic — by license & capacity",
+  random: "Automatic — random among licensed officers",
+  manual: "Manual — team members choose who assigns to whom",
+  custom: "Custom rules",
+};
+
+export type RuleConditionKind =
+  | "price_below"
+  | "price_above"
+  | "city_equals"
+  | "state_equals"
+  | "cap_per_day"
+  | "cap_per_week";
+
+export const RULE_CONDITION_LABEL: Record<RuleConditionKind, string> = {
+  price_below: "Purchase price is below",
+  price_above: "Purchase price is above",
+  city_equals: "Property city equals",
+  state_equals: "Property state equals",
+  cap_per_day: "Cap files per day at",
+  cap_per_week: "Cap files per week at",
+};
+
+export type CustomRule = {
+  id: string;
+  condition: RuleConditionKind;
+  /** Number for price/cap conditions, two-letter state or city text for location. */
+  value: string;
+  targetMemberId: string;
+};
+
+export type ManualAssignPermission = {
+  assignerId: string;
+  /** Members this assigner is allowed to hand files to. */
+  assigneeIds: string[];
+};
+
+export type AssignmentSettings = {
+  strategy: AssignmentStrategy;
+  customRules: CustomRule[];
+  customFallbackMemberId?: string;
+  manualPermissions: ManualAssignPermission[];
+};
+
+export const defaultAssignmentSettings = (): AssignmentSettings => ({
+  strategy: "license_capacity",
+  customRules: [],
+  manualPermissions: [],
+});
+
+export type CompanyVacation = { from: string; until: string; reason: string } | null;
+
+type TeamState = {
+  members: LenderMember[];
+  activeId: string;
+  assignment: AssignmentSettings;
+  companyVacation: CompanyVacation;
+};
 
 const STORAGE_KEY = "loqal.lender.team.v2";
 
@@ -136,22 +219,27 @@ const DEFAULT_STATE = (): TeamState => {
       licenses: [],
     },
   ];
-  return { members, activeId: "seed-admin" };
+  return { members, activeId: "seed-admin", assignment: defaultAssignmentSettings(), companyVacation: null };
 };
 
 let state: TeamState | null = null;
 const listeners = new Set<() => void>();
 
-/** Older stored members may predate state scoping / licences. */
-function normalise(next: TeamState): TeamState {
+/** Older stored members may predate state scoping / licences / vacation. */
+function normalise(next: Partial<TeamState>): TeamState {
   return {
-    ...next,
     members: (next.members ?? []).map((m) => ({
       ...m,
       allStates: m.allStates ?? true,
       states: m.states ?? [],
       licenses: m.licenses ?? [],
     })),
+    activeId: next.activeId ?? "",
+    assignment: {
+      ...defaultAssignmentSettings(),
+      ...(next.assignment ?? {}),
+    },
+    companyVacation: next.companyVacation ?? null,
   };
 }
 
@@ -160,12 +248,23 @@ function load(): TeamState {
   let next = DEFAULT_STATE();
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (raw) next = normalise(JSON.parse(raw) as TeamState);
+    if (raw) next = normalise(JSON.parse(raw) as Partial<TeamState>);
   } catch {
     /* ignore */
   }
   state = next;
   return next;
+}
+
+/** Raw, non-hook accessor — used by leads.tsx to auto-assign incoming files. */
+export function getTeamSnapshot(): TeamState {
+  return load();
+}
+
+export function isCompanyOnVacation(snapshot: TeamState = load(), todayIso = new Date().toISOString().slice(0, 10)) {
+  const v = snapshot.companyVacation;
+  if (!v) return false;
+  return inRange(todayIso, v.from, v.until);
 }
 
 function commit(next: TeamState) {
@@ -178,7 +277,77 @@ function commit(next: TeamState) {
   listeners.forEach((l) => l());
 }
 
-const SERVER_SNAPSHOT: TeamState = { members: [], activeId: "" };
+const SERVER_SNAPSHOT: TeamState = {
+  members: [],
+  activeId: "",
+  assignment: defaultAssignmentSettings(),
+  companyVacation: null,
+};
+
+/* --------------------------------------------------------- auto-assignment */
+
+export type AssignContext = { state: string; city: string; price: number };
+export type AssignCounts = {
+  openByMember: Record<string, number>;
+  todayByMember: Record<string, number>;
+  weekByMember: Record<string, number>;
+};
+
+function ruleApplies(rule: CustomRule, ctx: AssignContext, counts: AssignCounts): boolean {
+  switch (rule.condition) {
+    case "price_below":
+      return ctx.price < Number(rule.value || 0);
+    case "price_above":
+      return ctx.price > Number(rule.value || 0);
+    case "city_equals":
+      return ctx.city.trim().toLowerCase() === rule.value.trim().toLowerCase();
+    case "state_equals":
+      return ctx.state.trim().toUpperCase() === rule.value.trim().toUpperCase();
+    case "cap_per_day":
+      return (counts.todayByMember[rule.targetMemberId] ?? 0) < Number(rule.value || 0);
+    case "cap_per_week":
+      return (counts.weekByMember[rule.targetMemberId] ?? 0) < Number(rule.value || 0);
+    default:
+      return false;
+  }
+}
+
+/** Decide who a new pre-approval file should be routed to, per the company's assignment settings. */
+export function pickAssignee(
+  ctx: AssignContext,
+  counts: AssignCounts,
+  snapshot: TeamState = load(),
+): { id: string; name: string } | null {
+  const today = new Date().toISOString().slice(0, 10);
+  const available = snapshot.members.filter((m) => !isMemberOnVacation(m, today));
+  const licensedPool = available.filter((m) => memberLicensedIn(m, ctx.state));
+  const settings = snapshot.assignment;
+
+  if (settings.strategy === "manual") return null;
+
+  if (settings.strategy === "random") {
+    if (!licensedPool.length) return null;
+    const pick = licensedPool[Math.floor(Math.random() * licensedPool.length)]!;
+    return { id: pick.id, name: pick.name };
+  }
+
+  if (settings.strategy === "custom") {
+    for (const rule of settings.customRules) {
+      if (!ruleApplies(rule, ctx, counts)) continue;
+      const target = available.find((m) => m.id === rule.targetMemberId);
+      if (target) return { id: target.id, name: target.name };
+    }
+    const fallback = available.find((m) => m.id === settings.customFallbackMemberId);
+    return fallback ? { id: fallback.id, name: fallback.name } : null;
+  }
+
+  // license_capacity (default)
+  if (!licensedPool.length) return null;
+  const sorted = [...licensedPool].sort(
+    (a, b) => (counts.openByMember[a.id] ?? 0) - (counts.openByMember[b.id] ?? 0),
+  );
+  return { id: sorted[0]!.id, name: sorted[0]!.name };
+}
 
 export function useLenderTeam() {
   const snapshot = useSyncExternalStore(
@@ -277,6 +446,7 @@ export function useLenderTeam() {
     const cur = load();
     const members = cur.members.filter((m) => m.id !== id);
     commit({
+      ...cur,
       members,
       activeId: cur.activeId === id ? (members[0]?.id ?? "") : cur.activeId,
     });
@@ -284,6 +454,71 @@ export function useLenderTeam() {
 
   const setActive = useCallback((id: string) => {
     commit({ ...load(), activeId: id });
+  }, []);
+
+  /** Set/clear vacation mode for a member. Pass mm/dd/yyyy strings or empty to clear. */
+  const setVacation = useCallback((id: string, fromUs: string, untilUs: string, reason?: string) => {
+    const from = usDateToIso(fromUs);
+    const until = usDateToIso(untilUs);
+    update(id, {
+      vacationFrom: from || undefined,
+      vacationUntil: until || undefined,
+      vacationReason: from && until ? reason : undefined,
+    });
+  }, [update]);
+
+  const setAssignmentSettings = useCallback((patch: Partial<AssignmentSettings>) => {
+    const cur = load();
+    commit({ ...cur, assignment: { ...cur.assignment, ...patch } });
+  }, []);
+
+  const addCustomRule = useCallback((rule: Omit<CustomRule, "id">) => {
+    const cur = load();
+    commit({
+      ...cur,
+      assignment: { ...cur.assignment, customRules: [...cur.assignment.customRules, { ...rule, id: uid() }] },
+    });
+  }, []);
+
+  const removeCustomRule = useCallback((id: string) => {
+    const cur = load();
+    commit({
+      ...cur,
+      assignment: { ...cur.assignment, customRules: cur.assignment.customRules.filter((r) => r.id !== id) },
+    });
+  }, []);
+
+  const moveCustomRule = useCallback((id: string, direction: "up" | "down") => {
+    const cur = load();
+    const rules = [...cur.assignment.customRules];
+    const idx = rules.findIndex((r) => r.id === id);
+    if (idx < 0) return;
+    const swapWith = direction === "up" ? idx - 1 : idx + 1;
+    if (swapWith < 0 || swapWith >= rules.length) return;
+    [rules[idx], rules[swapWith]] = [rules[swapWith]!, rules[idx]!];
+    commit({ ...cur, assignment: { ...cur.assignment, customRules: rules } });
+  }, []);
+
+  const setManualPermission = useCallback((assignerId: string, assigneeIds: string[]) => {
+    const cur = load();
+    const rest = cur.assignment.manualPermissions.filter((p) => p.assignerId !== assignerId);
+    commit({
+      ...cur,
+      assignment: { ...cur.assignment, manualPermissions: [...rest, { assignerId, assigneeIds }] },
+    });
+  }, []);
+
+  /** Set/clear company-wide vacation mode (mm/dd/yyyy). */
+  const setCompanyVacation = useCallback((fromUs: string, untilUs: string, reason: string) => {
+    const cur = load();
+    const from = usDateToIso(fromUs);
+    const until = usDateToIso(untilUs);
+    commit({ ...cur, companyVacation: from && until ? { from, until, reason } : null });
+  }, []);
+
+  const clearCompanyVacation = useCallback(() => {
+    const cur = load();
+    commit({ ...cur, companyVacation: null });
   }, []);
 
   const active =
@@ -307,5 +542,16 @@ export function useLenderTeam() {
     removeLicense,
     removeMember,
     setActive,
+    setVacation,
+    assignment: snapshot.assignment,
+    setAssignmentSettings,
+    addCustomRule,
+    removeCustomRule,
+    moveCustomRule,
+    setManualPermission,
+    companyVacation: snapshot.companyVacation,
+    isCompanyOnVacation: isCompanyOnVacation(snapshot),
+    setCompanyVacation,
+    clearCompanyVacation,
   };
 }
