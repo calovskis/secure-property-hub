@@ -104,13 +104,21 @@ function DecisionPanel({ lead }: { lead: MortgageLead }) {
 
 
   function decide(status: LeadStatus) {
+    if (status === "info_required") {
+      if (!question.trim()) {
+        setError("Describe what the client must answer or upload.");
+        return;
+      }
+      setError(null);
+      addInfoRequest(lead.id, question.trim(), needsDoc);
+      setQuestion("");
+      setDocChoice(null);
+      setInfoMode(null);
+      return;
+    }
     const parsed = Number(score);
     if (!parsed || parsed < 300 || parsed > 850) {
       setError("A soft credit report score between 300 and 850 is required with every decision.");
-      return;
-    }
-    if (status === "info_required" && !question.trim()) {
-      setError("Describe what the client must answer or upload.");
       return;
     }
     const rate = Number(ratePct);
@@ -158,13 +166,6 @@ function DecisionPanel({ lead }: { lead: MortgageLead }) {
           }
         : {}),
     });
-    if (status === "info_required") {
-      addInfoRequest(lead.id, question.trim(), needsDoc);
-      setQuestion("");
-      setDocChoice(null);
-      setInfoMode(null);
-    }
-
   }
 
   return (
