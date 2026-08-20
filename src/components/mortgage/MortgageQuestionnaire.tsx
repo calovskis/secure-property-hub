@@ -272,21 +272,60 @@ export function MortgageQuestionnaire({
         </DialogHeader>
 
         {done ? (
-          <div className="rounded-lg border border-success/30 bg-success/10 p-6 text-center">
-            <div className="text-3xl">✅</div>
-            <div className="mt-2 text-base font-semibold text-foreground">Information received</div>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Your pre-approval application has been sent to a Loqal mortgage lending partner. You
-              will be notified here as soon as they respond.
-            </p>
+          <div className="space-y-4">
+            <div className="rounded-lg border border-success/30 bg-success/10 p-6 text-center">
+              <div className="text-3xl">✅</div>
+              <div className="mt-2 text-base font-semibold text-foreground">
+                Information received
+              </div>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Your pre-approval application has been sent to a Loqal mortgage lending partner. You
+                will be notified here as soon as they respond.
+              </p>
+            </div>
+
+            {data.visaActive ? (
+              <div className="rounded-lg border border-brand/40 bg-brand-tint/50 p-5 text-left">
+                <div className="text-sm font-semibold text-foreground">
+                  One more step: visa document verification
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Because you hold a US visa or status, please upload a copy or scan of your valid
+                  visa document so the lending partner can verify it.
+                </p>
+                {visaDoc ? (
+                  <p className="mt-3 text-sm text-success">Uploaded: {visaDoc}</p>
+                ) : (
+                  <label className="mt-3 inline-flex cursor-pointer items-center gap-2 rounded-md border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground hover:bg-brand-tint">
+                    Upload a copy/scan of your valid visa
+                    <input
+                      type="file"
+                      accept="image/*,application/pdf"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        setVisaDoc(file.name);
+                        saveMortgageProfile({
+                          visaDocumentName: file.name,
+                          visaDocumentUploadedAt: new Date().toISOString(),
+                        } as Partial<MortgageProfile> as MortgageProfile);
+                      }}
+                    />
+                  </label>
+                )}
+              </div>
+            ) : null}
+
             <button
               type="button"
               onClick={() => onOpenChange(false)}
-              className="mt-4 rounded-md bg-brand px-4 py-2 text-sm font-semibold text-background hover:bg-brand-soft"
+              className="w-full rounded-md bg-brand px-4 py-2 text-sm font-semibold text-background hover:bg-brand-soft"
             >
               Back to the property
             </button>
           </div>
+
         ) : (
           <form onSubmit={submit} className="space-y-6">
             {/* STEPPER */}
