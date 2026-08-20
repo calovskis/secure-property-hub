@@ -19,6 +19,7 @@ import { formatDate, formatDateTime } from "@/lib/dates";
 
 
 import { LENDER_ROLE_LABEL, useLenderTeam } from "@/lib/lender-team";
+import { usStatusOf, US_STATUS_LABEL, hasForeignIncome } from "@/lib/mortgage-form";
 import { LenderHome } from "@/components/lender/LenderHome";
 import { LenderAnalytics } from "@/components/lender/LenderAnalytics";
 import { LenderMortgages } from "@/components/lender/LenderMortgages";
@@ -666,8 +667,15 @@ function RequestsInbox({
               <StatusPill status={selected.status} />
             </div>
             <AssignBar lead={selected} />
-            <div className="mt-6">
-              <ApplicantFile lead={selected} />
+            <div className="mt-4">
+              <a
+                href={`/lender/file/${selected.id}`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-md border border-border px-4 py-2 text-xs font-semibold text-brand hover:bg-brand-tint"
+              >
+                Open full applicant file ↗
+              </a>
             </div>
           </div>
 
@@ -747,8 +755,13 @@ function RequestsInbox({
                       {leadCity(l)}, {leadState(l)}
                     </Cell>
                     <Cell label="Requested price">{money(l.propertyPrice)}</Cell>
-                    <Cell label="Date of birth">
-                      {l.profile.dateOfBirth ? formatDate(l.profile.dateOfBirth) : "—"}
+                    <Cell label="US status">
+                      {US_STATUS_LABEL[usStatusOf(l.profile, l.usPerson)]}
+                      {hasForeignIncome(l.profile.incomes ?? []) ? (
+                        <span className="ml-1.5 rounded-full bg-gold-tint px-1.5 py-0.5 text-[10px] font-semibold text-gold underline decoration-gold decoration-2 underline-offset-2">
+                          Foreign income
+                        </span>
+                      ) : null}
                     </Cell>
                     <Cell label="Citizenship">
                       {l.usPerson
