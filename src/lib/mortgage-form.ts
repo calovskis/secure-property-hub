@@ -340,8 +340,6 @@ export type Liabilities = {
   vehicleLoans: string;
   creditCards: string;
   studentLoans: string;
-  alimonyChildSupport: string;
-  insurance: string;
   other: OtherLiability[];
 };
 
@@ -350,8 +348,6 @@ export const emptyLiabilities = (): Liabilities => ({
   vehicleLoans: "",
   creditCards: "",
   studentLoans: "",
-  alimonyChildSupport: "",
-  insurance: "",
   other: [],
 });
 
@@ -361,8 +357,6 @@ export function totalLiabilities(l: Liabilities): number {
     num(l.vehicleLoans) +
     num(l.creditCards) +
     num(l.studentLoans) +
-    num(l.alimonyChildSupport) +
-    num(l.insurance) +
     l.other.reduce((sum, o) => sum + num(o.amount), 0)
   );
 }
@@ -372,6 +366,7 @@ export function totalLiabilities(l: Liabilities): number {
 export const QUESTIONNAIRE_STEPS = [
   { id: 1, title: "Personal, citizenship & addresses" },
   { id: 2, title: "Work, income & identification" },
-  { id: 3, title: "Monthly liabilities & declarations" },
-  { id: 4, title: "Demographic information" },
+  { id: 3, title: "Monthly liabilities" },
+  { id: 4, title: "Declarations & military service" },
+  { id: 5, title: "Demographic information" },
 ] as const;
