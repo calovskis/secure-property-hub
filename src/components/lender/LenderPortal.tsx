@@ -19,10 +19,12 @@ import { formatDate, formatDateTime } from "@/lib/dates";
 
 
 import { LENDER_ROLE_LABEL, useLenderTeam } from "@/lib/lender-team";
+import { usStatusOf, US_STATUS_LABEL, hasForeignIncome } from "@/lib/mortgage-form";
 import { LenderHome } from "@/components/lender/LenderHome";
 import { LenderAnalytics } from "@/components/lender/LenderAnalytics";
 import { LenderMortgages } from "@/components/lender/LenderMortgages";
 import { LenderTeam } from "@/components/lender/LenderTeam";
+import { InfoRequestDialog } from "@/components/lender/InfoRequestDialog";
 
 const money = (n: number) => `$${Math.round(n).toLocaleString()}`;
 const date = (iso?: string) => formatDateTime(iso);
@@ -96,21 +98,14 @@ function DecisionPanel({ lead }: { lead: MortgageLead }) {
   const [taxInsPct, setTaxInsPct] = useState(
     lead.terms ? String(lead.terms.taxInsurancePct) : "1.45",
   );
-  const [question, setQuestion] = useState("");
-  const [docChoice, setDocChoice] = useState<"yes" | "no" | null>(null);
-  const [infoMode, setInfoMode] = useState<null | "compose" | "confirm">(null);
+  const [infoOpen, setInfoOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const needsDoc = docChoice === "yes";
 
 
   function decide(status: LeadStatus) {
     const parsed = Number(score);
     if (!parsed || parsed < 300 || parsed > 850) {
       setError("A soft credit report score between 300 and 850 is required with every decision.");
-      return;
-    }
-    if (status === "info_required" && !question.trim()) {
-      setError("Describe what the client must answer or upload.");
       return;
     }
     const rate = Number(ratePct);
@@ -158,13 +153,6 @@ function DecisionPanel({ lead }: { lead: MortgageLead }) {
           }
         : {}),
     });
-    if (status === "info_required") {
-      addInfoRequest(lead.id, question.trim(), needsDoc);
-      setQuestion("");
-      setDocChoice(null);
-      setInfoMode(null);
-    }
-
   }
 
   return (
@@ -243,151 +231,39 @@ function DecisionPanel({ lead }: { lead: MortgageLead }) {
 
       {error ? <p className="text-xs font-medium text-destructive">{error}</p> : null}
 
-      {infoMode === null ? (
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => decide("qualified")}
-            className="rounded-md bg-success px-4 py-2.5 text-sm font-semibold text-background hover:opacity-90"
-          >
-            Qualified
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setError(null);
-              setInfoMode("compose");
-            }}
-            className="rounded-md bg-brand px-4 py-2.5 text-sm font-semibold text-background hover:bg-brand-soft"
-          >
-            Information request
-          </button>
-          <button
-            type="button"
-            onClick={() => decide("not_qualified")}
-            className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-2.5 text-sm font-semibold text-destructive hover:bg-destructive/20"
-          >
-            Not qualified
-          </button>
-        </div>
-      ) : infoMode === "compose" ? (
-        <div className="space-y-3 rounded-md border border-border bg-brand-tint/30 p-4">
-          <span className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            New information request
-          </span>
-          <textarea
-            rows={3}
-            autoFocus
-            placeholder="e.g. Please confirm your bonus structure and upload your last two pay stubs."
-            value={question}
-            onChange={(e) => setQuestion(e.target.value)}
-            className={inputClass}
-          />
-          <div>
-            <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Is a document upload required?
-            </span>
-            <div className="flex gap-2">
-              {(
-                [
-                  ["yes", "Yes — client must upload"],
-                  ["no", "No — written answer only"],
-                ] as const
-              ).map(([value, label]) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => setDocChoice(value)}
-                  className={`rounded-md px-3 py-2 text-xs font-semibold ${
-                    docChoice === value
-                      ? "bg-brand text-background"
-                      : "border border-border text-muted-foreground hover:bg-brand-tint"
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-2 pt-1">
-            <button
-              type="button"
-              onClick={() => {
-                if (!question.trim()) {
-                  setError("Describe what the client must answer or upload.");
-                  return;
-                }
-                if (docChoice === null) {
-                  setError("Choose whether a document upload is required.");
-                  return;
-                }
-                setError(null);
-                setInfoMode("confirm");
-              }}
-              className="rounded-md bg-brand px-4 py-2.5 text-sm font-semibold text-background hover:bg-brand-soft"
-            >
-              Review request
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setInfoMode(null);
-                setQuestion("");
-                setDocChoice(null);
-                setError(null);
-              }}
-              className="rounded-md border border-border px-4 py-2.5 text-sm font-semibold text-muted-foreground hover:bg-brand-tint"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="space-y-3 rounded-md border border-gold/40 bg-gold-tint/40 p-4">
-          <span className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Confirm the request before it is sent to the client
-          </span>
-          <p className="whitespace-pre-wrap rounded-md border border-border bg-card p-3 text-sm text-foreground">
-            {question.trim()}
-          </p>
-          <p className="text-xs text-muted-foreground">
-            Document upload:{" "}
-            <strong className="text-foreground">
-              {docChoice === "yes" ? "required" : "not required"}
-            </strong>{" "}
-            · The file moves to “More information required”.
-          </p>
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => decide("info_required")}
-              className="rounded-md bg-brand px-4 py-2.5 text-sm font-semibold text-background hover:bg-brand-soft"
-            >
-              Confirm &amp; send request
-            </button>
-            <button
-              type="button"
-              onClick={() => setInfoMode("compose")}
-              className="rounded-md border border-border px-4 py-2.5 text-sm font-semibold text-muted-foreground hover:bg-brand-tint"
-            >
-              Back to edit
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setInfoMode(null);
-                setQuestion("");
-                setDocChoice(null);
-                setError(null);
-              }}
-              className="rounded-md border border-border px-4 py-2.5 text-sm font-semibold text-muted-foreground hover:bg-brand-tint"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => decide("qualified")}
+          className="rounded-md bg-success px-4 py-2.5 text-sm font-semibold text-background hover:opacity-90"
+        >
+          Qualified
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setError(null);
+            setInfoOpen(true);
+          }}
+          className="rounded-md bg-brand px-4 py-2.5 text-sm font-semibold text-background hover:bg-brand-soft"
+        >
+          Information request
+        </button>
+        <button
+          type="button"
+          onClick={() => decide("not_qualified")}
+          className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-2.5 text-sm font-semibold text-destructive hover:bg-destructive/20"
+        >
+          Not qualified
+        </button>
+      </div>
 
+      <InfoRequestDialog
+        lead={lead}
+        open={infoOpen}
+        onOpenChange={setInfoOpen}
+        onSend={(question, needsDocument) => addInfoRequest(lead.id, question, needsDocument)}
+      />
     </div>
   );
 }
@@ -665,8 +541,15 @@ function RequestsInbox({
               <StatusPill status={selected.status} />
             </div>
             <AssignBar lead={selected} />
-            <div className="mt-6">
-              <ApplicantFile lead={selected} />
+            <div className="mt-4">
+              <a
+                href={`/lender/file/${selected.id}`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-md border border-border px-4 py-2 text-xs font-semibold text-brand hover:bg-brand-tint"
+              >
+                Open full applicant file ↗
+              </a>
             </div>
           </div>
 
@@ -746,8 +629,13 @@ function RequestsInbox({
                       {leadCity(l)}, {leadState(l)}
                     </Cell>
                     <Cell label="Requested price">{money(l.propertyPrice)}</Cell>
-                    <Cell label="Date of birth">
-                      {l.profile.dateOfBirth ? formatDate(l.profile.dateOfBirth) : "—"}
+                    <Cell label="US status">
+                      {US_STATUS_LABEL[usStatusOf(l.profile, l.usPerson)]}
+                      {hasForeignIncome(l.profile.incomes ?? []) ? (
+                        <span className="ml-1.5 rounded-full bg-gold-tint px-1.5 py-0.5 text-[10px] font-semibold text-gold underline decoration-gold decoration-2 underline-offset-2">
+                          Foreign income
+                        </span>
+                      ) : null}
                     </Cell>
                     <Cell label="Citizenship">
                       {l.usPerson
@@ -818,7 +706,7 @@ export function LenderPortal({
   const [focusLeadId, setFocusLeadId] = useState<string | null>(null);
   const tab = tabProp ?? tabState;
   const setTab = onTabChange ?? setTabState;
-  const { active, can } = useLenderTeam();
+  const { active, can, isCompanyOnVacation, companyVacation } = useLenderTeam();
 
   const allowed: Record<TabId, boolean> = {
     home: true,
@@ -841,6 +729,16 @@ export function LenderPortal({
           </span>
         ) : null}
       </div>
+
+      {isCompanyOnVacation && companyVacation ? (
+        <div className="mb-6 rounded-lg border border-gold/40 bg-gold-tint px-4 py-3 text-sm text-foreground">
+          <span className="font-semibold">Company-wide vacation mode is on</span> ({formatDate(companyVacation.from)} –{" "}
+          {formatDate(companyVacation.until)}
+          {companyVacation.reason ? ` · ${companyVacation.reason}` : ""}). New Loqal clients are being
+          routed to the next preferred partner while your company is away. Existing files in this
+          portal are unaffected.
+        </div>
+      ) : null}
 
       {current === "home" ? (
         <LenderHome

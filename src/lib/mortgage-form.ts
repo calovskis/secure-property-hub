@@ -40,14 +40,45 @@ export type UnmarriedAddendum = {
 
 export type Dependent = { id: string; age: string };
 
+/* ----------------------------------------------------------- US status */
+
+export type UsStatus =
+  | "citizen"
+  | "green_card"
+  | "work_visa"
+  | "student_visa"
+  | "protected_status"
+  | "refugee"
+  | "u4u"
+  | "none";
+
+export const US_STATUS_LABEL: Record<UsStatus, string> = {
+  citizen: "US citizen",
+  green_card: "Green card holder",
+  work_visa: "Work visa",
+  student_visa: "Student visa",
+  protected_status: "Protected status",
+  refugee: "Refugee status",
+  u4u: "U4U (Uniting for Ukraine)",
+  none: "No US status",
+};
+
+/** Visa options offered to non-US persons who hold an active US visa/status. */
+export const VISA_STATUS_OPTIONS: UsStatus[] = [
+  "work_visa",
+  "student_visa",
+  "protected_status",
+  "refugee",
+  "u4u",
+];
+
 /* -------------------------------------------------------------- income */
 
-export type IncomeType = "w2" | "self_employed" | "foreign" | "seasonal";
+export type IncomeType = "w2" | "self_employed" | "seasonal";
 
 export const INCOME_TYPE_LABEL: Record<IncomeType, string> = {
-  w2: "Base / W-2 employee income",
+  w2: "Base / W2 employee income",
   self_employed: "Business owner / self-employed",
-  foreign: "Foreign income",
   seasonal: "Seasonal / variable income",
 };
 
@@ -83,9 +114,10 @@ export type IncomeSource = {
   to: string;
   current: boolean;
 
-  /** W-2 employee */
+  /** W2 employee */
   payType: PayType;
-  salaryMonthly: string;
+  /** Annual gross salary (monthly is derived). */
+  annualSalary: string;
   hourlyRate: string;
   monthlyHours: string;
   relatedParty: RelatedParty;
@@ -94,16 +126,18 @@ export type IncomeSource = {
   /** Self-employed */
   ownershipPct: string;
   businessType: string;
-  netIncomeYear1: string;
-  netIncomeYear2: string;
+  /** Annual income — last year (US persons only, optional). */
+  annualIncomeLastYear: string;
+  /** Estimated annual income for the current year. */
+  estimatedAnnualIncome: string;
 
   /** Seasonal */
   seasonMonthlyGross: string;
   monthsPerYear: string;
 
-  /** Foreign */
+  /** Set automatically when the employer address is outside the US. */
   currency: string;
-  monthlyGrossForeign: string;
+  /** Units of USD per 1 unit of `currency`. */
   fxRate: string;
 };
 
@@ -125,31 +159,41 @@ export const emptyIncome = (type: IncomeType = "w2"): IncomeSource => ({
   to: "",
   current: true,
   payType: "salary",
-  salaryMonthly: "",
+  annualSalary: "",
   hourlyRate: "",
   monthlyHours: "",
   relatedParty: "none",
   relatedPartyDetail: "",
   ownershipPct: "",
   businessType: "",
-  netIncomeYear1: "",
-  netIncomeYear2: "",
+  annualIncomeLastYear: "",
+  estimatedAnnualIncome: "",
   seasonMonthlyGross: "",
   monthsPerYear: "",
   currency: "",
-  monthlyGrossForeign: "",
   fxRate: "",
 });
 
 export const num = (v?: string) => Number(String(v ?? "").replace(/[^0-9.]/g, "")) || 0;
 
-/** Averaged monthly gross for one income source, normalized to USD. */
-export function monthlyForIncome(s: IncomeSource): number {
+/** Income earned outside the US (employer/business address is not US). */
+export function isForeignIncome(s: IncomeSource): boolean {
+  return Boolean(s.address.country) && s.address.country !== "US";
+}
+
+export function hasForeignIncome(sources: IncomeSource[]): boolean {
+  return sources.some(isForeignIncome);
+}
+
+/** Monthly gross in the source's own currency (before FX). */
+export function monthlyNativeForIncome(s: IncomeSource): number {
   switch (s.type) {
     case "w2":
-      return s.payType === "hourly" ? num(s.hourlyRate) * num(s.monthlyHours) : num(s.salaryMonthly);
+      return s.payType === "hourly"
+        ? num(s.hourlyRate) * num(s.monthlyHours)
+        : num(s.annualSalary) / 12;
     case "self_employed": {
-      const years = [num(s.netIncomeYear1), num(s.netIncomeYear2)].filter((n) => n > 0);
+      const years = [num(s.annualIncomeLastYear), num(s.estimatedAnnualIncome)].filter((n) => n > 0);
       if (!years.length) return 0;
       return years.reduce((a, b) => a + b, 0) / years.length / 12;
     }
@@ -157,11 +201,16 @@ export function monthlyForIncome(s: IncomeSource): number {
       const months = Math.min(12, num(s.monthsPerYear));
       return (num(s.seasonMonthlyGross) * months) / 12;
     }
-    case "foreign":
-      return num(s.monthlyGrossForeign) * (num(s.fxRate) || 1);
     default:
       return 0;
   }
+}
+
+/** Averaged monthly gross for one income source, normalized to USD. */
+export function monthlyForIncome(s: IncomeSource): number {
+  const native = monthlyNativeForIncome(s);
+  if (!isForeignIncome(s)) return native;
+  return native * (num(s.fxRate) || 1);
 }
 
 export function totalMonthlyIncome(sources: IncomeSource[]): number {
@@ -291,8 +340,6 @@ export type Liabilities = {
   vehicleLoans: string;
   creditCards: string;
   studentLoans: string;
-  alimonyChildSupport: string;
-  insurance: string;
   other: OtherLiability[];
 };
 
@@ -301,8 +348,6 @@ export const emptyLiabilities = (): Liabilities => ({
   vehicleLoans: "",
   creditCards: "",
   studentLoans: "",
-  alimonyChildSupport: "",
-  insurance: "",
   other: [],
 });
 
@@ -312,8 +357,6 @@ export function totalLiabilities(l: Liabilities): number {
     num(l.vehicleLoans) +
     num(l.creditCards) +
     num(l.studentLoans) +
-    num(l.alimonyChildSupport) +
-    num(l.insurance) +
     l.other.reduce((sum, o) => sum + num(o.amount), 0)
   );
 }
@@ -323,6 +366,20 @@ export function totalLiabilities(l: Liabilities): number {
 export const QUESTIONNAIRE_STEPS = [
   { id: 1, title: "Personal, citizenship & addresses" },
   { id: 2, title: "Work, income & identification" },
-  { id: 3, title: "Monthly liabilities & declarations" },
-  { id: 4, title: "Demographic information" },
+  { id: 3, title: "Monthly liabilities" },
+  { id: 4, title: "Declarations & military service" },
+  { id: 5, title: "Demographic information" },
 ] as const;
+
+/* ------------------------------------------------------------ us status */
+
+/** Derive the US status shown to lending partners from a mortgage profile. */
+export function usStatusOf(
+  profile: { usStatus?: UsStatus; visaType?: UsStatus; usVisaActive?: boolean } | undefined,
+  usPerson: boolean,
+): UsStatus {
+  if (profile?.usStatus) return profile.usStatus;
+  if (usPerson) return "citizen";
+  if (profile?.usVisaActive && profile.visaType) return profile.visaType;
+  return "none";
+}

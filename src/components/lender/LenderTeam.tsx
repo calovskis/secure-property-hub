@@ -2,12 +2,16 @@ import { useEffect, useRef, useState } from "react";
 import {
   LENDER_ROLE_DESCRIPTION,
   LENDER_ROLE_LABEL,
+  isMemberOnVacation,
   permissionsFor,
   useLenderTeam,
   type LenderLicense,
   type LenderMember,
   type LenderRole,
 } from "@/lib/lender-team";
+import { DateInput } from "@/components/form/DateInput";
+import { isoToUsDate } from "@/lib/dates";
+import { AssignmentSettingsPanel } from "@/components/lender/AssignmentSettings";
 import { formatDate } from "@/lib/dates";
 import { US_STATE_NAME_BY_CODE } from "@/data/us-states";
 import { StateCombobox, StateMultiSelect } from "@/components/form/StateCombobox";
@@ -248,6 +252,146 @@ function RowMenu({
   );
 }
 
+function VacationEditor({ member }: { member: LenderMember }) {
+  const { setVacation } = useLenderTeam();
+  const [from, setFrom] = useState(member.vacationFrom ?? "");
+  const [until, setUntil] = useState(member.vacationUntil ?? "");
+  const [reason, setReason] = useState(member.vacationReason ?? "");
+  const onVacation = isMemberOnVacation(member);
+
+  function save() {
+    setVacation(member.id, isoToUsDate(from), isoToUsDate(until), reason.trim());
+  }
+
+  function clear() {
+    setFrom("");
+    setUntil("");
+    setReason("");
+    setVacation(member.id, "", "", "");
+  }
+
+  return (
+    <div className="rounded-md border border-border bg-background p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="text-sm font-semibold text-foreground">Vacation mode</div>
+        {onVacation ? (
+          <span className="rounded-full bg-gold-tint px-2.5 py-1 text-[11px] font-semibold text-gold">
+            Away
+          </span>
+        ) : null}
+      </div>
+      <p className="mt-1 text-xs text-muted-foreground">
+        While vacation dates are active, this seat is excluded from automatic file assignment.
+      </p>
+      <div className="mt-3 grid gap-3 sm:grid-cols-3">
+        <label className="block">
+          <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            From
+          </span>
+          <DateInput value={from} onChange={setFrom} className={inputClass} />
+        </label>
+        <label className="block">
+          <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            Until
+          </span>
+          <DateInput value={until} onChange={setUntil} className={inputClass} />
+        </label>
+        <label className="block">
+          <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            Reason (optional)
+          </span>
+          <input
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="e.g. Annual leave"
+            className={inputClass}
+          />
+        </label>
+      </div>
+      <div className="mt-3 flex gap-2">
+        <button type="button" onClick={save} className="rounded-md bg-brand px-4 py-2 text-xs font-semibold text-background">
+          Save vacation dates
+        </button>
+        {member.vacationFrom || member.vacationUntil ? (
+          <button type="button" onClick={clear} className={btnGhost}>
+            Clear
+          </button>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function CompanyVacationEditor() {
+  const { companyVacation, setCompanyVacation, clearCompanyVacation, isCompanyOnVacation } = useLenderTeam();
+  const [from, setFrom] = useState(companyVacation?.from ?? "");
+  const [until, setUntil] = useState(companyVacation?.until ?? "");
+  const [reason, setReason] = useState(companyVacation?.reason ?? "");
+
+  function save() {
+    setCompanyVacation(isoToUsDate(from), isoToUsDate(until), reason.trim());
+  }
+
+  function clear() {
+    setFrom("");
+    setUntil("");
+    setReason("");
+    clearCompanyVacation();
+  }
+
+  return (
+    <div className="rounded-lg border border-border bg-card p-6">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-base font-semibold text-foreground">Company-wide vacation mode</h2>
+        {isCompanyOnVacation ? (
+          <span className="rounded-full bg-gold-tint px-2.5 py-1 text-[11px] font-semibold text-gold">
+            Currently on
+          </span>
+        ) : null}
+      </div>
+      <p className="mt-1 text-xs text-muted-foreground">
+        While active, new Loqal clients are routed to the next preferred partner instead of your
+        company. Existing files stay in this portal and are unaffected.
+      </p>
+      <div className="mt-3 grid gap-3 sm:grid-cols-3">
+        <label className="block">
+          <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            From
+          </span>
+          <DateInput value={from} onChange={setFrom} className={inputClass} />
+        </label>
+        <label className="block">
+          <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            Until
+          </span>
+          <DateInput value={until} onChange={setUntil} className={inputClass} />
+        </label>
+        <label className="block">
+          <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            Reason (optional)
+          </span>
+          <input
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="e.g. Office closed for holidays"
+            className={inputClass}
+          />
+        </label>
+      </div>
+      <div className="mt-3 flex gap-2">
+        <button type="button" onClick={save} className="rounded-md bg-brand px-4 py-2 text-xs font-semibold text-background">
+          Save company vacation
+        </button>
+        {companyVacation ? (
+          <button type="button" onClick={clear} className={btnGhost}>
+            Turn off
+          </button>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 export function LenderTeam() {
   const {
     members,
@@ -382,6 +526,9 @@ export function LenderTeam() {
                   ? active.states.join(", ")
                   : "no states assigned — this seat sees no requests or mortgages"}
             </p>
+            <div className="mt-4">
+              <VacationEditor member={active} />
+            </div>
           </>
         ) : null}
       </div>
@@ -468,6 +615,11 @@ export function LenderTeam() {
                     <span className="rounded-full bg-brand-tint px-2.5 py-1 text-[11px] font-semibold text-brand">
                       {LENDER_ROLE_LABEL[m.role]}
                     </span>
+                    {isMemberOnVacation(m) ? (
+                      <span className="ml-1.5 rounded-full bg-gold-tint px-2.5 py-1 text-[11px] font-semibold text-gold">
+                        Away
+                      </span>
+                    ) : null}
                   </td>
                   <td className="py-3 text-xs text-muted-foreground">
                     {m.allStates ? (
@@ -634,6 +786,10 @@ export function LenderTeam() {
           </div>
         </form>
       ) : null}
+
+      {manage ? <AssignmentSettingsPanel members={members} /> : null}
+
+      {manage ? <CompanyVacationEditor /> : null}
 
       <div className="rounded-lg border border-border bg-card p-6">
         <h2 className="text-base font-semibold text-foreground">Role reference</h2>

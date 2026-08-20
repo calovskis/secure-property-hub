@@ -1,17 +1,27 @@
 import { Link } from "@tanstack/react-router";
-import { CountryCombobox } from "@/components/form/CountryCombobox";
 import { AddressFields } from "@/components/form/AddressFields";
 import { CurrencyCombobox } from "@/components/form/CurrencyCombobox";
 import { useFxRates, usdPerUnit } from "@/lib/fx";
+import { currencyForCountry } from "@/components/mortgage/country-currency";
+import { hasTwoYearCoverage } from "@/components/mortgage/history-coverage";
 
 import { MonthInput } from "@/components/form/DateInput";
-import { Field, Section, inputClass, money } from "@/components/mortgage/form-ui";
+import {
+  Field,
+  HistoryWarning,
+  InlineAddButton,
+  Section,
+  inputClass,
+  money,
+} from "@/components/mortgage/form-ui";
 import type { StepProps } from "@/components/mortgage/questionnaire-state";
 import {
   INCOME_TYPE_LABEL,
   RELATED_PARTY_LABEL,
   emptyIncome,
+  isForeignIncome,
   monthlyForIncome,
+  num,
   totalMonthlyIncome,
   type IncomeSource,
   type IncomeType,
@@ -26,6 +36,12 @@ export function Step2Income({ data, patch, usPerson }: StepProps) {
   const total = totalMonthlyIncome(data.incomes);
   const { fx, loading: fxLoading } = useFxRates();
 
+  // Annual income — last year is only asked of US persons, green card holders and ITIN holders.
+  const canAskLastYearIncome = usPerson || data.hasItin;
+
+  const coverage = hasTwoYearCoverage(
+    data.incomes.map((s) => ({ from: s.from, to: s.to, current: s.current })),
+  );
 
   return (
     <div className="space-y-6">
@@ -63,19 +79,13 @@ export function Step2Income({ data, patch, usPerson }: StepProps) {
       <Section
         title="Income sources — 2 year history"
         subtitle="Pick the income type first; we then ask only what that type needs."
-        action={
-          <button
-            type="button"
-            onClick={() => patch({ incomes: [...data.incomes, emptyIncome("w2")] })}
-            className="rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-brand hover:bg-brand-tint"
-          >
-            + Add income source
-          </button>
-        }
       >
         <div className="space-y-4">
           {data.incomes.map((s, i) => {
+            const monthlyNativeSalary = num(s.annualSalary) / 12;
             const monthly = monthlyForIncome(s);
+            const foreign = isForeignIncome(s);
+            const usdRate = s.currency ? usdPerUnit(fx, s.currency) : null;
             return (
               <div key={s.id} className="rounded-lg border border-border p-4">
                 <div className="mb-3 flex items-center justify-between text-xs font-semibold text-muted-foreground">
@@ -107,13 +117,7 @@ export function Step2Income({ data, patch, usPerson }: StepProps) {
                   </Field>
 
                   <Field
-                    label={
-                      s.type === "self_employed"
-                        ? "Business name"
-                        : s.type === "foreign"
-                          ? "Employer / payer name"
-                          : "Employer name"
-                    }
+                    label={s.type === "self_employed" ? "Business name" : "Employer name"}
                     required
                   >
                     <input
@@ -186,9 +190,56 @@ export function Step2Income({ data, patch, usPerson }: StepProps) {
                           ...p,
                           ...(p.country !== undefined ? { country: p.country } : {}),
                         },
+                        ...(p.country !== undefined && p.country !== "US"
+                          ? { currency: currencyForCountry(p.country), fxRate: "" }
+                          : {}),
+                        ...(p.country === "US" ? { currency: "", fxRate: "" } : {}),
                       })
                     }
                   />
+                  {foreign ? (
+                    <div className="mt-3 grid grid-cols-1 gap-3 rounded-md bg-card p-3 sm:grid-cols-2">
+                      <Field
+                        label="Currency"
+                        required
+                        hint="Auto-set from the address country; you can change it."
+                      >
+                        <CurrencyCombobox
+                          value={s.currency}
+                          onChange={(code) => {
+                            const rate = usdPerUnit(fx, code);
+                            patchIncome(s.id, {
+                              currency: code,
+                              ...(rate ? { fxRate: rate.toFixed(6) } : {}),
+                            });
+                          }}
+                        />
+                      </Field>
+                      <Field
+                        label="Exchange rate to USD"
+                        required
+                        hint={
+                          s.currency
+                            ? `Today's rate: 1 ${s.currency} = ${(usdRate ?? 0).toFixed(4)} USD`
+                            : "1 unit = ? USD"
+                        }
+                      >
+                        <input
+                          inputMode="decimal"
+                          placeholder="1.08"
+                          value={s.fxRate}
+                          onChange={(e) => patchIncome(s.id, { fxRate: e.target.value })}
+                          className={inputClass}
+                        />
+                      </Field>
+                      <p className="text-xs text-muted-foreground sm:col-span-2">
+                        Amounts below are entered in {s.currency || "the local currency"}. Rates
+                        update daily {fxLoading ? "(refreshing…)" : `(last update: ${fx.updatedAt})`};
+                        you can override the rate if your lender uses a different one. Converted
+                        monthly income: <strong className="text-brand">{money(monthly)}</strong> USD.
+                      </p>
+                    </div>
+                  ) : null}
                 </div>
 
                 {/* Type-specific questions */}
@@ -205,12 +256,16 @@ export function Step2Income({ data, patch, usPerson }: StepProps) {
                       </select>
                     </Field>
                     {s.payType === "salary" ? (
-                      <Field label="Monthly gross salary" required>
+                      <Field
+                        label={`Annual gross salary${foreign ? ` (${s.currency || "local currency"})` : ""}`}
+                        required
+                        hint={`Derived monthly: ${money(monthlyNativeSalary)}${foreign ? ` ${s.currency}` : ""}`}
+                      >
                         <input
                           inputMode="decimal"
-                          placeholder="8,500"
-                          value={s.salaryMonthly}
-                          onChange={(e) => patchIncome(s.id, { salaryMonthly: e.target.value })}
+                          placeholder="102,000"
+                          value={s.annualSalary}
+                          onChange={(e) => patchIncome(s.id, { annualSalary: e.target.value })}
                           className={inputClass}
                         />
                       </Field>
@@ -287,21 +342,26 @@ export function Step2Income({ data, patch, usPerson }: StepProps) {
                         className={inputClass}
                       />
                     </Field>
-                    <Field label="Net income — last tax year" required>
+                    {canAskLastYearIncome ? (
+                      <Field
+                        label="Annual income — last year"
+                        hint="Optional — for US persons, green card holders and ITIN holders."
+                      >
+                        <input
+                          inputMode="decimal"
+                          placeholder="140,000"
+                          value={s.annualIncomeLastYear}
+                          onChange={(e) => patchIncome(s.id, { annualIncomeLastYear: e.target.value })}
+                          className={inputClass}
+                        />
+                      </Field>
+                    ) : null}
+                    <Field label="Estimated annual income" required>
                       <input
                         inputMode="decimal"
-                        placeholder="140,000"
-                        value={s.netIncomeYear1}
-                        onChange={(e) => patchIncome(s.id, { netIncomeYear1: e.target.value })}
-                        className={inputClass}
-                      />
-                    </Field>
-                    <Field label="Net income — prior tax year">
-                      <input
-                        inputMode="decimal"
-                        placeholder="120,000"
-                        value={s.netIncomeYear2}
-                        onChange={(e) => patchIncome(s.id, { netIncomeYear2: e.target.value })}
+                        placeholder="150,000"
+                        value={s.estimatedAnnualIncome}
+                        onChange={(e) => patchIncome(s.id, { estimatedAnnualIncome: e.target.value })}
                         className={inputClass}
                       />
                     </Field>
@@ -331,68 +391,16 @@ export function Step2Income({ data, patch, usPerson }: StepProps) {
                   </div>
                 ) : null}
 
-                {s.type === "foreign" ? (
-                  <div className="mt-4 space-y-3">
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                      <Field label="Currency" required hint="Pick from the supported currencies">
-                        <CurrencyCombobox
-                          value={s.currency}
-                          onChange={(code) => {
-                            const rate = usdPerUnit(fx, code);
-                            patchIncome(s.id, {
-                              currency: code,
-                              ...(rate ? { fxRate: rate.toFixed(6) } : {}),
-                            });
-                          }}
-                        />
-                      </Field>
-                      <Field label="Monthly gross (in that currency)" required>
-                        <input
-                          inputMode="decimal"
-                          value={s.monthlyGrossForeign}
-                          onChange={(e) =>
-                            patchIncome(s.id, { monthlyGrossForeign: e.target.value })
-                          }
-                          className={inputClass}
-                        />
-                      </Field>
-                      <Field
-                        label="Exchange rate to USD"
-                        required
-                        hint={
-                          s.currency
-                            ? `Today's rate: 1 ${s.currency} = ${(usdPerUnit(fx, s.currency) ?? 0).toFixed(4)} USD`
-                            : "1 unit = ? USD"
-                        }
-                      >
-                        <input
-                          inputMode="decimal"
-                          placeholder="1.08"
-                          value={s.fxRate}
-                          onChange={(e) => patchIncome(s.id, { fxRate: e.target.value })}
-                          className={inputClass}
-                        />
-                      </Field>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Rates update daily from the European/global reference feed
-                      {fxLoading ? " (refreshing…)" : ` (last update: ${fx.updatedAt})`}. You can
-                      override the rate if your lender uses a different one.
-                    </p>
-                  </div>
-                ) : null}
-
-
                 <div className="mt-4 grid grid-cols-2 gap-3 rounded-md bg-card p-3 text-sm">
                   <div>
                     <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                      Average monthly
+                      Average monthly (USD)
                     </div>
                     <strong className="text-brand">{money(monthly)}</strong>
                   </div>
                   <div>
                     <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                      Estimated annual
+                      Estimated annual (USD)
                     </div>
                     <strong className="text-brand">{money(monthly * 12)}</strong>
                   </div>
@@ -401,6 +409,17 @@ export function Step2Income({ data, patch, usPerson }: StepProps) {
             );
           })}
         </div>
+
+        <InlineAddButton
+          label="+ Add another income source"
+          onClick={() => patch({ incomes: [...data.incomes, emptyIncome("w2")] })}
+        />
+
+        {!coverage ? (
+          <div className="mt-3">
+            <HistoryWarning message="Less than 2 years of employment/income history provided — please add earlier income sources covering at least the last 2 years." />
+          </div>
+        ) : null}
 
         <div className="mt-4 flex items-center justify-between rounded-md bg-brand-tint/60 p-3">
           <span className="text-xs uppercase tracking-wide text-muted-foreground">

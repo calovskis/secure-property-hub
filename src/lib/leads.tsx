@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import type { MortgageProfile } from "@/lib/auth";
+import { getTeamSnapshot, isCompanyOnVacation, pickAssignee, type AssignCounts } from "@/lib/lender-team";
 
 export type LeadStatus = "new" | "info_required" | "not_qualified" | "qualified";
 
@@ -83,6 +84,8 @@ export type MortgageLead = {
   assignedToId?: string | undefined;
   assignedToName?: string | undefined;
   assignedAt?: string | undefined;
+  /** Set when the lender company was on vacation mode at submission time. */
+  routedToOtherPartner?: boolean;
 
   infoRequests: InfoRequest[];
   debts?: DebtProfile;
@@ -176,6 +179,37 @@ type LeadsContextValue = {
 
 const LeadsContext = createContext<LeadsContextValue | null>(null);
 
+/** Decide (and return) the auto-assignment patch for a newly created lead. */
+export function autoAssign(
+  lead: Pick<MortgageLead, "propertyPrice" | "propertyLabel">,
+  existingLeads: MortgageLead[],
+): Partial<MortgageLead> {
+  const snapshot = getTeamSnapshot();
+  if (isCompanyOnVacation(snapshot)) {
+    return { routedToOtherPartner: true };
+  }
+  const now = new Date();
+  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const startOfWeek = startOfDay - now.getDay() * 24 * 60 * 60 * 1000;
+  const counts: AssignCounts = { openByMember: {}, todayByMember: {}, weekByMember: {} };
+  for (const l of existingLeads) {
+    if (!l.assignedToId) continue;
+    if (isOpenRequest(l)) {
+      counts.openByMember[l.assignedToId] = (counts.openByMember[l.assignedToId] ?? 0) + 1;
+    }
+    const at = l.assignedAt ? new Date(l.assignedAt).getTime() : 0;
+    if (at >= startOfDay) counts.todayByMember[l.assignedToId] = (counts.todayByMember[l.assignedToId] ?? 0) + 1;
+    if (at >= startOfWeek) counts.weekByMember[l.assignedToId] = (counts.weekByMember[l.assignedToId] ?? 0) + 1;
+  }
+  const m = lead.propertyLabel.match(/\b([A-Z]{2})\b\s*$/);
+  const state = m?.[1] ?? "";
+  const parts = lead.propertyLabel.split(",").map((s) => s.trim());
+  const city = parts.length > 1 ? parts[parts.length - 2]! : (parts[0] ?? "");
+  const picked = pickAssignee({ state, city, price: lead.propertyPrice }, counts, snapshot);
+  if (!picked) return {};
+  return { assignedToId: picked.id, assignedToName: picked.name, assignedAt: new Date().toISOString() };
+}
+
 export function LeadsProvider({ children }: { children: ReactNode }) {
   const [leads, setLeads] = useState<MortgageLead[]>([]);
   const [ready, setReady] = useState(false);
@@ -214,6 +248,7 @@ export function LeadsProvider({ children }: { children: ReactNode }) {
           dtiLimit: DEFAULT_DTI_LIMIT,
           infoRequests: [],
           submittedAt: new Date().toISOString(),
+          ...autoAssign(input, leads),
         };
         const rest = leads.filter(
           (l) => !(l.clientEmail === lead.clientEmail && l.propertyId === lead.propertyId),

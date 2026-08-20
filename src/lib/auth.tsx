@@ -34,6 +34,7 @@ import type {
   MaritalStatus,
   MilitaryService,
   UnmarriedAddendum,
+  UsStatus,
 } from "@/lib/mortgage-form";
 
 export type AddressEntry = {
@@ -72,6 +73,13 @@ export type MortgageProfile = {
   usVisaActive?: boolean;
   visaIssued?: string;
   visaValidUntil?: string;
+  /** Visa / status category when the applicant holds an active US visa. */
+  visaType?: UsStatus;
+  /** Overall US status shown to lending partners. */
+  usStatus?: UsStatus;
+  /** Uploaded copy of the visa document, when a visa was declared. */
+  visaDocumentName?: string;
+  visaDocumentUploadedAt?: string;
   propertyUse?: "vacation" | "investment";
   usBankAccount?: boolean;
   /** Marital status + URLA unmarried addendum */
@@ -80,7 +88,7 @@ export type MortgageProfile = {
   dependents?: Dependent[];
   addresses: AddressEntry[];
   employment: EmploymentEntry[];
-  /** Layered income sources (W-2, self-employed, foreign, seasonal). */
+  /** Layered income sources (W2, self-employed, seasonal). */
   incomes?: IncomeSource[];
   liabilities?: Liabilities;
   declarations?: Declarations;

@@ -14,6 +14,7 @@ import {
   type MaritalStatus,
   type MilitaryService,
   type UnmarriedAddendum,
+  type UsStatus,
 } from "@/lib/mortgage-form";
 
 export const emptyAddress = (): AddressEntry => ({
@@ -40,6 +41,7 @@ export type QuestionnaireData = {
   citizenship: string;
   secondCitizenship: string;
   visaActive: boolean;
+  visaType: UsStatus | "";
   visaIssued: string;
   visaValidUntil: string;
   propertyUse: "vacation" | "investment" | "";
@@ -51,9 +53,10 @@ export type QuestionnaireData = {
   incomes: IncomeSource[];
   /* step 3 */
   liabilities: Liabilities;
+  /* step 4 */
   declarations: Declarations;
   military: MilitaryService;
-  /* step 4 */
+  /* step 5 */
   demographics: Demographics;
 };
 
@@ -68,6 +71,7 @@ export const emptyQuestionnaire = (): QuestionnaireData => ({
   citizenship: "",
   secondCitizenship: "",
   visaActive: false,
+  visaType: "",
   visaIssued: "",
   visaValidUntil: "",
   propertyUse: "",
@@ -81,6 +85,11 @@ export const emptyQuestionnaire = (): QuestionnaireData => ({
   military: emptyMilitary(),
   demographics: emptyDemographics(),
 });
+
+/** Non-US persons without an ITIN and without US citizenship/green card skip liabilities. */
+export function isNonUsWithoutTaxId(data: QuestionnaireData, usPerson: boolean): boolean {
+  return !usPerson && !data.hasItin;
+}
 
 export type StepProps = {
   data: QuestionnaireData;

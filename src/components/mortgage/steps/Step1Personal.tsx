@@ -2,14 +2,25 @@ import { CountryCombobox } from "@/components/form/CountryCombobox";
 import { StateCombobox } from "@/components/form/StateCombobox";
 import { AddressFields } from "@/components/form/AddressFields";
 import { DateInput, MonthInput } from "@/components/form/DateInput";
-import { Field, Section, YesNo, inputClass } from "@/components/mortgage/form-ui";
+import {
+  Field,
+  HistoryWarning,
+  InlineAddButton,
+  Section,
+  YesNo,
+  inputClass,
+} from "@/components/mortgage/form-ui";
+import { hasTwoYearCoverage } from "@/components/mortgage/history-coverage";
 import { emptyAddress, type StepProps } from "@/components/mortgage/questionnaire-state";
 import {
   MARITAL_LABEL,
   UNMARRIED_RELATIONSHIP_LABEL,
+  US_STATUS_LABEL,
+  VISA_STATUS_OPTIONS,
   uid,
   type MaritalStatus,
   type UnmarriedRelationship,
+  type UsStatus,
 } from "@/lib/mortgage-form";
 import type { AddressEntry } from "@/lib/auth";
 
@@ -24,6 +35,10 @@ export function Step1Personal({ data, patch, usPerson }: StepProps) {
     while (next.length < count) next.push({ id: uid(), age: "" });
     patch({ dependents: next.slice(0, count) });
   };
+
+  const addressCoverage = hasTwoYearCoverage(
+    data.addresses.map((a) => ({ from: a.from, to: a.to, current: Boolean(a.present) })),
+  );
 
   return (
     <div className="space-y-6">
@@ -206,17 +221,34 @@ export function Step1Personal({ data, patch, usPerson }: StepProps) {
                 allowClear
               />
             </Field>
-            <Field label="Is your US visa active?" required>
+            <Field label="Do you hold an active US visa or status?" required>
               <YesNo
                 name="visaActive"
                 value={data.visaActive}
                 onChange={(v) =>
-                  patch({ visaActive: v, ...(v ? {} : { visaIssued: "", visaValidUntil: "" }) })
+                  patch({
+                    visaActive: v,
+                    ...(v ? {} : { visaType: "", visaIssued: "", visaValidUntil: "" }),
+                  })
                 }
               />
             </Field>
             {data.visaActive ? (
               <>
+                <Field label="Which visa / status?" required>
+                  <select
+                    value={data.visaType}
+                    onChange={(e) => patch({ visaType: e.target.value as UsStatus | "" })}
+                    className={inputClass}
+                  >
+                    <option value="">Select…</option>
+                    {VISA_STATUS_OPTIONS.map((k) => (
+                      <option key={k} value={k}>
+                        {US_STATUS_LABEL[k]}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
                 <Field label="Visa issued on" required>
                   <DateInput
                     value={data.visaIssued}
@@ -260,15 +292,6 @@ export function Step1Personal({ data, patch, usPerson }: StepProps) {
       <Section
         title="2 years of address history"
         subtitle="Tick “This is my present address” instead of entering an end date."
-        action={
-          <button
-            type="button"
-            onClick={() => patch({ addresses: [...data.addresses, emptyAddress()] })}
-            className="rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-brand hover:bg-brand-tint"
-          >
-            + Add address
-          </button>
-        }
       >
         <div className="space-y-4">
           {data.addresses.map((a, i) => (
@@ -337,6 +360,15 @@ export function Step1Personal({ data, patch, usPerson }: StepProps) {
             </div>
           ))}
         </div>
+        <InlineAddButton
+          label="+ Add another address"
+          onClick={() => patch({ addresses: [...data.addresses, emptyAddress()] })}
+        />
+        {!addressCoverage ? (
+          <div className="mt-3">
+            <HistoryWarning message="Less than 2 years of address history provided — please add earlier addresses covering at least the last 2 years." />
+          </div>
+        ) : null}
       </Section>
     </div>
   );
