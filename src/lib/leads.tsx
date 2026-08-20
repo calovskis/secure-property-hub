@@ -201,7 +201,7 @@ export function autoAssign(
     if (at >= startOfDay) counts.todayByMember[l.assignedToId] = (counts.todayByMember[l.assignedToId] ?? 0) + 1;
     if (at >= startOfWeek) counts.weekByMember[l.assignedToId] = (counts.weekByMember[l.assignedToId] ?? 0) + 1;
   }
-  const m = lead.propertyLabel.match(/\b([A-Z]{2})\b\s*\$/);
+  const m = lead.propertyLabel.match(/\b([A-Z]{2})\b\s*$/);
   const state = m?.[1] ?? "";
   const parts = lead.propertyLabel.split(",").map((s) => s.trim());
   const city = parts.length > 1 ? parts[parts.length - 2]! : (parts[0] ?? "");
