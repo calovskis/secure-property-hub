@@ -461,9 +461,9 @@ export function useLenderTeam() {
     const from = usDateToIso(fromUs);
     const until = usDateToIso(untilUs);
     update(id, {
-      vacationFrom: from || undefined,
-      vacationUntil: until || undefined,
-      vacationReason: from && until ? reason : undefined,
+      ...(from ? { vacationFrom: from } : { vacationFrom: "" }),
+      ...(until ? { vacationUntil: until } : { vacationUntil: "" }),
+      vacationReason: from && until && reason ? reason : "",
     });
   }, [update]);
 
