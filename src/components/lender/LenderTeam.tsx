@@ -526,6 +526,9 @@ export function LenderTeam() {
                   ? active.states.join(", ")
                   : "no states assigned — this seat sees no requests or mortgages"}
             </p>
+            <div className="mt-4">
+              <VacationEditor member={active} />
+            </div>
           </>
         ) : null}
       </div>
@@ -612,6 +615,11 @@ export function LenderTeam() {
                     <span className="rounded-full bg-brand-tint px-2.5 py-1 text-[11px] font-semibold text-brand">
                       {LENDER_ROLE_LABEL[m.role]}
                     </span>
+                    {isMemberOnVacation(m) ? (
+                      <span className="ml-1.5 rounded-full bg-gold-tint px-2.5 py-1 text-[11px] font-semibold text-gold">
+                        Away
+                      </span>
+                    ) : null}
                   </td>
                   <td className="py-3 text-xs text-muted-foreground">
                     {m.allStates ? (
@@ -778,6 +786,10 @@ export function LenderTeam() {
           </div>
         </form>
       ) : null}
+
+      {manage ? <AssignmentSettingsPanel members={members} /> : null}
+
+      {manage ? <CompanyVacationEditor /> : null}
 
       <div className="rounded-lg border border-border bg-card p-6">
         <h2 className="text-base font-semibold text-foreground">Role reference</h2>
