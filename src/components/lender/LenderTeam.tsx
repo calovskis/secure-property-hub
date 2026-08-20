@@ -2,12 +2,16 @@ import { useEffect, useRef, useState } from "react";
 import {
   LENDER_ROLE_DESCRIPTION,
   LENDER_ROLE_LABEL,
+  isMemberOnVacation,
   permissionsFor,
   useLenderTeam,
   type LenderLicense,
   type LenderMember,
   type LenderRole,
 } from "@/lib/lender-team";
+import { DateInput } from "@/components/form/DateInput";
+import { isoToUsDate } from "@/lib/dates";
+import { AssignmentSettingsPanel } from "@/components/lender/AssignmentSettings";
 import { formatDate } from "@/lib/dates";
 import { US_STATE_NAME_BY_CODE } from "@/data/us-states";
 import { StateCombobox, StateMultiSelect } from "@/components/form/StateCombobox";
