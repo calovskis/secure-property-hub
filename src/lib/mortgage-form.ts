@@ -370,3 +370,16 @@ export const QUESTIONNAIRE_STEPS = [
   { id: 4, title: "Declarations & military service" },
   { id: 5, title: "Demographic information" },
 ] as const;
+
+/* ------------------------------------------------------------ us status */
+
+/** Derive the US status shown to lending partners from a mortgage profile. */
+export function usStatusOf(
+  profile: { usStatus?: UsStatus; visaType?: UsStatus; usVisaActive?: boolean } | undefined,
+  usPerson: boolean,
+): UsStatus {
+  if (profile?.usStatus) return profile.usStatus;
+  if (usPerson) return "citizen";
+  if (profile?.usVisaActive && profile.visaType) return profile.visaType;
+  return "none";
+}
