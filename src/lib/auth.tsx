@@ -88,7 +88,7 @@ export type MortgageProfile = {
   dependents?: Dependent[];
   addresses: AddressEntry[];
   employment: EmploymentEntry[];
-  /** Layered income sources (W-2, self-employed, foreign, seasonal). */
+  /** Layered income sources (W2, self-employed, seasonal). */
   incomes?: IncomeSource[];
   liabilities?: Liabilities;
   declarations?: Declarations;
