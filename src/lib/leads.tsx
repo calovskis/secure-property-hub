@@ -23,6 +23,7 @@ export type LeadDocument = {
   id: string;
   name: string;
   uploadedAt: string;
+  url?: string;
 };
 
 export type InfoRequest = {

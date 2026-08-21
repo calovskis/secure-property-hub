@@ -63,9 +63,11 @@ export function MortgageQuestionnaire({
   const initial = useMemo<{ data: QuestionnaireData; step: number }>(() => {
     const draft = user ? getDraft(user.email, propertyId) : undefined;
     if (draft && !draft.submitted) {
+      const defaults = emptyQuestionnaire();
+      const saved = draft.data as Partial<QuestionnaireData>;
       return {
-        data: { ...emptyQuestionnaire(), ...(draft.data as Partial<QuestionnaireData>) },
-        step: draft.step,
+        data: { ...defaults, ...saved, assets: saved.assets ?? defaults.assets },
+        step: Math.min(5, Math.max(1, draft.step)),
       };
     }
     return { data: emptyQuestionnaire(), step: 1 };
@@ -78,7 +80,10 @@ export function MortgageQuestionnaire({
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [savedNote, setSavedNote] = useState(false);
-  const [visaDoc, setVisaDoc] = useState<string | null>(null);
+  const [submittedProfile, setSubmittedProfile] = useState<MortgageProfile | null>(null);
+  const [submittedLeadId, setSubmittedLeadId] = useState<string | null>(null);
+  const [visaDocs, setVisaDocs] = useState<{ id: string; name: string; url: string }[]>([]);
+  const [visaDocsConfirmed, setVisaDocsConfirmed] = useState(false);
 
   const patch = (p: Partial<QuestionnaireData>) => {
     setData((prev) => ({ ...prev, ...p }));
@@ -121,6 +126,8 @@ export function MortgageQuestionnaire({
         return "At least one full address (street, city, state) is required.";
       if (!usPerson && data.visaActive && !data.visaType)
         return "Please select which visa or status you hold.";
+      if (!usPerson && data.visaActive && data.visaType === "other" && !data.otherVisaType.trim())
+        return "Please specify your visa or status.";
       if (
         !hasTwoYearCoverage(
           data.addresses.map((x) => ({ from: x.from, to: x.to, current: Boolean(x.present) })),
@@ -144,11 +151,24 @@ export function MortgageQuestionnaire({
         return "Less than 2 years of employment history provided — please add earlier employment covering at least the last 2 years.";
       return null;
     }
+    if (s === 3) {
+      const invalidAsset = data.assets.financial.some(
+        (asset) => !asset.country || !asset.currency || !asset.value,
+      );
+      if (invalidAsset) return "Please complete the country, currency and value for each financial asset.";
+    }
+    if (s === 5) {
+      if (!data.demographics.ethnicityDeclined && data.demographics.ethnicity.length === 0)
+        return "Please select an ethnicity option or choose not to provide it.";
+      if (!data.demographics.raceDeclined && data.demographics.race.length === 0)
+        return "Please select a race option or choose not to provide it.";
+      if (!data.demographics.sex) return "Please select a sex option or choose not to provide it.";
+    }
     return null;
   }
 
   const skipLiabilities = isNonUsWithoutTaxId(data, usPerson);
-  const steps = QUESTIONNAIRE_STEPS.filter((s) => !(skipLiabilities && s.id === 3));
+  const steps = QUESTIONNAIRE_STEPS;
   const lastStepId = steps[steps.length - 1]?.id ?? 5;
 
   /** Next/previous visible step id. */
@@ -208,6 +228,7 @@ export function MortgageQuestionnaire({
                   visaIssued: data.visaIssued,
                   visaValidUntil: data.visaValidUntil,
                   visaType: data.visaType as UsStatus,
+                  ...(data.visaType === "other" ? { otherVisaType: data.otherVisaType.trim() } : {}),
                 }
               : {}),
             propertyUse: data.propertyUse as "vacation" | "investment",
@@ -227,6 +248,7 @@ export function MortgageQuestionnaire({
       })),
       incomes: data.incomes,
       liabilities: data.liabilities,
+      assets: data.assets,
       declarations: derivedDeclarations,
       military: data.military,
       demographics: data.demographics,
@@ -243,8 +265,9 @@ export function MortgageQuestionnaire({
 
     setError(null);
     saveMortgageProfile(profile);
+    setSubmittedProfile(profile);
     if (user && property) {
-      createLead({
+      const lead = createLead({
         clientEmail: user.email,
         clientName: fullName(user),
         usPerson: user.usPerson,
@@ -253,6 +276,7 @@ export function MortgageQuestionnaire({
         propertyPrice: property.price,
         profile,
       });
+      setSubmittedLeadId(lead.id);
     }
     if (user) clearDraft(user.email, propertyId);
     setDone(true);
@@ -294,26 +318,65 @@ export function MortgageQuestionnaire({
                   Because you hold a US visa or status, please upload a copy or scan of your valid
                   visa document so the lending partner can verify it.
                 </p>
-                {visaDoc ? (
-                  <p className="mt-3 text-sm text-success">Uploaded: {visaDoc}</p>
+                {visaDocsConfirmed ? (
+                  <div className="mt-3">
+                    <p className="text-sm font-semibold text-success">Documents confirmed and shared.</p>
+                    <ul className="mt-1 text-xs text-muted-foreground">{visaDocs.map((doc) => <li key={doc.id}>📎 {doc.name}</li>)}</ul>
+                  </div>
                 ) : (
+                  <div className="mt-3 space-y-3">
                   <label className="mt-3 inline-flex cursor-pointer items-center gap-2 rounded-md border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground hover:bg-brand-tint">
-                    Upload a copy/scan of your valid visa
+                    {visaDocs.length ? "Add more documents" : "Choose visa documents"}
                     <input
                       type="file"
+                      multiple
                       accept="image/*,application/pdf"
                       className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
-                        setVisaDoc(file.name);
-                        saveMortgageProfile({
-                          visaDocumentName: file.name,
-                          visaDocumentUploadedAt: new Date().toISOString(),
-                        } as Partial<MortgageProfile> as MortgageProfile);
+                      onChange={async (e) => {
+                        const selected = Array.from(e.target.files ?? []);
+                        const next = await Promise.all(selected.map(async (file) => ({
+                          id: Math.random().toString(36).slice(2, 10),
+                          name: file.name,
+                          url: await new Promise<string>((resolve) => {
+                            const reader = new FileReader();
+                            reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : "");
+                            reader.readAsDataURL(file);
+                          }),
+                        })));
+                        setVisaDocs((current) => [...current, ...next]);
+                        e.currentTarget.value = "";
                       }}
                     />
                   </label>
+                  {visaDocs.length ? (
+                    <>
+                      <ul className="space-y-2">
+                        {visaDocs.map((doc) => (
+                          <li key={doc.id} className="flex items-center justify-between rounded-md border border-border bg-background px-3 py-2 text-xs">
+                            <span className="text-foreground">📎 {doc.name}</span>
+                            <button type="button" onClick={() => setVisaDocs((docs) => docs.filter((item) => item.id !== doc.id))} className="font-semibold text-destructive">Remove</button>
+                          </li>
+                        ))}
+                      </ul>
+                      <p className="text-xs text-muted-foreground">Review the files above. They are not shared until you confirm.</p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!submittedProfile) return;
+                          const now = new Date().toISOString();
+                          const documents = visaDocs.map((doc) => ({ ...doc, uploadedAt: now }));
+                          const profileWithDocs: MortgageProfile = { ...submittedProfile, visaDocuments: documents, visaDocumentName: documents[0]?.name, visaDocumentUploadedAt: now };
+                          saveMortgageProfile(profileWithDocs);
+                          if (submittedLeadId) updateLead(submittedLeadId, { profile: profileWithDocs });
+                          setVisaDocsConfirmed(true);
+                        }}
+                        className="rounded-md bg-brand px-4 py-2 text-sm font-semibold text-background hover:bg-brand-soft"
+                      >
+                        Confirm and share documents
+                      </button>
+                    </>
+                  ) : null}
+                  </div>
                 )}
               </div>
             ) : null}
@@ -358,7 +421,7 @@ export function MortgageQuestionnaire({
 
             {step === 1 ? <Step1Personal {...stepProps} /> : null}
             {step === 2 ? <Step2Income {...stepProps} /> : null}
-            {step === 3 && !skipLiabilities ? <Step3Liabilities {...stepProps} /> : null}
+            {step === 3 ? <Step3Liabilities {...stepProps} /> : null}
             {step === 4 ? <Step4Declarations {...stepProps} /> : null}
             {step === 5 ? <Step5Demographics {...stepProps} /> : null}
 
