@@ -90,11 +90,17 @@ function InfoRequests({ lead }: { lead: MortgageLead }) {
           </div>
           <button
             type="button"
-            onClick={() => answerInfoRequest(lead.id, r.id, drafts[r.id] ?? "", files[r.id] ?? [])}
+            onClick={() => {
+              const selectedFiles = files[r.id] ?? [];
+              const confirmed = window.confirm(
+                `Send this response to the lender${selectedFiles.length ? ` with ${selectedFiles.length} document${selectedFiles.length === 1 ? "" : "s"}` : ""}?`,
+              );
+              if (confirmed) answerInfoRequest(lead.id, r.id, drafts[r.id] ?? "", selectedFiles);
+            }}
             disabled={r.needsDocument && (files[r.id] ?? []).length === 0}
             className="mt-3 rounded-md bg-brand px-4 py-2 text-sm font-semibold text-background hover:bg-brand-soft disabled:opacity-50"
           >
-            Review and confirm submission
+            Send to lender
           </button>
           <p className="mt-2 text-[11px] text-muted-foreground">
             Answers and files are stored with this property case and on your Loqal profile, so they

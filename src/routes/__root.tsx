@@ -85,14 +85,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "Loqal — Real Estate Concierge" },
+      { name: "description", content: "Manage real estate services, properties, financing and documents through Loqal." },
+      { name: "author", content: "Loqal" },
+      { property: "og:title", content: "Loqal — Real Estate Concierge" },
+      { property: "og:description", content: "Manage real estate services, properties, financing and documents through Loqal." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
       {

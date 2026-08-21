@@ -203,7 +203,7 @@ export function ApplicantFile({ lead }: { lead: MortgageLead }) {
         id: document.id,
         label: `Visa document — ${document.name}`,
         when: document.uploadedAt,
-        url: document.url,
+        ...(document.url ? { url: document.url } : {}),
       });
     }
   } else if (p.visaDocumentName) {

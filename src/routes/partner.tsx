@@ -48,7 +48,7 @@ const BOARDS: Record<PartnerType, Board> = {
     ],
     queue: [
       { title: "255 Park Avenue — showing request", meta: "Client: A. Novak · Remote buyer", badge: "New" },
-      { title: "1825 Oak Street — offer submitted", meta: "Awaiting seller response", badge: "In progress" },
+      { title: "1825 Oak Street — offer submitted", meta: "Awaiting seller response", badge: "In process" },
       { title: "450 Residential Lane — listing draft", meta: "Photos pending upload", badge: "Draft" },
     ],
     actions: ["Add listing", "Upload photos", "Log a showing", "Request valuation"],

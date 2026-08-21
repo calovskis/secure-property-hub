@@ -265,7 +265,7 @@ function ProfilePage() {
                   <Row label="Date of birth" value={isoToUsDate(profile.dateOfBirth)} />
                   <Row label="Marital status" value={profile.maritalStatus} />
                   <Row label="Dependents" value={profile.dependents?.length ?? 0} />
-                  <Row label="Monthly gross income" value={money(profile.monthlyGross)} />
+                  <Row label="Monthly gross income" value={money(profile.monthlyGross ?? 0)} />
                   {!user.usPerson ? (
                     <>
                       <Row label="Country of residence" value={profile.countryOfResidence} />
