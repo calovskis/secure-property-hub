@@ -391,7 +391,7 @@ export function MortgageQuestionnaire({
                             const profileWithDocs: MortgageProfile = {
                               ...submittedProfile,
                               visaDocuments: documents,
-                              visaDocumentName: documents[0]?.name,
+                            ...(documents[0]?.name ? { visaDocumentName: documents[0].name } : {}),
                               visaDocumentUploadedAt: now,
                             };
                             saveMortgageProfile(profileWithDocs);
