@@ -5,6 +5,7 @@ import { countryLabel } from "@/data/countries";
 import { currencyLabel } from "@/data/currencies";
 import { formatDate, formatDateTime, isoToUsMonth } from "@/lib/dates";
 import {
+  ASSET_TYPE_LABEL,
   INCOME_TYPE_LABEL,
   MARITAL_LABEL,
   RELATED_PARTY_LABEL,
@@ -182,6 +183,7 @@ export function ApplicantFile({ lead }: { lead: MortgageLead }) {
   const monthlyIncome = incomes.length ? totalMonthlyIncome(incomes) : p.monthlyGross;
   const annual = monthlyIncome * 12;
   const liabilities = p.liabilities;
+  const assets = p.assets;
   const decl = p.declarations;
   const mil = p.military;
   const demo = p.demographics;
@@ -325,7 +327,13 @@ export function ApplicantFile({ lead }: { lead: MortgageLead }) {
                   label="US visa"
                   value={
                     p.usVisaActive
-                      ? `Active · ${formatDate(p.visaIssued)} → ${formatDate(p.visaValidUntil)}`
+                      ? `Active · ${
+                          p.visaType === "other"
+                            ? p.otherVisaType || "Other status"
+                            : p.visaType
+                              ? US_STATUS_LABEL[p.visaType]
+                              : "Status not specified"
+                        } · ${formatDate(p.visaIssued)} → ${formatDate(p.visaValidUntil)}`
                       : "Not active"
                   }
                 />
@@ -413,26 +421,47 @@ export function ApplicantFile({ lead }: { lead: MortgageLead }) {
       ) : null}
 
       {tab === "liabilities" ? (
-        <Block title="Monthly liabilities">
-          {liabilities ? (
-            <>
-              <Row label="Property loans" value={money(num(liabilities.propertyLoans))} />
-              <Row label="Vehicle loans" value={money(num(liabilities.vehicleLoans))} />
-              <Row label="Credit cards" value={money(num(liabilities.creditCards))} />
-              <Row label="Student loans" value={money(num(liabilities.studentLoans))} />
-              {liabilities.other.map((o) => (
-                <Row
-                  key={o.id}
-                  label={o.label || "Other obligation"}
-                  value={money(num(o.amount))}
-                />
-              ))}
-              <Row label="Total monthly obligations" value={money(totalLiabilities(liabilities))} />
-            </>
-          ) : (
-            <p className="py-2 text-sm text-muted-foreground">No liabilities on file.</p>
-          )}
-        </Block>
+        <div className="space-y-4">
+          <Block title="Assets">
+            {assets ? (
+              <>
+                {assets.financial.map((asset) => (
+                  <Row
+                    key={asset.id}
+                    label={ASSET_TYPE_LABEL[asset.type]}
+                    value={`${asset.value || "0"} ${asset.currency}${asset.institution ? ` · ${asset.institution}` : ""} · ${countryLabel(asset.country)}`}
+                  />
+                ))}
+                {assets.properties.map((property) => (
+                  <Row
+                    key={property.id}
+                    label="Other property"
+                    value={`${property.address} · ${property.estimatedValue || "0"} ${property.currency} · ${countryLabel(property.country)}`}
+                  />
+                ))}
+                <Row label="Total declared value (before FX)" value={money(totalAssets(assets))} />
+              </>
+            ) : (
+              <p className="py-2 text-sm text-muted-foreground">No assets on file.</p>
+            )}
+          </Block>
+          <Block title="Monthly liabilities">
+            {liabilities ? (
+              <>
+                <Row label="Property loans" value={money(num(liabilities.propertyLoans))} />
+                <Row label="Vehicle loans" value={money(num(liabilities.vehicleLoans))} />
+                <Row label="Credit cards" value={money(num(liabilities.creditCards))} />
+                <Row label="Student loans" value={money(num(liabilities.studentLoans))} />
+                {liabilities.other.map((o) => (
+                  <Row key={o.id} label={o.label || "Other obligation"} value={money(num(o.amount))} />
+                ))}
+                <Row label="Total monthly obligations" value={money(totalLiabilities(liabilities))} />
+              </>
+            ) : (
+              <p className="py-2 text-sm text-muted-foreground">Not required for this applicant.</p>
+            )}
+          </Block>
+        </div>
       ) : null}
 
       {tab === "declarations" ? (
@@ -553,7 +582,13 @@ export function ApplicantFile({ lead }: { lead: MortgageLead }) {
               <ul className="space-y-1 py-2">
                 {documents.map((d) => (
                   <li key={d.id} className="flex items-center justify-between text-sm">
-                    <span className="text-brand">📎 {d.label}</span>
+                    {d.url ? (
+                      <a href={d.url} download className="text-brand underline underline-offset-2">
+                        📎 {d.label}
+                      </a>
+                    ) : (
+                      <span className="text-brand">📎 {d.label}</span>
+                    )}
                     <span className="text-xs text-muted-foreground">{date(d.when)}</span>
                   </li>
                 ))}

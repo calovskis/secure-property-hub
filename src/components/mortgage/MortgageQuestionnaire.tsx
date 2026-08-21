@@ -18,7 +18,6 @@ import {
 } from "@/lib/mortgage-form";
 import {
   emptyQuestionnaire,
-  isNonUsWithoutTaxId,
   type QuestionnaireData,
 } from "@/components/mortgage/questionnaire-state";
 import { hasTwoYearCoverage } from "@/components/mortgage/history-coverage";
