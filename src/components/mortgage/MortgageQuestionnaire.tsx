@@ -155,7 +155,8 @@ export function MortgageQuestionnaire({
       const invalidAsset = data.assets.financial.some(
         (asset) => !asset.country || !asset.currency || !asset.value,
       );
-      if (invalidAsset) return "Please complete the country, currency and value for each financial asset.";
+      if (invalidAsset)
+        return "Please complete the country, currency and value for each financial asset.";
     }
     if (s === 5) {
       if (!data.demographics.ethnicityDeclined && data.demographics.ethnicity.length === 0)
@@ -227,7 +228,9 @@ export function MortgageQuestionnaire({
                   visaIssued: data.visaIssued,
                   visaValidUntil: data.visaValidUntil,
                   visaType: data.visaType as UsStatus,
-                  ...(data.visaType === "other" ? { otherVisaType: data.otherVisaType.trim() } : {}),
+                  ...(data.visaType === "other"
+                    ? { otherVisaType: data.otherVisaType.trim() }
+                    : {}),
                 }
               : {}),
             propertyUse: data.propertyUse as "vacation" | "investment",
@@ -319,62 +322,90 @@ export function MortgageQuestionnaire({
                 </p>
                 {visaDocsConfirmed ? (
                   <div className="mt-3">
-                    <p className="text-sm font-semibold text-success">Documents confirmed and shared.</p>
-                    <ul className="mt-1 text-xs text-muted-foreground">{visaDocs.map((doc) => <li key={doc.id}>📎 {doc.name}</li>)}</ul>
+                    <p className="text-sm font-semibold text-success">
+                      Documents confirmed and shared.
+                    </p>
+                    <ul className="mt-1 text-xs text-muted-foreground">
+                      {visaDocs.map((doc) => (
+                        <li key={doc.id}>📎 {doc.name}</li>
+                      ))}
+                    </ul>
                   </div>
                 ) : (
                   <div className="mt-3 space-y-3">
-                  <label className="mt-3 inline-flex cursor-pointer items-center gap-2 rounded-md border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground hover:bg-brand-tint">
-                    {visaDocs.length ? "Add more documents" : "Choose visa documents"}
-                    <input
-                      type="file"
-                      multiple
-                      accept="image/*,application/pdf"
-                      className="hidden"
-                      onChange={async (e) => {
-                        const selected = Array.from(e.target.files ?? []);
-                        const next = await Promise.all(selected.map(async (file) => ({
-                          id: Math.random().toString(36).slice(2, 10),
-                          name: file.name,
-                          url: await new Promise<string>((resolve) => {
-                            const reader = new FileReader();
-                            reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : "");
-                            reader.readAsDataURL(file);
-                          }),
-                        })));
-                        setVisaDocs((current) => [...current, ...next]);
-                        e.currentTarget.value = "";
-                      }}
-                    />
-                  </label>
-                  {visaDocs.length ? (
-                    <>
-                      <ul className="space-y-2">
-                        {visaDocs.map((doc) => (
-                          <li key={doc.id} className="flex items-center justify-between rounded-md border border-border bg-background px-3 py-2 text-xs">
-                            <span className="text-foreground">📎 {doc.name}</span>
-                            <button type="button" onClick={() => setVisaDocs((docs) => docs.filter((item) => item.id !== doc.id))} className="font-semibold text-destructive">Remove</button>
-                          </li>
-                        ))}
-                      </ul>
-                      <p className="text-xs text-muted-foreground">Review the files above. They are not shared until you confirm.</p>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (!submittedProfile) return;
-                          const now = new Date().toISOString();
-                          const documents = visaDocs.map((doc) => ({ ...doc, uploadedAt: now }));
-                          const profileWithDocs: MortgageProfile = { ...submittedProfile, visaDocuments: documents, visaDocumentName: documents[0]?.name, visaDocumentUploadedAt: now };
-                          saveMortgageProfile(profileWithDocs);
-                          if (submittedLeadId) updateLead(submittedLeadId, { profile: profileWithDocs });
-                          setVisaDocsConfirmed(true);
+                    <label className="mt-3 inline-flex cursor-pointer items-center gap-2 rounded-md border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground hover:bg-brand-tint">
+                      {visaDocs.length ? "Add more documents" : "Choose visa documents"}
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/*,application/pdf"
+                        className="hidden"
+                        onChange={async (e) => {
+                          const selected = Array.from(e.target.files ?? []);
+                          const next = await Promise.all(
+                            selected.map(async (file) => ({
+                              id: Math.random().toString(36).slice(2, 10),
+                              name: file.name,
+                              url: await new Promise<string>((resolve) => {
+                                const reader = new FileReader();
+                                reader.onload = () =>
+                                  resolve(typeof reader.result === "string" ? reader.result : "");
+                                reader.readAsDataURL(file);
+                              }),
+                            })),
+                          );
+                          setVisaDocs((current) => [...current, ...next]);
+                          e.currentTarget.value = "";
                         }}
-                        className="rounded-md bg-brand px-4 py-2 text-sm font-semibold text-background hover:bg-brand-soft"
-                      >
-                        Confirm and share documents
-                      </button>
-                    </>
-                  ) : null}
+                      />
+                    </label>
+                    {visaDocs.length ? (
+                      <>
+                        <ul className="space-y-2">
+                          {visaDocs.map((doc) => (
+                            <li
+                              key={doc.id}
+                              className="flex items-center justify-between rounded-md border border-border bg-background px-3 py-2 text-xs"
+                            >
+                              <span className="text-foreground">📎 {doc.name}</span>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setVisaDocs((docs) => docs.filter((item) => item.id !== doc.id))
+                                }
+                                className="font-semibold text-destructive"
+                              >
+                                Remove
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                        <p className="text-xs text-muted-foreground">
+                          Review the files above. They are not shared until you confirm.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!submittedProfile) return;
+                            const now = new Date().toISOString();
+                            const documents = visaDocs.map((doc) => ({ ...doc, uploadedAt: now }));
+                            const profileWithDocs: MortgageProfile = {
+                              ...submittedProfile,
+                              visaDocuments: documents,
+                              visaDocumentName: documents[0]?.name,
+                              visaDocumentUploadedAt: now,
+                            };
+                            saveMortgageProfile(profileWithDocs);
+                            if (submittedLeadId)
+                              updateLead(submittedLeadId, { profile: profileWithDocs });
+                            setVisaDocsConfirmed(true);
+                          }}
+                          className="rounded-md bg-brand px-4 py-2 text-sm font-semibold text-background hover:bg-brand-soft"
+                        >
+                          Confirm and share documents
+                        </button>
+                      </>
+                    ) : null}
                   </div>
                 )}
               </div>
@@ -388,7 +419,6 @@ export function MortgageQuestionnaire({
               Back to the property
             </button>
           </div>
-
         ) : (
           <form onSubmit={submit} className="space-y-6">
             {/* STEPPER */}

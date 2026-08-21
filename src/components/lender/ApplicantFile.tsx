@@ -117,7 +117,10 @@ function IncomeCard({ s }: { s: IncomeSource }) {
             <Row label="Ownership" value={s.ownershipPct ? `${s.ownershipPct}%` : "—"} />
             <Row label="Business type" value={s.businessType || "—"} />
             <Row label="Annual income — last year" value={money(num(s.annualIncomeLastYear))} />
-            <Row label="Estimated annual income — this year" value={money(num(s.estimatedAnnualIncome))} />
+            <Row
+              label="Estimated annual income — this year"
+              value={money(num(s.estimatedAnnualIncome))}
+            />
           </>
         ) : null}
         {s.type === "seasonal" ? (
@@ -194,7 +197,12 @@ export function ApplicantFile({ lead }: { lead: MortgageLead }) {
   const documents: { id: string; label: string; when?: string; url?: string }[] = [];
   if (p.visaDocuments?.length) {
     for (const document of p.visaDocuments) {
-      documents.push({ id: document.id, label: `Visa document — ${document.name}`, when: document.uploadedAt, url: document.url });
+      documents.push({
+        id: document.id,
+        label: `Visa document — ${document.name}`,
+        when: document.uploadedAt,
+        url: document.url,
+      });
     }
   } else if (p.visaDocumentName) {
     documents.push({
@@ -342,7 +350,10 @@ export function ApplicantFile({ lead }: { lead: MortgageLead }) {
           ) : (
             <ul className="space-y-2 py-2">
               {p.addresses.map((a) => (
-                <li key={a.id} className="rounded-md border border-border bg-background p-3 text-sm">
+                <li
+                  key={a.id}
+                  className="rounded-md border border-border bg-background p-3 text-sm"
+                >
                   <div className="font-semibold text-foreground">{addressLine(a)}</div>
                   <div className="text-xs text-muted-foreground">
                     {isoToUsMonth(a.from) || "—"} →{" "}
@@ -370,7 +381,9 @@ export function ApplicantFile({ lead }: { lead: MortgageLead }) {
             </section>
           ) : p.employment.length > 0 ? (
             <section>
-              <h3 className="text-sm font-semibold text-foreground">Employment history (2 years)</h3>
+              <h3 className="text-sm font-semibold text-foreground">
+                Employment history (2 years)
+              </h3>
               <ul className="mt-2 space-y-2 text-sm text-muted-foreground">
                 {p.employment.map((e) => (
                   <li key={e.id} className="rounded-md border border-border bg-background p-3">
@@ -390,7 +403,10 @@ export function ApplicantFile({ lead }: { lead: MortgageLead }) {
           )}
 
           <Block title="Income summary">
-            <Row label="Monthly gross (USD)" value={monthlyIncome ? money(monthlyIncome) : "Not provided"} />
+            <Row
+              label="Monthly gross (USD)"
+              value={monthlyIncome ? money(monthlyIncome) : "Not provided"}
+            />
             <Row label="Annual gross (USD)" value={annual ? money(annual) : "Not provided"} />
           </Block>
         </div>
@@ -405,7 +421,11 @@ export function ApplicantFile({ lead }: { lead: MortgageLead }) {
               <Row label="Credit cards" value={money(num(liabilities.creditCards))} />
               <Row label="Student loans" value={money(num(liabilities.studentLoans))} />
               {liabilities.other.map((o) => (
-                <Row key={o.id} label={o.label || "Other obligation"} value={money(num(o.amount))} />
+                <Row
+                  key={o.id}
+                  label={o.label || "Other obligation"}
+                  value={money(num(o.amount))}
+                />
               ))}
               <Row label="Total monthly obligations" value={money(totalLiabilities(liabilities))} />
             </>
@@ -517,7 +537,9 @@ export function ApplicantFile({ lead }: { lead: MortgageLead }) {
               />
             </>
           ) : (
-            <p className="py-2 text-sm text-muted-foreground">No demographic information on file.</p>
+            <p className="py-2 text-sm text-muted-foreground">
+              No demographic information on file.
+            </p>
           )}
         </Block>
       ) : null}
@@ -548,10 +570,15 @@ export function ApplicantFile({ lead }: { lead: MortgageLead }) {
             ) : (
               <ul className="mt-2 space-y-3">
                 {lead.infoRequests.map((r) => (
-                  <li key={r.id} className="rounded-md border border-border bg-background p-3 text-sm">
+                  <li
+                    key={r.id}
+                    className="rounded-md border border-border bg-background p-3 text-sm"
+                  >
                     <div className="font-semibold text-foreground">Lender asked</div>
                     <p className="text-muted-foreground">{r.question}</p>
-                    <div className="mt-1 text-[11px] text-muted-foreground">{date(r.requestedAt)}</div>
+                    <div className="mt-1 text-[11px] text-muted-foreground">
+                      {date(r.requestedAt)}
+                    </div>
                     {r.answeredAt ? (
                       <div className="mt-3 rounded-md bg-brand-tint/40 p-3">
                         <div className="font-semibold text-foreground">Client replied</div>

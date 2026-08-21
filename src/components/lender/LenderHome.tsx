@@ -222,19 +222,21 @@ export function LenderHome({
                       onClick={() => onOpenRequests(lead.id)}
                       className="flex w-full items-center justify-between gap-4 rounded-md px-2 py-2 text-left hover:bg-brand-tint/40"
                     >
-                    <div>
-                      <div className="text-sm font-semibold text-foreground">{lead.clientName}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {lead.propertyLabel} · {money(lead.propertyPrice)}
+                      <div>
+                        <div className="text-sm font-semibold text-foreground">
+                          {lead.clientName}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {lead.propertyLabel} · {money(lead.propertyPrice)}
+                        </div>
                       </div>
-                    </div>
-                    <span
-                      className={`shrink-0 rounded-full px-3 py-1 text-[11px] font-semibold ${
-                        late ? "bg-destructive/10 text-destructive" : "bg-brand-tint text-brand"
-                      }`}
-                    >
-                      {late ? "Overdue" : "Due"} {formatDate(due)}
-                    </span>
+                      <span
+                        className={`shrink-0 rounded-full px-3 py-1 text-[11px] font-semibold ${
+                          late ? "bg-destructive/10 text-destructive" : "bg-brand-tint text-brand"
+                        }`}
+                      >
+                        {late ? "Overdue" : "Due"} {formatDate(due)}
+                      </span>
                     </button>
                   </li>
                 );
@@ -258,17 +260,17 @@ export function LenderHome({
                     onClick={() => onOpenRequests(l.id)}
                     className="w-full rounded-md px-2 py-1.5 text-left hover:bg-brand-tint/40"
                   >
-                  <div className="font-semibold text-foreground">{l.clientName}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {l.status === "new"
-                      ? "Submitted a pre-approval request"
-                      : l.status === "info_required"
-                        ? "Additional information requested"
-                        : l.status === "qualified"
-                          ? "Qualified" + (l.terms ? " with priced terms" : " — pricing pending")
-                          : "Declined"}{" "}
-                    · {formatDateTime(l.decidedAt ?? l.submittedAt)}
-                  </div>
+                    <div className="font-semibold text-foreground">{l.clientName}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {l.status === "new"
+                        ? "Submitted a pre-approval request"
+                        : l.status === "info_required"
+                          ? "Additional information requested"
+                          : l.status === "qualified"
+                            ? "Qualified" + (l.terms ? " with priced terms" : " — pricing pending")
+                            : "Declined"}{" "}
+                      · {formatDateTime(l.decidedAt ?? l.submittedAt)}
+                    </div>
                   </button>
                 </li>
               ))}

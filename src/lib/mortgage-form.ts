@@ -16,10 +16,7 @@ export const MARITAL_LABEL: Record<MaritalStatus, string> = {
 };
 
 export type UnmarriedRelationship =
-  | "civil_union"
-  | "domestic_partnership"
-  | "registered_reciprocal"
-  | "other";
+  "civil_union" | "domestic_partnership" | "registered_reciprocal" | "other";
 
 export const UNMARRIED_RELATIONSHIP_LABEL: Record<UnmarriedRelationship, string> = {
   civil_union: "Civil union",
@@ -87,7 +84,8 @@ export const INCOME_TYPE_LABEL: Record<IncomeType, string> = {
 
 export type PayType = "salary" | "hourly";
 
-export type RelatedParty = "none" | "family_member" | "property_seller" | "real_estate_agent" | "other";
+export type RelatedParty =
+  "none" | "family_member" | "property_seller" | "real_estate_agent" | "other";
 
 export const RELATED_PARTY_LABEL: Record<RelatedParty, string> = {
   none: "No — unrelated employer",
@@ -196,7 +194,9 @@ export function monthlyNativeForIncome(s: IncomeSource): number {
         ? num(s.hourlyRate) * num(s.monthlyHours)
         : num(s.annualSalary) / 12;
     case "self_employed": {
-      const years = [num(s.annualIncomeLastYear), num(s.estimatedAnnualIncome)].filter((n) => n > 0);
+      const years = [num(s.annualIncomeLastYear), num(s.estimatedAnnualIncome)].filter(
+        (n) => n > 0,
+      );
       if (!years.length) return 0;
       return years.reduce((a, b) => a + b, 0) / years.length / 12;
     }
@@ -337,12 +337,7 @@ export const emptyDemographics = (): Demographics => ({
 /* --------------------------------------------------------------- assets */
 
 export type AssetType =
-  | "checking"
-  | "savings"
-  | "safety_deposit"
-  | "cash_liquid"
-  | "investments"
-  | "other";
+  "checking" | "savings" | "safety_deposit" | "cash_liquid" | "investments" | "other";
 
 export const ASSET_TYPE_LABEL: Record<AssetType, string> = {
   checking: "Checking account",
@@ -377,19 +372,31 @@ export type Assets = {
 };
 
 export const emptyFinancialAsset = (): FinancialAsset => ({
-  id: uid(), type: "checking", institution: "", country: "US", currency: "USD", value: "", description: "",
+  id: uid(),
+  type: "checking",
+  institution: "",
+  country: "US",
+  currency: "USD",
+  value: "",
+  description: "",
 });
 
 export const emptyPropertyAsset = (): PropertyAsset => ({
-  id: uid(), address: "", country: "US", estimatedValue: "", currency: "USD",
+  id: uid(),
+  address: "",
+  country: "US",
+  estimatedValue: "",
+  currency: "USD",
 });
 
 export const emptyAssets = (): Assets => ({ financial: [emptyFinancialAsset()], properties: [] });
 
 export function totalAssets(a?: Assets): number {
   if (!a) return 0;
-  return a.financial.reduce((sum, x) => sum + num(x.value), 0) +
-    a.properties.reduce((sum, x) => sum + num(x.estimatedValue), 0);
+  return (
+    a.financial.reduce((sum, x) => sum + num(x.value), 0) +
+    a.properties.reduce((sum, x) => sum + num(x.estimatedValue), 0)
+  );
 }
 
 /* ---------------------------------------------------------- liabilities */

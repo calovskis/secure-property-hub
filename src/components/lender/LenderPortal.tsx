@@ -17,7 +17,6 @@ import { ApplicantFile, Row } from "@/components/lender/ApplicantFile";
 import { countryLabel } from "@/data/countries";
 import { formatDate, formatDateTime } from "@/lib/dates";
 
-
 import { LENDER_ROLE_LABEL, useLenderTeam } from "@/lib/lender-team";
 import { usStatusOf, US_STATUS_LABEL, hasForeignIncome } from "@/lib/mortgage-form";
 import { LenderHome } from "@/components/lender/LenderHome";
@@ -100,7 +99,6 @@ function DecisionPanel({ lead }: { lead: MortgageLead }) {
   );
   const [infoOpen, setInfoOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
 
   function decide(status: LeadStatus) {
     const parsed = Number(score);
@@ -342,7 +340,6 @@ function AssignBar({ lead }: { lead: MortgageLead }) {
                 }
               : { assignedToId: undefined, assignedToName: undefined, assignedAt: undefined },
           );
-
         }}
         className="rounded-md border border-input bg-background px-3 py-2 text-xs text-foreground"
       >
@@ -370,7 +367,6 @@ function AssignBar({ lead }: { lead: MortgageLead }) {
 }
 
 function RequestsInbox({
-
   canDecide,
   focusLeadId,
 }: {
@@ -441,9 +437,9 @@ function RequestsInbox({
 
       {hiddenByScope > 0 ? (
         <div className="mb-4 rounded-lg border border-border bg-card px-4 py-3 text-xs text-muted-foreground">
-          {hiddenByScope} {hiddenByScope === 1 ? "request is" : "requests are"} outside your licensed
-          state coverage and hidden from this seat. A portal admin can widen your state scope in
-          Other → Team.
+          {hiddenByScope} {hiddenByScope === 1 ? "request is" : "requests are"} outside your
+          licensed state coverage and hidden from this seat. A portal admin can widen your state
+          scope in Other → Team.
         </div>
       ) : null}
 
@@ -630,7 +626,9 @@ function RequestsInbox({
                     </Cell>
                     <Cell label="Requested price">{money(l.propertyPrice)}</Cell>
                     <Cell label="US status">
-                      <span className="block">{US_STATUS_LABEL[usStatusOf(l.profile, l.usPerson)]}</span>
+                      <span className="block">
+                        {US_STATUS_LABEL[usStatusOf(l.profile, l.usPerson)]}
+                      </span>
                       {hasForeignIncome(l.profile.incomes ?? []) ? (
                         <span className="mt-1 block w-fit rounded-full bg-gold-tint px-1.5 py-0.5 text-[10px] font-semibold text-gold underline decoration-gold decoration-2 underline-offset-2">
                           Foreign income
@@ -640,13 +638,18 @@ function RequestsInbox({
                     <Cell label="Citizenship">
                       {l.usPerson
                         ? "US citizen / green card"
-                        : [countryLabel(l.profile.citizenship), countryLabel(l.profile.secondCitizenship)]
+                        : [
+                            countryLabel(l.profile.citizenship),
+                            countryLabel(l.profile.secondCitizenship),
+                          ]
                             .filter(Boolean)
                             .join(" / ") || "Non-US person"}
                     </Cell>
 
                     <div className="flex min-w-0 flex-col items-start gap-1">
-                      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Process status / assignee</div>
+                      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                        Process status / assignee
+                      </div>
                       <StatusPill status={l.status} />
                       {l.assignedToName ? (
                         <span className="text-[11px] text-muted-foreground">
@@ -666,7 +669,6 @@ function RequestsInbox({
           )}
         </section>
       )}
-
     </>
   );
 }
@@ -733,11 +735,11 @@ export function LenderPortal({
 
       {isCompanyOnVacation && companyVacation ? (
         <div className="mb-6 rounded-lg border border-gold/40 bg-gold-tint px-4 py-3 text-sm text-foreground">
-          <span className="font-semibold">Company-wide vacation mode is on</span> ({formatDate(companyVacation.from)} –{" "}
-          {formatDate(companyVacation.until)}
-          {companyVacation.reason ? ` · ${companyVacation.reason}` : ""}). New Loqal clients are being
-          routed to the next preferred partner while your company is away. Existing files in this
-          portal are unaffected.
+          <span className="font-semibold">Company-wide vacation mode is on</span> (
+          {formatDate(companyVacation.from)} – {formatDate(companyVacation.until)}
+          {companyVacation.reason ? ` · ${companyVacation.reason}` : ""}). New Loqal clients are
+          being routed to the next preferred partner while your company is away. Existing files in
+          this portal are unaffected.
         </div>
       ) : null}
 

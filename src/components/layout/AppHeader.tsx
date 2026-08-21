@@ -1,13 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import {
-  PARTNER_LABEL,
-  ROLE_LABEL,
-  fullName,
-  homeRouteFor,
-  initials,
-  useAuth,
-} from "@/lib/auth";
+import { PARTNER_LABEL, ROLE_LABEL, fullName, homeRouteFor, initials, useAuth } from "@/lib/auth";
 import { LANGUAGES, useI18n } from "@/lib/i18n";
 
 function LanguageMenu() {
@@ -56,7 +49,6 @@ function AccountMenu() {
   const navigate = useNavigate();
 
   if (!ready) return <div className="size-9 rounded-full bg-muted" />;
-
 
   if (!user) {
     return (
@@ -120,7 +112,6 @@ function AccountMenu() {
   );
 }
 
-
 type SubItem = { label: string; icon: string; to?: string };
 type NavItem = {
   label: string;
@@ -171,7 +162,6 @@ const NAV: NavItem[] = [
     ],
   },
 ];
-
 
 export function AppHeader({
   active = "Home",
@@ -258,7 +248,12 @@ export function AppHeader({
                       const cls =
                         "flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-brand-tint hover:text-brand";
                       return sub.to ? (
-                        <Link key={sub.label} to={sub.to} className={cls} onClick={() => setOpen(null)}>
+                        <Link
+                          key={sub.label}
+                          to={sub.to}
+                          className={cls}
+                          onClick={() => setOpen(null)}
+                        >
                           <span aria-hidden>{sub.icon}</span>
                           {t(sub.label)}
                         </Link>
@@ -269,7 +264,6 @@ export function AppHeader({
                         </button>
                       );
                     })}
-
                   </div>
                 ) : null}
               </div>
@@ -333,7 +327,6 @@ export function AppHeader({
           <LanguageMenu />
 
           <AccountMenu />
-
         </div>
       </div>
 
@@ -358,6 +351,5 @@ export function AppHeader({
         })}
       </nav>
     </header>
-
   );
 }

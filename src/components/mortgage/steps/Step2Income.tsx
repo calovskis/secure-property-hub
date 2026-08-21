@@ -231,9 +231,10 @@ export function Step2Income({ data, patch, usPerson }: StepProps) {
                       </Field>
                       <p className="text-xs text-muted-foreground sm:col-span-2">
                         Amounts below are entered in {s.currency || "the local currency"}. Rates
-                        update daily {fxLoading ? "(refreshing…)" : `(last update: ${fx.updatedAt})`}.
-                        Converted
-                        monthly income: <strong className="text-brand">{money(monthly)}</strong> USD.
+                        update daily{" "}
+                        {fxLoading ? "(refreshing…)" : `(last update: ${fx.updatedAt})`}. Converted
+                        monthly income: <strong className="text-brand">{money(monthly)}</strong>{" "}
+                        USD.
                       </p>
                     </div>
                   ) : null}
@@ -348,7 +349,9 @@ export function Step2Income({ data, patch, usPerson }: StepProps) {
                           inputMode="decimal"
                           placeholder="140,000"
                           value={s.annualIncomeLastYear}
-                          onChange={(e) => patchIncome(s.id, { annualIncomeLastYear: e.target.value })}
+                          onChange={(e) =>
+                            patchIncome(s.id, { annualIncomeLastYear: e.target.value })
+                          }
                           className={inputClass}
                         />
                       </Field>
@@ -358,7 +361,9 @@ export function Step2Income({ data, patch, usPerson }: StepProps) {
                         inputMode="decimal"
                         placeholder="150,000"
                         value={s.estimatedAnnualIncome}
-                        onChange={(e) => patchIncome(s.id, { estimatedAnnualIncome: e.target.value })}
+                        onChange={(e) =>
+                          patchIncome(s.id, { estimatedAnnualIncome: e.target.value })
+                        }
                         className={inputClass}
                       />
                     </Field>
