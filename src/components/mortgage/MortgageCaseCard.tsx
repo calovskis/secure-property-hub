@@ -82,9 +82,23 @@ function InfoRequests({ lead }: { lead: MortgageLead }) {
               className="mt-1 block w-full text-xs text-muted-foreground file:mr-3 file:rounded-md file:border-0 file:bg-brand file:px-3 file:py-2 file:text-xs file:font-semibold file:text-background"
             />
             {(files[r.id] ?? []).map((n, index) => (
-              <div key={`${n}-${index}`} className="mt-1 flex items-center justify-between rounded-md border border-border bg-background px-2 py-1 text-xs">
+              <div
+                key={`${n}-${index}`}
+                className="mt-1 flex items-center justify-between rounded-md border border-border bg-background px-2 py-1 text-xs"
+              >
                 <span className="text-brand">📎 {n}</span>
-                <button type="button" onClick={() => setFiles({ ...files, [r.id]: (files[r.id] ?? []).filter((_, i) => i !== index) })} className="font-semibold text-destructive">Remove</button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFiles({
+                      ...files,
+                      [r.id]: (files[r.id] ?? []).filter((_, i) => i !== index),
+                    })
+                  }
+                  className="font-semibold text-destructive"
+                >
+                  Remove
+                </button>
               </div>
             ))}
           </div>

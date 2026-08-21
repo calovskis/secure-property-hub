@@ -453,9 +453,16 @@ export function ApplicantFile({ lead }: { lead: MortgageLead }) {
                 <Row label="Credit cards" value={money(num(liabilities.creditCards))} />
                 <Row label="Student loans" value={money(num(liabilities.studentLoans))} />
                 {liabilities.other.map((o) => (
-                  <Row key={o.id} label={o.label || "Other obligation"} value={money(num(o.amount))} />
+                  <Row
+                    key={o.id}
+                    label={o.label || "Other obligation"}
+                    value={money(num(o.amount))}
+                  />
                 ))}
-                <Row label="Total monthly obligations" value={money(totalLiabilities(liabilities))} />
+                <Row
+                  label="Total monthly obligations"
+                  value={money(totalLiabilities(liabilities))}
+                />
               </>
             ) : (
               <p className="py-2 text-sm text-muted-foreground">Not required for this applicant.</p>
