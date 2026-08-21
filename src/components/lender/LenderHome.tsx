@@ -155,13 +155,13 @@ export function LenderHome({
 
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          label="Open pre-approvals"
+          label="Open requests"
           value={String(s.open.length)}
           note={`${s.newCount} not yet touched`}
           tone="gold"
         />
         <StatCard
-          label="In progress"
+          label="In process"
           value={String(s.inProgress.length)}
           note={`${s.openDocRequests} outstanding client requests`}
         />
@@ -171,7 +171,7 @@ export function LenderHome({
           note={`${s.requestedToday.length} requested today`}
         />
         <StatCard
-          label="Closed today"
+          label="Pre-approvals issued"
           value={String(s.closedToday.length)}
           note={`${s.qualified.length} qualified · ${s.notQualified.length} declined overall`}
           tone="success"
@@ -222,19 +222,21 @@ export function LenderHome({
                       onClick={() => onOpenRequests(lead.id)}
                       className="flex w-full items-center justify-between gap-4 rounded-md px-2 py-2 text-left hover:bg-brand-tint/40"
                     >
-                    <div>
-                      <div className="text-sm font-semibold text-foreground">{lead.clientName}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {lead.propertyLabel} · {money(lead.propertyPrice)}
+                      <div>
+                        <div className="text-sm font-semibold text-foreground">
+                          {lead.clientName}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {lead.propertyLabel} · {money(lead.propertyPrice)}
+                        </div>
                       </div>
-                    </div>
-                    <span
-                      className={`shrink-0 rounded-full px-3 py-1 text-[11px] font-semibold ${
-                        late ? "bg-destructive/10 text-destructive" : "bg-brand-tint text-brand"
-                      }`}
-                    >
-                      {late ? "Overdue" : "Due"} {formatDate(due)}
-                    </span>
+                      <span
+                        className={`shrink-0 rounded-full px-3 py-1 text-[11px] font-semibold ${
+                          late ? "bg-destructive/10 text-destructive" : "bg-brand-tint text-brand"
+                        }`}
+                      >
+                        {late ? "Overdue" : "Due"} {formatDate(due)}
+                      </span>
                     </button>
                   </li>
                 );
@@ -258,17 +260,17 @@ export function LenderHome({
                     onClick={() => onOpenRequests(l.id)}
                     className="w-full rounded-md px-2 py-1.5 text-left hover:bg-brand-tint/40"
                   >
-                  <div className="font-semibold text-foreground">{l.clientName}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {l.status === "new"
-                      ? "Submitted a pre-approval request"
-                      : l.status === "info_required"
-                        ? "Additional information requested"
-                        : l.status === "qualified"
-                          ? "Qualified" + (l.terms ? " with priced terms" : " — pricing pending")
-                          : "Declined"}{" "}
-                    · {formatDateTime(l.decidedAt ?? l.submittedAt)}
-                  </div>
+                    <div className="font-semibold text-foreground">{l.clientName}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {l.status === "new"
+                        ? "Submitted a pre-approval request"
+                        : l.status === "info_required"
+                          ? "Additional information requested"
+                          : l.status === "qualified"
+                            ? "Qualified" + (l.terms ? " with priced terms" : " — pricing pending")
+                            : "Declined"}{" "}
+                      · {formatDateTime(l.decidedAt ?? l.submittedAt)}
+                    </div>
                   </button>
                 </li>
               ))}

@@ -1,14 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { AppHeader } from "@/components/layout/AppHeader";
-import {
-  LenderPortal,
-  useLenderTabs,
-  type LenderTabId,
-} from "@/components/lender/LenderPortal";
+import { LenderPortal, useLenderTabs, type LenderTabId } from "@/components/lender/LenderPortal";
 
 import { PARTNER_LABEL, fullName, useAuth, type PartnerType } from "@/lib/auth";
-
 
 export const Route = createFileRoute("/partner")({
   component: PartnerPage,
@@ -47,9 +42,21 @@ const BOARDS: Record<PartnerType, Board> = {
       ["Deals in closing", "5", "2 awaiting inspection"],
     ],
     queue: [
-      { title: "255 Park Avenue — showing request", meta: "Client: A. Novak · Remote buyer", badge: "New" },
-      { title: "1825 Oak Street — offer submitted", meta: "Awaiting seller response", badge: "In progress" },
-      { title: "450 Residential Lane — listing draft", meta: "Photos pending upload", badge: "Draft" },
+      {
+        title: "255 Park Avenue — showing request",
+        meta: "Client: A. Novak · Remote buyer",
+        badge: "New",
+      },
+      {
+        title: "1825 Oak Street — offer submitted",
+        meta: "Awaiting seller response",
+        badge: "In process",
+      },
+      {
+        title: "450 Residential Lane — listing draft",
+        meta: "Photos pending upload",
+        badge: "Draft",
+      },
     ],
     actions: ["Add listing", "Upload photos", "Log a showing", "Request valuation"],
   },
@@ -64,7 +71,11 @@ const BOARDS: Record<PartnerType, Board> = {
     queue: [
       { title: "Pre-qual — 255 Park Avenue", meta: "Foreign national · 20% down", badge: "Review" },
       { title: "Pre-qual — 2001 Ocean Drive", meta: "US person · SSN provided", badge: "Ready" },
-      { title: "Term sheet — 3030 Valley Road", meta: "Multi-family · DSCR product", badge: "Sent" },
+      {
+        title: "Term sheet — 3030 Valley Road",
+        meta: "Multi-family · DSCR product",
+        badge: "Sent",
+      },
     ],
     actions: ["Open request queue", "Issue term sheet", "Request documents", "Rate sheet"],
   },
@@ -79,7 +90,11 @@ const BOARDS: Record<PartnerType, Board> = {
     queue: [
       { title: "450 Bay Street — turnover clean", meta: "Today 14:00 · 2h slot", badge: "Today" },
       { title: "2001 Ocean Drive — deep clean", meta: "Tomorrow 09:00", badge: "Scheduled" },
-      { title: "1 Central Park South — inspection photos", meta: "Owner requested proof", badge: "Action" },
+      {
+        title: "1 Central Park South — inspection photos",
+        meta: "Owner requested proof",
+        badge: "Action",
+      },
     ],
     actions: ["Accept job", "Upload completion photos", "Report an issue", "Update availability"],
   },
@@ -92,9 +107,17 @@ const BOARDS: Record<PartnerType, Board> = {
       ["Pending payouts", "$8,240", "Next run: Friday"],
     ],
     queue: [
-      { title: "5000 Industrial Way — HVAC inspection", meta: "Scheduled Thursday", badge: "Scheduled" },
+      {
+        title: "5000 Industrial Way — HVAC inspection",
+        meta: "Scheduled Thursday",
+        badge: "Scheduled",
+      },
       { title: "Lot 45 Green Hills — survey", meta: "Documents requested", badge: "Action" },
-      { title: "500 5th Avenue — utility transfer", meta: "Awaiting owner signature", badge: "Blocked" },
+      {
+        title: "500 5th Avenue — utility transfer",
+        meta: "Awaiting owner signature",
+        badge: "Blocked",
+      },
     ],
     actions: ["Accept job", "Submit report", "Raise invoice", "Update availability"],
   },
@@ -133,12 +156,12 @@ function PartnerPage() {
 
   const board = BOARDS[type];
 
-
   return (
     <div className="min-h-screen bg-background">
-      <AppHeader navSlot={<span className="text-sm font-semibold text-brand">Partner workspace</span>} />
+      <AppHeader
+        navSlot={<span className="text-sm font-semibold text-brand">Partner workspace</span>}
+      />
       <main className="mx-auto max-w-[1400px] px-4 py-8 md:px-7">
-
         <div className="mb-8">
           <span className="rounded-full bg-gold-tint px-3 py-1 text-xs font-semibold text-gold">
             {PARTNER_LABEL[type]}
@@ -232,4 +255,3 @@ function LenderWorkspace({ lenderName }: { lenderName: string }) {
     </div>
   );
 }
-

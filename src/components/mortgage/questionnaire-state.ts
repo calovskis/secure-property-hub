@@ -2,6 +2,7 @@ import type { AddressEntry } from "@/lib/auth";
 import {
   emptyDeclarations,
   emptyDemographics,
+  emptyAssets,
   emptyIncome,
   emptyLiabilities,
   emptyMilitary,
@@ -13,6 +14,7 @@ import {
   type Liabilities,
   type MaritalStatus,
   type MilitaryService,
+  type Assets,
   type UnmarriedAddendum,
   type UsStatus,
 } from "@/lib/mortgage-form";
@@ -42,6 +44,7 @@ export type QuestionnaireData = {
   secondCitizenship: string;
   visaActive: boolean;
   visaType: UsStatus | "";
+  otherVisaType: string;
   visaIssued: string;
   visaValidUntil: string;
   propertyUse: "vacation" | "investment" | "";
@@ -53,6 +56,7 @@ export type QuestionnaireData = {
   incomes: IncomeSource[];
   /* step 3 */
   liabilities: Liabilities;
+  assets: Assets;
   /* step 4 */
   declarations: Declarations;
   military: MilitaryService;
@@ -72,6 +76,7 @@ export const emptyQuestionnaire = (): QuestionnaireData => ({
   secondCitizenship: "",
   visaActive: false,
   visaType: "",
+  otherVisaType: "",
   visaIssued: "",
   visaValidUntil: "",
   propertyUse: "",
@@ -81,6 +86,7 @@ export const emptyQuestionnaire = (): QuestionnaireData => ({
   ssnAccepted: false,
   incomes: [emptyIncome("w2")],
   liabilities: emptyLiabilities(),
+  assets: emptyAssets(),
   declarations: emptyDeclarations(),
   military: emptyMilitary(),
   demographics: emptyDemographics(),

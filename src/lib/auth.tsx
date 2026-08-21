@@ -27,6 +27,7 @@ export const PARTNER_LABEL: Record<PartnerType, string> = {
 
 import type {
   Declarations,
+  Assets,
   Demographics,
   Dependent,
   IncomeSource,
@@ -75,11 +76,13 @@ export type MortgageProfile = {
   visaValidUntil?: string;
   /** Visa / status category when the applicant holds an active US visa. */
   visaType?: UsStatus;
+  otherVisaType?: string;
   /** Overall US status shown to lending partners. */
   usStatus?: UsStatus;
   /** Uploaded copy of the visa document, when a visa was declared. */
   visaDocumentName?: string;
   visaDocumentUploadedAt?: string;
+  visaDocuments?: { id: string; name: string; uploadedAt: string; url?: string }[];
   propertyUse?: "vacation" | "investment";
   usBankAccount?: boolean;
   /** Marital status + URLA unmarried addendum */
@@ -91,6 +94,7 @@ export type MortgageProfile = {
   /** Layered income sources (W2, self-employed, seasonal). */
   incomes?: IncomeSource[];
   liabilities?: Liabilities;
+  assets?: Assets;
   declarations?: Declarations;
   military?: MilitaryService;
   demographics?: Demographics;

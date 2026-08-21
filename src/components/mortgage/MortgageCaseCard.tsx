@@ -74,23 +74,43 @@ function InfoRequests({ lead }: { lead: MortgageLead }) {
             <input
               type="file"
               multiple
-              onChange={(e) =>
-                setFiles({
-                  ...files,
-                  [r.id]: Array.from(e.target.files ?? []).map((f) => f.name),
-                })
-              }
+              onChange={(e) => {
+                const names = Array.from(e.target.files ?? []).map((f) => f.name);
+                setFiles({ ...files, [r.id]: [...(files[r.id] ?? []), ...names] });
+                e.currentTarget.value = "";
+              }}
               className="mt-1 block w-full text-xs text-muted-foreground file:mr-3 file:rounded-md file:border-0 file:bg-brand file:px-3 file:py-2 file:text-xs file:font-semibold file:text-background"
             />
-            {(files[r.id] ?? []).map((n) => (
-              <div key={n} className="mt-1 text-xs text-brand">
-                📎 {n}
+            {(files[r.id] ?? []).map((n, index) => (
+              <div
+                key={`${n}-${index}`}
+                className="mt-1 flex items-center justify-between rounded-md border border-border bg-background px-2 py-1 text-xs"
+              >
+                <span className="text-brand">📎 {n}</span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFiles({
+                      ...files,
+                      [r.id]: (files[r.id] ?? []).filter((_, i) => i !== index),
+                    })
+                  }
+                  className="font-semibold text-destructive"
+                >
+                  Remove
+                </button>
               </div>
             ))}
           </div>
           <button
             type="button"
-            onClick={() => answerInfoRequest(lead.id, r.id, drafts[r.id] ?? "", files[r.id] ?? [])}
+            onClick={() => {
+              const selectedFiles = files[r.id] ?? [];
+              const confirmed = window.confirm(
+                `Send this response to the lender${selectedFiles.length ? ` with ${selectedFiles.length} document${selectedFiles.length === 1 ? "" : "s"}` : ""}?`,
+              );
+              if (confirmed) answerInfoRequest(lead.id, r.id, drafts[r.id] ?? "", selectedFiles);
+            }}
             disabled={r.needsDocument && (files[r.id] ?? []).length === 0}
             className="mt-3 rounded-md bg-brand px-4 py-2 text-sm font-semibold text-background hover:bg-brand-soft disabled:opacity-50"
           >

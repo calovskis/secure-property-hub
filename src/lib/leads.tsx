@@ -8,7 +8,12 @@ import {
   type ReactNode,
 } from "react";
 import type { MortgageProfile } from "@/lib/auth";
-import { getTeamSnapshot, isCompanyOnVacation, pickAssignee, type AssignCounts } from "@/lib/lender-team";
+import {
+  getTeamSnapshot,
+  isCompanyOnVacation,
+  pickAssignee,
+  type AssignCounts,
+} from "@/lib/lender-team";
 
 export type LeadStatus = "new" | "info_required" | "not_qualified" | "qualified";
 
@@ -23,6 +28,7 @@ export type LeadDocument = {
   id: string;
   name: string;
   uploadedAt: string;
+  url?: string;
 };
 
 export type InfoRequest = {
@@ -91,7 +97,6 @@ export type MortgageLead = {
   debts?: DebtProfile;
 };
 
-
 /** Estimates unlock only when the lender returned a score AND full pricing. */
 export function hasPricedOffer(lead?: MortgageLead): lead is MortgageLead {
   return Boolean(lead && lead.status === "qualified" && lead.creditScore && lead.terms);
@@ -137,8 +142,6 @@ export function leadCity(lead: MortgageLead) {
   const parts = lead.propertyLabel.split(",").map((s) => s.trim());
   return parts.length > 1 ? parts[parts.length - 2]! : (parts[0] ?? "—");
 }
-
-
 
 /** Convert lender terms into the loan terms used by the investment model. */
 export function toLoanTerms(terms: LenderTerms) {
@@ -198,8 +201,10 @@ export function autoAssign(
       counts.openByMember[l.assignedToId] = (counts.openByMember[l.assignedToId] ?? 0) + 1;
     }
     const at = l.assignedAt ? new Date(l.assignedAt).getTime() : 0;
-    if (at >= startOfDay) counts.todayByMember[l.assignedToId] = (counts.todayByMember[l.assignedToId] ?? 0) + 1;
-    if (at >= startOfWeek) counts.weekByMember[l.assignedToId] = (counts.weekByMember[l.assignedToId] ?? 0) + 1;
+    if (at >= startOfDay)
+      counts.todayByMember[l.assignedToId] = (counts.todayByMember[l.assignedToId] ?? 0) + 1;
+    if (at >= startOfWeek)
+      counts.weekByMember[l.assignedToId] = (counts.weekByMember[l.assignedToId] ?? 0) + 1;
   }
   const m = lead.propertyLabel.match(/\b([A-Z]{2})\b\s*$/);
   const state = m?.[1] ?? "";
@@ -207,7 +212,11 @@ export function autoAssign(
   const city = parts.length > 1 ? parts[parts.length - 2]! : (parts[0] ?? "");
   const picked = pickAssignee({ state, city, price: lead.propertyPrice }, counts, snapshot);
   if (!picked) return {};
-  return { assignedToId: picked.id, assignedToName: picked.name, assignedAt: new Date().toISOString() };
+  return {
+    assignedToId: picked.id,
+    assignedToName: picked.name,
+    assignedAt: new Date().toISOString(),
+  };
 }
 
 export function LeadsProvider({ children }: { children: ReactNode }) {

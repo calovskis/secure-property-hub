@@ -5,6 +5,7 @@ import { countryLabel } from "@/data/countries";
 import { currencyLabel } from "@/data/currencies";
 import { formatDate, formatDateTime, isoToUsMonth } from "@/lib/dates";
 import {
+  ASSET_TYPE_LABEL,
   INCOME_TYPE_LABEL,
   MARITAL_LABEL,
   RELATED_PARTY_LABEL,
@@ -15,6 +16,7 @@ import {
   monthlyNativeForIncome,
   num,
   totalLiabilities,
+  totalAssets,
   totalMonthlyIncome,
   usStatusOf,
   type Declarations,
@@ -116,7 +118,10 @@ function IncomeCard({ s }: { s: IncomeSource }) {
             <Row label="Ownership" value={s.ownershipPct ? `${s.ownershipPct}%` : "—"} />
             <Row label="Business type" value={s.businessType || "—"} />
             <Row label="Annual income — last year" value={money(num(s.annualIncomeLastYear))} />
-            <Row label="Estimated annual income — this year" value={money(num(s.estimatedAnnualIncome))} />
+            <Row
+              label="Estimated annual income — this year"
+              value={money(num(s.estimatedAnnualIncome))}
+            />
           </>
         ) : null}
         {s.type === "seasonal" ? (
@@ -163,7 +168,7 @@ const TABS = [
   { id: "personal", label: "Personal & household" },
   { id: "addresses", label: "Addresses" },
   { id: "income", label: "Employment & income" },
-  { id: "liabilities", label: "Liabilities & DTI" },
+  { id: "liabilities", label: "Assets & Liabilities" },
   { id: "declarations", label: "Declarations & military" },
   { id: "demographics", label: "Demographics" },
   { id: "documents", label: "Documents & requests" },
@@ -178,6 +183,7 @@ export function ApplicantFile({ lead }: { lead: MortgageLead }) {
   const monthlyIncome = incomes.length ? totalMonthlyIncome(incomes) : p.monthlyGross;
   const annual = monthlyIncome * 12;
   const liabilities = p.liabilities;
+  const assets = p.assets;
   const decl = p.declarations;
   const mil = p.military;
   const demo = p.demographics;
@@ -190,8 +196,17 @@ export function ApplicantFile({ lead }: { lead: MortgageLead }) {
     (s) => s.relatedParty === "property_seller" || s.relatedParty === "family_member",
   );
 
-  const documents: { id: string; label: string; when?: string }[] = [];
-  if (p.visaDocumentName) {
+  const documents: { id: string; label: string; when?: string; url?: string }[] = [];
+  if (p.visaDocuments?.length) {
+    for (const document of p.visaDocuments) {
+      documents.push({
+        id: document.id,
+        label: `Visa document — ${document.name}`,
+        when: document.uploadedAt,
+        ...(document.url ? { url: document.url } : {}),
+      });
+    }
+  } else if (p.visaDocumentName) {
     documents.push({
       id: "visa",
       label: `Visa document — ${p.visaDocumentName}`,
@@ -312,7 +327,13 @@ export function ApplicantFile({ lead }: { lead: MortgageLead }) {
                   label="US visa"
                   value={
                     p.usVisaActive
-                      ? `Active · ${formatDate(p.visaIssued)} → ${formatDate(p.visaValidUntil)}`
+                      ? `Active · ${
+                          p.visaType === "other"
+                            ? p.otherVisaType || "Other status"
+                            : p.visaType
+                              ? US_STATUS_LABEL[p.visaType]
+                              : "Status not specified"
+                        } · ${formatDate(p.visaIssued)} → ${formatDate(p.visaValidUntil)}`
                       : "Not active"
                   }
                 />
@@ -337,7 +358,10 @@ export function ApplicantFile({ lead }: { lead: MortgageLead }) {
           ) : (
             <ul className="space-y-2 py-2">
               {p.addresses.map((a) => (
-                <li key={a.id} className="rounded-md border border-border bg-background p-3 text-sm">
+                <li
+                  key={a.id}
+                  className="rounded-md border border-border bg-background p-3 text-sm"
+                >
                   <div className="font-semibold text-foreground">{addressLine(a)}</div>
                   <div className="text-xs text-muted-foreground">
                     {isoToUsMonth(a.from) || "—"} →{" "}
@@ -365,7 +389,9 @@ export function ApplicantFile({ lead }: { lead: MortgageLead }) {
             </section>
           ) : p.employment.length > 0 ? (
             <section>
-              <h3 className="text-sm font-semibold text-foreground">Employment history (2 years)</h3>
+              <h3 className="text-sm font-semibold text-foreground">
+                Employment history (2 years)
+              </h3>
               <ul className="mt-2 space-y-2 text-sm text-muted-foreground">
                 {p.employment.map((e) => (
                   <li key={e.id} className="rounded-md border border-border bg-background p-3">
@@ -385,29 +411,64 @@ export function ApplicantFile({ lead }: { lead: MortgageLead }) {
           )}
 
           <Block title="Income summary">
-            <Row label="Monthly gross (USD)" value={monthlyIncome ? money(monthlyIncome) : "Not provided"} />
+            <Row
+              label="Monthly gross (USD)"
+              value={monthlyIncome ? money(monthlyIncome) : "Not provided"}
+            />
             <Row label="Annual gross (USD)" value={annual ? money(annual) : "Not provided"} />
           </Block>
         </div>
       ) : null}
 
       {tab === "liabilities" ? (
-        <Block title="Monthly liabilities">
-          {liabilities ? (
-            <>
-              <Row label="Property loans" value={money(num(liabilities.propertyLoans))} />
-              <Row label="Vehicle loans" value={money(num(liabilities.vehicleLoans))} />
-              <Row label="Credit cards" value={money(num(liabilities.creditCards))} />
-              <Row label="Student loans" value={money(num(liabilities.studentLoans))} />
-              {liabilities.other.map((o) => (
-                <Row key={o.id} label={o.label || "Other obligation"} value={money(num(o.amount))} />
-              ))}
-              <Row label="Total monthly obligations" value={money(totalLiabilities(liabilities))} />
-            </>
-          ) : (
-            <p className="py-2 text-sm text-muted-foreground">No liabilities on file.</p>
-          )}
-        </Block>
+        <div className="space-y-4">
+          <Block title="Assets">
+            {assets ? (
+              <>
+                {assets.financial.map((asset) => (
+                  <Row
+                    key={asset.id}
+                    label={ASSET_TYPE_LABEL[asset.type]}
+                    value={`${asset.value || "0"} ${asset.currency}${asset.institution ? ` · ${asset.institution}` : ""} · ${countryLabel(asset.country)}`}
+                  />
+                ))}
+                {assets.properties.map((property) => (
+                  <Row
+                    key={property.id}
+                    label="Other property"
+                    value={`${property.address} · ${property.estimatedValue || "0"} ${property.currency} · ${countryLabel(property.country)}`}
+                  />
+                ))}
+                <Row label="Total declared value (before FX)" value={money(totalAssets(assets))} />
+              </>
+            ) : (
+              <p className="py-2 text-sm text-muted-foreground">No assets on file.</p>
+            )}
+          </Block>
+          <Block title="Monthly liabilities">
+            {liabilities ? (
+              <>
+                <Row label="Property loans" value={money(num(liabilities.propertyLoans))} />
+                <Row label="Vehicle loans" value={money(num(liabilities.vehicleLoans))} />
+                <Row label="Credit cards" value={money(num(liabilities.creditCards))} />
+                <Row label="Student loans" value={money(num(liabilities.studentLoans))} />
+                {liabilities.other.map((o) => (
+                  <Row
+                    key={o.id}
+                    label={o.label || "Other obligation"}
+                    value={money(num(o.amount))}
+                  />
+                ))}
+                <Row
+                  label="Total monthly obligations"
+                  value={money(totalLiabilities(liabilities))}
+                />
+              </>
+            ) : (
+              <p className="py-2 text-sm text-muted-foreground">Not required for this applicant.</p>
+            )}
+          </Block>
+        </div>
       ) : null}
 
       {tab === "declarations" ? (
@@ -512,7 +573,9 @@ export function ApplicantFile({ lead }: { lead: MortgageLead }) {
               />
             </>
           ) : (
-            <p className="py-2 text-sm text-muted-foreground">No demographic information on file.</p>
+            <p className="py-2 text-sm text-muted-foreground">
+              No demographic information on file.
+            </p>
           )}
         </Block>
       ) : null}
@@ -526,7 +589,13 @@ export function ApplicantFile({ lead }: { lead: MortgageLead }) {
               <ul className="space-y-1 py-2">
                 {documents.map((d) => (
                   <li key={d.id} className="flex items-center justify-between text-sm">
-                    <span className="text-brand">📎 {d.label}</span>
+                    {d.url ? (
+                      <a href={d.url} download className="text-brand underline underline-offset-2">
+                        📎 {d.label}
+                      </a>
+                    ) : (
+                      <span className="text-brand">📎 {d.label}</span>
+                    )}
                     <span className="text-xs text-muted-foreground">{date(d.when)}</span>
                   </li>
                 ))}
@@ -543,10 +612,15 @@ export function ApplicantFile({ lead }: { lead: MortgageLead }) {
             ) : (
               <ul className="mt-2 space-y-3">
                 {lead.infoRequests.map((r) => (
-                  <li key={r.id} className="rounded-md border border-border bg-background p-3 text-sm">
+                  <li
+                    key={r.id}
+                    className="rounded-md border border-border bg-background p-3 text-sm"
+                  >
                     <div className="font-semibold text-foreground">Lender asked</div>
                     <p className="text-muted-foreground">{r.question}</p>
-                    <div className="mt-1 text-[11px] text-muted-foreground">{date(r.requestedAt)}</div>
+                    <div className="mt-1 text-[11px] text-muted-foreground">
+                      {date(r.requestedAt)}
+                    </div>
                     {r.answeredAt ? (
                       <div className="mt-3 rounded-md bg-brand-tint/40 p-3">
                         <div className="font-semibold text-foreground">Client replied</div>

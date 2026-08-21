@@ -265,7 +265,7 @@ function ProfilePage() {
                   <Row label="Date of birth" value={isoToUsDate(profile.dateOfBirth)} />
                   <Row label="Marital status" value={profile.maritalStatus} />
                   <Row label="Dependents" value={profile.dependents?.length ?? 0} />
-                  <Row label="Monthly gross income" value={money(profile.monthlyGross)} />
+                  <Row label="Monthly gross income" value={money(profile.monthlyGross ?? 0)} />
                   {!user.usPerson ? (
                     <>
                       <Row label="Country of residence" value={profile.countryOfResidence} />
@@ -280,7 +280,7 @@ function ProfilePage() {
                     Address history
                   </div>
                   <ul className="mt-2 space-y-2">
-                    {profile.addresses.map((a) => (
+                    {(profile.addresses ?? []).map((a) => (
                       <li key={a.id} className="rounded-md border border-border p-3 text-sm">
                         <div className="text-foreground">
                           {[a.street, a.city, a.state, a.zip, countryLabel(a.country ?? "")]
@@ -299,7 +299,7 @@ function ProfilePage() {
                     Work & income history
                   </div>
                   <ul className="mt-2 space-y-2">
-                    {profile.employment.map((e) => (
+                    {(profile.employment ?? []).map((e) => (
                       <li key={e.id} className="rounded-md border border-border p-3 text-sm">
                         <div className="text-foreground">
                           {e.employer}

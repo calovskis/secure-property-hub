@@ -64,10 +64,7 @@ export function Step1Personal({ data, patch, usPerson }: StepProps) {
       </div>
 
       {data.maritalStatus === "unmarried" ? (
-        <Section
-          title="Unmarried addendum"
-          subtitle="Required when the applicant is unmarried."
-        >
+        <Section title="Unmarried addendum" subtitle="Required when the applicant is unmarried.">
           <div className="space-y-4">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
               <p className="max-w-2xl text-sm text-foreground">
@@ -105,13 +102,13 @@ export function Step1Personal({ data, patch, usPerson }: StepProps) {
                     className={inputClass}
                   >
                     <option value="">Select…</option>
-                    {(
-                      Object.keys(UNMARRIED_RELATIONSHIP_LABEL) as UnmarriedRelationship[]
-                    ).map((k) => (
-                      <option key={k} value={k}>
-                        {UNMARRIED_RELATIONSHIP_LABEL[k]}
-                      </option>
-                    ))}
+                    {(Object.keys(UNMARRIED_RELATIONSHIP_LABEL) as UnmarriedRelationship[]).map(
+                      (k) => (
+                        <option key={k} value={k}>
+                          {UNMARRIED_RELATIONSHIP_LABEL[k]}
+                        </option>
+                      ),
+                    )}
                   </select>
                 </Field>
 
@@ -228,7 +225,9 @@ export function Step1Personal({ data, patch, usPerson }: StepProps) {
                 onChange={(v) =>
                   patch({
                     visaActive: v,
-                    ...(v ? {} : { visaType: "", visaIssued: "", visaValidUntil: "" }),
+                    ...(v
+                      ? {}
+                      : { visaType: "", otherVisaType: "", visaIssued: "", visaValidUntil: "" }),
                   })
                 }
               />
@@ -249,6 +248,15 @@ export function Step1Personal({ data, patch, usPerson }: StepProps) {
                     ))}
                   </select>
                 </Field>
+                {data.visaType === "other" ? (
+                  <Field label="Please specify visa / status" required>
+                    <input
+                      value={data.otherVisaType}
+                      onChange={(e) => patch({ otherVisaType: e.target.value })}
+                      className={inputClass}
+                    />
+                  </Field>
+                ) : null}
                 <Field label="Visa issued on" required>
                   <DateInput
                     value={data.visaIssued}
@@ -297,7 +305,9 @@ export function Step1Personal({ data, patch, usPerson }: StepProps) {
           {data.addresses.map((a, i) => (
             <div key={a.id} className="rounded-lg border border-border p-4">
               <div className="mb-3 flex items-center justify-between text-xs font-semibold text-muted-foreground">
-                <span>{a.present ? "Present address" : i === 0 ? "Address" : `Address ${i + 1}`}</span>
+                <span>
+                  {a.present ? "Present address" : i === 0 ? "Address" : `Address ${i + 1}`}
+                </span>
                 {data.addresses.length > 1 ? (
                   <button
                     type="button"

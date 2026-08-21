@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { AddressFields } from "@/components/form/AddressFields";
-import { CurrencyCombobox } from "@/components/form/CurrencyCombobox";
 import { useFxRates, usdPerUnit } from "@/lib/fx";
 import { currencyForCountry } from "@/components/mortgage/country-currency";
 import { hasTwoYearCoverage } from "@/components/mortgage/history-coverage";
@@ -35,6 +35,17 @@ export function Step2Income({ data, patch, usPerson }: StepProps) {
 
   const total = totalMonthlyIncome(data.incomes);
   const { fx, loading: fxLoading } = useFxRates();
+
+  useEffect(() => {
+    const next = data.incomes.map((source) => {
+      if (!isForeignIncome(source) || !source.currency) return source;
+      const rate = usdPerUnit(fx, source.currency);
+      return rate && source.fxRate !== rate.toFixed(6)
+        ? { ...source, fxRate: rate.toFixed(6) }
+        : source;
+    });
+    if (next.some((source, index) => source !== data.incomes[index])) patch({ incomes: next });
+  }, [fx, data.incomes, patch]);
 
   // Annual income — last year is only asked of US persons, green card holders and ITIN holders.
   const canAskLastYearIncome = usPerson || data.hasItin;
@@ -202,41 +213,28 @@ export function Step2Income({ data, patch, usPerson }: StepProps) {
                       <Field
                         label="Currency"
                         required
-                        hint="Auto-set from the address country; you can change it."
+                        hint="Automatically set from the employer address country."
                       >
-                        <CurrencyCombobox
-                          value={s.currency}
-                          onChange={(code) => {
-                            const rate = usdPerUnit(fx, code);
-                            patchIncome(s.id, {
-                              currency: code,
-                              ...(rate ? { fxRate: rate.toFixed(6) } : {}),
-                            });
-                          }}
-                        />
+                        <div className={`${inputClass} bg-muted/40`}>{s.currency || "—"}</div>
                       </Field>
                       <Field
                         label="Exchange rate to USD"
-                        required
                         hint={
                           s.currency
                             ? `Today's rate: 1 ${s.currency} = ${(usdRate ?? 0).toFixed(4)} USD`
                             : "1 unit = ? USD"
                         }
                       >
-                        <input
-                          inputMode="decimal"
-                          placeholder="1.08"
-                          value={s.fxRate}
-                          onChange={(e) => patchIncome(s.id, { fxRate: e.target.value })}
-                          className={inputClass}
-                        />
+                        <div className={`${inputClass} bg-muted/40`}>
+                          {s.fxRate || (fxLoading ? "Updating…" : "Unavailable")}
+                        </div>
                       </Field>
                       <p className="text-xs text-muted-foreground sm:col-span-2">
                         Amounts below are entered in {s.currency || "the local currency"}. Rates
-                        update daily {fxLoading ? "(refreshing…)" : `(last update: ${fx.updatedAt})`};
-                        you can override the rate if your lender uses a different one. Converted
-                        monthly income: <strong className="text-brand">{money(monthly)}</strong> USD.
+                        update daily{" "}
+                        {fxLoading ? "(refreshing…)" : `(last update: ${fx.updatedAt})`}. Converted
+                        monthly income: <strong className="text-brand">{money(monthly)}</strong>{" "}
+                        USD.
                       </p>
                     </div>
                   ) : null}
@@ -351,7 +349,9 @@ export function Step2Income({ data, patch, usPerson }: StepProps) {
                           inputMode="decimal"
                           placeholder="140,000"
                           value={s.annualIncomeLastYear}
-                          onChange={(e) => patchIncome(s.id, { annualIncomeLastYear: e.target.value })}
+                          onChange={(e) =>
+                            patchIncome(s.id, { annualIncomeLastYear: e.target.value })
+                          }
                           className={inputClass}
                         />
                       </Field>
@@ -361,7 +361,9 @@ export function Step2Income({ data, patch, usPerson }: StepProps) {
                         inputMode="decimal"
                         placeholder="150,000"
                         value={s.estimatedAnnualIncome}
-                        onChange={(e) => patchIncome(s.id, { estimatedAnnualIncome: e.target.value })}
+                        onChange={(e) =>
+                          patchIncome(s.id, { estimatedAnnualIncome: e.target.value })
+                        }
                         className={inputClass}
                       />
                     </Field>
