@@ -339,16 +339,23 @@ export function AppHeader({
 
       <nav className="flex gap-1 overflow-x-auto border-t border-border px-4 py-2 lg:hidden">
         {navSlot}
-        {(navSlot ? [] : nav).map((item) => (
-          <span
-            key={item.label}
-            className={`whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-medium ${
-              item.label === active ? "bg-brand-tint text-brand" : "text-muted-foreground"
-            }`}
-          >
-            {item.icon} {t(item.label)}
-          </span>
-        ))}
+        {(navSlot ? [] : nav).flatMap((item) => {
+          const direct = item.to ? [{ label: item.label, icon: item.icon, to: item.to }] : [];
+          const children = item.items?.filter((sub) => sub.to) ?? [];
+          return [...direct, ...children].map((entry) => (
+            <Link
+              key={`${item.label}-${entry.label}`}
+              to={entry.to ?? "/"}
+              className={`whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-medium ${
+                entry.label.toLowerCase() === active.toLowerCase()
+                  ? "bg-brand-tint text-brand"
+                  : "text-muted-foreground"
+              }`}
+            >
+              {entry.icon} {t(entry.label)}
+            </Link>
+          ));
+        })}
       </nav>
     </header>
 

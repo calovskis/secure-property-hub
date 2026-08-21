@@ -616,7 +616,7 @@ function RequestsInbox({
                   <button
                     type="button"
                     onClick={() => setSelectedId(l.id)}
-                    className="grid w-full grid-cols-1 gap-3 p-4 text-left transition-colors hover:bg-brand-tint/40 md:grid-cols-[1.3fr_1fr_0.9fr_0.9fr_1.1fr_auto] md:items-center"
+                    className="grid w-full grid-cols-1 gap-3 p-4 text-left transition-colors hover:bg-brand-tint/40 md:grid-cols-[1.25fr_1fr_0.8fr_0.9fr_1.1fr_1.25fr] md:items-start"
                   >
                     <div>
                       <div className="text-sm font-semibold text-foreground">{l.clientName}</div>
@@ -630,9 +630,9 @@ function RequestsInbox({
                     </Cell>
                     <Cell label="Requested price">{money(l.propertyPrice)}</Cell>
                     <Cell label="US status">
-                      {US_STATUS_LABEL[usStatusOf(l.profile, l.usPerson)]}
+                      <span className="block">{US_STATUS_LABEL[usStatusOf(l.profile, l.usPerson)]}</span>
                       {hasForeignIncome(l.profile.incomes ?? []) ? (
-                        <span className="ml-1.5 rounded-full bg-gold-tint px-1.5 py-0.5 text-[10px] font-semibold text-gold underline decoration-gold decoration-2 underline-offset-2">
+                        <span className="mt-1 block w-fit rounded-full bg-gold-tint px-1.5 py-0.5 text-[10px] font-semibold text-gold underline decoration-gold decoration-2 underline-offset-2">
                           Foreign income
                         </span>
                       ) : null}
@@ -645,7 +645,8 @@ function RequestsInbox({
                             .join(" / ") || "Non-US person"}
                     </Cell>
 
-                    <div className="flex flex-col items-start gap-1 md:items-end">
+                    <div className="flex min-w-0 flex-col items-start gap-1">
+                      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Process status / assignee</div>
                       <StatusPill status={l.status} />
                       {l.assignedToName ? (
                         <span className="text-[11px] text-muted-foreground">

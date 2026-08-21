@@ -15,6 +15,7 @@ import {
   monthlyNativeForIncome,
   num,
   totalLiabilities,
+  totalAssets,
   totalMonthlyIncome,
   usStatusOf,
   type Declarations,
@@ -163,7 +164,7 @@ const TABS = [
   { id: "personal", label: "Personal & household" },
   { id: "addresses", label: "Addresses" },
   { id: "income", label: "Employment & income" },
-  { id: "liabilities", label: "Liabilities & DTI" },
+  { id: "liabilities", label: "Assets & Liabilities" },
   { id: "declarations", label: "Declarations & military" },
   { id: "demographics", label: "Demographics" },
   { id: "documents", label: "Documents & requests" },
@@ -190,8 +191,12 @@ export function ApplicantFile({ lead }: { lead: MortgageLead }) {
     (s) => s.relatedParty === "property_seller" || s.relatedParty === "family_member",
   );
 
-  const documents: { id: string; label: string; when?: string }[] = [];
-  if (p.visaDocumentName) {
+  const documents: { id: string; label: string; when?: string; url?: string }[] = [];
+  if (p.visaDocuments?.length) {
+    for (const document of p.visaDocuments) {
+      documents.push({ id: document.id, label: `Visa document — ${document.name}`, when: document.uploadedAt, url: document.url });
+    }
+  } else if (p.visaDocumentName) {
     documents.push({
       id: "visa",
       label: `Visa document — ${p.visaDocumentName}`,

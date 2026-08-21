@@ -54,7 +54,7 @@ export function MortgageQuestionnaire({
   property?: { id: number; price: number };
 }) {
   const { user, saveMortgageProfile } = useAuth();
-  const { createLead } = useLeads();
+  const { createLead, updateLead } = useLeads();
   const { getDraft, saveDraft, clearDraft } = useMortgageDrafts();
 
   const propertyId = property?.id ?? 0;
@@ -167,7 +167,6 @@ export function MortgageQuestionnaire({
     return null;
   }
 
-  const skipLiabilities = isNonUsWithoutTaxId(data, usPerson);
   const steps = QUESTIONNAIRE_STEPS;
   const lastStepId = steps[steps.length - 1]?.id ?? 5;
 

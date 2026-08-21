@@ -155,13 +155,13 @@ export function LenderHome({
 
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          label="Open pre-approvals"
+          label="Open requests"
           value={String(s.open.length)}
           note={`${s.newCount} not yet touched`}
           tone="gold"
         />
         <StatCard
-          label="In progress"
+          label="In process"
           value={String(s.inProgress.length)}
           note={`${s.openDocRequests} outstanding client requests`}
         />
@@ -171,7 +171,7 @@ export function LenderHome({
           note={`${s.requestedToday.length} requested today`}
         />
         <StatCard
-          label="Closed today"
+          label="Pre-approvals issued"
           value={String(s.closedToday.length)}
           note={`${s.qualified.length} qualified · ${s.notQualified.length} declined overall`}
           tone="success"
