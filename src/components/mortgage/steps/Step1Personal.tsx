@@ -228,7 +228,7 @@ export function Step1Personal({ data, patch, usPerson }: StepProps) {
                 onChange={(v) =>
                   patch({
                     visaActive: v,
-                    ...(v ? {} : { visaType: "", visaIssued: "", visaValidUntil: "" }),
+                    ...(v ? {} : { visaType: "", otherVisaType: "", visaIssued: "", visaValidUntil: "" }),
                   })
                 }
               />
@@ -249,6 +249,15 @@ export function Step1Personal({ data, patch, usPerson }: StepProps) {
                     ))}
                   </select>
                 </Field>
+                {data.visaType === "other" ? (
+                  <Field label="Please specify visa / status" required>
+                    <input
+                      value={data.otherVisaType}
+                      onChange={(e) => patch({ otherVisaType: e.target.value })}
+                      className={inputClass}
+                    />
+                  </Field>
+                ) : null}
                 <Field label="Visa issued on" required>
                   <DateInput
                     value={data.visaIssued}
