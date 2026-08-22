@@ -6,19 +6,23 @@ import { currencyLabel } from "@/data/currencies";
 import { formatDate, formatDateTime, isoToUsMonth } from "@/lib/dates";
 import {
   ASSET_TYPE_LABEL,
+  BANK_ACCOUNT_KIND_LABEL,
   INCOME_TYPE_LABEL,
   MARITAL_LABEL,
   RELATED_PARTY_LABEL,
   UNMARRIED_RELATIONSHIP_LABEL,
   US_STATUS_LABEL,
   isForeignIncome,
+  isMajorityForeignIncome,
   monthlyForIncome,
   monthlyNativeForIncome,
+  normalizeAssets,
   num,
   totalLiabilities,
   totalAssets,
   totalMonthlyIncome,
   usStatusOf,
+  type AssetEntry,
   type Declarations,
   type IncomeSource,
 } from "@/lib/mortgage-form";
@@ -66,6 +70,26 @@ function addressLine(a: {
       .filter(Boolean)
       .join(", ") || "—"
   );
+}
+
+function assetLabel(a: AssetEntry): string {
+  const base = ASSET_TYPE_LABEL[a.type] ?? "Asset";
+  const kind =
+    a.type === "bank_account" && a.kind ? (BANK_ACCOUNT_KIND_LABEL[a.kind] ?? a.kind) : "";
+  return kind ? `${base} · ${kind}` : base;
+}
+
+function assetValue(a: AssetEntry): string {
+  const amount = `${a.value || "0"} ${a.currency}`;
+  if (a.type === "real_estate") {
+    const parts = [a.address, amount, countryLabel(a.country)];
+    if (a.lien) parts.push(`existing lien ${a.lien} ${a.currency}`);
+    return parts.filter(Boolean).join(" · ");
+  }
+  if (a.type === "other") {
+    return [a.description, amount, countryLabel(a.country)].filter(Boolean).join(" · ");
+  }
+  return [amount, a.institution, countryLabel(a.country)].filter(Boolean).join(" · ");
 }
 
 function IncomeCard({ s }: { s: IncomeSource }) {
@@ -188,6 +212,12 @@ export function ApplicantFile({ lead }: { lead: MortgageLead }) {
   const mil = p.military;
   const demo = p.demographics;
   const usStatus = usStatusOf(p, lead.usPerson);
+  const assetEntries = assets
+    ? normalizeAssets(assets).entries.filter(
+        (e) => e.value || e.institution || e.address || e.description,
+      )
+    : [];
+  const majorityForeign = isMajorityForeignIncome(incomes);
 
   /** Derived — occupancy comes from the applicant's declared property use. */
   const derivedPrimaryResidence = !p.propertyUse;
@@ -307,7 +337,7 @@ export function ApplicantFile({ lead }: { lead: MortgageLead }) {
           <Block title="Citizenship & identification">
             <Row label="US status" value={US_STATUS_LABEL[usStatus]} />
             {lead.usPerson ? (
-              <Row label="SSN" value={p.ssn ? `••• •• ${p.ssn.slice(-4)}` : "Not provided"} />
+              <Row label="SSN" value={p.ssn || "Not provided"} />
             ) : (
               <>
                 <Row label="ITIN" value={p.hasItin ? p.itin || "Provided" : "No ITIN"} />
@@ -423,20 +453,13 @@ export function ApplicantFile({ lead }: { lead: MortgageLead }) {
       {tab === "liabilities" ? (
         <div className="space-y-4">
           <Block title="Assets">
-            {assets ? (
+            {assetEntries.length ? (
               <>
-                {assets.financial.map((asset) => (
+                {assetEntries.map((asset) => (
                   <Row
                     key={asset.id}
-                    label={ASSET_TYPE_LABEL[asset.type]}
-                    value={`${asset.value || "0"} ${asset.currency}${asset.institution ? ` · ${asset.institution}` : ""} · ${countryLabel(asset.country)}`}
-                  />
-                ))}
-                {assets.properties.map((property) => (
-                  <Row
-                    key={property.id}
-                    label="Other property"
-                    value={`${property.address} · ${property.estimatedValue || "0"} ${property.currency} · ${countryLabel(property.country)}`}
+                    label={assetLabel(asset)}
+                    value={assetValue(asset)}
                   />
                 ))}
                 <Row label="Total declared value (before FX)" value={money(totalAssets(assets))} />
