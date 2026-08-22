@@ -206,6 +206,65 @@ function AdminPage() {
           )}
         </section>
 
+        <section className="mb-6 rounded-lg border border-border bg-card p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-base font-semibold text-foreground">Buyer files — oversight</h2>
+            <span className="rounded-full bg-brand-tint px-3 py-1 text-[11px] font-semibold text-brand">
+              {buyerFiles.length} active
+            </span>
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Every accepted pre-approval: who represents the buyer, the kickoff choice and the
+            current status. Loqal personal manager cases carry an extra 1% platform fee.
+          </p>
+          {buyerFiles.length === 0 ? (
+            <p className="mt-4 text-sm text-muted-foreground">
+              No active buyer files yet — they appear here once clients accept pre-approval terms.
+            </p>
+          ) : (
+            <div className="mt-4 overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="border-b border-border text-[11px] uppercase tracking-wide text-muted-foreground">
+                    <th className="py-2 pr-4 font-semibold">Buyer</th>
+                    <th className="py-2 pr-4 font-semibold">Property</th>
+                    <th className="py-2 pr-4 font-semibold">Representation</th>
+                    <th className="py-2 pr-4 font-semibold">Kickoff</th>
+                    <th className="py-2 font-semibold">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {buyerFiles.map((l) => (
+                    <tr key={l.id}>
+                      <td className="py-3 pr-4 font-semibold text-foreground">{l.clientName}</td>
+                      <td className="py-3 pr-4 text-muted-foreground">{l.propertyLabel}</td>
+                      <td className="py-3 pr-4">
+                        {l.buyerAgent?.representation === "loqal_rep" ? (
+                          <span className="rounded-full bg-gold-tint px-2.5 py-1 text-[11px] font-semibold text-gold">
+                            🛡 Loqal manager (+1% fee)
+                          </span>
+                        ) : (
+                          <span className="rounded-full bg-brand-tint px-2.5 py-1 text-[11px] font-semibold text-brand">
+                            {l.buyerAgent?.agentName
+                              ? `Direct · ${l.buyerAgent.agentName}`
+                              : "Awaiting choice"}
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3 pr-4 text-muted-foreground">
+                        {l.buyerAgent?.kickoff ? KICKOFF_LABEL[l.buyerAgent.kickoff] : "—"}
+                      </td>
+                      <td className="py-3 text-muted-foreground">
+                        {buyerAgentSummary(l, proc) ?? "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+
         <section className="grid grid-cols-1 gap-6 lg:grid-cols-[1.6fr_1fr]">
           <div className="rounded-lg border border-border bg-card p-6">
             <h2 className="text-base font-semibold text-foreground">Accounts</h2>
