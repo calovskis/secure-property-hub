@@ -39,7 +39,7 @@ const ACTION_TILES: { id: ClientNextAction; title: string; blurb: string }[] = [
   },
   {
     id: "sign_prepurchase",
-    title: "Proceed to the prepurchase agreement",
+    title: "Proceed to the Purchase Agreement",
     blurb: "Conditioned upon inspection results and the appraisal value.",
   },
   {
@@ -377,7 +377,7 @@ export function BuyerProcessCard({ lead }: { lead: MortgageLead }) {
                 {active === "sign_prepurchase" ? (
                   <div className="mt-3 space-y-2">
                     <p className="rounded-md border border-border bg-background p-3 text-xs text-muted-foreground">
-                      The prepurchase agreement will be conditioned upon satisfactory inspection
+                      The Purchase Agreement will be conditioned upon satisfactory inspection
                       results and the appraisal value. Once it is signed, your lender issues the
                       final mortgage proposal.
                     </p>
@@ -394,7 +394,7 @@ export function BuyerProcessCard({ lead }: { lead: MortgageLead }) {
                         onClick={() => submit("sign_prepurchase")}
                         className={btnPrimary}
                       >
-                        Proceed to prepurchase agreement
+                        Proceed to Purchase Agreement
                       </button>
                       <button type="button" onClick={resetForms} className={btnGhost}>
                         Cancel

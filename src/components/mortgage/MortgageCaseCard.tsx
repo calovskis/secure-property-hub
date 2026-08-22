@@ -373,11 +373,11 @@ function ProceedPanel({ lead }: { lead: MortgageLead }) {
       <div className="mt-3 space-y-1.5 rounded-md border border-border bg-background/70 p-3 text-[11px] leading-relaxed text-muted-foreground">
         <p>
           These are <strong className="text-foreground">preliminary estimated terms</strong> — they
-          can change in the final mortgage proposal, which is issued after the prepurchase contract
+          can change in the final mortgage proposal, which is issued after the Purchase Agreement
           is signed.
         </p>
         <p>
-          After you accept — and until the prepurchase agreement is signed — you may request a
+          After you accept — and until the Purchase Agreement is signed — you may request a
           property change at any point within{" "}
           <strong className="text-foreground">3 months</strong> under the same pre-approval, within
           the same purchase price. Once you decide on a property, the lender re-checks your

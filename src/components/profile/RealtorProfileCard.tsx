@@ -52,8 +52,8 @@ type InfoForm = {
   languages: string[];
 };
 
-type LicenseForm = { state: string; number: string; issuedAt: string; validUntil: string };
-const EMPTY_LICENSE: LicenseForm = { state: "", number: "", issuedAt: "", validUntil: "" };
+type LicenseForm = { state: string; number: string; validUntil: string };
+const EMPTY_LICENSE: LicenseForm = { state: "", number: "", validUntil: "" };
 
 export function RealtorProfileCard({ user }: { user: LoqalUser }) {
   const { realtors, ensureSeat, updateRealtor } = useRealtors();
