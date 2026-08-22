@@ -127,8 +127,46 @@ export function MortgageQuestionnaire({
   const [savedNote, setSavedNote] = useState(false);
   const [submittedProfile, setSubmittedProfile] = useState<MortgageProfile | null>(null);
   const [submittedLeadId, setSubmittedLeadId] = useState<string | null>(null);
-  const [visaDocs, setVisaDocs] = useState<{ id: string; name: string; url: string }[]>([]);
-  const [visaDocsConfirmed, setVisaDocsConfirmed] = useState(false);
+  /** Why a fresh visa document is required after submission (null = on file). */
+  const [visaFollowUp, setVisaFollowUp] = useState<"changed" | "expired" | "new" | null>(null);
+
+  /* Warn when the visa / status document on file expires within 3 days
+   * (or has already expired) — the client is asked to upload a renewal. */
+  const savedVisaValidUntil = user?.mortgageProfile?.visaValidUntil;
+  useEffect(() => {
+    if (!open) return;
+    const state = documentExpiryState(savedVisaValidUntil);
+    if (state === "expiring") {
+      toast.warning(
+        `Your US visa / status document expires ${formatDate(savedVisaValidUntil)} — please prepare a renewed document.`,
+      );
+    }
+    if (state === "expired") {
+      toast.error(
+        "Your US visa / status document on file has expired — please upload an updated document.",
+      );
+    }
+  }, [open, savedVisaValidUntil]);
+
+  /** Merge confirmed documents into the submitted profile + lead snapshot. */
+  function attachDocuments(
+    key: "visaDocuments" | "idDocuments" | "bankruptcyDocuments",
+    docs: { id: string; name: string; url: string }[],
+  ) {
+    if (!submittedProfile) return;
+    const now = new Date().toISOString();
+    const documents = docs.map((d) => ({ ...d, uploadedAt: now }));
+    const next: MortgageProfile = {
+      ...submittedProfile,
+      [key]: documents,
+      ...(key === "visaDocuments" && documents[0]?.name
+        ? { visaDocumentName: documents[0].name, visaDocumentUploadedAt: now }
+        : {}),
+    };
+    setSubmittedProfile(next);
+    saveMortgageProfile(next);
+    if (submittedLeadId) updateLead(submittedLeadId, { profile: next });
+  }
 
   const patch = (p: Partial<QuestionnaireData>) => {
     setData((prev) => ({ ...prev, ...p }));
@@ -197,11 +235,18 @@ export function MortgageQuestionnaire({
       return null;
     }
     if (s === 3) {
-      const invalidAsset = data.assets.financial.some(
-        (asset) => !asset.country || !asset.currency || !asset.value,
+      const invalidAsset = normalizeAssets(data.assets).entries.some(
+        (asset) =>
+          !asset.country ||
+          !asset.currency ||
+          !asset.value ||
+          (asset.type === "real_estate" && !asset.address.trim()) ||
+          (asset.type === "other" && !asset.description.trim()) ||
+          ((asset.type === "bank_account" || asset.type === "investment_account") &&
+            !asset.institution.trim()),
       );
       if (invalidAsset)
-        return "Please complete the country, currency and value for each financial asset.";
+        return "Please complete each asset: institution, country, currency and value (address for real estate, description for other).";
     }
     if (s === 5) {
       if (!data.demographics.ethnicityDeclined && data.demographics.ethnicity.length === 0)
@@ -245,6 +290,36 @@ export function MortgageQuestionnaire({
     }
 
     const monthly = totalMonthlyIncome(data.incomes);
+
+    /* Previously confirmed documents stay on file across re-submissions —
+     * unless the visa details changed or the visa expired, in which case a
+     * fresh document is required to verify the new information. */
+    const prevProfile = user?.mortgageProfile;
+    const visaExpiry = data.visaActive ? documentExpiryState(data.visaValidUntil) : null;
+    const visaChanged = Boolean(
+      prevProfile &&
+        (Boolean(prevProfile.usVisaActive) !== data.visaActive ||
+          (data.visaActive &&
+            ((prevProfile.visaType ?? "") !== (data.visaType || "") ||
+              (prevProfile.visaIssued ?? "") !== data.visaIssued ||
+              (prevProfile.visaValidUntil ?? "") !== data.visaValidUntil))),
+    );
+    const carriedVisaDocs =
+      data.visaActive && !visaChanged && visaExpiry !== "expired"
+        ? (prevProfile?.visaDocuments ?? [])
+        : [];
+    setVisaFollowUp(
+      !data.visaActive
+        ? null
+        : visaChanged
+          ? "changed"
+          : visaExpiry === "expired"
+            ? "expired"
+            : carriedVisaDocs.length
+              ? null
+              : "new",
+    );
+
     /* Answers we derive instead of asking the client twice. */
     const derivedDeclarations = {
       ...data.declarations,
