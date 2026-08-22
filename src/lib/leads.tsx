@@ -81,6 +81,18 @@ export type ClientQuestion = {
   answeredAt?: string;
 };
 
+/** Who steers the purchase on the buyer's side after the terms are accepted. */
+export type Representation = "loqal_rep" | "buyer_direct";
+
+/** How the buyer wants to kick off the work with the buyer's agent. */
+export type KickoffRequest = "live_call" | "photo_visit" | "video_showcase";
+
+export const KICKOFF_LABEL: Record<KickoffRequest, string> = {
+  live_call: "Live call with the buyer's agent",
+  photo_visit: "Agent visit for updated property photos",
+  video_showcase: "Real-time video showcasing of the property",
+};
+
 /** Buyer's agent engagement, created when the client accepts the terms. */
 export type BuyerAgentEngagement = {
   /** When the client confirmed the buyer's agent agreement (3% fee at closing). */
@@ -89,9 +101,21 @@ export type BuyerAgentEngagement = {
   agentId?: string;
   agentName?: string;
   assignedAt?: string;
-  /** How the client wants to start working with the agent. */
+  /** How the client wants to start working with the agent (legacy two-option flow). */
   nextStep?: "live_call" | "start";
   liveCallRequestedAt?: string;
+  /**
+   * Who represents the buyer day-to-day: a Loqal personal manager (extra 1%
+   * fee on the purchase price) or the buyer directly with the agent.
+   */
+  representation?: Representation;
+  /** Loqal personal manager fee, % of the purchase price at closing. */
+  loqalManagerFeePct?: number;
+  /** Kickoff choice when the buyer works with the agent directly. */
+  kickoff?: KickoffRequest;
+  /** Free-text notes the buyer attached to their choice. */
+  kickoffNotes?: string;
+  kickoffAt?: string;
 };
 
 export type MortgageLead = {
