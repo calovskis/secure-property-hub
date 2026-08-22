@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { MortgageQuestionnaire } from "@/components/mortgage/MortgageQuestionnaire";
+import { FeedbackDialog } from "@/components/mortgage/FeedbackDialog";
 import {
   AddressTopic,
   AssetsTopic,
@@ -19,11 +20,7 @@ import { KybCard } from "@/components/profile/KybCard";
 import { PARTNER_LABEL, ROLE_LABEL, fullName, useAuth, type MortgageProfile } from "@/lib/auth";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import {
-  CLIENT_DECISION_LABEL,
   LEAD_STATUS_LABEL,
-  hasPricedOffer,
-  offerReminders,
-  useLeads,
   type MortgageLead,
 } from "@/lib/leads";
 import { useMortgageDrafts } from "@/lib/mortgage-draft";
