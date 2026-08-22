@@ -76,6 +76,11 @@ function ensureThread(email: string, userName: string, role: string): ChatState 
   return next;
 }
 
+/** Admin side: open (or create) a thread with a user before messaging them. */
+export function openSupportThread(email: string, userName: string, role: string) {
+  ensureThread(email, userName, role);
+}
+
 const SERVER_SNAPSHOT: ChatState = { threads: [] };
 
 function useStore() {

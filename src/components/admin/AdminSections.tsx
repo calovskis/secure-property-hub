@@ -18,6 +18,8 @@ import {
 import { logActivity } from "@/lib/activity";
 import { PARTNER_LABEL } from "@/lib/auth";
 import { formatDate, formatDateTime } from "@/lib/dates";
+import { getTeamSnapshot, LENDER_ROLE_LABEL } from "@/lib/lender-team";
+import { realtorName } from "@/lib/realtors";
 
 /* ------------------------------- Activity -------------------------------- */
 
@@ -294,6 +296,204 @@ export function PartnerComparison() {
                     </td>
                   </tr>
                 ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+    </div>
+  );
+}
+
+/* ---------------------- Partner metrics comparison ---------------------- */
+
+function avgResponseHours(items: { submittedAt: string; decidedAt?: string }[]) {
+  const done = items.filter((l) => l.decidedAt);
+  if (!done.length) return null;
+  return (
+    done.reduce(
+      (s, l) => s + (new Date(l.decidedAt!).getTime() - new Date(l.submittedAt).getTime()),
+      0,
+    ) /
+    done.length /
+    3600000
+  );
+}
+
+/**
+ * Side-by-side partner metrics by category: realtors compared on their buyer
+ * files, lender loan officers on pre-approval work. Average, best and worst
+ * are highlighted per key metric.
+ */
+export function PartnerMetrics() {
+  const { realtors } = useRealtors();
+  const { leads } = useLeads();
+  const snapshot = getTeamSnapshot();
+
+  const approved = realtors.filter((r) => r.approvedAt);
+  const realtorRows = approved.map((r) => {
+    const files = leads.filter((l) => l.buyerAgent?.agentId === r.id);
+    return {
+      name: realtorName(r),
+      files: files.length,
+      pipeline: files.reduce((s, l) => s + l.propertyPrice, 0),
+      states: r.licenses.length,
+      languages: r.languages.length,
+    };
+  });
+  const avgFiles = realtorRows.length
+    ? realtorRows.reduce((s, r) => s + r.files, 0) / realtorRows.length
+    : 0;
+  const bestFiles = Math.max(0, ...realtorRows.map((r) => r.files));
+  const worstFiles = Math.min(...realtorRows.map((r) => r.files));
+
+  const officerRows = snapshot.members.map((m) => {
+    const mine = leads.filter((l) => l.assignedToId === m.id);
+    const qualified = mine.filter((l) => l.status === "qualified").length;
+    return {
+      name: m.name,
+      role: LENDER_ROLE_LABEL[m.role],
+      assigned: mine.length,
+      open: mine.filter((l) => l.status === "new" || l.status === "info_required").length,
+      qualified,
+      rate: mine.length ? Math.round((qualified / mine.length) * 100) : 0,
+      avgH: avgResponseHours(mine),
+    };
+  });
+  const responseVals = officerRows.filter((r) => r.avgH !== null).map((r) => r.avgH!);
+  const bestH = responseVals.length ? Math.min(...responseVals) : null;
+  const worstH = responseVals.length ? Math.max(...responseVals) : null;
+  const avgH = responseVals.length
+    ? responseVals.reduce((s, v) => s + v, 0) / responseVals.length
+    : null;
+  const bestQualified = Math.max(0, ...officerRows.map((r) => r.qualified));
+
+  return (
+    <div className="space-y-6">
+      <section className="rounded-lg border border-border bg-card p-6">
+        <h2 className="text-base font-semibold text-foreground">Realtor partners — comparison</h2>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Buyer files, pipeline value and coverage per realtor. ★ best · ▼ worst in category.
+        </p>
+        {realtorRows.length === 0 ? (
+          <p className="mt-4 text-sm text-muted-foreground">No approved realtors yet.</p>
+        ) : (
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-b border-border text-[11px] uppercase tracking-wide text-muted-foreground">
+                  <th className="py-2 pr-4 font-semibold">Realtor</th>
+                  <th className="py-2 pr-4 font-semibold">Active files</th>
+                  <th className="py-2 pr-4 font-semibold">Pipeline value</th>
+                  <th className="py-2 pr-4 font-semibold">Licensed states</th>
+                  <th className="py-2 font-semibold">Languages</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {realtorRows.map((r) => (
+                  <tr key={r.name}>
+                    <td className="py-2.5 pr-4 font-semibold text-foreground">{r.name}</td>
+                    <td className="py-2.5 pr-4 text-muted-foreground">
+                      {r.files}{" "}
+                      {realtorRows.length > 1 && r.files === bestFiles && bestFiles > 0 ? (
+                        <span className="text-success" title="Best in category">★</span>
+                      ) : null}
+                      {realtorRows.length > 1 && r.files === worstFiles && worstFiles < bestFiles ? (
+                        <span className="text-destructive" title="Lowest in category">▼</span>
+                      ) : null}
+                    </td>
+                    <td className="py-2.5 pr-4 text-muted-foreground">{usd(r.pipeline)}</td>
+                    <td className="py-2.5 pr-4 text-muted-foreground">{r.states}</td>
+                    <td className="py-2.5 text-muted-foreground">{r.languages}</td>
+                  </tr>
+                ))}
+                <tr className="bg-brand-tint/40 font-semibold">
+                  <td className="py-2.5 pr-4 text-foreground">Category average</td>
+                  <td className="py-2.5 pr-4 text-foreground">{avgFiles.toFixed(1)}</td>
+                  <td className="py-2.5 pr-4 text-foreground">
+                    {usd(realtorRows.reduce((s, r) => s + r.pipeline, 0) / realtorRows.length)}
+                  </td>
+                  <td className="py-2.5 pr-4 text-foreground">
+                    {(realtorRows.reduce((s, r) => s + r.states, 0) / realtorRows.length).toFixed(1)}
+                  </td>
+                  <td className="py-2.5 text-foreground">
+                    {(realtorRows.reduce((s, r) => s + r.languages, 0) / realtorRows.length).toFixed(1)}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      <section className="rounded-lg border border-border bg-card p-6">
+        <h2 className="text-base font-semibold text-foreground">
+          Mortgage lender partners — comparison
+        </h2>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Loan officers compared on assigned inquiries, qualification rate and response time.
+        </p>
+        {officerRows.length === 0 ? (
+          <p className="mt-4 text-sm text-muted-foreground">No lender team members yet.</p>
+        ) : (
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-b border-border text-[11px] uppercase tracking-wide text-muted-foreground">
+                  <th className="py-2 pr-4 font-semibold">Loan officer</th>
+                  <th className="py-2 pr-4 font-semibold">Assigned</th>
+                  <th className="py-2 pr-4 font-semibold">Open</th>
+                  <th className="py-2 pr-4 font-semibold">Qualified</th>
+                  <th className="py-2 pr-4 font-semibold">Qualification rate</th>
+                  <th className="py-2 font-semibold">Avg. response</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {officerRows.map((r) => (
+                  <tr key={r.name}>
+                    <td className="py-2.5 pr-4">
+                      <div className="font-semibold text-foreground">{r.name}</div>
+                      <div className="text-xs text-muted-foreground">{r.role}</div>
+                    </td>
+                    <td className="py-2.5 pr-4 text-muted-foreground">{r.assigned}</td>
+                    <td className="py-2.5 pr-4 text-muted-foreground">{r.open}</td>
+                    <td className="py-2.5 pr-4 text-muted-foreground">
+                      {r.qualified}{" "}
+                      {officerRows.length > 1 && r.qualified === bestQualified && bestQualified > 0 ? (
+                        <span className="text-success" title="Best in category">★</span>
+                      ) : null}
+                    </td>
+                    <td className="py-2.5 pr-4 text-muted-foreground">{r.rate}%</td>
+                    <td className="py-2.5 text-muted-foreground">
+                      {r.avgH !== null ? `${r.avgH.toFixed(1)}h` : "—"}{" "}
+                      {r.avgH !== null && bestH !== null && r.avgH === bestH && officerRows.length > 1 ? (
+                        <span className="text-success" title="Fastest">★</span>
+                      ) : null}
+                      {r.avgH !== null && worstH !== null && r.avgH === worstH && worstH > bestH! ? (
+                        <span className="text-destructive" title="Slowest">▼</span>
+                      ) : null}
+                    </td>
+                  </tr>
+                ))}
+                <tr className="bg-brand-tint/40 font-semibold">
+                  <td className="py-2.5 pr-4 text-foreground">Team average</td>
+                  <td className="py-2.5 pr-4 text-foreground">
+                    {(officerRows.reduce((s, r) => s + r.assigned, 0) / officerRows.length).toFixed(1)}
+                  </td>
+                  <td className="py-2.5 pr-4 text-foreground">
+                    {(officerRows.reduce((s, r) => s + r.open, 0) / officerRows.length).toFixed(1)}
+                  </td>
+                  <td className="py-2.5 pr-4 text-foreground">
+                    {(officerRows.reduce((s, r) => s + r.qualified, 0) / officerRows.length).toFixed(1)}
+                  </td>
+                  <td className="py-2.5 pr-4 text-foreground">
+                    {Math.round(
+                      officerRows.reduce((s, r) => s + r.rate, 0) / officerRows.length,
+                    )}
+                    %
+                  </td>
+                  <td className="py-2.5 text-foreground">{avgH !== null ? `${avgH.toFixed(1)}h` : "—"}</td>
+                </tr>
               </tbody>
             </table>
           </div>
