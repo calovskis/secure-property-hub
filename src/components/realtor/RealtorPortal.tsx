@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { AppHeader } from "@/components/layout/AppHeader";
 import { fullName, type LoqalUser } from "@/lib/auth";
 import { KICKOFF_LABEL, useLeads, type MortgageLead } from "@/lib/leads";
 import {
@@ -20,6 +19,7 @@ import { DateInput } from "@/components/form/DateInput";
 import { CallScheduler } from "@/components/buyer/CallScheduler";
 import { RealtorAnalytics } from "@/components/realtor/RealtorAnalytics";
 import { RealtorAccounting } from "@/components/realtor/RealtorAccounting";
+import { RealtorFinancialAnalytics } from "@/components/realtor/RealtorFinancialAnalytics";
 
 const money = (n: number) => `$${Math.round(n).toLocaleString()}`;
 const inputClass =
@@ -58,7 +58,7 @@ function RepresentationBadge({ lead }: { lead: MortgageLead }) {
   if (ba.representation === "loqal_rep") {
     return (
       <span className="rounded-full bg-gold-tint px-3 py-1 text-[11px] font-semibold text-gold">
-        🛡 Loqal personal manager
+        🛡 Loqal personal advocate
       </span>
     );
   }
@@ -461,7 +461,7 @@ function BuyerFile({ lead, me }: { lead: MortgageLead; me: Realtor }) {
                   label="Representation"
                   value={
                     loqalManaged
-                      ? "Loqal personal manager steers the buyer"
+                      ? "A Loqal personal advocate steers the buyer"
                       : "Buyer works with you directly"
                   }
                 />
@@ -482,10 +482,10 @@ function BuyerFile({ lead, me }: { lead: MortgageLead; me: Realtor }) {
           {loqalManaged ? (
             <section className="rounded-lg border border-gold/40 bg-gold-tint/40 p-4">
               <h3 className="text-sm font-semibold text-foreground">
-                🛡 Steered by a Loqal personal manager
+                🛡 Steered by a Loqal personal advocate
               </h3>
               <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                The buyer assigned a Loqal personal manager to represent their interests (+1% fee).
+                The buyer assigned a Loqal personal advocate to represent their interests (+1% fee).
                 The manager directs inspections, negotiations and next steps with you — you keep
                 your buyer's agent fee and stay informed here.
               </p>
@@ -677,11 +677,94 @@ function VacationMode({ me }: { me: Realtor }) {
   );
 }
 
-export function RealtorPortal({ user }: { user: LoqalUser }) {
+/** Licenses & languages summary shown on the realtor Home dashboard. */
+function LicensesCard({ me }: { me: Realtor }) {
+  return (
+    <section className="rounded-lg border border-border bg-card p-6">
+      <h2 className="text-base font-semibold text-foreground">My licenses & languages</h2>
+      {me.licenses.length ? (
+        <div className="mt-3 overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-border text-[11px] uppercase tracking-wide text-muted-foreground">
+                <th className="py-2 pr-4 font-semibold">State</th>
+                <th className="py-2 pr-4 font-semibold">License №</th>
+                <th className="py-2 pr-4 font-semibold">Issued</th>
+                <th className="py-2 font-semibold">Valid until</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {me.licenses.map((l) => (
+                <tr key={`${l.state}-${l.number}`}>
+                  <td className="py-2.5 pr-4 font-semibold text-foreground">{l.state}</td>
+                  <td className="py-2.5 pr-4 text-muted-foreground">{l.number}</td>
+                  <td className="py-2.5 pr-4 text-muted-foreground">{formatDate(l.issuedAt)}</td>
+                  <td className="py-2.5 text-muted-foreground">{formatDate(l.validUntil)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <p className="mt-3 text-sm text-muted-foreground">
+          No licenses on file yet — add them from My Profile to start receiving assignments.
+        </p>
+      )}
+      <div className="mt-4">
+        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Languages
+        </span>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {me.languages.map((l) => (
+            <span
+              key={l}
+              className="rounded-full bg-brand-tint px-3 py-1 text-[11px] font-semibold text-brand"
+            >
+              {l}
+            </span>
+          ))}
+        </div>
+      </div>
+      <p className="mt-4 text-xs text-muted-foreground">
+        Add, remove or adjust your details and licenses any time from{" "}
+        <Link to="/profile" className="font-semibold text-brand hover:underline">
+          My Profile
+        </Link>
+        .
+      </p>
+    </section>
+  );
+}
+
+export type RealtorTabId =
+  | "home"
+  | "buyers"
+  | "calendar"
+  | "analytics"
+  | "financial"
+  | "accounting";
+
+const REALTOR_TABS: { id: RealtorTabId; label: string; icon: string }[] = [
+  { id: "home", label: "Home", icon: "🏠" },
+  { id: "buyers", label: "Buyer files", icon: "🗂" },
+  { id: "calendar", label: "My calendar", icon: "🗓" },
+  { id: "analytics", label: "Performance analytics", icon: "📈" },
+  { id: "financial", label: "Financial analytics", icon: "💹" },
+  { id: "accounting", label: "Accounting", icon: "💳" },
+];
+
+export function RealtorPortal({
+  user,
+  tab,
+  onTabChange,
+}: {
+  user: LoqalUser;
+  tab: RealtorTabId;
+  onTabChange: (tab: RealtorTabId) => void;
+}) {
   const { realtors, ensureSeat } = useRealtors();
   const { leads, ready: leadsReady } = useLeads();
   const { photos } = useBuyerProcess();
-  const [tab, setTab] = useState<"buyers" | "calendar" | "analytics" | "accounting">("buyers");
 
   const me = realtors.find((r) => r.email.toLowerCase() === user.email.toLowerCase());
 
@@ -699,164 +782,99 @@ export function RealtorPortal({ user }: { user: LoqalUser }) {
   }).length;
 
   if (!leadsReady || !me) {
-    return (
-      <div className="min-h-screen bg-background">
-        <AppHeader
-          navSlot={<span className="text-sm font-semibold text-brand">Buyer's agent workspace</span>}
-        />
-      </div>
-    );
+    return <div className="min-h-screen bg-background" />;
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <AppHeader
-        navSlot={<span className="text-sm font-semibold text-brand">Buyer's agent workspace</span>}
-      />
-      <main className="mx-auto max-w-[1400px] px-4 py-8 md:px-7">
-        <div className="mb-8">
-          <span className="rounded-full bg-gold-tint px-3 py-1 text-xs font-semibold text-gold">
-            Realtor partner
-          </span>
-          <h1 className="mt-3 text-2xl font-bold text-foreground md:text-[32px]">
-            Welcome back, {fullName(user)}
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Buyers assigned to you, your calendar, licenses and availability.
-          </p>
-        </div>
+    <main className="mx-auto max-w-[1400px] px-4 py-8 md:px-7">
+      <div className="mb-8">
+        <span className="rounded-full bg-gold-tint px-3 py-1 text-xs font-semibold text-gold">
+          Realtor partner
+        </span>
+        <h1 className="mt-3 text-2xl font-bold text-foreground md:text-[32px]">
+          Welcome back, {fullName(user)}
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Buyers assigned to you, your calendar, licenses and availability.
+        </p>
+      </div>
 
-        {!me.approvedAt ? (
-          <div className="mb-6 rounded-lg border border-gold/40 bg-gold-tint/50 p-4 text-sm text-foreground">
-            <strong>Registration pending.</strong> A Loqal admin reviews every partner registration
-            before access is granted. Once approved, buyer files can be assigned to you.
+      {!me.approvedAt ? (
+        <div className="mb-6 rounded-lg border border-gold/40 bg-gold-tint/50 p-4 text-sm text-foreground">
+          <strong>Registration pending.</strong> A Loqal admin reviews every partner registration
+          before access is granted. Once approved, buyer files can be assigned to you.
+        </div>
+      ) : null}
+
+      {/* Secondary navigation for small screens — desktop uses the header menu */}
+      <div className="mb-6 flex flex-wrap gap-2 lg:hidden">
+        {REALTOR_TABS.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            onClick={() => onTabChange(t.id)}
+            className={`rounded-full px-4 py-2 text-xs font-semibold ${
+              tab === t.id
+                ? "bg-brand text-background"
+                : "border border-border text-muted-foreground hover:bg-brand-tint"
+            }`}
+          >
+            {t.icon} {t.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "home" ? (
+        <>
+          <section className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <Stat label="Active buyers" value={mine.length} note="Assigned to you right now" />
+            <Stat
+              label="Photo requests open"
+              value={photoWork}
+              note={photoWork ? "Deliver within 3 days or update the buyer" : "None pending"}
+            />
+            <Stat
+              label="Licensed states"
+              value={activeLicenseStates(me).length || "—"}
+              note={activeLicenseStates(me).join(", ") || "Add licenses to receive assignments"}
+            />
+          </section>
+
+          <div className="grid gap-6 lg:grid-cols-2">
+            <VacationMode me={me} />
+            <LicensesCard me={me} />
           </div>
-        ) : null}
-
-        <div className="mb-6 flex gap-2">
-          {(
-            [
-              ["buyers", "Buyer files"],
-              ["calendar", "My calendar"],
-              ["analytics", "Analytics"],
-              ["accounting", "Accounting"],
-            ] as const
-          ).map(([id, label]) => (
-            <button
-              key={id}
-              type="button"
-              onClick={() => setTab(id)}
-              className={`rounded-full px-4 py-2 text-xs font-semibold ${
-                tab === id
-                  ? "bg-brand text-background"
-                  : "border border-border text-muted-foreground hover:bg-brand-tint"
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-
-        {tab === "buyers" ? (
-          <>
-            <section className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-              <Stat label="Active buyers" value={mine.length} note="Assigned to you right now" />
-              <Stat
-                label="Photo requests open"
-                value={photoWork}
-                note={photoWork ? "Deliver within 3 days or update the buyer" : "None pending"}
-              />
-              <Stat
-                label="Licensed states"
-                value={activeLicenseStates(me).length || "—"}
-                note={activeLicenseStates(me).join(", ") || "Add licenses to receive assignments"}
-              />
-            </section>
-
-            <section className="mb-6">
-              <div className="mb-3 flex items-center justify-between">
-                <h2 className="text-base font-semibold text-foreground">My buyer files</h2>
-                <span className="text-xs text-muted-foreground">
-                  Assigned by Loqal based on your licenses, pipeline and languages
-                </span>
-              </div>
-              {mine.length ? (
-                <ul className="space-y-4">
-                  {mine.map((l) => (
-                    <BuyerFile key={l.id} lead={l} me={me} />
-                  ))}
-                </ul>
-              ) : (
-                <div className="rounded-lg border border-border bg-card p-10 text-center text-sm text-muted-foreground">
-                  No buyer files assigned yet. When a client confirms their pre-approval terms in a
-                  state you are licensed in, the file appears here.
-                </div>
-              )}
-            </section>
-
-            <div className="grid gap-6 lg:grid-cols-2">
-              <VacationMode me={me} />
-
-              <section className="rounded-lg border border-border bg-card p-6">
-                <h2 className="text-base font-semibold text-foreground">My licenses & languages</h2>
-                {me.licenses.length ? (
-                  <div className="mt-3 overflow-x-auto">
-                    <table className="w-full text-left text-sm">
-                      <thead>
-                        <tr className="border-b border-border text-[11px] uppercase tracking-wide text-muted-foreground">
-                          <th className="py-2 pr-4 font-semibold">State</th>
-                          <th className="py-2 pr-4 font-semibold">License №</th>
-                          <th className="py-2 pr-4 font-semibold">Issued</th>
-                          <th className="py-2 font-semibold">Valid until</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-border">
-                        {me.licenses.map((l) => (
-                          <tr key={`${l.state}-${l.number}`}>
-                            <td className="py-2.5 pr-4 font-semibold text-foreground">{l.state}</td>
-                            <td className="py-2.5 pr-4 text-muted-foreground">{l.number}</td>
-                            <td className="py-2.5 pr-4 text-muted-foreground">
-                              {formatDate(l.issuedAt)}
-                            </td>
-                            <td className="py-2.5 text-muted-foreground">
-                              {formatDate(l.validUntil)}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <p className="mt-3 text-sm text-muted-foreground">
-                    No licenses on file yet. They are added from your approved partner registration.
-                  </p>
-                )}
-                <div className="mt-4">
-                  <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Languages
-                  </span>
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {me.languages.map((l) => (
-                      <span
-                        key={l}
-                        className="rounded-full bg-brand-tint px-3 py-1 text-[11px] font-semibold text-brand"
-                      >
-                        {l}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </section>
+        </>
+      ) : tab === "buyers" ? (
+        <section>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-base font-semibold text-foreground">My buyer files</h2>
+            <span className="text-xs text-muted-foreground">
+              Assigned by Loqal based on your licenses, pipeline and languages
+            </span>
+          </div>
+          {mine.length ? (
+            <ul className="space-y-4">
+              {mine.map((l) => (
+                <BuyerFile key={l.id} lead={l} me={me} />
+              ))}
+            </ul>
+          ) : (
+            <div className="rounded-lg border border-border bg-card p-10 text-center text-sm text-muted-foreground">
+              No buyer files assigned yet. When a client confirms their pre-approval terms in a
+              state you are licensed in, the file appears here.
             </div>
-          </>
-        ) : tab === "calendar" ? (
-          <CalendarSection me={me} myLeads={mine} />
-        ) : tab === "analytics" ? (
-          <RealtorAnalytics me={me} mine={mine} />
-        ) : (
-          <RealtorAccounting me={me} mine={mine} />
-        )}
-      </main>
-    </div>
+          )}
+        </section>
+      ) : tab === "calendar" ? (
+        <CalendarSection me={me} myLeads={mine} />
+      ) : tab === "analytics" ? (
+        <RealtorAnalytics me={me} mine={mine} />
+      ) : tab === "financial" ? (
+        <RealtorFinancialAnalytics mine={mine} />
+      ) : (
+        <RealtorAccounting me={me} mine={mine} />
+      )}
+    </main>
   );
 }
