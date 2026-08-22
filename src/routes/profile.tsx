@@ -14,6 +14,8 @@ import {
   PersonalTopic,
 } from "@/components/profile/ProfileTopicsContent";
 import { PartnerProfile } from "@/components/profile/PartnerProfile";
+import { AgreementCard } from "@/components/profile/AgreementCard";
+import { KybCard } from "@/components/profile/KybCard";
 import { PARTNER_LABEL, ROLE_LABEL, fullName, useAuth, type MortgageProfile } from "@/lib/auth";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import {
@@ -321,7 +323,11 @@ function ProfilePage() {
             </section>
 
             {isPartner ? (
-              <PartnerProfile user={user} />
+              <>
+                <AgreementCard user={user} />
+                <KybCard user={user} />
+                <PartnerProfile user={user} />
+              </>
             ) : (
               <section className="rounded-lg border border-border bg-card p-6">
                 <div className="flex flex-wrap items-center justify-between gap-3">

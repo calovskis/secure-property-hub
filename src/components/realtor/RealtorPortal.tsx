@@ -18,6 +18,8 @@ import {
 import { formatDate, formatDateTime } from "@/lib/dates";
 import { DateInput } from "@/components/form/DateInput";
 import { CallScheduler } from "@/components/buyer/CallScheduler";
+import { RealtorAnalytics } from "@/components/realtor/RealtorAnalytics";
+import { RealtorAccounting } from "@/components/realtor/RealtorAccounting";
 
 const money = (n: number) => `$${Math.round(n).toLocaleString()}`;
 const inputClass =
@@ -679,7 +681,7 @@ export function RealtorPortal({ user }: { user: LoqalUser }) {
   const { realtors, ensureSeat } = useRealtors();
   const { leads, ready: leadsReady } = useLeads();
   const { photos } = useBuyerProcess();
-  const [tab, setTab] = useState<"buyers" | "calendar">("buyers");
+  const [tab, setTab] = useState<"buyers" | "calendar" | "analytics" | "accounting">("buyers");
 
   const me = realtors.find((r) => r.email.toLowerCase() === user.email.toLowerCase());
 
@@ -736,6 +738,8 @@ export function RealtorPortal({ user }: { user: LoqalUser }) {
             [
               ["buyers", "Buyer files"],
               ["calendar", "My calendar"],
+              ["analytics", "Analytics"],
+              ["accounting", "Accounting"],
             ] as const
           ).map(([id, label]) => (
             <button
@@ -845,8 +849,12 @@ export function RealtorPortal({ user }: { user: LoqalUser }) {
               </section>
             </div>
           </>
-        ) : (
+        ) : tab === "calendar" ? (
           <CalendarSection me={me} myLeads={mine} />
+        ) : tab === "analytics" ? (
+          <RealtorAnalytics me={me} mine={mine} />
+        ) : (
+          <RealtorAccounting me={me} mine={mine} />
         )}
       </main>
     </div>

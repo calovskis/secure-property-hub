@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { PARTNER_LABEL, fullName, useAuth } from "@/lib/auth";
 import { formatDate } from "@/lib/dates";
@@ -6,6 +7,21 @@ import { usePartnerRequests, type PartnerRequest } from "@/lib/partner-requests"
 import { useRealtors } from "@/lib/realtors";
 import { KICKOFF_LABEL, useLeads } from "@/lib/leads";
 import { buyerAgentSummary, useBuyerProcess } from "@/lib/buyer-process";
+import { logActivity } from "@/lib/activity";
+import {
+  ActivityFeed,
+  EmployeeTracking,
+  PartnerComparison,
+} from "@/components/admin/AdminSections";
+
+type AdminTab = "overview" | "partners" | "employees" | "activity";
+
+const ADMIN_TABS: [AdminTab, string][] = [
+  ["overview", "Overview"],
+  ["partners", "Partners"],
+  ["employees", "Employees"],
+  ["activity", "Activity"],
+];
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
@@ -51,6 +67,7 @@ const QUEUES: [string, string, string][] = [
 
 function AdminPage() {
   const { user, ready } = useAuth();
+  const [tab, setTab] = useState<AdminTab>("overview");
   const { requests, setStatus } = usePartnerRequests();
   const { addRealtor } = useRealtors();
   const { leads } = useLeads();
@@ -83,6 +100,7 @@ function AdminPage() {
 
   function approve(r: PartnerRequest) {
     setStatus(r.id, "approved");
+    logActivity("Loqal admin", "approved a partner registration", r.companyName);
     if (r.partnerType === "realtor") {
       addRealtor({
         firstName: r.firstName,
@@ -113,6 +131,29 @@ function AdminPage() {
           </p>
         </div>
 
+        {/* Tabs */}
+        <div className="mb-6 flex flex-wrap gap-2 border-b border-border pb-3">
+          {ADMIN_TABS.map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setTab(id)}
+              className={`rounded-full border px-4 py-1.5 text-xs font-semibold ${
+                tab === id
+                  ? "border-brand bg-brand text-background"
+                  : "border-border bg-card text-muted-foreground hover:bg-brand-tint"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {tab === "employees" ? <EmployeeTracking /> : null}
+        {tab === "activity" ? <ActivityFeed /> : null}
+        {tab === "partners" ? <PartnerComparison /> : null}
+
+        {tab === "overview" ? (
         <section className="mb-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
           {METRICS.map(([label, value, note]) => (
             <div key={label} className="rounded-lg border border-border bg-card p-6">
@@ -124,7 +165,9 @@ function AdminPage() {
             </div>
           ))}
         </section>
+        ) : null}
 
+        {tab === "partners" ? (
         <section className="mb-6 rounded-lg border border-border bg-card p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-base font-semibold text-foreground">
@@ -194,7 +237,10 @@ function AdminPage() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => setStatus(r.id, "declined")}
+                        onClick={() => {
+                          setStatus(r.id, "declined");
+                          logActivity("Loqal admin", "declined a partner registration", r.companyName);
+                        }}
                         className="rounded-md border border-border px-4 py-2 text-xs font-semibold text-muted-foreground hover:text-destructive"
                       >
                         Decline
@@ -206,7 +252,10 @@ function AdminPage() {
             </ul>
           )}
         </section>
+        ) : null}
 
+        {tab === "overview" ? (
+        <>
         <section className="mb-6 rounded-lg border border-border bg-card p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-base font-semibold text-foreground">Buyer files — oversight</h2>
@@ -216,7 +265,7 @@ function AdminPage() {
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
             Every accepted pre-approval: who represents the buyer, the kickoff choice and the
-            current status. Loqal personal manager cases carry an extra 1% platform fee.
+            current status. Loqal personal advocate cases carry an extra 1% platform fee.
           </p>
           {buyerFiles.length === 0 ? (
             <p className="mt-4 text-sm text-muted-foreground">
@@ -242,7 +291,7 @@ function AdminPage() {
                       <td className="py-3 pr-4">
                         {l.buyerAgent?.representation === "loqal_rep" ? (
                           <span className="rounded-full bg-gold-tint px-2.5 py-1 text-[11px] font-semibold text-gold">
-                            🛡 Loqal manager (+1% fee)
+                            🛡 Loqal advocate (+1% fee)
                           </span>
                         ) : (
                           <span className="rounded-full bg-brand-tint px-2.5 py-1 text-[11px] font-semibold text-brand">
@@ -315,6 +364,8 @@ function AdminPage() {
             </div>
           </div>
         </section>
+        </>
+        ) : null}
       </main>
     </div>
   );

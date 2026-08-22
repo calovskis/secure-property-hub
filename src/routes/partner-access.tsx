@@ -6,6 +6,7 @@ import { CountryCombobox } from "@/components/form/CountryCombobox";
 import { DateInput } from "@/components/form/DateInput";
 import { REALTOR_LANGUAGES, type RealtorLicense } from "@/lib/realtors";
 import { usePartnerRequests } from "@/lib/partner-requests";
+import { logActivity } from "@/lib/activity";
 
 export const Route = createFileRoute("/partner-access")({
   component: PartnerAccessPage,
@@ -128,6 +129,11 @@ function PartnerAccessPage() {
           }
         : {}),
     });
+    logActivity(
+      `${firstName.trim()} ${lastName.trim()}`,
+      kind === "partner" ? "requested partner registration" : "requested corporate access",
+      companyName.trim(),
+    );
     setSent(true);
   }
 

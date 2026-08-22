@@ -72,12 +72,13 @@ export function useAccounting() {
   const issueInvoice = useCallback(
     (input: Omit<Invoice, "id" | "number" | "status" | "issuedAt">) => {
       const cur = load();
+      const id = uid();
       const number = `INV-${new Date().getFullYear()}-${String(cur.invoices.length + 1).padStart(4, "0")}`;
       commit({
         invoices: [
           {
             ...input,
-            id: uid(),
+            id,
             number,
             status: "sent",
             issuedAt: new Date().toISOString(),
@@ -85,6 +86,7 @@ export function useAccounting() {
           ...cur.invoices,
         ],
       });
+      return id;
     },
     [],
   );

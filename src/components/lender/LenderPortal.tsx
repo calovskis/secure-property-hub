@@ -21,6 +21,7 @@ import { LENDER_ROLE_LABEL, useLenderTeam } from "@/lib/lender-team";
 import { usStatusOf, US_STATUS_LABEL, isMajorityForeignIncome } from "@/lib/mortgage-form";
 import { LenderHome } from "@/components/lender/LenderHome";
 import { LenderAnalytics } from "@/components/lender/LenderAnalytics";
+import { LenderAccounting } from "@/components/lender/LenderAccounting";
 import { LenderMortgages } from "@/components/lender/LenderMortgages";
 import { LenderTeam } from "@/components/lender/LenderTeam";
 import { LenderEmployees } from "@/components/lender/LenderEmployees";
@@ -724,6 +725,7 @@ export const TABS = [
   { id: "mortgages", label: "Mortgages", icon: "🏦" },
   { id: "employees", label: "Employees", icon: "👥" },
   { id: "analytics", label: "Analytics", icon: "📈" },
+  { id: "accounting", label: "Accounting", icon: "💵" },
   { id: "other", label: "Other", icon: "⚙️" },
 ] as const;
 
@@ -738,6 +740,7 @@ export function useLenderTabs() {
     mortgages: can("mortgages.view"),
     employees: true,
     analytics: can("analytics.view"),
+    accounting: can("accounting.view"),
     other: true,
   };
   return TABS.filter((t) => allowed[t.id]);
@@ -764,6 +767,7 @@ export function LenderPortal({
     mortgages: can("mortgages.view"),
     employees: true,
     analytics: can("analytics.view"),
+    accounting: can("accounting.view"),
     other: true,
   };
   const current = allowed[tab] ? tab : "home";
@@ -806,6 +810,7 @@ export function LenderPortal({
       {current === "mortgages" ? <LenderMortgages canManage={can("mortgages.manage")} /> : null}
       {current === "employees" ? <LenderEmployees /> : null}
       {current === "analytics" ? <LenderAnalytics /> : null}
+      {current === "accounting" ? <LenderAccounting lenderName={lenderName} /> : null}
       {current === "other" ? <LenderTeam /> : null}
     </main>
   );
