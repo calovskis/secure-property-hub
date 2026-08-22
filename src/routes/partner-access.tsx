@@ -388,9 +388,9 @@ function PartnerAccessPage() {
                               />
                             </label>
                             <label>
-                              <Label required>Issued</Label>
+                              <Label>Issued (optional)</Label>
                               <DateInput
-                                value={lic.issuedAt}
+                                value={lic.issuedAt ?? ""}
                                 onChange={(v) => setLic({ issuedAt: v })}
                                 className={inputClass}
                               />

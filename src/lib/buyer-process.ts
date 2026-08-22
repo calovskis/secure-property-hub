@@ -32,7 +32,7 @@ export type PhotoDelivery = {
   suggestedPrice?: number;
 };
 
-export type CallKind = "intro_call" | "video_tour";
+export type CallKind = "intro_call" | "video_tour" | "in_person_visit";
 
 export type CallBooking = {
   id: string;
@@ -41,10 +41,24 @@ export type CallBooking = {
   clientName: string;
   propertyLabel: string;
   kind: CallKind;
-  /** ISO start/end — 1 hour per booking. */
+  /** ISO start/end — 1 hour per booking. While proposed, startAt is the first option. */
   startAt: string;
   endAt: string;
   createdAt: string;
+  /**
+   * video tours / in-person visits: the buyer proposes several slots and the
+   * agent confirms one. Intro calls book instantly ("confirmed").
+   */
+  status: "proposed" | "confirmed";
+  proposedSlots?: string[];
+  /** Buyer's note attached to the proposal. */
+  note?: string;
+  confirmedAt?: string;
+  /* ---- recording & AI transcript (in-platform video calls) ---- */
+  recordingConsentedAt?: string;
+  endedAt?: string;
+  durationMin?: number;
+  transcript?: string;
 };
 
 export type ClientNextAction =
@@ -59,7 +73,7 @@ export const CLIENT_ACTION_LABEL: Record<ClientNextAction, string> = {
   more_info: "Requested more information about the property",
   agree_inspections: "Agreed to proceed with inspections",
   agree_negotiation: "Agreed to the proposed negotiation price",
-  sign_prepurchase: "Proceeding to the prepurchase agreement",
+  sign_prepurchase: "Proceeding to the Purchase Agreement",
   property_change: "Requested a property change",
   live_call: "Requested a live call",
 };
@@ -118,7 +132,8 @@ function load(): BuyerProcessState {
       const parsed = JSON.parse(raw) as Partial<BuyerProcessState>;
       next = {
         photos: parsed.photos ?? {},
-        bookings: parsed.bookings ?? [],
+        // Bookings predate the proposal flow — they were all instantly confirmed.
+        bookings: (parsed.bookings ?? []).map((b) => ({ ...b, status: b.status ?? "confirmed" })),
         actions: parsed.actions ?? {},
       };
     }
@@ -160,8 +175,11 @@ export function availableSlots(
   bookings: CallBooking[],
   maxDays = 10,
 ): SlotDay[] {
+  // Only confirmed bookings block a slot — proposals are not on the calendar yet.
   const booked = new Set(
-    bookings.filter((b) => b.realtorId === realtorId).map((b) => b.startAt),
+    bookings
+      .filter((b) => b.realtorId === realtorId && b.status !== "proposed")
+      .map((b) => b.startAt),
   );
   const out: SlotDay[] = [];
   const now = Date.now();
@@ -203,7 +221,7 @@ export function buyerAgentSummary(
     return "Buyer accepted the terms — choosing how to work with the buyer's agent";
   }
   if (ba.representation === "loqal_rep") {
-    return "Purchase is steered by a Loqal personal manager on the buyer's behalf";
+    return "Purchase is steered by a Loqal personal advocate on the buyer's behalf";
   }
   const agent = ba.agentName ?? "the assigned buyer's agent";
   const actions = proc.actions[lead.id] ?? [];
@@ -229,7 +247,16 @@ export function buyerAgentSummary(
       ? `Intro call between buyer and ${agent} booked for ${formatDate(booking.startAt)}`
       : `Buyer requested an intro call with ${agent}`;
   }
-  if (ba.kickoff === "video_showcase") return `Buyer asked ${agent} for a live video tour of the property`;
+  if (ba.kickoff === "video_showcase") {
+    const b = proc.bookings.find((x) => x.leadId === lead.id && x.kind === "video_tour");
+    if (b?.status === "confirmed") return `Live video tour with ${agent} confirmed for ${formatDate(b.startAt)}`;
+    return `Buyer proposed times for a live video tour — awaiting ${agent}'s confirmation`;
+  }
+  if (ba.kickoff === "in_person_visit") {
+    const b = proc.bookings.find((x) => x.leadId === lead.id && x.kind === "in_person_visit");
+    if (b?.status === "confirmed") return `In-person property visit with ${agent} confirmed for ${formatDate(b.startAt)}`;
+    return `Buyer proposed times for an in-person visit — awaiting ${agent}'s confirmation`;
+  }
   return `Buyer is working directly with ${agent}`;
 }
 
@@ -340,6 +367,8 @@ export function useBuyerProcess() {
         startAt: input.startAt,
         endAt: end.toISOString(),
         createdAt: new Date().toISOString(),
+        status: "confirmed",
+        confirmedAt: new Date().toISOString(),
         ...(input.realtorId ? { realtorId: input.realtorId } : {}),
       };
       commit({ ...cur, bookings: [...cur.bookings, booking] });
@@ -347,6 +376,75 @@ export function useBuyerProcess() {
     },
     [],
   );
+
+  /** Buyer proposes several slots (video tour / in-person visit); the agent confirms one. */
+  const proposeSlots = useCallback(
+    (input: {
+      leadId: string;
+      realtorId?: string;
+      clientName: string;
+      propertyLabel: string;
+      kind: CallKind;
+      slots: string[];
+      note?: string;
+    }) => {
+      if (!input.slots.length) return null;
+      const cur = load();
+      const sorted = [...input.slots].sort();
+      const end = new Date(new Date(sorted[0]!).getTime() + 60 * 60 * 1000);
+      const booking: CallBooking = {
+        id: uid(),
+        leadId: input.leadId,
+        clientName: input.clientName,
+        propertyLabel: input.propertyLabel,
+        kind: input.kind,
+        startAt: sorted[0]!,
+        endAt: end.toISOString(),
+        createdAt: new Date().toISOString(),
+        status: "proposed",
+        proposedSlots: sorted,
+        ...(input.realtorId ? { realtorId: input.realtorId } : {}),
+        ...(input.note ? { note: input.note } : {}),
+        recordingConsentedAt: new Date().toISOString(),
+      };
+      commit({ ...cur, bookings: [...cur.bookings, booking] });
+      return booking;
+    },
+    [],
+  );
+
+  /** Agent confirms one of the buyer's proposed slots. */
+  const confirmProposal = useCallback((bookingId: string, slot: string) => {
+    const cur = load();
+    const end = new Date(new Date(slot).getTime() + 60 * 60 * 1000);
+    commit({
+      ...cur,
+      bookings: cur.bookings.map((b) =>
+        b.id === bookingId
+          ? {
+              ...b,
+              status: "confirmed",
+              startAt: slot,
+              endAt: end.toISOString(),
+              confirmedAt: new Date().toISOString(),
+            }
+          : b,
+      ),
+    });
+  }, []);
+
+  /** Call ended — the recording and the AI transcript are saved to the file. */
+  const endCall = useCallback((bookingId: string, durationMin: number, transcript: string) => {
+    const cur = load();
+    commit({
+      ...cur,
+      bookings: cur.bookings.map((b) =>
+        b.id === bookingId
+          ? { ...b, endedAt: new Date().toISOString(), durationMin, transcript }
+          : b,
+      ),
+    });
+  }, []);
 
   const addClientAction = useCallback(
     (
@@ -385,6 +483,9 @@ export function useBuyerProcess() {
     delayPhotos,
     deliverPhotos,
     bookCall,
+    proposeSlots,
+    confirmProposal,
+    endCall,
     addClientAction,
   };
 }

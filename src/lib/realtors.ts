@@ -15,8 +15,8 @@ export type RealtorLicense = {
   /** Two-letter state code. */
   state: string;
   number: string;
-  /** ISO yyyy-mm-dd */
-  issuedAt: string;
+  /** ISO yyyy-mm-dd — optional, we only track validity. */
+  issuedAt?: string;
   /** ISO yyyy-mm-dd — the license stops counting for assignment after this. */
   validUntil: string;
 };

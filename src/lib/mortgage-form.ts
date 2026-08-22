@@ -258,6 +258,8 @@ export type Declarations = {
   propertyForeclosed: boolean;
   bankruptcy: boolean;
   bankruptcyChapters: string[];
+  /** US-format mm/dd/yyyy — required when bankruptcy is true. */
+  bankruptcyDischargeDate: string;
 };
 
 export const emptyDeclarations = (): Declarations => ({
@@ -280,6 +282,7 @@ export const emptyDeclarations = (): Declarations => ({
   propertyForeclosed: false,
   bankruptcy: false,
   bankruptcyChapters: [],
+  bankruptcyDischargeDate: "",
 });
 
 export type MilitaryService = {

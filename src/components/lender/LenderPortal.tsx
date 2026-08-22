@@ -86,9 +86,15 @@ function Step2Summary({ lead }: { lead: MortgageLead }) {
 
 function DecisionPanel({ lead }: { lead: MortgageLead }) {
   const { updateLead, addInfoRequest } = useLeads();
+  /** No SSN → no US credit file: no soft score and no DTI ceiling is issued. */
+  const hasSsn = Boolean(lead.profile.ssn?.trim());
   const [score, setScore] = useState(lead.creditScore ? String(lead.creditScore) : "");
   const [note, setNote] = useState(lead.lenderNote ?? "");
   const [dtiLimit, setDtiLimit] = useState(String(Math.round(lead.dtiLimit * 100)));
+  const [lenderName, setLenderName] = useState(
+    lead.terms?.lenderName ?? "Loqal Mortgage Partners LLC",
+  );
+  const [lenderNmls, setLenderNmls] = useState(lead.terms?.lenderNmls ?? "");
   const [ratePct, setRatePct] = useState(lead.terms ? String(lead.terms.ratePct) : "");
   const [termYears, setTermYears] = useState(lead.terms ? String(lead.terms.termYears) : "30");
   const [downPct, setDownPct] = useState(lead.terms ? String(lead.terms.downPaymentPct) : "");
@@ -103,7 +109,7 @@ function DecisionPanel({ lead }: { lead: MortgageLead }) {
 
   function decide(status: LeadStatus) {
     const parsed = Number(score);
-    if (!parsed || parsed < 300 || parsed > 850) {
+    if (hasSsn && (!parsed || parsed < 300 || parsed > 850)) {
       setError("A soft credit report score between 300 and 850 is required with every decision.");
       return;
     }
@@ -130,18 +136,26 @@ function DecisionPanel({ lead }: { lead: MortgageLead }) {
         );
         return;
       }
+      if (!lenderName.trim() || !lenderNmls.trim()) {
+        setError(
+          "Enter the lending company name and its NMLS number — the client sees who issued these terms.",
+        );
+        return;
+      }
     }
     setError(null);
     const limit = Math.min(Math.max(Number(dtiLimit) || 50, 20), 60) / 100;
     updateLead(lead.id, {
       status,
-      creditScore: parsed,
+      ...(hasSsn && parsed ? { creditScore: parsed } : {}),
       lenderNote: note.trim(),
       dtiLimit: limit,
       decidedAt: new Date().toISOString(),
       ...(status === "qualified"
         ? {
             terms: {
+              lenderName: lenderName.trim(),
+              lenderNmls: lenderNmls.trim(),
               ratePct: rate,
               termYears: years,
               downPaymentPct: down,
@@ -157,39 +171,69 @@ function DecisionPanel({ lead }: { lead: MortgageLead }) {
   return (
     <div className="space-y-4 rounded-lg border border-border bg-card p-4">
       <h3 className="text-sm font-semibold text-foreground">Pre-qualification feedback</h3>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <label className="block">
-          <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Soft credit report score <span className="text-destructive">*</span>
-          </span>
-          <input
-            inputMode="numeric"
-            placeholder="720"
-            value={score}
-            onChange={(e) => setScore(e.target.value)}
-            className={inputClass}
-          />
-        </label>
-        <label className="block">
-          <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            DTI ceiling for this applicant (%)
-          </span>
-          <input
-            inputMode="numeric"
-            value={dtiLimit}
-            onChange={(e) => setDtiLimit(e.target.value)}
-            className={inputClass}
-          />
-          <span className="mt-1 block text-[11px] text-muted-foreground">
-            Default policy is 50%; adjust for applicant-specific criteria.
-          </span>
-        </label>
-      </div>
+      {hasSsn ? (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <label className="block">
+            <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Soft credit report score <span className="text-destructive">*</span>
+            </span>
+            <input
+              inputMode="numeric"
+              placeholder="720"
+              value={score}
+              onChange={(e) => setScore(e.target.value)}
+              className={inputClass}
+            />
+          </label>
+          <label className="block">
+            <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              DTI ceiling for this applicant (%)
+            </span>
+            <input
+              inputMode="numeric"
+              value={dtiLimit}
+              onChange={(e) => setDtiLimit(e.target.value)}
+              className={inputClass}
+            />
+            <span className="mt-1 block text-[11px] text-muted-foreground">
+              Default policy is 50%; adjust for applicant-specific criteria.
+            </span>
+          </label>
+        </div>
+      ) : (
+        <p className="rounded-md border border-border bg-brand-tint/40 px-3 py-2 text-xs text-muted-foreground">
+          This applicant has no SSN — no US credit file exists, so no soft credit report score or
+          DTI ceiling is issued. The client feedback shows terms only.
+        </p>
+      )}
 
       <div className="rounded-md border border-gold/40 bg-gold-tint/40 p-3">
         <span className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Approved pricing (required for “Qualified” — unlocks the client estimate)
         </span>
+        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <label className="block">
+            <span className="mb-1.5 block text-[11px] font-semibold text-muted-foreground">
+              Lending company name (shown to the client)
+            </span>
+            <input
+              value={lenderName}
+              onChange={(e) => setLenderName(e.target.value)}
+              className={inputClass}
+            />
+          </label>
+          <label className="block">
+            <span className="mb-1.5 block text-[11px] font-semibold text-muted-foreground">
+              Company NMLS № (shown to the client)
+            </span>
+            <input
+              placeholder="NMLS #2481907"
+              value={lenderNmls}
+              onChange={(e) => setLenderNmls(e.target.value)}
+              className={inputClass}
+            />
+          </label>
+        </div>
         <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-5">
           {(
             [

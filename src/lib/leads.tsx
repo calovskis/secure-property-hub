@@ -54,6 +54,10 @@ export type DebtProfile = {
 
 /** Pricing the lender returns with a decision — required before any estimate. */
 export type LenderTerms = {
+  /** Lending company that issued the terms (shown to the client). */
+  lenderName?: string;
+  /** Company NMLS number (shown to the client). */
+  lenderNmls?: string;
   /** Annual interest rate as a percentage, e.g. 6.75 */
   ratePct: number;
   termYears: number;
@@ -85,12 +89,13 @@ export type ClientQuestion = {
 export type Representation = "loqal_rep" | "buyer_direct";
 
 /** How the buyer wants to kick off the work with the buyer's agent. */
-export type KickoffRequest = "live_call" | "photo_visit" | "video_showcase";
+export type KickoffRequest = "live_call" | "photo_visit" | "video_showcase" | "in_person_visit";
 
 export const KICKOFF_LABEL: Record<KickoffRequest, string> = {
   live_call: "Live call with the buyer's agent",
   photo_visit: "Agent visit for updated property photos",
   video_showcase: "Real-time video showcasing of the property",
+  in_person_visit: "In-person visit of the property",
 };
 
 /** Buyer's agent engagement, created when the client accepts the terms. */
@@ -105,11 +110,11 @@ export type BuyerAgentEngagement = {
   nextStep?: "live_call" | "start";
   liveCallRequestedAt?: string;
   /**
-   * Who represents the buyer day-to-day: a Loqal personal manager (extra 1%
+   * Who represents the buyer day-to-day: a Loqal personal advocate (extra 1%
    * fee on the purchase price) or the buyer directly with the agent.
    */
   representation?: Representation;
-  /** Loqal personal manager fee, % of the purchase price at closing. */
+  /** Loqal personal advocate fee, % of the purchase price at closing. */
   loqalManagerFeePct?: number;
   /** Kickoff choice when the buyer works with the agent directly. */
   kickoff?: KickoffRequest;
@@ -154,9 +159,18 @@ export type MortgageLead = {
   debts?: DebtProfile;
 };
 
-/** Estimates unlock only when the lender returned a score AND full pricing. */
+/**
+ * Estimates unlock when the lender returned full pricing — plus a soft credit
+ * score for applicants with an SSN. Applicants without an SSN (no US credit
+ * file) get terms only: no score and no DTI ceiling is shown to them.
+ */
 export function hasPricedOffer(lead?: MortgageLead): lead is MortgageLead {
-  return Boolean(lead && lead.status === "qualified" && lead.creditScore && lead.terms);
+  return Boolean(
+    lead &&
+      lead.status === "qualified" &&
+      lead.terms &&
+      (lead.creditScore || !lead.profile.ssn),
+  );
 }
 
 /** Still being worked on the pre-approval desk. */

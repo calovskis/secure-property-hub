@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider } from "@/lib/auth";
+import { SupportChat } from "@/components/support/SupportChat";
 import { I18nProvider } from "@/lib/i18n";
 import { LeadsProvider } from "@/lib/leads";
 import { MortgageDraftProvider } from "@/lib/mortgage-draft";
@@ -135,6 +136,7 @@ function RootComponent() {
             <MortgageDraftProvider>
               {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
               <Outlet />
+              <SupportChat />
               <Toaster />
             </MortgageDraftProvider>
           </LeadsProvider>
