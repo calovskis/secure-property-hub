@@ -52,8 +52,8 @@ const SECTIONS: { title: string; body: string[] }[] = [
   {
     title: "How does this connect to my Loqal mortgage pre-approval?",
     body: [
-      "Your lender's pre-approval terms are preliminary estimates until a formal mortgage proposal is issued after the prepurchase contract is signed.",
-      "After you accept the terms and until the prepurchase agreement is signed, you can request a property change at any point within 3 months under the same pre-approval, within the same purchase price. Once you decide on a property, the lender re-checks your qualification and the potential mortgage terms for that specific property.",
+      "Your lender's pre-approval terms are preliminary estimates until a formal mortgage proposal is issued after the Purchase Agreement is signed.",
+      "After you accept the terms and until the Purchase Agreement is signed, you can request a property change at any point within 3 months under the same pre-approval, within the same purchase price. Once you decide on a property, the lender re-checks your qualification and the potential mortgage terms for that specific property.",
     ],
   },
   {

@@ -362,7 +362,9 @@ export function KybCard({ user }: { user: LoqalUser }) {
         <div className="mt-5 border-t border-border pt-4">
           <h3 className="text-sm font-semibold text-foreground">Verification documents</h3>
           <p className="mt-1 text-xs text-muted-foreground">
-            Upload your ID and license documents to speed up the review of your registration.
+            {request.partnerType === "realtor"
+              ? "Upload your personal ID document and copies of the personal real estate licences you listed (not the company licence) to speed up the review of your registration."
+              : "Upload your ID and license documents to speed up the review of your registration."}
           </p>
           {request.verificationDocs.length ? (
             <ul className="mt-2 space-y-1">

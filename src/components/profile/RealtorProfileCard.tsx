@@ -52,8 +52,8 @@ type InfoForm = {
   languages: string[];
 };
 
-type LicenseForm = { state: string; number: string; issuedAt: string; validUntil: string };
-const EMPTY_LICENSE: LicenseForm = { state: "", number: "", issuedAt: "", validUntil: "" };
+type LicenseForm = { state: string; number: string; validUntil: string };
+const EMPTY_LICENSE: LicenseForm = { state: "", number: "", validUntil: "" };
 
 export function RealtorProfileCard({ user }: { user: LoqalUser }) {
   const { realtors, ensureSeat, updateRealtor } = useRealtors();
@@ -120,7 +120,6 @@ export function RealtorProfileCard({ user }: { user: LoqalUser }) {
     const entry = {
       state: lic.state,
       number: lic.number.trim(),
-      ...(lic.issuedAt ? { issuedAt: lic.issuedAt } : {}),
       validUntil: lic.validUntil,
     };
     const licenses =
@@ -303,7 +302,6 @@ export function RealtorProfileCard({ user }: { user: LoqalUser }) {
                 <tr className="border-b border-border text-[11px] uppercase tracking-wide text-muted-foreground">
                   <th className="py-2 pr-4 font-semibold">State</th>
                   <th className="py-2 pr-4 font-semibold">License №</th>
-                  <th className="py-2 pr-4 font-semibold">Issued</th>
                   <th className="py-2 pr-4 font-semibold">Valid until</th>
                   <th className="py-2 font-semibold" />
                 </tr>
@@ -313,7 +311,6 @@ export function RealtorProfileCard({ user }: { user: LoqalUser }) {
                   <tr key={`${l.state}-${l.number}-${i}`}>
                     <td className="py-2.5 pr-4 font-semibold text-foreground">{l.state}</td>
                     <td className="py-2.5 pr-4 text-muted-foreground">{l.number}</td>
-                    <td className="py-2.5 pr-4 text-muted-foreground">{formatDate(l.issuedAt)}</td>
                     <td className="py-2.5 pr-4">
                       <span className="text-muted-foreground">{formatDate(l.validUntil)}</span>
                       {l.validUntil < today ? (
@@ -329,7 +326,6 @@ export function RealtorProfileCard({ user }: { user: LoqalUser }) {
                           setLic({
                             state: l.state,
                             number: l.number,
-                            issuedAt: l.issuedAt ?? "",
                             validUntil: l.validUntil,
                           });
                           setLicIndex(i);
@@ -389,16 +385,6 @@ export function RealtorProfileCard({ user }: { user: LoqalUser }) {
                   value={lic.number}
                   onChange={(e) => setLic({ ...lic, number: e.target.value })}
                   placeholder="e.g. FL-SL-3488210"
-                  className={inputClass}
-                />
-              </label>
-              <label className="block">
-                <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Issued (optional)
-                </span>
-                <DateInput
-                  value={lic.issuedAt}
-                  onChange={(v) => setLic({ ...lic, issuedAt: v })}
                   className={inputClass}
                 />
               </label>

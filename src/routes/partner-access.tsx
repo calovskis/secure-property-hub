@@ -4,8 +4,10 @@ import { PARTNER_LABEL, type PartnerType } from "@/lib/auth";
 import { StateCombobox, StateMultiSelect } from "@/components/form/StateCombobox";
 import { CountryCombobox } from "@/components/form/CountryCombobox";
 import { DateInput } from "@/components/form/DateInput";
-import { REALTOR_LANGUAGES, type RealtorLicense } from "@/lib/realtors";
+import { LanguageMultiSelect } from "@/components/form/LanguageMultiSelect";
+import { US_STATE_CODES } from "@/data/us-states";
 import { usePartnerRequests } from "@/lib/partner-requests";
+import { notify } from "@/lib/notifications";
 import { logActivity } from "@/lib/activity";
 
 export const Route = createFileRoute("/partner-access")({
@@ -43,8 +45,23 @@ function Label({ children, required }: { children: React.ReactNode; required?: b
   );
 }
 
+function SectionTitle({ n, children }: { n: number; children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-2 border-t border-border pt-5">
+      <span className="flex size-6 items-center justify-center rounded-full bg-brand text-xs font-bold text-background">
+        {n}
+      </span>
+      <h2 className="text-sm font-semibold text-foreground">{children}</h2>
+    </div>
+  );
+}
+
+/** Per-state realtor licence — we only track the number and validity, not the issue date. */
+type LicenseForm = { number: string; validUntil: string };
+
 function PartnerAccessPage() {
   const [kind, setKind] = useState<"partner" | "corporate">("partner");
+  const [partnerType, setPartnerType] = useState<PartnerType>("realtor");
 
   const [companyName, setCompanyName] = useState("");
   const [companyType, setCompanyType] = useState("");
@@ -54,20 +71,34 @@ function PartnerAccessPage() {
   const [addressState, setAddressState] = useState("");
   const [zip, setZip] = useState("");
   const [country, setCountry] = useState("US");
+  const [companyLicence, setCompanyLicence] = useState("");
+  const [companyPhone, setCompanyPhone] = useState("");
+
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [position, setPosition] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [partnerType, setPartnerType] = useState<PartnerType>("realtor");
+
   const [licenceNumber, setLicenceNumber] = useState("");
   const [allStates, setAllStates] = useState(false);
   const [states, setStates] = useState<string[]>([]);
+  const [licenses, setLicenses] = useState<Record<string, LicenseForm>>({});
+  const [languages, setLanguages] = useState<string[]>([]);
+
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
   const { submit } = usePartnerRequests();
-  const [licenses, setLicenses] = useState<Record<string, Omit<RealtorLicense, "state">>>({});
-  const [languages, setLanguages] = useState<string[]>([]);
+
+  const isRealtor = kind === "partner" && partnerType === "realtor";
+
+  function toggleAllStates() {
+    setAllStates((v) => {
+      const next = !v;
+      setStates(next ? [...US_STATE_CODES] : []);
+      return next;
+    });
+  }
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -75,29 +106,36 @@ function PartnerAccessPage() {
     if (!companyType.trim()) return setError("Company type is required.");
     if (!registrationNumber.trim()) return setError("Registration number is required.");
     if (!street.trim() || !city.trim() || !zip.trim() || !country.trim())
-      return setError("Full address (street, city, ZIP, country) is required.");
+      return setError("Full legal address (street, city, ZIP, country) is required.");
     if (country === "US" && !addressState.trim())
-      return setError("Please select the state of your address.");
+      return setError("Please select the state of your legal address.");
+    if (isRealtor) {
+      if (!companyLicence.trim())
+        return setError("The company (brokerage) realtor licence number is required.");
+      if (!companyPhone.trim()) return setError("The company phone number is required.");
+    }
     if (!firstName.trim() || !lastName.trim())
-      return setError("Contact name and surname are required.");
+      return setError("First name and last name are required.");
     if (!position.trim()) return setError("Position is required.");
-    if (!email.trim()) return setError("Contact e-mail is required.");
-    if (!phone.trim()) return setError("Phone number is required.");
+    if (!email.trim()) return setError("Personal e-mail is required.");
+    if (!phone.trim()) return setError("Personal phone number is required.");
     if (kind === "partner") {
       if (partnerType === "lender" && !licenceNumber.trim())
         return setError("Licence number is required for mortgage lenders.");
-      if (partnerType === "realtor") {
-        if (states.length === 0)
-          return setError("Realtor licenses are issued per state — select the states you are licensed in.");
+      if (states.length === 0)
+        return setError(
+          isRealtor
+            ? "Realtor licenses are issued per state — select the states you are licensed in, or choose all states."
+            : "Select the states you are active in, or choose all states.",
+        );
+      if (isRealtor) {
         for (const s of states) {
           const lic = licenses[s];
-          if (!lic?.number.trim() || !lic.issuedAt || !lic.validUntil)
-            return setError(`Enter the license number, issue date and validity for ${s}.`);
+          if (!lic?.number.trim() || !lic.validUntil)
+            return setError(`Enter the license number and its validity for ${s}.`);
         }
         if (languages.length === 0)
           return setError("Select at least one language you work in.");
-      } else if (!allStates && states.length === 0) {
-        return setError("Select the states you are active in, or choose all states.");
       }
     }
     setError(null);
@@ -117,13 +155,15 @@ function PartnerAccessPage() {
       position: position.trim(),
       email: email.trim(),
       phone: phone.trim(),
-      allStates: partnerType === "realtor" ? false : allStates,
+      allStates,
       states,
       ...(kind === "partner" && partnerType === "lender"
         ? { lenderLicence: licenceNumber.trim() }
         : {}),
-      ...(kind === "partner" && partnerType === "realtor"
+      ...(isRealtor
         ? {
+            companyLicence: companyLicence.trim(),
+            companyPhone: companyPhone.trim(),
             realtorLicenses: states.map((s) => ({ state: s, ...licenses[s]! })),
             languages,
           }
@@ -134,6 +174,16 @@ function PartnerAccessPage() {
       kind === "partner" ? "requested partner registration" : "requested corporate access",
       companyName.trim(),
     );
+    notify({
+      id: `welcome-${email.trim().toLowerCase()}`,
+      to: email.trim().toLowerCase(),
+      title: "Thank you for your interest in joining Loqal",
+      body:
+        "Your registration is with our admin team. You can already log in to your portal — it becomes fully functional once approved. To speed up the review, please upload your verification documents (your personal ID and the licences you listed).",
+      href: "/profile",
+      severity: "info",
+      emailCopy: true,
+    });
     setSent(true);
   }
 
@@ -154,18 +204,40 @@ function PartnerAccessPage() {
           </p>
 
           {sent ? (
-            <div className="mt-8 rounded-lg border border-border bg-brand-tint/40 p-6 text-center">
-              <div className="text-base font-semibold text-foreground">Request received</div>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Thank you, {firstName}. A Loqal admin reviews every registration — once approved,
-                you can log in to your partner workspace. We will notify you at {email}.
-              </p>
-              <Link
-                to="/"
-                className="mt-6 inline-flex rounded-md bg-brand px-5 py-2.5 text-sm font-semibold text-background"
-              >
-                Back to Loqal
-              </Link>
+            <div className="mt-8 space-y-5">
+              <div className="rounded-lg border border-border bg-brand-tint/40 p-6 text-center">
+                <div className="text-base font-semibold text-foreground">
+                  Thank you, {firstName} — request received
+                </div>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  We've sent a confirmation to <strong>{email}</strong>. A Loqal admin reviews every
+                  registration — you can already log in to your portal, and it becomes fully
+                  functional once approved. We'll notify you by e-mail.
+                </p>
+              </div>
+              <div className="rounded-lg border border-gold/40 bg-gold-tint/40 p-5">
+                <div className="text-sm font-semibold text-foreground">
+                  Speed up your review — verification documents
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  While you wait, upload your verification documents in your portal under My
+                  Profile: your personal ID document
+                  {isRealtor
+                    ? " and copies of the personal real estate licences you listed (not the company licence)."
+                    : " and the licences you listed."}
+                </p>
+                <Link
+                  to="/profile"
+                  className="mt-3 inline-flex rounded-md bg-brand px-4 py-2 text-xs font-semibold text-background hover:bg-brand-soft"
+                >
+                  Go to My Profile
+                </Link>
+              </div>
+              <div className="text-center">
+                <Link to="/" className="text-sm font-medium text-brand hover:underline">
+                  Back to Loqal
+                </Link>
+              </div>
             </div>
           ) : (
             <form onSubmit={onSubmit} className="mt-6 space-y-5">
@@ -187,6 +259,29 @@ function PartnerAccessPage() {
                 ))}
               </div>
 
+              {kind === "partner" ? (
+                <>
+                  <SectionTitle n={1}>What type of partner are you?</SectionTitle>
+                  <div className="flex flex-wrap gap-2">
+                    {PARTNER_TYPES.map((p) => (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => setPartnerType(p)}
+                        className={`rounded-full border px-4 py-1.5 text-xs font-semibold transition-colors ${
+                          partnerType === p
+                            ? "border-brand bg-brand text-background"
+                            : "border-border text-foreground hover:bg-brand-tint"
+                        }`}
+                      >
+                        {PARTNER_LABEL[p]}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              ) : null}
+
+              <SectionTitle n={kind === "partner" ? 2 : 1}>Company information</SectionTitle>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <label>
                   <Label required>Company name</Label>
@@ -244,9 +339,34 @@ function PartnerAccessPage() {
                 </div>
               </div>
 
+              {isRealtor ? (
+                <div className="grid grid-cols-1 gap-4 rounded-lg border border-brand/30 bg-brand-tint/30 p-4 sm:grid-cols-2">
+                  <label>
+                    <Label required>Company realtor licence number</Label>
+                    <input
+                      placeholder="Brokerage licence №"
+                      value={companyLicence}
+                      onChange={(e) => setCompanyLicence(e.target.value)}
+                      className={inputClass}
+                    />
+                  </label>
+                  <label>
+                    <Label required>Company phone number</Label>
+                    <input
+                      type="tel"
+                      placeholder="Brokerage switchboard"
+                      value={companyPhone}
+                      onChange={(e) => setCompanyPhone(e.target.value)}
+                      className={inputClass}
+                    />
+                  </label>
+                </div>
+              ) : null}
+
+              <SectionTitle n={kind === "partner" ? 3 : 2}>Contact person</SectionTitle>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <label>
-                  <Label required>Name</Label>
+                  <Label required>First name</Label>
                   <input
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
@@ -254,7 +374,7 @@ function PartnerAccessPage() {
                   />
                 </label>
                 <label>
-                  <Label required>Surname</Label>
+                  <Label required>Last name</Label>
                   <input
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
@@ -270,10 +390,9 @@ function PartnerAccessPage() {
                   />
                 </label>
               </div>
-
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <label>
-                  <Label required>Contact e-mail</Label>
+                  <Label required>Personal e-mail</Label>
                   <input
                     type="email"
                     value={email}
@@ -282,7 +401,7 @@ function PartnerAccessPage() {
                   />
                 </label>
                 <label>
-                  <Label required>Phone number</Label>
+                  <Label required>Personal phone number</Label>
                   <input
                     type="tel"
                     placeholder="+1 555 010 0000"
@@ -295,28 +414,7 @@ function PartnerAccessPage() {
 
               {kind === "partner" ? (
                 <>
-                  <div>
-                    <Label required>Partner type</Label>
-                    <div className="flex flex-wrap gap-2">
-                      {PARTNER_TYPES.map((p) => (
-                        <button
-                          key={p}
-                          type="button"
-                          onClick={() => {
-                            setPartnerType(p);
-                            if (p === "realtor") setAllStates(false);
-                          }}
-                          className={`rounded-full border px-4 py-1.5 text-xs font-semibold transition-colors ${
-                            partnerType === p
-                              ? "border-brand bg-brand text-background"
-                              : "border-border text-foreground hover:bg-brand-tint"
-                          }`}
-                        >
-                          {PARTNER_LABEL[p]}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                  <SectionTitle n={4}>Coverage &amp; licences</SectionTitle>
 
                   {partnerType === "lender" ? (
                     <label className="block">
@@ -332,34 +430,34 @@ function PartnerAccessPage() {
 
                   <div>
                     <Label required>
-                      {partnerType === "realtor"
+                      {isRealtor
                         ? "States you are licensed in as a real estate agent"
                         : "States you are active in"}
                     </Label>
                     <div className="mb-3 flex flex-wrap items-center gap-3">
-                      {partnerType !== "realtor" ? (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setAllStates((v) => !v);
-                            setStates([]);
-                          }}
-                          className={`rounded-full border px-4 py-1.5 text-xs font-semibold transition-colors ${
-                            allStates
-                              ? "border-brand bg-brand text-background"
-                              : "border-border text-foreground hover:bg-brand-tint"
-                          }`}
-                        >
-                          All states
-                        </button>
-                      ) : null}
-                      {(partnerType === "realtor" || !allStates) && states.length > 0 ? (
+                      <button
+                        type="button"
+                        onClick={toggleAllStates}
+                        className={`rounded-full border px-4 py-1.5 text-xs font-semibold transition-colors ${
+                          allStates
+                            ? "border-brand bg-brand text-background"
+                            : "border-border text-foreground hover:bg-brand-tint"
+                        }`}
+                      >
+                        All states
+                      </button>
+                      {states.length > 0 && !allStates ? (
                         <span className="text-xs text-muted-foreground">
                           {states.length} selected
                         </span>
                       ) : null}
+                      {allStates ? (
+                        <span className="text-xs text-muted-foreground">
+                          All {US_STATE_CODES.length} states selected
+                        </span>
+                      ) : null}
                     </div>
-                    {partnerType === "realtor" || !allStates ? (
+                    {!allStates ? (
                       <StateMultiSelect
                         values={states}
                         onAdd={(c) => setStates((prev) => [...prev, c])}
@@ -370,19 +468,23 @@ function PartnerAccessPage() {
                     ) : null}
                   </div>
 
-                  {partnerType === "realtor" && states.length > 0 ? (
+                  {isRealtor && states.length > 0 ? (
                     <div className="space-y-3 rounded-lg border border-border bg-brand-tint/30 p-4">
                       <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                         Real estate license per state
                       </span>
+                      <p className="text-[11px] text-muted-foreground">
+                        We only need the license number and how long it is valid — we'll remind you
+                        30 and 15 days before a licence expires.
+                      </p>
                       {states.map((s) => {
-                        const lic = licenses[s] ?? { number: "", issuedAt: "", validUntil: "" };
-                        const setLic = (patch: Partial<Omit<RealtorLicense, "state">>) =>
+                        const lic = licenses[s] ?? { number: "", validUntil: "" };
+                        const setLic = (patch: Partial<LicenseForm>) =>
                           setLicenses({ ...licenses, [s]: { ...lic, ...patch } });
                         return (
                           <div
                             key={s}
-                            className="grid grid-cols-1 gap-3 sm:grid-cols-[48px_1fr_1fr_1fr] sm:items-end"
+                            className="grid grid-cols-1 gap-3 sm:grid-cols-[48px_1fr_1fr] sm:items-end"
                           >
                             <span className="pt-2 text-sm font-semibold text-foreground">{s}</span>
                             <label>
@@ -390,14 +492,6 @@ function PartnerAccessPage() {
                               <input
                                 value={lic.number}
                                 onChange={(e) => setLic({ number: e.target.value })}
-                                className={inputClass}
-                              />
-                            </label>
-                            <label>
-                              <Label>Issued (optional)</Label>
-                              <DateInput
-                                value={lic.issuedAt ?? ""}
-                                onChange={(v) => setLic({ issuedAt: v })}
                                 className={inputClass}
                               />
                             </label>
@@ -415,31 +509,14 @@ function PartnerAccessPage() {
                     </div>
                   ) : null}
 
-                  {partnerType === "realtor" ? (
+                  {isRealtor ? (
                     <div>
                       <Label required>Languages you work in</Label>
-                      <div className="flex flex-wrap gap-2">
-                        {REALTOR_LANGUAGES.map((l) => (
-                          <button
-                            key={l}
-                            type="button"
-                            onClick={() =>
-                              setLanguages(
-                                languages.includes(l)
-                                  ? languages.filter((x) => x !== l)
-                                  : [...languages, l],
-                              )
-                            }
-                            className={`rounded-full border px-4 py-1.5 text-xs font-semibold transition-colors ${
-                              languages.includes(l)
-                                ? "border-brand bg-brand text-background"
-                                : "border-border text-foreground hover:bg-brand-tint"
-                            }`}
-                          >
-                            {l}
-                          </button>
-                        ))}
-                      </div>
+                      <LanguageMultiSelect values={languages} onChange={setLanguages} />
+                      <p className="mt-1.5 text-[11px] text-muted-foreground">
+                        Start typing — matching languages pre-show for one-click selection. Buyers
+                        are matched to agents who speak their language.
+                      </p>
                     </div>
                   ) : null}
                 </>

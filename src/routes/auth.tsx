@@ -94,7 +94,7 @@ function AuthPage() {
 
   function onRegister(e: React.FormEvent) {
     e.preventDefault();
-    if (!firstName || !lastName) return setError("Name and surname are required.");
+    if (!firstName || !lastName) return setError("First name and last name are required.");
     if (!email) return setError("E-mail is required.");
     if (!phone) return setError("Phone number is required.");
     if (usPerson === null)
@@ -155,7 +155,7 @@ function AuthPage() {
             {mode === "register" ? (
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <label>
-                  <Label required>Name</Label>
+                  <Label required>First name</Label>
                   <input
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
@@ -171,7 +171,7 @@ function AuthPage() {
                   />
                 </label>
                 <label>
-                  <Label required>Surname</Label>
+                  <Label required>Last name</Label>
                   <input
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}

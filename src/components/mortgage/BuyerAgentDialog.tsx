@@ -138,7 +138,7 @@ export function BuyerAgentDialog({
                   <li>
                     Propose a property change when circumstances or your input call for it.
                   </li>
-                  <li>Guide you through offers, the prepurchase contract and closing.</li>
+                  <li>Guide you through offers, the Purchase Agreement and closing.</li>
                 </ul>
               </div>
               <p className="text-xs">
