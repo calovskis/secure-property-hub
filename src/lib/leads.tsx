@@ -513,6 +513,22 @@ export function LeadsProvider({ children }: { children: ReactNode }) {
               }
             : l,
         ),
+      setBuyerRepresentation: (leadId, representation, kickoff, notes) =>
+        patchLead(leadId, (l) =>
+          l.buyerAgent
+            ? {
+                ...l,
+                buyerAgent: {
+                  ...l.buyerAgent,
+                  representation,
+                  ...(representation === "loqal_rep" ? { loqalManagerFeePct: 1 } : {}),
+                  ...(kickoff ? { kickoff } : {}),
+                  kickoffNotes: notes ?? "",
+                  kickoffAt: new Date().toISOString(),
+                },
+              }
+            : l,
+        ),
 
       leadsForClient: (email) => leads.filter((l) => l.clientEmail === email),
       leadForProperty: (email, propertyId) =>
