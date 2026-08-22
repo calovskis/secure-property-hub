@@ -1,12 +1,15 @@
 import { useState } from "react";
 import {
   computeDti,
+  offerReminders,
   totalMonthlyObligations,
   useLeads,
   type DebtProfile,
   type MortgageLead,
   type OtherObligation,
 } from "@/lib/leads";
+import { formatDate, formatDateTime } from "@/lib/dates";
+import { BuyerAgentDialog } from "@/components/mortgage/BuyerAgentDialog";
 
 const money = (n: number) => `$${Math.round(n).toLocaleString()}`;
 const uid = () => Math.random().toString(36).slice(2, 9);
@@ -291,8 +294,38 @@ function Step2Form({ lead }: { lead: MortgageLead }) {
   );
 }
 
+/** Questions the client asked the lender about the issued terms, with answers. */
+function QuestionThread({ lead }: { lead: MortgageLead }) {
+  const questions = lead.clientQuestions ?? [];
+  if (!questions.length) return null;
+  return (
+    <div className="mt-4 space-y-2">
+      {questions.map((q) => (
+        <div key={q.id} className="rounded-md border border-border bg-background p-3 text-sm">
+          <div className="font-medium text-foreground">You asked: {q.text}</div>
+          <div className="mt-1 text-[11px] text-muted-foreground">{formatDateTime(q.askedAt)}</div>
+          {q.answer ? (
+            <p className="mt-2 rounded-md bg-brand-tint/40 p-2 text-muted-foreground">
+              <strong className="text-foreground">Lender: </strong>
+              {q.answer}
+              <span className="mt-1 block text-[11px]">{formatDateTime(q.answeredAt)}</span>
+            </p>
+          ) : (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Waiting for the lender's answer — the terms stay open in the meantime.
+            </p>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function ProceedPanel({ lead }: { lead: MortgageLead }) {
-  const { setClientDecision } = useLeads();
+  const { setClientDecision, askClientQuestion } = useLeads();
+  const [agentDialogOpen, setAgentDialogOpen] = useState(false);
+  const [askOpen, setAskOpen] = useState(false);
+  const [question, setQuestion] = useState("");
   const t = lead.terms;
   if (!t) {
     return (
@@ -304,6 +337,18 @@ function ProceedPanel({ lead }: { lead: MortgageLead }) {
   }
 
   const loan = lead.propertyPrice * (1 - t.downPaymentPct / 100);
+  const reminders = offerReminders(lead);
+  const nextReminder = reminders.find((r) => !r.due);
+  const sentCount = reminders.filter((r) => r.due).length;
+  const ba = lead.buyerAgent;
+
+  function sendQuestion() {
+    const text = question.trim();
+    if (!text) return;
+    askClientQuestion(lead.id, text);
+    setQuestion("");
+    setAskOpen(false);
+  }
 
   return (
     <div className="mb-6 rounded-lg border border-success/40 bg-success/5 p-4">
@@ -324,48 +369,170 @@ function ProceedPanel({ lead }: { lead: MortgageLead }) {
         ))}
       </div>
 
-      {lead.clientDecision === "accepted" ? (
-        <p className="mt-3 text-sm font-semibold text-success">
-          You confirmed these terms — your lender is now running the hard credit check and preparing
-          the mortgage proposal.
+      <div className="mt-3 space-y-1.5 rounded-md border border-border bg-background/70 p-3 text-[11px] leading-relaxed text-muted-foreground">
+        <p>
+          These are <strong className="text-foreground">preliminary estimated terms</strong> — they
+          can change in the final mortgage proposal, which is issued after the prepurchase contract
+          is signed.
         </p>
-      ) : lead.clientDecision === "declined" ? (
+        <p>
+          After you accept — and until the prepurchase agreement is signed — you may request a
+          property change at any point within{" "}
+          <strong className="text-foreground">3 months</strong> under the same pre-approval, within
+          the same purchase price. Once you decide on a property, the lender re-checks your
+          qualification and the potential mortgage terms for that property.
+        </p>
+      </div>
+
+      {lead.clientDecision === "accepted" ? (
         <div className="mt-3">
-          <p className="text-sm text-muted-foreground">
-            You declined these terms. The pre-approval stays valid — you can still proceed later.
+          <p className="text-sm font-semibold text-success">
+            You confirmed these terms — your lender is now running the hard credit check and
+            preparing the mortgage proposal.
           </p>
-          <button
-            type="button"
-            onClick={() => setClientDecision(lead.id, "accepted")}
-            className="mt-3 rounded-md bg-success px-5 py-2.5 text-sm font-semibold text-background hover:opacity-90"
-          >
-            Proceed with the mortgage agreement
-          </button>
+          <div className="mt-3 rounded-md border border-brand/30 bg-brand-tint/40 p-3">
+            <div className="text-sm font-semibold text-foreground">Your buyer's agent</div>
+            {ba?.agentName ? (
+              <p className="mt-1 text-sm text-muted-foreground">
+                <strong className="text-foreground">{ba.agentName}</strong> represents you as your
+                buyer's agent — fee {ba.feePct}% of the purchase price at closing, agreed{" "}
+                {formatDate(ba.agreedAt)}.
+                {ba.nextStep === "live_call"
+                  ? ` Live call requested ${formatDateTime(ba.liveCallRequestedAt)} — the agent will reach out to schedule it.`
+                  : " The agent is starting on your brief right away."}
+              </p>
+            ) : (
+              <p className="mt-1 text-sm text-muted-foreground">
+                We are matching you with the best available buyer's agent licensed in this state.
+              </p>
+            )}
+          </div>
         </div>
-      ) : (
-        <div className="mt-3">
-          <p className="text-sm text-muted-foreground">
-            To move forward, confirm these terms. That authorises a hard credit check and a formal
-            mortgage proposal from your lender.
+      ) : lead.clientDecision === "hold" ? (
+        <div className="mt-3 rounded-md border border-gold/40 bg-gold-tint/50 p-3">
+          <p className="text-sm font-semibold text-foreground">On hold</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            You put this pre-approval on hold on {formatDate(lead.clientDecisionAt)}. The terms
+            stay valid — continue whenever you are ready.
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             <button
               type="button"
-              onClick={() => setClientDecision(lead.id, "accepted")}
+              onClick={() => setAgentDialogOpen(true)}
               className="rounded-md bg-success px-5 py-2.5 text-sm font-semibold text-background hover:opacity-90"
             >
-              Proceed with the mortgage agreement
+              Continue with these terms
             </button>
             <button
               type="button"
               onClick={() => setClientDecision(lead.id, "declined")}
               className="rounded-md border border-border px-5 py-2.5 text-sm font-semibold text-muted-foreground hover:text-destructive"
             >
-              Not right now
+              Not continuing
             </button>
           </div>
         </div>
+      ) : lead.clientDecision === "declined" ? (
+        <div className="mt-3">
+          <p className="text-sm text-muted-foreground">
+            You chose not to continue with these terms. The pre-approval stays valid — you can
+            still proceed later.
+          </p>
+          <button
+            type="button"
+            onClick={() => setAgentDialogOpen(true)}
+            className="mt-3 rounded-md bg-success px-5 py-2.5 text-sm font-semibold text-background hover:opacity-90"
+          >
+            Continue with these terms
+          </button>
+        </div>
+      ) : (
+        <div className="mt-3">
+          <p className="text-sm text-muted-foreground">
+            How would you like to respond to these terms? You don't have to decide right away — the
+            offer stays in My profile and on your dashboard until you answer.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setAgentDialogOpen(true)}
+              className="rounded-md bg-success px-5 py-2.5 text-sm font-semibold text-background hover:opacity-90"
+            >
+              Continue with these terms
+            </button>
+            <button
+              type="button"
+              onClick={() => setClientDecision(lead.id, "hold")}
+              className="rounded-md border border-border px-5 py-2.5 text-sm font-semibold text-foreground hover:bg-gold-tint"
+            >
+              Put on hold
+            </button>
+            <button
+              type="button"
+              onClick={() => setAskOpen((v) => !v)}
+              className="rounded-md border border-border px-5 py-2.5 text-sm font-semibold text-foreground hover:bg-brand-tint"
+            >
+              Ask the lender a question
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (window.confirm("Decline these pre-approval terms? You can still proceed later."))
+                  setClientDecision(lead.id, "declined");
+              }}
+              className="rounded-md border border-border px-5 py-2.5 text-sm font-semibold text-muted-foreground hover:text-destructive"
+            >
+              Not continuing
+            </button>
+          </div>
+
+          {askOpen ? (
+            <div className="mt-3 rounded-md border border-border bg-background p-3">
+              <textarea
+                rows={3}
+                autoFocus
+                placeholder="What would you like to ask your lender about these terms?"
+                value={question}
+                onChange={(e) => setQuestion(e.target.value)}
+                className={`${inputClass}`}
+              />
+              <div className="mt-2 flex gap-2">
+                <button
+                  type="button"
+                  onClick={sendQuestion}
+                  disabled={!question.trim()}
+                  className="rounded-md bg-brand px-4 py-2 text-sm font-semibold text-background hover:bg-brand-soft disabled:opacity-50"
+                >
+                  Send question
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAskOpen(false)}
+                  className="rounded-md border border-border px-4 py-2 text-sm font-semibold text-muted-foreground"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : null}
+
+          {sentCount || nextReminder ? (
+            <p className="mt-3 text-[11px] text-muted-foreground">
+              {sentCount
+                ? `${sentCount} reminder${sentCount > 1 ? "s" : ""} already sent. `
+                : ""}
+              {nextReminder
+                ? `Next reminder ${formatDateTime(nextReminder.dueAt)}${
+                    nextReminder.email ? " — on the platform and by e-mail" : " — on the platform"
+                  }.`
+                : ""}
+            </p>
+          ) : null}
+        </div>
       )}
+
+      <QuestionThread lead={lead} />
+      <BuyerAgentDialog lead={lead} open={agentDialogOpen} onOpenChange={setAgentDialogOpen} />
     </div>
   );
 }
@@ -400,7 +567,13 @@ export function MortgageCaseCard({ lead }: { lead: MortgageLead }) {
             : lead.status === "info_required"
               ? `Action needed${openRequests ? ` (${openRequests})` : ""}`
               : lead.status === "qualified"
-                ? "Pre-qualified"
+                ? lead.clientDecision === "accepted"
+                  ? "Pre-approved — agent assigned"
+                  : lead.clientDecision === "hold"
+                    ? "On hold"
+                    : lead.clientDecision
+                      ? "Pre-qualified"
+                      : "Awaiting your response"
                 : "Not qualified"}
         </span>
       </div>

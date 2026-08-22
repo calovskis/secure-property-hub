@@ -14,6 +14,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DocumentsRouteImport } from './routes/documents'
+import { Route as FaqRouteImport } from './routes/faq'
 import { Route as FinancialsRouteImport } from './routes/financials'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as MyPropertiesRouteImport } from './routes/my-properties'
@@ -48,6 +49,11 @@ const AuthRoute = AuthRouteImport.update({
 const DocumentsRoute = DocumentsRouteImport.update({
   id: '/documents',
   path: '/documents',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FaqRoute = FaqRouteImport.update({
+  id: '/faq',
+  path: '/faq',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FinancialsRoute = FinancialsRouteImport.update({
@@ -107,6 +113,7 @@ export interface FileRoutesByFullPath {
   '/analytics': typeof AnalyticsRoute
   '/auth': typeof AuthRoute
   '/documents': typeof DocumentsRoute
+  '/faq': typeof FaqRoute
   '/financials': typeof FinancialsRoute
   '/marketplace': typeof MarketplaceRoute
   '/my-properties': typeof MyPropertiesRoute
@@ -124,6 +131,7 @@ export interface FileRoutesByTo {
   '/analytics': typeof AnalyticsRoute
   '/auth': typeof AuthRoute
   '/documents': typeof DocumentsRoute
+  '/faq': typeof FaqRoute
   '/financials': typeof FinancialsRoute
   '/marketplace': typeof MarketplaceRoute
   '/my-properties': typeof MyPropertiesRoute
@@ -142,6 +150,7 @@ export interface FileRoutesById {
   '/analytics': typeof AnalyticsRoute
   '/auth': typeof AuthRoute
   '/documents': typeof DocumentsRoute
+  '/faq': typeof FaqRoute
   '/financials': typeof FinancialsRoute
   '/marketplace': typeof MarketplaceRoute
   '/my-properties': typeof MyPropertiesRoute
@@ -161,6 +170,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/auth'
     | '/documents'
+    | '/faq'
     | '/financials'
     | '/marketplace'
     | '/my-properties'
@@ -178,6 +188,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/auth'
     | '/documents'
+    | '/faq'
     | '/financials'
     | '/marketplace'
     | '/my-properties'
@@ -195,6 +206,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/auth'
     | '/documents'
+    | '/faq'
     | '/financials'
     | '/marketplace'
     | '/my-properties'
@@ -213,6 +225,7 @@ export interface RootRouteChildren {
   AnalyticsRoute: typeof AnalyticsRoute
   AuthRoute: typeof AuthRoute
   DocumentsRoute: typeof DocumentsRoute
+  FaqRoute: typeof FaqRoute
   FinancialsRoute: typeof FinancialsRoute
   MarketplaceRoute: typeof MarketplaceRoute
   MyPropertiesRoute: typeof MyPropertiesRoute
@@ -260,6 +273,13 @@ declare module '@tanstack/react-router' {
       path: '/documents'
       fullPath: '/documents'
       preLoaderRoute: typeof DocumentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/faq': {
+      id: '/faq'
+      path: '/faq'
+      fullPath: '/faq'
+      preLoaderRoute: typeof FaqRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/financials': {
@@ -341,6 +361,7 @@ const rootRouteChildren: RootRouteChildren = {
   AnalyticsRoute: AnalyticsRoute,
   AuthRoute: AuthRoute,
   DocumentsRoute: DocumentsRoute,
+  FaqRoute: FaqRoute,
   FinancialsRoute: FinancialsRoute,
   MarketplaceRoute: MarketplaceRoute,
   MyPropertiesRoute: MyPropertiesRoute,

@@ -14,6 +14,7 @@ import {
   pickAssignee,
   type AssignCounts,
 } from "@/lib/lender-team";
+import { pickRealtor } from "@/lib/realtors";
 
 export type LeadStatus = "new" | "info_required" | "not_qualified" | "qualified";
 
@@ -63,7 +64,35 @@ export type LenderTerms = {
 };
 
 /** What the client decided about the lender's priced pre-approval offer. */
-export type ClientDecision = "accepted" | "declined";
+export type ClientDecision = "accepted" | "hold" | "declined";
+
+export const CLIENT_DECISION_LABEL: Record<ClientDecision, string> = {
+  accepted: "Continuing with the terms",
+  hold: "Put on hold",
+  declined: "Not continuing",
+};
+
+/** A question the client asked the lender about the issued terms. */
+export type ClientQuestion = {
+  id: string;
+  text: string;
+  askedAt: string;
+  answer?: string;
+  answeredAt?: string;
+};
+
+/** Buyer's agent engagement, created when the client accepts the terms. */
+export type BuyerAgentEngagement = {
+  /** When the client confirmed the buyer's agent agreement (3% fee at closing). */
+  agreedAt: string;
+  feePct: number;
+  agentId?: string;
+  agentName?: string;
+  assignedAt?: string;
+  /** How the client wants to start working with the agent. */
+  nextStep?: "live_call" | "start";
+  liveCallRequestedAt?: string;
+};
 
 export type MortgageLead = {
   id: string;
@@ -83,9 +112,13 @@ export type MortgageLead = {
   dtiLimit: number;
   /** Lender-issued loan pricing. Estimates stay locked until this exists. */
   terms?: LenderTerms;
-  /** Set once the client accepts or declines the priced pre-approval terms. */
+  /** Set once the client answers the priced pre-approval terms. */
   clientDecision?: ClientDecision;
   clientDecisionAt?: string;
+  /** Questions the client raised about the issued terms. */
+  clientQuestions?: ClientQuestion[];
+  /** Buyer's agent engagement after the client accepts the terms. */
+  buyerAgent?: BuyerAgentEngagement;
   /** Team member inside the lender company reviewing this inquiry. */
   assignedToId?: string | undefined;
   assignedToName?: string | undefined;
@@ -117,19 +150,56 @@ export function isQualifiedNotApproved(lead: MortgageLead) {
   return lead.status === "qualified" && lead.clientDecision !== "accepted";
 }
 
-export type MortgageFileStage = "awaiting_client" | "client_declined" | "in_underwriting";
+export type MortgageFileStage =
+  | "awaiting_client"
+  | "client_on_hold"
+  | "client_declined"
+  | "in_underwriting";
 
 export function mortgageStage(lead: MortgageLead): MortgageFileStage {
   if (lead.clientDecision === "accepted") return "in_underwriting";
   if (lead.clientDecision === "declined") return "client_declined";
+  if (lead.clientDecision === "hold") return "client_on_hold";
   return "awaiting_client";
 }
 
 export const MORTGAGE_STAGE_LABEL: Record<MortgageFileStage, string> = {
-  awaiting_client: "Awaiting client confirmation",
-  client_declined: "Qualified — not approved by client",
+  awaiting_client: "Awaiting client decision",
+  client_on_hold: "On hold by client",
+  client_declined: "Qualified — client not continuing",
   in_underwriting: "Open mortgage file (hard check)",
 };
+
+/* ----------------------------------------------------- decision reminders */
+
+/**
+ * While a priced offer waits for the client's answer we remind on this
+ * schedule (days after the terms were issued). From day 3 onwards the
+ * reminder also goes out by e-mail, not only on the platform.
+ */
+export const OFFER_REMINDER_DAYS = [1, 3, 7, 14, 30, 60, 75] as const;
+
+export type OfferReminder = {
+  day: number;
+  dueAt: string;
+  due: boolean;
+  /** true → this reminder is also sent by e-mail. */
+  email: boolean;
+};
+
+/** A priced offer the client has not answered yet. */
+export function pendingOfferDecision(lead: MortgageLead) {
+  return hasPricedOffer(lead) && !lead.clientDecision;
+}
+
+export function offerReminders(lead: MortgageLead, now: Date = new Date()): OfferReminder[] {
+  if (!pendingOfferDecision(lead)) return [];
+  const issued = new Date(lead.terms!.issuedAt).getTime();
+  return OFFER_REMINDER_DAYS.map((day) => {
+    const at = new Date(issued + day * 24 * 60 * 60 * 1000);
+    return { day, dueAt: at.toISOString(), due: at.getTime() <= now.getTime(), email: day >= 3 };
+  });
+}
 
 /** Two-letter state parsed from the property label, e.g. "New York, NY". */
 export function leadState(lead: MortgageLead) {
@@ -175,6 +245,14 @@ type LeadsContextValue = {
   ) => void;
   saveDebts: (leadId: string, debts: DebtProfile) => void;
   setClientDecision: (leadId: string, decision: ClientDecision) => void;
+  askClientQuestion: (leadId: string, text: string) => void;
+  answerClientQuestion: (leadId: string, questionId: string, answer: string) => void;
+  /**
+   * Client confirmed the terms AND the buyer's agent agreement — assigns a
+   * realtor (licensed in the property state, available, lightest pipeline).
+   */
+  agreeBuyerAgent: (leadId: string, languages?: string[]) => void;
+  setBuyerAgentNextStep: (leadId: string, step: "live_call" | "start") => void;
 
   leadsForClient: (email: string) => MortgageLead[];
   leadForProperty: (email: string, propertyId: number) => MortgageLead | undefined;
@@ -277,6 +355,8 @@ export function LeadsProvider({ children }: { children: ReactNode }) {
                 ...(existing.clientDecisionAt
                   ? { clientDecisionAt: existing.clientDecisionAt }
                   : {}),
+                ...(existing.clientQuestions ? { clientQuestions: existing.clientQuestions } : {}),
+                ...(existing.buyerAgent ? { buyerAgent: existing.buyerAgent } : {}),
                 ...(existing.assignedToId
                   ? {
                       assignedToId: existing.assignedToId,
@@ -339,6 +419,66 @@ export function LeadsProvider({ children }: { children: ReactNode }) {
           clientDecision: decision,
           clientDecisionAt: new Date().toISOString(),
         })),
+      askClientQuestion: (leadId, text) =>
+        patchLead(leadId, (l) => ({
+          ...l,
+          clientQuestions: [
+            ...(l.clientQuestions ?? []),
+            { id: uid(), text, askedAt: new Date().toISOString() },
+          ],
+        })),
+      answerClientQuestion: (leadId, questionId, answer) =>
+        patchLead(leadId, (l) => ({
+          ...l,
+          clientQuestions: (l.clientQuestions ?? []).map((q) =>
+            q.id === questionId ? { ...q, answer, answeredAt: new Date().toISOString() } : q,
+          ),
+        })),
+      agreeBuyerAgent: (leadId, languages = []) =>
+        patchLead(leadId, (l) => {
+          const now = new Date().toISOString();
+          const activeCounts: Record<string, number> = {};
+          for (const other of leads) {
+            const id = other.buyerAgent?.agentId;
+            if (id && other.clientDecision === "accepted")
+              activeCounts[id] = (activeCounts[id] ?? 0) + 1;
+          }
+          const picked = pickRealtor(
+            { state: leadState(l), languages, price: l.propertyPrice },
+            activeCounts,
+          );
+          return {
+            ...l,
+            clientDecision: "accepted",
+            clientDecisionAt: now,
+            buyerAgent: {
+              agreedAt: now,
+              feePct: 3,
+              ...(picked
+                ? {
+                    agentId: picked.id,
+                    agentName: `${picked.firstName} ${picked.lastName}`,
+                    assignedAt: now,
+                  }
+                : {}),
+            },
+          };
+        }),
+      setBuyerAgentNextStep: (leadId, step) =>
+        patchLead(leadId, (l) =>
+          l.buyerAgent
+            ? {
+                ...l,
+                buyerAgent: {
+                  ...l.buyerAgent,
+                  nextStep: step,
+                  ...(step === "live_call"
+                    ? { liveCallRequestedAt: new Date().toISOString() }
+                    : {}),
+                },
+              }
+            : l,
+        ),
 
       leadsForClient: (email) => leads.filter((l) => l.clientEmail === email),
       leadForProperty: (email, propertyId) =>

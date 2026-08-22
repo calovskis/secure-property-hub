@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import {
+  CLIENT_DECISION_LABEL,
   MORTGAGE_STAGE_LABEL,
   hasPricedOffer,
   leadState,
@@ -17,9 +18,57 @@ const money = (n: number) => `$${Math.round(n).toLocaleString()}`;
 
 const STAGE_TONE: Record<MortgageFileStage, string> = {
   awaiting_client: "bg-gold-tint text-gold",
+  client_on_hold: "bg-warning/10 text-warning",
   client_declined: "bg-destructive/10 text-destructive",
   in_underwriting: "bg-success/10 text-success",
 };
+
+/** Questions the client asked about the issued terms, with an answer box. */
+function ClientQuestions({ lead }: { lead: MortgageLead }) {
+  const { answerClientQuestion } = useLeads();
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const questions = lead.clientQuestions ?? [];
+  if (!questions.length) return null;
+
+  return (
+    <section className="rounded-lg border border-border bg-card p-4">
+      <h3 className="text-sm font-semibold text-foreground">Client questions about the terms</h3>
+      <div className="mt-3 space-y-3">
+        {questions.map((q) => (
+          <div key={q.id} className="rounded-md border border-border p-3">
+            <div className="text-sm font-medium text-foreground">{q.text}</div>
+            <div className="mt-1 text-[11px] text-muted-foreground">
+              Asked {formatDateTime(q.askedAt)}
+            </div>
+            {q.answer ? (
+              <p className="mt-2 rounded-md bg-brand-tint/40 p-2 text-sm text-muted-foreground">
+                <strong className="text-foreground">Your answer: </strong>
+                {q.answer}
+              </p>
+            ) : (
+              <div className="mt-2 flex gap-2">
+                <input
+                  placeholder="Write the answer for the client…"
+                  value={drafts[q.id] ?? ""}
+                  onChange={(e) => setDrafts({ ...drafts, [q.id]: e.target.value })}
+                  className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
+                />
+                <button
+                  type="button"
+                  disabled={!(drafts[q.id] ?? "").trim()}
+                  onClick={() => answerClientQuestion(lead.id, q.id, (drafts[q.id] ?? "").trim())}
+                  className="rounded-md bg-brand px-4 py-2 text-xs font-semibold text-background hover:bg-brand-soft disabled:opacity-50"
+                >
+                  Send
+                </button>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
 
 function FileDetail({ lead }: { lead: MortgageLead }) {
   const t = lead.terms!;
@@ -51,8 +100,8 @@ function FileDetail({ lead }: { lead: MortgageLead }) {
             label="Client decision"
             value={
               lead.clientDecision
-                ? `${lead.clientDecision === "accepted" ? "Proceeding with the mortgage agreement" : "Declined the terms"} · ${formatDateTime(lead.clientDecisionAt)}`
-                : "Pending — terms delivered to the client"
+                ? `${CLIENT_DECISION_LABEL[lead.clientDecision]} · ${formatDateTime(lead.clientDecisionAt)}`
+                : "Pending — terms delivered to the client, reminders running"
             }
           />
           <Row
@@ -92,6 +141,8 @@ function FileDetail({ lead }: { lead: MortgageLead }) {
           </div>
         </details>
       </section>
+
+      <ClientQuestions lead={lead} />
     </div>
   );
 }
@@ -118,6 +169,7 @@ export function LenderMortgages({ canManage }: { canManage: boolean }) {
   const counts = {
     in_underwriting: files.filter((l) => mortgageStage(l) === "in_underwriting").length,
     awaiting_client: files.filter((l) => mortgageStage(l) === "awaiting_client").length,
+    client_on_hold: files.filter((l) => mortgageStage(l) === "client_on_hold").length,
     client_declined: files.filter((l) => mortgageStage(l) === "client_declined").length,
   };
 
@@ -131,12 +183,13 @@ export function LenderMortgages({ canManage }: { canManage: boolean }) {
         </p>
       </div>
 
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {(
           [
             ["Open mortgage files", counts.in_underwriting, "Client confirmed — hard check"],
-            ["Awaiting client confirmation", counts.awaiting_client, "Terms delivered"],
-            ["Qualified, not approved by client", counts.client_declined, "Client declined terms"],
+            ["Awaiting client decision", counts.awaiting_client, "Terms delivered — reminders running"],
+            ["On hold by client", counts.client_on_hold, "Client paused the process"],
+            ["Qualified, not continuing", counts.client_declined, "Client declined the terms"],
           ] as const
         ).map(([label, value, note]) => (
           <div key={label} className="rounded-lg border border-border bg-card p-5">
@@ -155,6 +208,7 @@ export function LenderMortgages({ canManage }: { canManage: boolean }) {
             ["all", "All files"],
             ["in_underwriting", MORTGAGE_STAGE_LABEL.in_underwriting],
             ["awaiting_client", MORTGAGE_STAGE_LABEL.awaiting_client],
+            ["client_on_hold", MORTGAGE_STAGE_LABEL.client_on_hold],
             ["client_declined", MORTGAGE_STAGE_LABEL.client_declined],
           ] as const
         ).map(([id, label]) => (
