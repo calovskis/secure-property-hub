@@ -4,7 +4,7 @@ import { PARTNER_LABEL, ROLE_LABEL, fullName, homeRouteFor, initials, useAuth } 
 import { LANGUAGES, useI18n } from "@/lib/i18n";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 
-function LanguageMenu() {
+export function LanguageMenu() {
   const { lang, setLang } = useI18n();
   const [open, setOpen] = useState(false);
   const current = LANGUAGES.find((l) => l.code === lang)!;
