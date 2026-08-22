@@ -61,6 +61,9 @@ export type EmploymentEntry = {
   current: boolean;
 };
 
+/** A document the client uploaded and confirmed (name + optional data URL). */
+export type StoredDocument = { id: string; name: string; uploadedAt: string; url?: string };
+
 export type MortgageProfile = {
   dateOfBirth: string;
   ssn?: string;
@@ -82,7 +85,11 @@ export type MortgageProfile = {
   /** Uploaded copy of the visa document, when a visa was declared. */
   visaDocumentName?: string;
   visaDocumentUploadedAt?: string;
-  visaDocuments?: { id: string; name: string; uploadedAt: string; url?: string }[];
+  visaDocuments?: StoredDocument[];
+  /** US citizens / green card / ITIN holders: driver's license (front & back), green card or passport. */
+  idDocuments?: StoredDocument[];
+  /** Bankruptcy discharge papers — required when a bankruptcy was declared. */
+  bankruptcyDocuments?: StoredDocument[];
   propertyUse?: "vacation" | "investment";
   usBankAccount?: boolean;
   /** Marital status + URLA unmarried addendum */
