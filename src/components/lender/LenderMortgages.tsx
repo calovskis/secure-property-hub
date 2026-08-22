@@ -141,6 +141,8 @@ function FileDetail({ lead }: { lead: MortgageLead }) {
           </div>
         </details>
       </section>
+
+      <ClientQuestions lead={lead} />
     </div>
   );
 }
