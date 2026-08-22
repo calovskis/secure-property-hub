@@ -13,6 +13,7 @@ import {
 import { formatDate, formatDateTime } from "@/lib/dates";
 import { ApplicantFile, Row } from "@/components/lender/ApplicantFile";
 import { useLenderTeam } from "@/lib/lender-team";
+import { buyerAgentSummary, useBuyerProcess } from "@/lib/buyer-process";
 
 const money = (n: number) => `$${Math.round(n).toLocaleString()}`;
 
@@ -74,6 +75,8 @@ function FileDetail({ lead }: { lead: MortgageLead }) {
   const t = lead.terms!;
   const loan = lead.propertyPrice * (1 - t.downPaymentPct / 100);
   const answered = lead.infoRequests.filter((r) => r.answeredAt).length;
+  const proc = useBuyerProcess();
+  const agentProgress = buyerAgentSummary(lead, proc);
 
   return (
     <div className="space-y-6 border-t border-border bg-background/50 p-6">
@@ -112,6 +115,9 @@ function FileDetail({ lead }: { lead: MortgageLead }) {
                 : "Not authorised"
             }
           />
+          {agentProgress ? (
+            <Row label="Buyer–agent progress" value={agentProgress} />
+          ) : null}
         </div>
       </section>
 

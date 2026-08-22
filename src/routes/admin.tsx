@@ -4,6 +4,8 @@ import { PARTNER_LABEL, fullName, useAuth } from "@/lib/auth";
 import { formatDate } from "@/lib/dates";
 import { usePartnerRequests, type PartnerRequest } from "@/lib/partner-requests";
 import { useRealtors } from "@/lib/realtors";
+import { KICKOFF_LABEL, useLeads } from "@/lib/leads";
+import { buyerAgentSummary, useBuyerProcess } from "@/lib/buyer-process";
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
@@ -51,6 +53,8 @@ function AdminPage() {
   const { user, ready } = useAuth();
   const { requests, setStatus } = usePartnerRequests();
   const { addRealtor } = useRealtors();
+  const { leads } = useLeads();
+  const proc = useBuyerProcess();
 
   if (!ready) return <div className="min-h-screen bg-background" />;
 
@@ -75,6 +79,7 @@ function AdminPage() {
   }
 
   const pending = requests.filter((r) => r.status === "pending");
+  const buyerFiles = leads.filter((l) => l.clientDecision === "accepted" && l.buyerAgent);
 
   function approve(r: PartnerRequest) {
     setStatus(r.id, "approved");
@@ -199,6 +204,65 @@ function AdminPage() {
                 </li>
               ))}
             </ul>
+          )}
+        </section>
+
+        <section className="mb-6 rounded-lg border border-border bg-card p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-base font-semibold text-foreground">Buyer files — oversight</h2>
+            <span className="rounded-full bg-brand-tint px-3 py-1 text-[11px] font-semibold text-brand">
+              {buyerFiles.length} active
+            </span>
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Every accepted pre-approval: who represents the buyer, the kickoff choice and the
+            current status. Loqal personal manager cases carry an extra 1% platform fee.
+          </p>
+          {buyerFiles.length === 0 ? (
+            <p className="mt-4 text-sm text-muted-foreground">
+              No active buyer files yet — they appear here once clients accept pre-approval terms.
+            </p>
+          ) : (
+            <div className="mt-4 overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="border-b border-border text-[11px] uppercase tracking-wide text-muted-foreground">
+                    <th className="py-2 pr-4 font-semibold">Buyer</th>
+                    <th className="py-2 pr-4 font-semibold">Property</th>
+                    <th className="py-2 pr-4 font-semibold">Representation</th>
+                    <th className="py-2 pr-4 font-semibold">Kickoff</th>
+                    <th className="py-2 font-semibold">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {buyerFiles.map((l) => (
+                    <tr key={l.id}>
+                      <td className="py-3 pr-4 font-semibold text-foreground">{l.clientName}</td>
+                      <td className="py-3 pr-4 text-muted-foreground">{l.propertyLabel}</td>
+                      <td className="py-3 pr-4">
+                        {l.buyerAgent?.representation === "loqal_rep" ? (
+                          <span className="rounded-full bg-gold-tint px-2.5 py-1 text-[11px] font-semibold text-gold">
+                            🛡 Loqal manager (+1% fee)
+                          </span>
+                        ) : (
+                          <span className="rounded-full bg-brand-tint px-2.5 py-1 text-[11px] font-semibold text-brand">
+                            {l.buyerAgent?.agentName
+                              ? `Direct · ${l.buyerAgent.agentName}`
+                              : "Awaiting choice"}
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3 pr-4 text-muted-foreground">
+                        {l.buyerAgent?.kickoff ? KICKOFF_LABEL[l.buyerAgent.kickoff] : "—"}
+                      </td>
+                      <td className="py-3 text-muted-foreground">
+                        {buyerAgentSummary(l, proc) ?? "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </section>
 
