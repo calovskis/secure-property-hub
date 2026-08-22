@@ -18,7 +18,7 @@ import { countryLabel } from "@/data/countries";
 import { formatDate, formatDateTime } from "@/lib/dates";
 
 import { LENDER_ROLE_LABEL, useLenderTeam } from "@/lib/lender-team";
-import { usStatusOf, US_STATUS_LABEL, hasForeignIncome } from "@/lib/mortgage-form";
+import { usStatusOf, US_STATUS_LABEL, isMajorityForeignIncome } from "@/lib/mortgage-form";
 import { LenderHome } from "@/components/lender/LenderHome";
 import { LenderAnalytics } from "@/components/lender/LenderAnalytics";
 import { LenderMortgages } from "@/components/lender/LenderMortgages";
@@ -629,7 +629,7 @@ function RequestsInbox({
                       <span className="block">
                         {US_STATUS_LABEL[usStatusOf(l.profile, l.usPerson)]}
                       </span>
-                      {hasForeignIncome(l.profile.incomes ?? []) ? (
+                      {isMajorityForeignIncome(l.profile.incomes ?? []) ? (
                         <span className="mt-1 block w-fit rounded-full bg-gold-tint px-1.5 py-0.5 text-[10px] font-semibold text-gold underline decoration-gold decoration-2 underline-offset-2">
                           Foreign income
                         </span>
