@@ -129,11 +129,101 @@ function ActivityRow({
   );
 }
 
+function LandingHeader() {
+  const t = useT();
+  const links: { label: string; href: string }[] = [
+    { label: "How it works", href: "#how-it-works" },
+    { label: "About Us", href: "#about" },
+    { label: "FAQ", href: "#faq" },
+    { label: "Contact", href: "#contact" },
+  ];
+  return (
+    <header className="sticky top-0 z-50 border-b border-border bg-card shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
+      <div className="mx-auto flex h-[72px] max-w-[1100px] items-center justify-between gap-3 px-4 md:px-7">
+        <a href="#top" className="flex shrink-0 items-center gap-1.5">
+          <span className="flex size-7 items-center justify-center rounded-md bg-gradient-to-br from-gold to-gold/70 text-[13px] font-bold text-primary-foreground">
+            LQ
+          </span>
+          <span className="bg-gradient-to-br from-brand to-brand-soft bg-clip-text text-[22px] font-bold tracking-tight text-transparent md:text-[28px]">
+            LOQAL
+          </span>
+        </a>
+        <nav className="hidden items-center gap-1 md:flex">
+          {links.map((l) => (
+            <a
+              key={l.href}
+              href={l.href}
+              className="rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-brand-tint hover:text-brand"
+            >
+              {t(l.label)}
+            </a>
+          ))}
+        </nav>
+        <div className="flex items-center gap-2">
+          <LanguageMenu />
+          <Link
+            to="/auth"
+            className="rounded-md bg-brand px-4 py-2 text-sm font-semibold text-background transition-colors hover:bg-brand-soft"
+          >
+            {t("Log in")}
+          </Link>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+const howItWorksSteps = [
+  {
+    icon: "📝",
+    title: "Create your profile",
+    text: "Sign up in a minute and tell us about your goals — vacation home, investment property or a whole portfolio.",
+  },
+  {
+    icon: "🏦",
+    title: "Get pre-approved",
+    text: "Complete the guided mortgage questionnaire once. Our lending partners review your file and return estimated terms.",
+  },
+  {
+    icon: "🤝",
+    title: "Work with your team",
+    text: "A dedicated realtor partner — or a Loqal personal advocate — handles viewings, photos, inspections and negotiations for you.",
+  },
+  {
+    icon: "🔑",
+    title: "Close & relax",
+    text: "Sign the Purchase Agreement and let Loqal run management, cleaning, utilities and reporting from one dashboard.",
+  },
+];
+
+const landingFaq = [
+  {
+    q: "Who is Loqal for?",
+    a: "Real estate investors and property owners — US-based or international — who want every service around their property handled from a single place.",
+  },
+  {
+    q: "Do I need to be a US citizen to buy through Loqal?",
+    a: "No. Our mortgage questionnaire and lending partners support non-US persons, including ITIN holders and buyers on valid visas. Income in foreign currencies is converted automatically.",
+  },
+  {
+    q: "What does a buyer's agent do for me?",
+    a: "Your realtor partner represents your interests only: visiting the property, delivering fresh photos, advising on inspections, and negotiating the price down before you sign the Purchase Agreement.",
+  },
+  {
+    q: "What is a Loqal personal advocate?",
+    a: "For an extra 1% at closing, a Loqal personal advocate manages the purchase as if it were their own investment — recommending inspections, negotiations and next steps at every stage.",
+  },
+  {
+    q: "How do partners join the platform?",
+    a: "Realtors, mortgage lenders and service providers request access, sign the partner agreement and complete KYB verification. Our team approves every partner before they can work with clients.",
+  },
+];
+
 function Landing() {
   const t = useT();
   return (
-    <div className="min-h-screen bg-background">
-      <AppHeader active="Home" />
+    <div id="top" className="min-h-screen bg-background">
+      <LandingHeader />
       <main className="mx-auto max-w-[1100px] px-4 py-16 md:px-7">
         <section className="rounded-2xl border border-border bg-gradient-to-br from-brand-tint via-card to-gold-tint p-8 md:p-14">
           <span className="rounded-full bg-card px-3 py-1 text-xs font-semibold text-brand">
