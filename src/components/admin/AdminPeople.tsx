@@ -16,13 +16,13 @@ export type DirectoryPerson = {
   email: string;
   name: string;
   role: string;
-  phone?: string;
-  company?: string;
+  phone?: string | undefined;
+  company?: string | undefined;
   since: string;
   /** Source of truth for edits. */
   source: "client" | "partner";
   requestId?: string;
-  note?: string;
+  note?: string | undefined;
 };
 
 export function AdminPeople({
@@ -175,7 +175,12 @@ function EditPersonDialog({
 }: {
   person: DirectoryPerson;
   onClose: () => void;
-  onSave: (patch: { name: string; phone?: string; company?: string; note?: string }) => void;
+  onSave: (patch: {
+    name: string;
+    phone?: string | undefined;
+    company?: string | undefined;
+    note?: string | undefined;
+  }) => void;
 }) {
   const [name, setName] = useState(person.name);
   const [phone, setPhone] = useState(person.phone ?? "");

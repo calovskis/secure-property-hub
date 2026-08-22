@@ -7,10 +7,10 @@
 import { useCallback, useSyncExternalStore } from "react";
 
 export type ProfileOverride = {
-  displayName?: string;
-  phone?: string;
-  company?: string;
-  note?: string;
+  displayName?: string | undefined;
+  phone?: string | undefined;
+  company?: string | undefined;
+  note?: string | undefined;
   updatedAt: string;
 };
 
