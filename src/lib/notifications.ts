@@ -61,7 +61,7 @@ function commit(next: NotificationState) {
 }
 
 /** Add or refresh a notification. Existing read state is preserved. */
-export function notify(n: Omit<AppNotification, "createdAt"> & { createdAt?: string }) {
+export function notify(n: Omit<AppNotification, "createdAt"> & { createdAt?: string | undefined }) {
   const cur = load();
   const existing = cur.items.find((i) => i.id === n.id);
   const entry: AppNotification = {
@@ -84,7 +84,9 @@ export function notify(n: Omit<AppNotification, "createdAt"> & { createdAt?: str
 }
 
 /** Bulk-upsert derived notifications; no-op when nothing is new. */
-export function syncNotifications(list: (Omit<AppNotification, "createdAt"> & { createdAt?: string })[]) {
+export function syncNotifications(
+  list: (Omit<AppNotification, "createdAt"> & { createdAt?: string | undefined })[],
+) {
   list.forEach((n) => notify(n));
 }
 
