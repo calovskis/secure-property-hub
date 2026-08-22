@@ -15,7 +15,7 @@ import {
 } from "@/components/profile/ProfileTopicsContent";
 import { PartnerProfile } from "@/components/profile/PartnerProfile";
 import { PARTNER_LABEL, ROLE_LABEL, fullName, useAuth, type MortgageProfile } from "@/lib/auth";
-import { formatDate, formatDateTime, isoToUsDate } from "@/lib/dates";
+import { formatDate, formatDateTime } from "@/lib/dates";
 import { LEAD_STATUS_LABEL, hasPricedOffer, useLeads, type MortgageLead } from "@/lib/leads";
 import { useMortgageDrafts } from "@/lib/mortgage-draft";
 import { useI18n } from "@/lib/i18n";
