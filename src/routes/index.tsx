@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 
-import { AppHeader } from "@/components/layout/AppHeader";
+import { AppHeader, LanguageMenu } from "@/components/layout/AppHeader";
 import { useAuth } from "@/lib/auth";
 import { useT } from "@/lib/i18n";
 import { offerReminders, pendingOfferDecision, useLeads } from "@/lib/leads";
