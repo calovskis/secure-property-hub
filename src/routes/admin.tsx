@@ -4,6 +4,8 @@ import { PARTNER_LABEL, fullName, useAuth } from "@/lib/auth";
 import { formatDate } from "@/lib/dates";
 import { usePartnerRequests, type PartnerRequest } from "@/lib/partner-requests";
 import { useRealtors } from "@/lib/realtors";
+import { KICKOFF_LABEL, useLeads } from "@/lib/leads";
+import { buyerAgentSummary, useBuyerProcess } from "@/lib/buyer-process";
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
@@ -51,6 +53,8 @@ function AdminPage() {
   const { user, ready } = useAuth();
   const { requests, setStatus } = usePartnerRequests();
   const { addRealtor } = useRealtors();
+  const { leads } = useLeads();
+  const proc = useBuyerProcess();
 
   if (!ready) return <div className="min-h-screen bg-background" />;
 
