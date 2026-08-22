@@ -274,9 +274,22 @@ function ProfilePage() {
   const profile = user.mortgageProfile;
   const unfinished = allDrafts(user.email).filter((d) => !d.submitted);
 
+  const isRealtor = user.partnerType === "realtor";
+  // Realtors keep their workspace header everywhere, including My Profile.
+  const realtorNav = [
+    { label: "Home", icon: "🏠", to: "/partner" },
+    { label: "Files", icon: "📁", to: "/partner" },
+    { label: "Analytics", icon: "📈", to: "/partner" },
+    { label: "Accounting", icon: "💳", to: "/partner" },
+    { label: "My Profile", icon: "👤", to: "/profile" },
+  ];
+
   return (
     <div className="min-h-screen bg-background">
-      <AppHeader active="My profile" />
+      <AppHeader
+        active={isRealtor ? "My Profile" : "My profile"}
+        {...(isRealtor ? { navItems: realtorNav } : {})}
+      />
 
       <main className="mx-auto max-w-[1100px] px-4 py-8 md:px-7">
         <header className="flex flex-wrap items-center justify-between gap-4">
