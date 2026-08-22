@@ -724,6 +724,7 @@ export const TABS = [
   { id: "mortgages", label: "Mortgages", icon: "🏦" },
   { id: "employees", label: "Employees", icon: "👥" },
   { id: "analytics", label: "Analytics", icon: "📈" },
+  { id: "accounting", label: "Accounting", icon: "💵" },
   { id: "other", label: "Other", icon: "⚙️" },
 ] as const;
 
@@ -738,6 +739,7 @@ export function useLenderTabs() {
     mortgages: can("mortgages.view"),
     employees: true,
     analytics: can("analytics.view"),
+    accounting: can("accounting.view"),
     other: true,
   };
   return TABS.filter((t) => allowed[t.id]);
@@ -764,6 +766,7 @@ export function LenderPortal({
     mortgages: can("mortgages.view"),
     employees: true,
     analytics: can("analytics.view"),
+    accounting: can("accounting.view"),
     other: true,
   };
   const current = allowed[tab] ? tab : "home";
@@ -806,6 +809,7 @@ export function LenderPortal({
       {current === "mortgages" ? <LenderMortgages canManage={can("mortgages.manage")} /> : null}
       {current === "employees" ? <LenderEmployees /> : null}
       {current === "analytics" ? <LenderAnalytics /> : null}
+      {current === "accounting" ? <LenderAccounting lenderName={lenderName} /> : null}
       {current === "other" ? <LenderTeam /> : null}
     </main>
   );

@@ -20,6 +20,7 @@ export type LenderPermission =
   | "mortgages.view"
   | "mortgages.manage"
   | "analytics.view"
+  | "accounting.view"
   | "team.manage";
 
 export const LENDER_ROLE_LABEL: Record<LenderRole, string> = {
@@ -46,12 +47,13 @@ const ROLE_PERMISSIONS: Record<LenderRole, LenderPermission[]> = {
     "mortgages.view",
     "mortgages.manage",
     "analytics.view",
+    "accounting.view",
     "team.manage",
   ],
   loan_officer: ["requests.view", "requests.request_info", "mortgages.view", "analytics.view"],
   underwriter: ["requests.view", "requests.request_info", "requests.decide", "mortgages.view"],
   processor: ["requests.view", "mortgages.view", "mortgages.manage"],
-  analyst: ["analytics.view", "mortgages.view"],
+  analyst: ["analytics.view", "accounting.view", "mortgages.view"],
 };
 
 export function permissionsFor(role: LenderRole): LenderPermission[] {
