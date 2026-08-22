@@ -226,6 +226,17 @@ function AdminPage() {
                           Licence: {r.lenderLicence}
                         </div>
                       ) : null}
+                      {r.companyLicence ? (
+                        <div className="mt-1 text-xs text-muted-foreground">
+                          Company licence: {r.companyLicence}
+                          {r.companyPhone ? ` · Company phone: ${r.companyPhone}` : ""}
+                        </div>
+                      ) : null}
+                      {r.verificationDocs.length ? (
+                        <div className="mt-1 text-xs text-muted-foreground">
+                          Verification docs: {r.verificationDocs.join(", ")}
+                        </div>
+                      ) : null}
                     </div>
                     <div className="flex shrink-0 gap-2">
                       <button
