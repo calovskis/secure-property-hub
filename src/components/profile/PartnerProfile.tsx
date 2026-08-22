@@ -61,7 +61,7 @@ export function PartnerProfile({ user }: { user: LoqalUser }) {
   );
 }
 
-function Row({ label, value }: { label: string; value?: string | number }) {
+function Row({ label, value }: { label: string; value?: string | number | undefined }) {
   return (
     <div className="flex items-baseline justify-between gap-4 border-b border-border/60 py-2 last:border-b-0">
       <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</span>

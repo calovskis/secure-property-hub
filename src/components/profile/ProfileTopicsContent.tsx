@@ -117,7 +117,7 @@ export function PersonalTopic({ profile, onSave }: { profile: MortgageProfile; o
                 ? { ...profile.unmarriedAddendum, hasSpousalEquivalent: draft.unmarriedHasSpousalEquivalent }
                 : profile.unmarriedAddendum,
             dependents,
-          });
+          } as Partial<MortgageProfile>);
           toast.success("Personal & household details updated");
         }}
       >
@@ -289,11 +289,11 @@ export function CitizenshipTopic({
             citizenship: draft.citizenship || undefined,
             secondCitizenship: draft.secondCitizenship || undefined,
             hasItin: draft.hasItin,
-            itin: draft.itin || undefined,
+            itin: draft.itin ?? "",
             visaIssued: draft.visaIssued || undefined,
             visaValidUntil: draft.visaValidUntil || undefined,
             otherVisaType: draft.otherVisaType || undefined,
-          });
+          } as Partial<MortgageProfile>);
           toast.success("Citizenship & identification updated");
         }}
       >
@@ -514,7 +514,7 @@ export function AddressTopic({ profile, onSave }: { profile: MortgageProfile; on
                   />
                   <DateInput
                     value={a.to}
-                    disabled={a.present}
+                    disabled={Boolean(a.present)}
                     onChange={(v) => {
                       const next = [...draft.addresses];
                       next[i] = { ...a, to: v };
@@ -1163,7 +1163,7 @@ export function DemographicsTopic({ profile, onSave }: { profile: MortgageProfil
 
 /* -------------------------------------------------------------------------- Documents */
 
-function DocList({ docs }: { docs?: StoredDocument[] }) {
+function DocList({ docs }: { docs?: StoredDocument[] | undefined }) {
   if (!docs?.length) return <p className="text-sm text-muted-foreground">None uploaded.</p>;
   return (
     <ul className="space-y-2">
