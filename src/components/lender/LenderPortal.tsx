@@ -23,6 +23,7 @@ import { LenderHome } from "@/components/lender/LenderHome";
 import { LenderAnalytics } from "@/components/lender/LenderAnalytics";
 import { LenderMortgages } from "@/components/lender/LenderMortgages";
 import { LenderTeam } from "@/components/lender/LenderTeam";
+import { LenderEmployees } from "@/components/lender/LenderEmployees";
 import { InfoRequestDialog } from "@/components/lender/InfoRequestDialog";
 
 const money = (n: number) => `$${Math.round(n).toLocaleString()}`;
@@ -677,6 +678,7 @@ export const TABS = [
   { id: "home", label: "Home", icon: "🏠" },
   { id: "requests", label: "Pre-approval Requests", icon: "📥" },
   { id: "mortgages", label: "Mortgages", icon: "🏦" },
+  { id: "employees", label: "Employees", icon: "👥" },
   { id: "analytics", label: "Analytics", icon: "📈" },
   { id: "other", label: "Other", icon: "⚙️" },
 ] as const;
@@ -690,6 +692,7 @@ export function useLenderTabs() {
     home: true,
     requests: can("requests.view"),
     mortgages: can("mortgages.view"),
+    employees: true,
     analytics: can("analytics.view"),
     other: true,
   };
@@ -715,6 +718,7 @@ export function LenderPortal({
     home: true,
     requests: can("requests.view"),
     mortgages: can("mortgages.view"),
+    employees: true,
     analytics: can("analytics.view"),
     other: true,
   };
@@ -756,6 +760,7 @@ export function LenderPortal({
         <RequestsInbox canDecide={can("requests.decide")} focusLeadId={focusLeadId} />
       ) : null}
       {current === "mortgages" ? <LenderMortgages canManage={can("mortgages.manage")} /> : null}
+      {current === "employees" ? <LenderEmployees /> : null}
       {current === "analytics" ? <LenderAnalytics /> : null}
       {current === "other" ? <LenderTeam /> : null}
     </main>
