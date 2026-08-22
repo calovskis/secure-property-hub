@@ -289,7 +289,7 @@ export function CitizenshipTopic({
             citizenship: draft.citizenship || undefined,
             secondCitizenship: draft.secondCitizenship || undefined,
             hasItin: draft.hasItin,
-            itin: draft.itin || undefined,
+            itin: draft.itin ?? "",
             visaIssued: draft.visaIssued || undefined,
             visaValidUntil: draft.visaValidUntil || undefined,
             otherVisaType: draft.otherVisaType || undefined,
@@ -514,7 +514,7 @@ export function AddressTopic({ profile, onSave }: { profile: MortgageProfile; on
                   />
                   <DateInput
                     value={a.to}
-                    disabled={a.present}
+                    disabled={Boolean(a.present)}
                     onChange={(v) => {
                       const next = [...draft.addresses];
                       next[i] = { ...a, to: v };
