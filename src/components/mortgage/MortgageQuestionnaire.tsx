@@ -374,6 +374,17 @@ export function MortgageQuestionnaire({
       declarations: derivedDeclarations,
       military: data.military,
       demographics: data.demographics,
+      ...(carriedVisaDocs.length
+        ? {
+            visaDocuments: carriedVisaDocs,
+            visaDocumentName: carriedVisaDocs[0]!.name,
+            visaDocumentUploadedAt: carriedVisaDocs[0]!.uploadedAt,
+          }
+        : {}),
+      ...(prevProfile?.idDocuments?.length ? { idDocuments: prevProfile.idDocuments } : {}),
+      ...(data.declarations.bankruptcy && prevProfile?.bankruptcyDocuments?.length
+        ? { bankruptcyDocuments: prevProfile.bankruptcyDocuments }
+        : {}),
       monthlyGross: monthly,
       usStatus: usStatusOf(
         {
