@@ -2,6 +2,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { PARTNER_LABEL, ROLE_LABEL, fullName, homeRouteFor, initials, useAuth } from "@/lib/auth";
 import { LANGUAGES, useI18n } from "@/lib/i18n";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 
 function LanguageMenu() {
   const { lang, setLang } = useI18n();
@@ -323,6 +324,8 @@ export function AppHeader({
           >
             ⚙️
           </button>
+
+          <NotificationBell />
 
           <LanguageMenu />
 

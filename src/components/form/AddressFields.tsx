@@ -141,13 +141,16 @@ export function AddressFields({
     });
 
     // The geocoder often omits the postcode on the first hit — run a
-    // structured follow-up lookup and patch the ZIP once it resolves.
+    // follow-up lookup (reverse-geocoding the picked coordinates first) and
+    // patch the ZIP once it resolves.
     if (!s.zip) {
       lookupZip({
         street: s.street || s.label,
         city: s.city,
         state: s.state,
         country,
+        ...(s.lat ? { lat: s.lat } : {}),
+        ...(s.lon ? { lon: s.lon } : {}),
       }).then((zip) => {
         if (zip) onChange({ zip });
       });

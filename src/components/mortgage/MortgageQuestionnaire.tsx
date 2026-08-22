@@ -248,6 +248,14 @@ export function MortgageQuestionnaire({
       if (invalidAsset)
         return "Please complete each asset: institution, country, currency and value (address for real estate, description for other).";
     }
+    if (s === 4) {
+      if (data.declarations.bankruptcy) {
+        if (data.declarations.bankruptcyChapters.length === 0)
+          return "Please select the bankruptcy chapter(s) that apply.";
+        if (!data.declarations.bankruptcyDischargeDate)
+          return "Please enter the bankruptcy discharge date (mm/dd/yyyy).";
+      }
+    }
     if (s === 5) {
       if (!data.demographics.ethnicityDeclined && data.demographics.ethnicity.length === 0)
         return "Please select an ethnicity option or choose not to provide it.";

@@ -179,17 +179,33 @@ export function Step4Declarations({ data, patch }: StepProps) {
           value={d.bankruptcy}
           onChange={(v) => patchD({ bankruptcy: v })}
         >
-          <div className="flex flex-wrap gap-4 rounded-md bg-brand-tint/40 p-3">
-            {["Chapter 7", "Chapter 11", "Chapter 12", "Chapter 13"].map((c) => (
-              <label key={c} className="flex items-center gap-2 text-sm text-foreground">
-                <input
-                  type="checkbox"
-                  checked={d.bankruptcyChapters.includes(c)}
-                  onChange={() => toggleChapter(c)}
-                />
-                {c}
-              </label>
-            ))}
+          <div className="space-y-3 rounded-md bg-brand-tint/40 p-3">
+            <div className="flex flex-wrap gap-4">
+              {["Chapter 7", "Chapter 11", "Chapter 12", "Chapter 13"].map((c) => (
+                <label key={c} className="flex items-center gap-2 text-sm text-foreground">
+                  <input
+                    type="checkbox"
+                    checked={d.bankruptcyChapters.includes(c)}
+                    onChange={() => toggleChapter(c)}
+                  />
+                  {c}
+                </label>
+              ))}
+            </div>
+            <label className="block max-w-xs">
+              <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Discharge date <span className="text-destructive">*</span>
+              </span>
+              <DateInput
+                value={d.bankruptcyDischargeDate}
+                onChange={(v) => patchD({ bankruptcyDischargeDate: v })}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-brand"
+              />
+              <span className="mt-1 block text-[11px] text-muted-foreground">
+                You will be asked to upload the bankruptcy discharge papers at the end of the
+                questionnaire.
+              </span>
+            </label>
           </div>
         </QuestionRow>
       </Section>

@@ -135,11 +135,9 @@ export type AddressSuggestion = {
   city: string;
   state: string;
   zip: string;
-};
-
-type NominatimResult = {
-  display_name?: string;
-  address?: Record<string, string>;
+  /** Coordinates — used for the postal-code follow-up lookup. */
+  lat?: string | undefined;
+  lon?: string | undefined;
 };
 
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
@@ -155,6 +153,13 @@ function pick(address: Record<string, string> | undefined, keys: string[]): stri
   }
   return "";
 }
+
+type NominatimResult = {
+  display_name?: string;
+  lat?: string;
+  lon?: string;
+  address?: Record<string, string>;
+};
 
 function toSuggestion(result: NominatimResult): AddressSuggestion | null {
   const address = result.address;
@@ -172,6 +177,8 @@ function toSuggestion(result: NominatimResult): AddressSuggestion | null {
     city,
     state,
     zip,
+    lat: result.lat,
+    lon: result.lon,
   };
 }
 
@@ -231,23 +238,61 @@ const zipCache = new Map<string, string>();
 /**
  * Best-effort ZIP/postal-code lookup for a picked suggestion whose geocode
  * result didn't include one (Nominatim often omits the postcode on the
- * initial search hit). Uses a structured follow-up query; never throws and
- * resolves to "" when no postcode is known.
+ * initial search hit). Two strategies, in order:
+ *   1. reverse-geocode the exact coordinates of the picked place — the
+ *      reverse response almost always carries the postcode;
+ *   2. a structured follow-up search, scanning several hits (the first hit
+ *      is not always the one carrying a postcode).
+ * Never throws and resolves to "" when no postcode is known.
  */
 export async function lookupZip(
-  input: { street: string; city: string; state: string; country?: string },
+  input: {
+    street: string;
+    city: string;
+    state: string;
+    country?: string;
+    lat?: string;
+    lon?: string | undefined;
+  },
   signal?: AbortSignal,
 ): Promise<string> {
   if (!input.street && !input.city) return "";
-  const key = `${input.country ?? ""}|${input.street}|${input.city}|${input.state}`.toLowerCase();
+  const key =
+    `${input.country ?? ""}|${input.street}|${input.city}|${input.state}`.toLowerCase();
   const cached = zipCache.get(key);
   if (cached !== undefined) return cached;
 
+  // 1) Reverse geocoding at the picked coordinates.
+  if (input.lat && input.lon) {
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(
+          input.lat,
+        )}&lon=${encodeURIComponent(input.lon)}&addressdetails=1`,
+        {
+          signal: signal ?? null,
+          headers: { Accept: "application/json", "User-Agent": USER_AGENT },
+        },
+      );
+      if (res.ok) {
+        const data = (await res.json()) as NominatimResult;
+        const zip = pick(data.address, ["postcode"]);
+        if (zip) {
+          zipCache.set(key, zip);
+          return zip;
+        }
+      }
+    } catch {
+      /* fall through to the structured search */
+    }
+  }
+
+  // 2) Structured search — scan up to 5 hits for a postcode.
   try {
     const params = new URLSearchParams({
       format: "jsonv2",
       addressdetails: "1",
-      limit: "1",
+      limit: "5",
     });
     if (input.street) params.set("street", input.street);
     if (input.city) params.set("city", input.city);
@@ -264,8 +309,12 @@ export async function lookupZip(
     if (!res.ok) return "";
 
     const data: unknown = await res.json();
-    const first = Array.isArray(data) ? (data[0] as NominatimResult | undefined) : undefined;
-    const zip = pick(first?.address, ["postcode"]);
+    const results = Array.isArray(data) ? (data as NominatimResult[]) : [];
+    let zip = "";
+    for (const r of results) {
+      zip = pick(r.address, ["postcode"]);
+      if (zip) break;
+    }
     zipCache.set(key, zip);
     return zip;
   } catch {
