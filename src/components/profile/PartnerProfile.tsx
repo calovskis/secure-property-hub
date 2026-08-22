@@ -1,6 +1,7 @@
 import { PARTNER_LABEL, fullName, type LoqalUser } from "@/lib/auth";
 import { getTeamSnapshot, LENDER_ROLE_LABEL } from "@/lib/lender-team";
 import { useLeads } from "@/lib/leads";
+import { RealtorProfileCard } from "@/components/profile/RealtorProfileCard";
 
 function avgResponseHours(items: { submittedAt: string; decidedAt?: string }[]) {
   const done = items.filter((l) => l.decidedAt);
@@ -13,6 +14,11 @@ function avgResponseHours(items: { submittedAt: string; decidedAt?: string }[]) 
 }
 
 export function PartnerProfile({ user }: { user: LoqalUser }) {
+  if (user.partnerType === "realtor") return <RealtorProfileCard user={user} />;
+  return <LenderPartnerProfile user={user} />;
+}
+
+function LenderPartnerProfile({ user }: { user: LoqalUser }) {
   const { leads } = useLeads();
   const snapshot = getTeamSnapshot();
   const member = snapshot.members.find((m) => m.email === user.email) ?? snapshot.members[0];

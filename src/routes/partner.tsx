@@ -1,10 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { LenderPortal, useLenderTabs, type LenderTabId } from "@/components/lender/LenderPortal";
-import { RealtorPortal } from "@/components/realtor/RealtorPortal";
+import { RealtorPortal, type RealtorTabId } from "@/components/realtor/RealtorPortal";
 
-import { PARTNER_LABEL, fullName, useAuth, type PartnerType } from "@/lib/auth";
+import { PARTNER_LABEL, fullName, useAuth, type LoqalUser, type PartnerType } from "@/lib/auth";
 
 export const Route = createFileRoute("/partner")({
   component: PartnerPage,
@@ -156,7 +156,7 @@ function PartnerPage() {
   }
 
   if (type === "realtor") {
-    return <RealtorPortal user={user} />;
+    return <RealtorWorkspace user={user} />;
   }
 
   const board = BOARDS[type];
@@ -257,6 +257,119 @@ function LenderWorkspace({ lenderName }: { lenderName: string }) {
         }
       />
       <LenderPortal lenderName={lenderName} tab={current} onTabChange={setTab} />
+    </div>
+  );
+}
+
+/**
+ * Realtor (buyer's agent) workspace. The header carries the navigation:
+ * Home dashboard, Files (buyer files + calendar), Analytics (performance +
+ * financial), Accounting and My Profile.
+ */
+function RealtorWorkspace({ user }: { user: LoqalUser }) {
+  const [tab, setTab] = useState<RealtorTabId>("home");
+  const [menu, setMenu] = useState<"files" | "analytics" | null>(null);
+
+  useEffect(() => {
+    function onDocClick(e: MouseEvent) {
+      if (!(e.target as HTMLElement | null)?.closest?.("[data-realtor-menu]")) setMenu(null);
+    }
+    document.addEventListener("click", onDocClick);
+    return () => document.removeEventListener("click", onDocClick);
+  }, []);
+
+  const itemCls = (active: boolean) =>
+    `flex items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+      active ? "bg-brand-tint text-brand" : "text-muted-foreground hover:bg-brand-tint hover:text-brand"
+    }`;
+  const subCls = (active: boolean) =>
+    `flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-brand-tint hover:text-brand ${
+      active ? "font-semibold text-brand" : "text-foreground"
+    }`;
+
+  const go = (t: RealtorTabId) => {
+    setTab(t);
+    setMenu(null);
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      <AppHeader
+        navSlot={
+          <>
+            <button type="button" onClick={() => go("home")} className={itemCls(tab === "home")}>
+              <span aria-hidden>🏠</span> Home
+            </button>
+
+            <div className="relative hidden lg:block" data-realtor-menu>
+              <button
+                type="button"
+                onClick={() => setMenu(menu === "files" ? null : "files")}
+                className={itemCls(tab === "buyers" || tab === "calendar")}
+              >
+                <span aria-hidden>📁</span> Files
+                <span className="text-[9px] opacity-60">▼</span>
+              </button>
+              {menu === "files" ? (
+                <div className="absolute left-0 top-[calc(100%+8px)] w-52 rounded-lg border border-border bg-popover p-1.5 shadow-lg">
+                  <button type="button" onClick={() => go("buyers")} className={subCls(tab === "buyers")}>
+                    <span aria-hidden>🗂</span> Buyer files
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => go("calendar")}
+                    className={subCls(tab === "calendar")}
+                  >
+                    <span aria-hidden>🗓</span> My calendar
+                  </button>
+                </div>
+              ) : null}
+            </div>
+
+            <div className="relative hidden lg:block" data-realtor-menu>
+              <button
+                type="button"
+                onClick={() => setMenu(menu === "analytics" ? null : "analytics")}
+                className={itemCls(tab === "analytics" || tab === "financial")}
+              >
+                <span aria-hidden>📈</span> Analytics
+                <span className="text-[9px] opacity-60">▼</span>
+              </button>
+              {menu === "analytics" ? (
+                <div className="absolute left-0 top-[calc(100%+8px)] w-56 rounded-lg border border-border bg-popover p-1.5 shadow-lg">
+                  <button
+                    type="button"
+                    onClick={() => go("analytics")}
+                    className={subCls(tab === "analytics")}
+                  >
+                    <span aria-hidden>📈</span> Performance analytics
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => go("financial")}
+                    className={subCls(tab === "financial")}
+                  >
+                    <span aria-hidden>💹</span> Financial analytics
+                  </button>
+                </div>
+              ) : null}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => go("accounting")}
+              className={itemCls(tab === "accounting")}
+            >
+              <span aria-hidden>💳</span> Accounting
+            </button>
+
+            <Link to="/profile" className={itemCls(false)}>
+              <span aria-hidden>👤</span> My Profile
+            </Link>
+          </>
+        }
+      />
+      <RealtorPortal user={user} tab={tab} onTabChange={setTab} />
     </div>
   );
 }
