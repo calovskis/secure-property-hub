@@ -298,8 +298,141 @@ function Landing() {
             </div>
           ))}
         </section>
+
+        <section id="how-it-works" className="mt-16 scroll-mt-24">
+          <div className="text-center">
+            <span className="rounded-full bg-gold-tint px-3 py-1 text-xs font-semibold text-gold">
+              {t("Show demo")}
+            </span>
+            <h2 className="mt-4 text-2xl font-bold tracking-tight text-foreground md:text-3xl">
+              {t("How Loqal works")}
+            </h2>
+            <p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">
+              {t("From first sign-up to keys in hand — one guided flow, one dashboard, one team behind you.")}
+            </p>
+          </div>
+          <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {howItWorksSteps.map((s, i) => (
+              <div
+                key={s.title}
+                className="relative rounded-lg border border-border bg-card p-6 shadow-[0_1px_3px_rgba(0,0,0,0.05)]"
+              >
+                <span className="absolute right-4 top-4 text-xs font-bold text-muted-foreground">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <div className="flex size-10 items-center justify-center rounded-md bg-brand-tint text-lg" aria-hidden>
+                  {s.icon}
+                </div>
+                <div className="mt-4 text-sm font-semibold text-foreground">{t(s.title)}</div>
+                <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{t(s.text)}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-6 text-center">
+            <Link
+              to="/auth"
+              className="inline-flex rounded-md bg-brand px-6 py-3 text-sm font-semibold text-background transition-colors hover:bg-brand-soft"
+            >
+              {t("Try it — create your profile")}
+            </Link>
+          </div>
+        </section>
+
+        <section id="about" className="mt-16 scroll-mt-24 rounded-2xl border border-border bg-gradient-to-br from-brand-tint via-card to-gold-tint p-8 md:p-12">
+          <h2 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">{t("About Us")}</h2>
+          <div className="mt-4 grid grid-cols-1 gap-8 md:grid-cols-2">
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              {t("Loqal is a white-glove concierge platform for real estate investors and property owners. We bring every major service around a property — entity formation, banking, mortgage, inspections, management, legal and utilities — into a single operating layer, so owning property anywhere feels local.")}
+            </p>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              {t("Our vetted partner network of realtors, mortgage lenders and service providers works inside the same workspace as our clients. Every step — from pre-approval to the Purchase Agreement and beyond — is tracked, transparent and handled by people who treat your property like their own.")}
+            </p>
+          </div>
+          <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4">
+            {[
+              ["🌍", "Worldwide owners"],
+              ["🏘️", "All-in-one services"],
+              ["🔐", "Secure by design"],
+              ["🤝", "Vetted partners"],
+            ].map(([icon, label]) => (
+              <div key={label} className="rounded-lg border border-border bg-card p-4 text-center">
+                <div className="text-2xl" aria-hidden>{icon}</div>
+                <div className="mt-2 text-xs font-semibold text-foreground">{t(label!)}</div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section id="faq" className="mt-16 scroll-mt-24">
+          <h2 className="text-center text-2xl font-bold tracking-tight text-foreground md:text-3xl">
+            {t("Frequently asked questions")}
+          </h2>
+          <div className="mt-8 space-y-3">
+            {landingFaq.map((f) => (
+              <details
+                key={f.q}
+                className="group rounded-lg border border-border bg-card px-5 py-4 shadow-[0_1px_3px_rgba(0,0,0,0.05)]"
+              >
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-semibold text-foreground">
+                  {t(f.q)}
+                  <span className="text-xs text-muted-foreground transition-transform group-open:rotate-180" aria-hidden>
+                    ▼
+                  </span>
+                </summary>
+                <p className="mt-3 text-xs leading-relaxed text-muted-foreground">{t(f.a)}</p>
+              </details>
+            ))}
+          </div>
+          <div className="mt-6 text-center">
+            <Link to="/faq" className="text-sm font-semibold text-brand hover:underline">
+              {t("Open the full FAQ →")}
+            </Link>
+          </div>
+        </section>
+
+        <section id="contact" className="mt-16 scroll-mt-24 rounded-2xl border border-border bg-card p-8 shadow-[0_1px_3px_rgba(0,0,0,0.05)] md:p-12">
+          <div className="grid grid-cols-1 items-center gap-8 md:grid-cols-2">
+            <div>
+              <h2 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">{t("Contact us")}</h2>
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                {t("Questions about onboarding, partnerships or your portfolio? Our team replies within one business day — or use the in-platform support chat once you're logged in.")}
+              </p>
+            </div>
+            <div className="space-y-3">
+              <a
+                href="mailto:hello@loqal.com"
+                className="flex items-center gap-3 rounded-lg border border-border bg-background px-4 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-brand-tint hover:text-brand"
+              >
+                <span aria-hidden>✉️</span> hello@loqal.com
+              </a>
+              <Link
+                to="/partner-access"
+                className="flex items-center gap-3 rounded-lg border border-border bg-background px-4 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-brand-tint hover:text-brand"
+              >
+                <span aria-hidden>🤝</span> {t("Become a partner")}
+              </Link>
+              <Link
+                to="/auth"
+                className="flex items-center gap-3 rounded-lg border border-gold/40 bg-gold-tint px-4 py-3 text-sm font-semibold text-gold transition-colors hover:bg-gold-tint/70"
+              >
+                <span aria-hidden>✨</span> {t("Become a Loqal")}
+              </Link>
+            </div>
+          </div>
+        </section>
       </main>
 
+      <footer className="mt-16 border-t border-border bg-card">
+        <div className="mx-auto flex max-w-[1100px] flex-col items-center justify-between gap-3 px-4 py-8 text-xs text-muted-foreground md:flex-row md:px-7">
+          <span>© {new Date().getFullYear()} Loqal — {t("White-glove concierge for real estate")}</span>
+          <div className="flex items-center gap-4">
+            <a href="#about" className="hover:text-brand">{t("About Us")}</a>
+            <a href="#faq" className="hover:text-brand">{t("FAQ")}</a>
+            <a href="#contact" className="hover:text-brand">{t("Contact")}</a>
+            <Link to="/auth" className="font-semibold text-brand hover:underline">{t("Log in")}</Link>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
