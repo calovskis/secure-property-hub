@@ -130,7 +130,11 @@ export function RealtorAccounting({ me, mine }: { me: Realtor; mine: MortgageLea
                     type="button"
                     onClick={() => {
                       markPaid(i.id);
-                      logActivity(fullName({ firstName: me.firstName, lastName: me.lastName } as never), "paid a Loqal invoice", `${i.number} · ${usd(i.amount)}`);
+                      logActivity(
+                        `${me.firstName} ${me.lastName}`.trim(),
+                        "paid a Loqal invoice",
+                        `${i.number} · ${usd(i.amount)}`,
+                      );
                       toast("Payment recorded", { description: `${i.number} marked as paid.` });
                     }}
                     className="rounded-md bg-brand px-3.5 py-1.5 text-xs font-semibold text-background hover:bg-brand-soft"
