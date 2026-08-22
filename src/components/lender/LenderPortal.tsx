@@ -21,6 +21,7 @@ import { LENDER_ROLE_LABEL, useLenderTeam } from "@/lib/lender-team";
 import { usStatusOf, US_STATUS_LABEL, isMajorityForeignIncome } from "@/lib/mortgage-form";
 import { LenderHome } from "@/components/lender/LenderHome";
 import { LenderAnalytics } from "@/components/lender/LenderAnalytics";
+import { LenderAccounting } from "@/components/lender/LenderAccounting";
 import { LenderMortgages } from "@/components/lender/LenderMortgages";
 import { LenderTeam } from "@/components/lender/LenderTeam";
 import { LenderEmployees } from "@/components/lender/LenderEmployees";
