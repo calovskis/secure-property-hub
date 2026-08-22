@@ -443,103 +443,49 @@ export function MortgageQuestionnaire({
             </div>
 
             {data.visaActive ? (
-              <div className="rounded-lg border border-brand/40 bg-brand-tint/50 p-5 text-left">
-                <div className="text-sm font-semibold text-foreground">
-                  One more step: visa document verification
+              submittedProfile?.visaDocuments?.length ? (
+                <div className="rounded-lg border border-border bg-card p-5 text-left">
+                  <div className="text-sm font-semibold text-foreground">
+                    Visa document on file
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Shared with the lending partner together with your application.
+                  </p>
+                  <ul className="mt-1 text-xs text-muted-foreground">
+                    {submittedProfile.visaDocuments.map((doc) => (
+                      <li key={doc.id}>📎 {doc.name}</li>
+                    ))}
+                  </ul>
                 </div>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Because you hold a US visa or status, please upload a copy or scan of your valid
-                  visa document so the lending partner can verify it.
-                </p>
-                {visaDocsConfirmed ? (
-                  <div className="mt-3">
-                    <p className="text-sm font-semibold text-success">
-                      Documents confirmed and shared.
-                    </p>
-                    <ul className="mt-1 text-xs text-muted-foreground">
-                      {visaDocs.map((doc) => (
-                        <li key={doc.id}>📎 {doc.name}</li>
-                      ))}
-                    </ul>
-                  </div>
-                ) : (
-                  <div className="mt-3 space-y-3">
-                    <label className="mt-3 inline-flex cursor-pointer items-center gap-2 rounded-md border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground hover:bg-brand-tint">
-                      {visaDocs.length ? "Add more documents" : "Choose visa documents"}
-                      <input
-                        type="file"
-                        multiple
-                        accept="image/*,application/pdf"
-                        className="hidden"
-                        onChange={async (e) => {
-                          const selected = Array.from(e.target.files ?? []);
-                          const next = await Promise.all(
-                            selected.map(async (file) => ({
-                              id: Math.random().toString(36).slice(2, 10),
-                              name: file.name,
-                              url: await new Promise<string>((resolve) => {
-                                const reader = new FileReader();
-                                reader.onload = () =>
-                                  resolve(typeof reader.result === "string" ? reader.result : "");
-                                reader.readAsDataURL(file);
-                              }),
-                            })),
-                          );
-                          setVisaDocs((current) => [...current, ...next]);
-                          e.currentTarget.value = "";
-                        }}
-                      />
-                    </label>
-                    {visaDocs.length ? (
-                      <>
-                        <ul className="space-y-2">
-                          {visaDocs.map((doc) => (
-                            <li
-                              key={doc.id}
-                              className="flex items-center justify-between rounded-md border border-border bg-background px-3 py-2 text-xs"
-                            >
-                              <span className="text-foreground">📎 {doc.name}</span>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setVisaDocs((docs) => docs.filter((item) => item.id !== doc.id))
-                                }
-                                className="font-semibold text-destructive"
-                              >
-                                Remove
-                              </button>
-                            </li>
-                          ))}
-                        </ul>
-                        <p className="text-xs text-muted-foreground">
-                          Review the files above. They are not shared until you confirm.
-                        </p>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (!submittedProfile) return;
-                            const now = new Date().toISOString();
-                            const documents = visaDocs.map((doc) => ({ ...doc, uploadedAt: now }));
-                            const profileWithDocs: MortgageProfile = {
-                              ...submittedProfile,
-                              visaDocuments: documents,
-                            ...(documents[0]?.name ? { visaDocumentName: documents[0].name } : {}),
-                              visaDocumentUploadedAt: now,
-                            };
-                            saveMortgageProfile(profileWithDocs);
-                            if (submittedLeadId)
-                              updateLead(submittedLeadId, { profile: profileWithDocs });
-                            setVisaDocsConfirmed(true);
-                          }}
-                          className="rounded-md bg-brand px-4 py-2 text-sm font-semibold text-background hover:bg-brand-soft"
-                        >
-                          Confirm and share documents
-                        </button>
-                      </>
-                    ) : null}
-                  </div>
-                )}
-              </div>
+              ) : (
+                <DocumentUploadBox
+                  title="One more step: visa document verification"
+                  description={
+                    visaFollowUp === "changed"
+                      ? "Your visa / status details changed since your last application — please upload the new valid visa document so the lending partner can verify it."
+                      : visaFollowUp === "expired"
+                        ? "The visa document we had on file has expired — please upload the renewed document."
+                        : "Because you hold a US visa or status, please upload a copy or scan of your valid visa document so the lending partner can verify it."
+                  }
+                  onConfirm={(docs) => attachDocuments("visaDocuments", docs)}
+                />
+              )
+            ) : null}
+
+            {data.declarations.bankruptcy && !submittedProfile?.bankruptcyDocuments?.length ? (
+              <DocumentUploadBox
+                title="Bankruptcy discharge papers"
+                description="You declared a bankruptcy within the last 7 years. Please upload the bankruptcy discharge papers so the lending partner can verify the discharge."
+                onConfirm={(docs) => attachDocuments("bankruptcyDocuments", docs)}
+              />
+            ) : null}
+
+            {(usPerson || data.hasItin) && !submittedProfile?.idDocuments?.length ? (
+              <DocumentUploadBox
+                title="Identification document"
+                description="To verify the information for an accurate pre-approval, please upload your driver's license (front and back), green card, or passport."
+                onConfirm={(docs) => attachDocuments("idDocuments", docs)}
+              />
             ) : null}
 
             <button
