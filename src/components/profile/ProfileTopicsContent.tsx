@@ -293,7 +293,7 @@ export function CitizenshipTopic({
             visaIssued: draft.visaIssued || undefined,
             visaValidUntil: draft.visaValidUntil || undefined,
             otherVisaType: draft.otherVisaType || undefined,
-          });
+          } as Partial<MortgageProfile>);
           toast.success("Citizenship & identification updated");
         }}
       >
