@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { PARTNER_LABEL, fullName, useAuth } from "@/lib/auth";
 import { formatDate } from "@/lib/dates";
@@ -6,6 +7,21 @@ import { usePartnerRequests, type PartnerRequest } from "@/lib/partner-requests"
 import { useRealtors } from "@/lib/realtors";
 import { KICKOFF_LABEL, useLeads } from "@/lib/leads";
 import { buyerAgentSummary, useBuyerProcess } from "@/lib/buyer-process";
+import { logActivity } from "@/lib/activity";
+import {
+  ActivityFeed,
+  EmployeeTracking,
+  PartnerComparison,
+} from "@/components/admin/AdminSections";
+
+type AdminTab = "overview" | "partners" | "employees" | "activity";
+
+const ADMIN_TABS: [AdminTab, string][] = [
+  ["overview", "Overview"],
+  ["partners", "Partners"],
+  ["employees", "Employees"],
+  ["activity", "Activity"],
+];
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
@@ -51,6 +67,7 @@ const QUEUES: [string, string, string][] = [
 
 function AdminPage() {
   const { user, ready } = useAuth();
+  const [tab, setTab] = useState<AdminTab>("overview");
   const { requests, setStatus } = usePartnerRequests();
   const { addRealtor } = useRealtors();
   const { leads } = useLeads();
@@ -83,6 +100,7 @@ function AdminPage() {
 
   function approve(r: PartnerRequest) {
     setStatus(r.id, "approved");
+    logActivity("Loqal admin", "approved a partner registration", r.companyName);
     if (r.partnerType === "realtor") {
       addRealtor({
         firstName: r.firstName,
@@ -194,7 +212,10 @@ function AdminPage() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => setStatus(r.id, "declined")}
+                        onClick={() => {
+                          setStatus(r.id, "declined");
+                          logActivity("Loqal admin", "declined a partner registration", r.companyName);
+                        }}
                         className="rounded-md border border-border px-4 py-2 text-xs font-semibold text-muted-foreground hover:text-destructive"
                       >
                         Decline
