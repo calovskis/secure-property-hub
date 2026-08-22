@@ -79,6 +79,7 @@ function AdminPage() {
   }
 
   const pending = requests.filter((r) => r.status === "pending");
+  const buyerFiles = leads.filter((l) => l.clientDecision === "accepted" && l.buyerAgent);
 
   function approve(r: PartnerRequest) {
     setStatus(r.id, "approved");
