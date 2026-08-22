@@ -250,14 +250,44 @@ export function LeadsProvider({ children }: { children: ReactNode }) {
       leads,
       ready,
       createLead: (input) => {
+        /* A re-submission for the same client + property refreshes the file,
+         * it does not wipe the lender's workflow state (decision, terms,
+         * info requests, debts, assignment) or previously confirmed docs. */
+        const existing = leads.find(
+          (l) => l.clientEmail === input.clientEmail && l.propertyId === input.propertyId,
+        );
         const lead: MortgageLead = {
           ...input,
-          id: uid(),
-          status: "new",
-          dtiLimit: DEFAULT_DTI_LIMIT,
-          infoRequests: [],
+          id: existing?.id ?? uid(),
+          status: existing?.status ?? "new",
+          dtiLimit: existing?.dtiLimit ?? DEFAULT_DTI_LIMIT,
+          infoRequests: existing?.infoRequests ?? [],
           submittedAt: new Date().toISOString(),
-          ...autoAssign(input, leads),
+          ...(existing
+            ? {
+                ...(existing.creditScore !== undefined
+                  ? { creditScore: existing.creditScore }
+                  : {}),
+                ...(existing.lenderNote ? { lenderNote: existing.lenderNote } : {}),
+                ...(existing.decidedAt ? { decidedAt: existing.decidedAt } : {}),
+                ...(existing.terms ? { terms: existing.terms } : {}),
+                ...(existing.clientDecision
+                  ? { clientDecision: existing.clientDecision }
+                  : {}),
+                ...(existing.clientDecisionAt
+                  ? { clientDecisionAt: existing.clientDecisionAt }
+                  : {}),
+                ...(existing.assignedToId
+                  ? {
+                      assignedToId: existing.assignedToId,
+                      assignedToName: existing.assignedToName,
+                      assignedAt: existing.assignedAt,
+                    }
+                  : {}),
+                ...(existing.routedToOtherPartner ? { routedToOtherPartner: true } : {}),
+                ...(existing.debts ? { debts: existing.debts } : {}),
+              }
+            : autoAssign(input, leads)),
         };
         const rest = leads.filter(
           (l) => !(l.clientEmail === lead.clientEmail && l.propertyId === lead.propertyId),

@@ -243,6 +243,22 @@ export function ApplicantFile({ lead }: { lead: MortgageLead }) {
       ...(p.visaDocumentUploadedAt ? { when: p.visaDocumentUploadedAt } : {}),
     });
   }
+  for (const d of p.idDocuments ?? []) {
+    documents.push({
+      id: d.id,
+      label: `ID document — ${d.name}`,
+      when: d.uploadedAt,
+      ...(d.url ? { url: d.url } : {}),
+    });
+  }
+  for (const d of p.bankruptcyDocuments ?? []) {
+    documents.push({
+      id: d.id,
+      label: `Bankruptcy discharge papers — ${d.name}`,
+      when: d.uploadedAt,
+      ...(d.url ? { url: d.url } : {}),
+    });
+  }
   for (const r of lead.infoRequests) {
     for (const d of r.documents) {
       documents.push({ id: d.id, label: d.name, when: d.uploadedAt });
@@ -264,6 +280,11 @@ export function ApplicantFile({ lead }: { lead: MortgageLead }) {
             <span className="rounded-full bg-gold-tint px-3 py-1 text-[11px] font-semibold text-gold">
               {LEAD_STATUS_LABEL[lead.status]}
             </span>
+            {majorityForeign ? (
+              <span className="rounded-full bg-gold-tint px-3 py-1 text-[11px] font-semibold text-gold underline decoration-gold decoration-2 underline-offset-2">
+                Foreign income (≥51%)
+              </span>
+            ) : null}
           </div>
         </div>
         <div className="mt-2 flex flex-wrap items-center gap-x-6 gap-y-1 text-xs text-muted-foreground">
