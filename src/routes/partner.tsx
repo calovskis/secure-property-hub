@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { LenderPortal, useLenderTabs, type LenderTabId } from "@/components/lender/LenderPortal";
+import { RealtorPortal } from "@/components/realtor/RealtorPortal";
 
 import { PARTNER_LABEL, fullName, useAuth, type PartnerType } from "@/lib/auth";
 
@@ -152,6 +153,10 @@ function PartnerPage() {
 
   if (type === "lender") {
     return <LenderWorkspace lenderName={user.companyName || fullName(user)} />;
+  }
+
+  if (type === "realtor") {
+    return <RealtorPortal user={user} />;
   }
 
   const board = BOARDS[type];

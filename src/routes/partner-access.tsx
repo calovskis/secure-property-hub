@@ -3,6 +3,9 @@ import { useState } from "react";
 import { PARTNER_LABEL, type PartnerType } from "@/lib/auth";
 import { StateCombobox, StateMultiSelect } from "@/components/form/StateCombobox";
 import { CountryCombobox } from "@/components/form/CountryCombobox";
+import { DateInput } from "@/components/form/DateInput";
+import { REALTOR_LANGUAGES, type RealtorLicense } from "@/lib/realtors";
+import { usePartnerRequests } from "@/lib/partner-requests";
 
 export const Route = createFileRoute("/partner-access")({
   component: PartnerAccessPage,
@@ -61,7 +64,9 @@ function PartnerAccessPage() {
   const [states, setStates] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
-
+  const { submit } = usePartnerRequests();
+  const [licenses, setLicenses] = useState<Record<string, Omit<RealtorLicense, "state">>>({});
+  const [languages, setLanguages] = useState<string[]>([]);
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -80,10 +85,49 @@ function PartnerAccessPage() {
     if (kind === "partner") {
       if (partnerType === "lender" && !licenceNumber.trim())
         return setError("Licence number is required for mortgage lenders.");
-      if (!allStates && states.length === 0)
+      if (partnerType === "realtor") {
+        if (states.length === 0)
+          return setError("Realtor licenses are issued per state — select the states you are licensed in.");
+        for (const s of states) {
+          const lic = licenses[s];
+          if (!lic?.number.trim() || !lic.issuedAt || !lic.validUntil)
+            return setError(`Enter the license number, issue date and validity for ${s}.`);
+        }
+        if (languages.length === 0)
+          return setError("Select at least one language you work in.");
+      } else if (!allStates && states.length === 0) {
         return setError("Select the states you are active in, or choose all states.");
+      }
     }
     setError(null);
+    submit({
+      kind,
+      ...(kind === "partner" ? { partnerType } : {}),
+      companyName: companyName.trim(),
+      companyType: companyType.trim(),
+      registrationNumber: registrationNumber.trim(),
+      street: street.trim(),
+      city: city.trim(),
+      state: addressState,
+      zip: zip.trim(),
+      country,
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      position: position.trim(),
+      email: email.trim(),
+      phone: phone.trim(),
+      allStates: partnerType === "realtor" ? false : allStates,
+      states,
+      ...(kind === "partner" && partnerType === "lender"
+        ? { lenderLicence: licenceNumber.trim() }
+        : {}),
+      ...(kind === "partner" && partnerType === "realtor"
+        ? {
+            realtorLicenses: states.map((s) => ({ state: s, ...licenses[s]! })),
+            languages,
+          }
+        : {}),
+    });
     setSent(true);
   }
 
@@ -107,8 +151,8 @@ function PartnerAccessPage() {
             <div className="mt-8 rounded-lg border border-border bg-brand-tint/40 p-6 text-center">
               <div className="text-base font-semibold text-foreground">Request received</div>
               <p className="mt-2 text-sm text-muted-foreground">
-                Thank you, {firstName}. Our onboarding team will contact you at {email} within one
-                business day.
+                Thank you, {firstName}. A Loqal admin reviews every registration — once approved,
+                you can log in to your partner workspace. We will notify you at {email}.
               </p>
               <Link
                 to="/"
@@ -252,7 +296,10 @@ function PartnerAccessPage() {
                         <button
                           key={p}
                           type="button"
-                          onClick={() => setPartnerType(p)}
+                          onClick={() => {
+                            setPartnerType(p);
+                            if (p === "realtor") setAllStates(false);
+                          }}
                           className={`rounded-full border px-4 py-1.5 text-xs font-semibold transition-colors ${
                             partnerType === p
                               ? "border-brand bg-brand text-background"
@@ -278,29 +325,35 @@ function PartnerAccessPage() {
                   ) : null}
 
                   <div>
-                    <Label required>States you are active in</Label>
+                    <Label required>
+                      {partnerType === "realtor"
+                        ? "States you are licensed in as a real estate agent"
+                        : "States you are active in"}
+                    </Label>
                     <div className="mb-3 flex flex-wrap items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setAllStates((v) => !v);
-                          setStates([]);
-                        }}
-                        className={`rounded-full border px-4 py-1.5 text-xs font-semibold transition-colors ${
-                          allStates
-                            ? "border-brand bg-brand text-background"
-                            : "border-border text-foreground hover:bg-brand-tint"
-                        }`}
-                      >
-                        All states
-                      </button>
-                      {!allStates && states.length > 0 ? (
+                      {partnerType !== "realtor" ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAllStates((v) => !v);
+                            setStates([]);
+                          }}
+                          className={`rounded-full border px-4 py-1.5 text-xs font-semibold transition-colors ${
+                            allStates
+                              ? "border-brand bg-brand text-background"
+                              : "border-border text-foreground hover:bg-brand-tint"
+                          }`}
+                        >
+                          All states
+                        </button>
+                      ) : null}
+                      {(partnerType === "realtor" || !allStates) && states.length > 0 ? (
                         <span className="text-xs text-muted-foreground">
                           {states.length} selected
                         </span>
                       ) : null}
                     </div>
-                    {!allStates ? (
+                    {partnerType === "realtor" || !allStates ? (
                       <StateMultiSelect
                         values={states}
                         onAdd={(c) => setStates((prev) => [...prev, c])}
@@ -310,6 +363,79 @@ function PartnerAccessPage() {
                       />
                     ) : null}
                   </div>
+
+                  {partnerType === "realtor" && states.length > 0 ? (
+                    <div className="space-y-3 rounded-lg border border-border bg-brand-tint/30 p-4">
+                      <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Real estate license per state
+                      </span>
+                      {states.map((s) => {
+                        const lic = licenses[s] ?? { number: "", issuedAt: "", validUntil: "" };
+                        const setLic = (patch: Partial<Omit<RealtorLicense, "state">>) =>
+                          setLicenses({ ...licenses, [s]: { ...lic, ...patch } });
+                        return (
+                          <div
+                            key={s}
+                            className="grid grid-cols-1 gap-3 sm:grid-cols-[48px_1fr_1fr_1fr] sm:items-end"
+                          >
+                            <span className="pt-2 text-sm font-semibold text-foreground">{s}</span>
+                            <label>
+                              <Label required>License №</Label>
+                              <input
+                                value={lic.number}
+                                onChange={(e) => setLic({ number: e.target.value })}
+                                className={inputClass}
+                              />
+                            </label>
+                            <label>
+                              <Label required>Issued</Label>
+                              <DateInput
+                                value={lic.issuedAt}
+                                onChange={(v) => setLic({ issuedAt: v })}
+                                className={inputClass}
+                              />
+                            </label>
+                            <label>
+                              <Label required>Valid until</Label>
+                              <DateInput
+                                value={lic.validUntil}
+                                onChange={(v) => setLic({ validUntil: v })}
+                                className={inputClass}
+                              />
+                            </label>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : null}
+
+                  {partnerType === "realtor" ? (
+                    <div>
+                      <Label required>Languages you work in</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {REALTOR_LANGUAGES.map((l) => (
+                          <button
+                            key={l}
+                            type="button"
+                            onClick={() =>
+                              setLanguages(
+                                languages.includes(l)
+                                  ? languages.filter((x) => x !== l)
+                                  : [...languages, l],
+                              )
+                            }
+                            className={`rounded-full border px-4 py-1.5 text-xs font-semibold transition-colors ${
+                              languages.includes(l)
+                                ? "border-brand bg-brand text-background"
+                                : "border-border text-foreground hover:bg-brand-tint"
+                            }`}
+                          >
+                            {l}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
                 </>
               ) : null}
 
