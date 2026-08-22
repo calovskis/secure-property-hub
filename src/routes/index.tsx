@@ -3,6 +3,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { useAuth } from "@/lib/auth";
 import { useT } from "@/lib/i18n";
+import { offerReminders, pendingOfferDecision, useLeads } from "@/lib/leads";
+import { formatDateTime } from "@/lib/dates";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -214,10 +216,13 @@ function Landing() {
 
 function Dashboard() {
   const { user, ready } = useAuth();
+  const { leadsForClient } = useLeads();
   const t = useT();
 
   if (!ready) return <div className="min-h-screen bg-background" />;
   if (!user) return <Landing />;
+
+  const pendingOffers = leadsForClient(user.email).filter(pendingOfferDecision);
 
   return (
     <div className="min-h-screen bg-background">
@@ -247,6 +252,42 @@ function Dashboard() {
             {t("Start typing or")} <span className="cursor-pointer font-semibold text-brand">{t("open full search")}</span>
           </span>
         </div>
+
+        {pendingOffers.length ? (
+          <div className="mb-8 rounded-xl border border-gold/40 bg-gold-tint/50 p-5">
+            <div className="text-sm font-semibold text-foreground">
+              ⏳ Action needed — your pre-approval terms are waiting for your answer
+            </div>
+            <div className="mt-3 space-y-2">
+              {pendingOffers.map((l) => {
+                const next = offerReminders(l).find((r) => !r.due);
+                return (
+                  <div
+                    key={l.id}
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card px-4 py-3"
+                  >
+                    <div>
+                      <div className="text-sm font-semibold text-foreground">{l.propertyLabel}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {l.terms!.ratePct}% · {l.terms!.termYears}y · {l.terms!.downPaymentPct}% down
+                        {next
+                          ? ` · next reminder ${formatDateTime(next.dueAt)}${next.email ? " (platform + e-mail)" : ""}`
+                          : ""}
+                      </div>
+                    </div>
+                    <Link
+                      to="/property/$propertyId"
+                      params={{ propertyId: String(l.propertyId) }}
+                      className="rounded-md bg-brand px-4 py-2 text-xs font-semibold text-background hover:bg-brand-soft"
+                    >
+                      Review &amp; respond
+                    </Link>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
 
         <div className="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
           {metrics.map((m) => (

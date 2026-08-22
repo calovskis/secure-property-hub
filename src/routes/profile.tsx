@@ -16,7 +16,14 @@ import {
 import { PartnerProfile } from "@/components/profile/PartnerProfile";
 import { PARTNER_LABEL, ROLE_LABEL, fullName, useAuth, type MortgageProfile } from "@/lib/auth";
 import { formatDate, formatDateTime } from "@/lib/dates";
-import { LEAD_STATUS_LABEL, hasPricedOffer, useLeads, type MortgageLead } from "@/lib/leads";
+import {
+  CLIENT_DECISION_LABEL,
+  LEAD_STATUS_LABEL,
+  hasPricedOffer,
+  offerReminders,
+  useLeads,
+  type MortgageLead,
+} from "@/lib/leads";
 import { useMortgageDrafts } from "@/lib/mortgage-draft";
 import { useI18n } from "@/lib/i18n";
 
@@ -65,6 +72,7 @@ function statusTone(lead: MortgageLead) {
 function FeedbackBlock({ lead }: { lead: MortgageLead }) {
   const answered = lead.infoRequests.filter((r) => r.answeredAt);
   const open = lead.infoRequests.filter((r) => !r.answeredAt);
+  const nextReminder = offerReminders(lead).find((r) => !r.due);
 
   return (
     <div className="mt-4 space-y-3 border-t border-border pt-4">
@@ -105,12 +113,22 @@ function FeedbackBlock({ lead }: { lead: MortgageLead }) {
               label="Your decision"
               value={
                 lead.clientDecision
-                  ? `${lead.clientDecision === "accepted" ? "Accepted" : "Declined"} · ${formatDate(
-                      lead.clientDecisionAt,
-                    )}`
-                  : "Awaiting your confirmation"
+                  ? `${CLIENT_DECISION_LABEL[lead.clientDecision]} · ${formatDate(lead.clientDecisionAt)}`
+                  : "Awaiting your response"
               }
             />
+            {!lead.clientDecision && nextReminder ? (
+              <Row
+                label="Next reminder"
+                value={`${formatDateTime(nextReminder.dueAt)}${nextReminder.email ? " · also by e-mail" : ""}`}
+              />
+            ) : null}
+            {lead.buyerAgent?.agentName ? (
+              <Row
+                label="Buyer's agent"
+                value={`${lead.buyerAgent.agentName} · ${lead.buyerAgent.feePct}% at closing`}
+              />
+            ) : null}
           </div>
         </div>
       ) : null}
@@ -130,6 +148,22 @@ function FeedbackBlock({ lead }: { lead: MortgageLead }) {
               <div className="mt-1 text-sm text-muted-foreground">{r.answer}</div>
               <div className="mt-1 text-[11px] text-muted-foreground">
                 Answered {formatDateTime(r.answeredAt)}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      {(lead.clientQuestions ?? []).length ? (
+        <div className="space-y-2">
+          <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Your questions to the lender
+          </div>
+          {(lead.clientQuestions ?? []).map((q) => (
+            <div key={q.id} className="rounded-md border border-border p-3">
+              <div className="text-sm font-medium text-foreground">{q.text}</div>
+              <div className="mt-1 text-sm text-muted-foreground">
+                {q.answer ?? "Waiting for the lender's answer…"}
               </div>
             </div>
           ))}

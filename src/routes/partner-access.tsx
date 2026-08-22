@@ -452,7 +452,7 @@ function PartnerAccessPage() {
                 Submit request
               </button>
               <p className="text-center text-[11px] text-muted-foreground">
-                Prototype — requests are not stored yet.
+                Your request goes to the Loqal admin team — access opens once it is approved.
               </p>
             </form>
           )}

@@ -1,6 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppHeader } from "@/components/layout/AppHeader";
-import { fullName, useAuth } from "@/lib/auth";
+import { PARTNER_LABEL, fullName, useAuth } from "@/lib/auth";
+import { formatDate } from "@/lib/dates";
+import { usePartnerRequests, type PartnerRequest } from "@/lib/partner-requests";
+import { useRealtors } from "@/lib/realtors";
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
@@ -46,6 +49,8 @@ const QUEUES: [string, string, string][] = [
 
 function AdminPage() {
   const { user, ready } = useAuth();
+  const { requests, setStatus } = usePartnerRequests();
+  const { addRealtor } = useRealtors();
 
   if (!ready) return <div className="min-h-screen bg-background" />;
 
@@ -67,6 +72,24 @@ function AdminPage() {
         </main>
       </div>
     );
+  }
+
+  const pending = requests.filter((r) => r.status === "pending");
+
+  function approve(r: PartnerRequest) {
+    setStatus(r.id, "approved");
+    if (r.partnerType === "realtor") {
+      addRealtor({
+        firstName: r.firstName,
+        lastName: r.lastName,
+        email: r.email,
+        phone: r.phone,
+        address: { street: r.street, city: r.city, state: r.state, zip: r.zip, country: r.country },
+        licenses: r.realtorLicenses ?? [],
+        languages: r.languages ?? ["English"],
+        approvedAt: new Date().toISOString(),
+      });
+    }
   }
 
   return (
@@ -95,6 +118,88 @@ function AdminPage() {
               <div className="mt-2 text-xs text-muted-foreground">{note}</div>
             </div>
           ))}
+        </section>
+
+        <section className="mb-6 rounded-lg border border-border bg-card p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-base font-semibold text-foreground">
+              Partner registration requests
+            </h2>
+            <span className="rounded-full bg-gold-tint px-3 py-1 text-[11px] font-semibold text-gold">
+              {pending.length} pending
+            </span>
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Partners only get access to their workspace after you approve them here.
+          </p>
+          {pending.length === 0 ? (
+            <p className="mt-4 text-sm text-muted-foreground">No requests waiting for review.</p>
+          ) : (
+            <ul className="mt-4 space-y-4">
+              {pending.map((r) => (
+                <li key={r.id} className="rounded-lg border border-border p-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold text-foreground">
+                        {r.companyName}{" "}
+                        <span className="ml-1 rounded-full bg-brand-tint px-2.5 py-0.5 text-[11px] font-semibold text-brand">
+                          {r.kind === "partner"
+                            ? PARTNER_LABEL[r.partnerType ?? "other"]
+                            : "Corporate"}
+                        </span>
+                      </div>
+                      <div className="mt-1 text-xs text-muted-foreground">
+                        {r.firstName} {r.lastName} · {r.position} · {r.email} · {r.phone}
+                      </div>
+                      <div className="mt-1 text-xs text-muted-foreground">
+                        {r.street}, {r.city}
+                        {r.state ? `, ${r.state}` : ""} {r.zip}, {r.country} · Reg №{" "}
+                        {r.registrationNumber} · submitted {formatDate(r.submittedAt)}
+                      </div>
+                      {r.realtorLicenses?.length ? (
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          {r.realtorLicenses.map((l) => (
+                            <span
+                              key={l.state}
+                              className="rounded bg-brand-tint px-2 py-1 text-[11px] font-semibold text-brand"
+                            >
+                              {l.state} · {l.number} · valid till {formatDate(l.validUntil)}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
+                      {r.languages?.length ? (
+                        <div className="mt-1 text-xs text-muted-foreground">
+                          Languages: {r.languages.join(", ")}
+                        </div>
+                      ) : null}
+                      {r.lenderLicence ? (
+                        <div className="mt-1 text-xs text-muted-foreground">
+                          Licence: {r.lenderLicence}
+                        </div>
+                      ) : null}
+                    </div>
+                    <div className="flex shrink-0 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => approve(r)}
+                        className="rounded-md bg-success px-4 py-2 text-xs font-semibold text-background hover:opacity-90"
+                      >
+                        Approve
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setStatus(r.id, "declined")}
+                        className="rounded-md border border-border px-4 py-2 text-xs font-semibold text-muted-foreground hover:text-destructive"
+                      >
+                        Decline
+                      </button>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
 
         <section className="grid grid-cols-1 gap-6 lg:grid-cols-[1.6fr_1fr]">
