@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -7,15 +8,19 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useAuth, fullName, type MortgageProfile } from "@/lib/auth";
+import { formatDate } from "@/lib/dates";
 import { useLeads } from "@/lib/leads";
 import { useMortgageDrafts } from "@/lib/mortgage-draft";
 import {
   QUESTIONNAIRE_STEPS,
+  documentExpiryState,
+  normalizeAssets,
   totalMonthlyIncome,
   usStatusOf,
   type MaritalStatus,
   type UsStatus,
 } from "@/lib/mortgage-form";
+import { DocumentUploadBox } from "@/components/mortgage/DocumentUploadBox";
 import {
   emptyQuestionnaire,
   type QuestionnaireData,
@@ -39,6 +44,44 @@ function completionOf(data: QuestionnaireData, usPerson: boolean): number {
     Boolean(data.demographics.sex),
   ];
   return Math.round((checks.filter(Boolean).length / checks.length) * 100);
+}
+
+/**
+ * Prefill the wizard from the last saved mortgage profile. The profile is
+ * also what My Profile edits write to, so the latest manual change always
+ * wins over an older questionnaire submission.
+ */
+function profileToQuestionnaire(p?: MortgageProfile): QuestionnaireData | null {
+  if (!p) return null;
+  const d = emptyQuestionnaire();
+  return {
+    ...d,
+    dob: p.dateOfBirth ?? "",
+    maritalStatus: p.maritalStatus ?? "",
+    unmarried: p.unmarriedAddendum ?? d.unmarried,
+    dependents: p.dependents ?? [],
+    hasItin: p.hasItin ?? false,
+    itin: p.itin ?? "",
+    countryOfResidence: p.countryOfResidence ?? "",
+    citizenship: p.citizenship ?? "",
+    secondCitizenship: p.secondCitizenship ?? "",
+    visaActive: p.usVisaActive ?? false,
+    visaType: p.visaType ?? "",
+    otherVisaType: p.otherVisaType ?? "",
+    visaIssued: p.visaIssued ?? "",
+    visaValidUntil: p.visaValidUntil ?? "",
+    propertyUse: p.propertyUse ?? "",
+    usBankAccount: p.usBankAccount ?? false,
+    addresses: p.addresses?.length ? p.addresses : d.addresses,
+    ssn: p.ssn ?? "",
+    ssnAccepted: p.ssnTermsAccepted ?? false,
+    incomes: p.incomes?.length ? p.incomes : d.incomes,
+    liabilities: p.liabilities ?? d.liabilities,
+    assets: normalizeAssets(p.assets),
+    declarations: p.declarations ?? d.declarations,
+    military: p.military ?? d.military,
+    demographics: p.demographics ?? d.demographics,
+  };
 }
 
 export function MortgageQuestionnaire({
@@ -65,11 +108,14 @@ export function MortgageQuestionnaire({
       const defaults = emptyQuestionnaire();
       const saved = draft.data as Partial<QuestionnaireData>;
       return {
-        data: { ...defaults, ...saved, assets: saved.assets ?? defaults.assets },
+        data: { ...defaults, ...saved, assets: normalizeAssets(saved.assets ?? defaults.assets) },
         step: Math.min(5, Math.max(1, draft.step)),
       };
     }
-    return { data: emptyQuestionnaire(), step: 1 };
+    /* No open draft — prefill from the last saved profile (which also
+     * reflects manual edits made via My Profile). */
+    const fromProfile = profileToQuestionnaire(user?.mortgageProfile);
+    return { data: fromProfile ?? emptyQuestionnaire(), step: 1 };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.email, propertyId, open]);
 
