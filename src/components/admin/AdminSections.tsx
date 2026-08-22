@@ -139,7 +139,10 @@ export function PartnerComparison() {
     const files = buyerFiles.filter((l) =>
       realtors.some((r) => r.email === email && l.buyerAgent?.agentId === r.id),
     );
-    if (!files.length) return toast("Nothing to invoice", { description: "No active buyer files." });
+    if (!files.length) {
+      toast("Nothing to invoice", { description: "No active buyer files." });
+      return;
+    }
     const amount = files.reduce(
       (s, l) => s + (l.propertyPrice * REALTOR_COMMISSION_PCT * REALTOR_PLATFORM_FEE_PCT) / 10000,
       0,
@@ -157,7 +160,10 @@ export function PartnerComparison() {
 
   function invoiceLender(email: string, company: string) {
     const amount = issuedPreApprovals.length * LENDER_PLATFORM_FEE_USD;
-    if (!amount) return toast("Nothing to invoice", { description: "No pre-approvals issued yet." });
+    if (!amount) {
+      toast("Nothing to invoice", { description: "No pre-approvals issued yet." });
+      return;
+    }
     issueInvoice({
       fromParty: "Loqal",
       toParty: email,
