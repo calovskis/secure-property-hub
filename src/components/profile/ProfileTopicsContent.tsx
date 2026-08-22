@@ -117,7 +117,7 @@ export function PersonalTopic({ profile, onSave }: { profile: MortgageProfile; o
                 ? { ...profile.unmarriedAddendum, hasSpousalEquivalent: draft.unmarriedHasSpousalEquivalent }
                 : profile.unmarriedAddendum,
             dependents,
-          });
+          } as Partial<MortgageProfile>);
           toast.success("Personal & household details updated");
         }}
       >
