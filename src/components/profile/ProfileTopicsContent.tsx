@@ -1163,7 +1163,7 @@ export function DemographicsTopic({ profile, onSave }: { profile: MortgageProfil
 
 /* -------------------------------------------------------------------------- Documents */
 
-function DocList({ docs }: { docs?: StoredDocument[] }) {
+function DocList({ docs }: { docs?: StoredDocument[] | undefined }) {
   if (!docs?.length) return <p className="text-sm text-muted-foreground">None uploaded.</p>;
   return (
     <ul className="space-y-2">
