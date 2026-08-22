@@ -131,6 +131,29 @@ function AdminPage() {
           </p>
         </div>
 
+        {/* Tabs */}
+        <div className="mb-6 flex flex-wrap gap-2 border-b border-border pb-3">
+          {ADMIN_TABS.map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setTab(id)}
+              className={`rounded-full border px-4 py-1.5 text-xs font-semibold ${
+                tab === id
+                  ? "border-brand bg-brand text-background"
+                  : "border-border bg-card text-muted-foreground hover:bg-brand-tint"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {tab === "employees" ? <EmployeeTracking /> : null}
+        {tab === "activity" ? <ActivityFeed /> : null}
+        {tab === "partners" ? <PartnerComparison /> : null}
+
+        {tab === "overview" ? (
         <section className="mb-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
           {METRICS.map(([label, value, note]) => (
             <div key={label} className="rounded-lg border border-border bg-card p-6">
@@ -142,7 +165,9 @@ function AdminPage() {
             </div>
           ))}
         </section>
+        ) : null}
 
+        {tab === "partners" ? (
         <section className="mb-6 rounded-lg border border-border bg-card p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-base font-semibold text-foreground">
@@ -227,7 +252,10 @@ function AdminPage() {
             </ul>
           )}
         </section>
+        ) : null}
 
+        {tab === "overview" ? (
+        <>
         <section className="mb-6 rounded-lg border border-border bg-card p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-base font-semibold text-foreground">Buyer files — oversight</h2>
@@ -237,7 +265,7 @@ function AdminPage() {
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
             Every accepted pre-approval: who represents the buyer, the kickoff choice and the
-            current status. Loqal personal manager cases carry an extra 1% platform fee.
+            current status. Loqal personal advocate cases carry an extra 1% platform fee.
           </p>
           {buyerFiles.length === 0 ? (
             <p className="mt-4 text-sm text-muted-foreground">
@@ -263,7 +291,7 @@ function AdminPage() {
                       <td className="py-3 pr-4">
                         {l.buyerAgent?.representation === "loqal_rep" ? (
                           <span className="rounded-full bg-gold-tint px-2.5 py-1 text-[11px] font-semibold text-gold">
-                            🛡 Loqal manager (+1% fee)
+                            🛡 Loqal advocate (+1% fee)
                           </span>
                         ) : (
                           <span className="rounded-full bg-brand-tint px-2.5 py-1 text-[11px] font-semibold text-brand">
@@ -336,6 +364,8 @@ function AdminPage() {
             </div>
           </div>
         </section>
+        </>
+        ) : null}
       </main>
     </div>
   );
