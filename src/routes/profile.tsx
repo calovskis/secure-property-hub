@@ -2,9 +2,20 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { MortgageQuestionnaire } from "@/components/mortgage/MortgageQuestionnaire";
-import { PARTNER_LABEL, ROLE_LABEL, fullName, useAuth } from "@/lib/auth";
+import {
+  AddressTopic,
+  AssetsTopic,
+  CitizenshipTopic,
+  DeclarationsTopic,
+  DemographicsTopic,
+  DocumentsTopic,
+  IncomeTopic,
+  LiabilitiesTopic,
+  PersonalTopic,
+} from "@/components/profile/ProfileTopicsContent";
+import { PartnerProfile } from "@/components/profile/PartnerProfile";
+import { PARTNER_LABEL, ROLE_LABEL, fullName, useAuth, type MortgageProfile } from "@/lib/auth";
 import { formatDate, formatDateTime, isoToUsDate } from "@/lib/dates";
-import { countryLabel } from "@/data/countries";
 import { LEAD_STATUS_LABEL, hasPricedOffer, useLeads, type MortgageLead } from "@/lib/leads";
 import { useMortgageDrafts } from "@/lib/mortgage-draft";
 import { useI18n } from "@/lib/i18n";
@@ -169,6 +180,28 @@ function ApplicationCard({ lead }: { lead: MortgageLead }) {
   );
 }
 
+function ProfileTopics({ profile }: { profile: MortgageProfile }) {
+  const { user, saveMortgageProfile } = useAuth();
+  const save = (patch: Partial<MortgageProfile>) => {
+    if (!user) return;
+    saveMortgageProfile({ ...profile, ...patch });
+  };
+
+  return (
+    <div className="space-y-4">
+      <PersonalTopic profile={profile} onSave={save} />
+      <CitizenshipTopic profile={profile} onSave={save} />
+      <AddressTopic profile={profile} onSave={save} />
+      <IncomeTopic profile={profile} onSave={save} />
+      <AssetsTopic profile={profile} onSave={save} />
+      <LiabilitiesTopic profile={profile} onSave={save} />
+      <DeclarationsTopic profile={profile} onSave={save} />
+      <DemographicsTopic profile={profile} onSave={save} />
+      <DocumentsTopic profile={profile} onSave={save} />
+    </div>
+  );
+}
+
 function ProfilePage() {
   const { user, ready } = useAuth();
   const { leadsForClient } = useLeads();
@@ -198,6 +231,7 @@ function ProfilePage() {
     );
   }
 
+  const isPartner = user.role === "partner";
   const leads = leadsForClient(user.email)
     .slice()
     .sort((a, b) => (a.submittedAt < b.submittedAt ? 1 : -1));
@@ -213,16 +247,20 @@ function ProfilePage() {
           <div>
             <h1 className="text-2xl font-bold text-foreground">My profile</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Everything you have shared with Loqal, and the status of what you submitted.
+              {isPartner
+                ? "Your partner details, licenses and performance with Loqal."
+                : "Everything you have shared with Loqal, and the status of what you submitted."}
             </p>
           </div>
-          <button
-            type="button"
-            onClick={() => setWizardOpen(true)}
-            className="rounded-md bg-brand px-4 py-2 text-sm font-semibold text-background hover:bg-brand-soft"
-          >
-            {profile ? "Update my information" : "Pre-fill my information"}
-          </button>
+          {!isPartner ? (
+            <button
+              type="button"
+              onClick={() => setWizardOpen(true)}
+              className="rounded-md bg-brand px-4 py-2 text-sm font-semibold text-background hover:bg-brand-soft"
+            >
+              {profile ? "Update my information" : "Pre-fill my information"}
+            </button>
+          ) : null}
         </header>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
@@ -233,161 +271,122 @@ function ProfilePage() {
                 <Row label="Full name" value={fullName(user)} />
                 <Row label="Email" value={user.email} />
                 <Row label="Phone" value={user.phone} />
-                <Row label="US citizen / green card" value={user.usPerson ? "Yes" : "No"} />
-                <Row
-                  label="Access"
-                  value={`${ROLE_LABEL[user.role]}${
-                    user.partnerType ? ` · ${PARTNER_LABEL[user.partnerType]}` : ""
-                  }`}
-                />
+                {!isPartner ? (
+                  <Row label="US citizen / green card" value={user.usPerson ? "Yes" : "No"} />
+                ) : null}
+                {user.role === "admin" ? (
+                  <Row
+                    label="Access"
+                    value={`${ROLE_LABEL[user.role]}${
+                      user.partnerType ? ` · ${PARTNER_LABEL[user.partnerType]}` : ""
+                    }`}
+                  />
+                ) : null}
                 {user.companyName ? <Row label="Company" value={user.companyName} /> : null}
               </div>
             </section>
 
-            <section className="rounded-lg border border-border bg-card p-6">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <h2 className="text-base font-semibold text-foreground">
-                  Financial & personal profile
-                </h2>
-                {profile ? (
-                  <span className="rounded-full bg-success/10 px-3 py-1 text-[11px] font-semibold text-success">
-                    Completed {formatDate(profile.submittedAt)}
-                  </span>
-                ) : (
-                  <span className="rounded-full bg-gold-tint px-3 py-1 text-[11px] font-semibold text-gold">
-                    Not provided yet
-                  </span>
-                )}
-              </div>
-
-              {profile ? (
-                <div className="mt-3">
-                  <Row label="Date of birth" value={isoToUsDate(profile.dateOfBirth)} />
-                  <Row label="Marital status" value={profile.maritalStatus} />
-                  <Row label="Dependents" value={profile.dependents?.length ?? 0} />
-                  <Row label="Monthly gross income" value={money(profile.monthlyGross ?? 0)} />
-                  {!user.usPerson ? (
-                    <>
-                      <Row label="Country of residence" value={profile.countryOfResidence} />
-                      <Row label="Citizenship" value={profile.citizenship} />
-                      <Row label="Property use" value={profile.propertyUse} />
-                    </>
+            {isPartner ? (
+              <PartnerProfile user={user} />
+            ) : (
+              <section className="rounded-lg border border-border bg-card p-6">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <h2 className="text-base font-semibold text-foreground">
+                    Financial & personal profile
+                  </h2>
+                  {profile ? (
+                    <span className="rounded-full bg-success/10 px-3 py-1 text-[11px] font-semibold text-success">
+                      Last updated {formatDate(profile.submittedAt)}
+                    </span>
                   ) : (
-                    <Row label="SSN on file" value={profile.ssn ? "Yes" : "No"} />
+                    <span className="rounded-full bg-gold-tint px-3 py-1 text-[11px] font-semibold text-gold">
+                      Not provided yet
+                    </span>
                   )}
-
-                  <div className="mt-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Address history
-                  </div>
-                  <ul className="mt-2 space-y-2">
-                    {(profile.addresses ?? []).map((a) => (
-                      <li key={a.id} className="rounded-md border border-border p-3 text-sm">
-                        <div className="text-foreground">
-                          {[a.street, a.city, a.state, a.zip, countryLabel(a.country ?? "")]
-                            .filter(Boolean)
-                            .join(", ")}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {isoToUsDate(a.from) || a.from || "—"} —{" "}
-                          {a.present ? "Present" : isoToUsDate(a.to) || a.to || "—"}
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-
-                  <div className="mt-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Work & income history
-                  </div>
-                  <ul className="mt-2 space-y-2">
-                    {(profile.employment ?? []).map((e) => (
-                      <li key={e.id} className="rounded-md border border-border p-3 text-sm">
-                        <div className="text-foreground">
-                          {e.employer}
-                          {e.title ? ` — ${e.title}` : ""}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {isoToUsDate(e.from) || e.from || "—"} —{" "}
-                          {e.current ? "Present" : isoToUsDate(e.to) || e.to || "—"}
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
                 </div>
-              ) : (
-                <p className="mt-3 text-sm text-muted-foreground">
-                  You have not shared your personal, address, income and declaration details yet.
-                  You can pre-fill them whenever you want — once saved, every future request reuses
-                  them.
-                </p>
-              )}
-            </section>
+
+                {profile ? (
+                  <div className="mt-4">
+                    <ProfileTopics profile={profile} />
+                  </div>
+                ) : (
+                  <p className="mt-3 text-sm text-muted-foreground">
+                    You have not shared your personal, address, income and declaration details yet.
+                    You can pre-fill them whenever you want — once saved, every future request
+                    reuses them.
+                  </p>
+                )}
+              </section>
+            )}
           </div>
 
-          <aside className="space-y-6">
-            <section className="rounded-lg border border-border bg-card p-6">
-              <h2 className="text-base font-semibold text-foreground">Submitted applications</h2>
-              {leads.length ? (
-                <div className="mt-4 space-y-4">
-                  {leads.map((lead) => (
-                    <ApplicationCard key={lead.id} lead={lead} />
-                  ))}
-                </div>
-              ) : (
-                <p className="mt-3 text-sm text-muted-foreground">
-                  Nothing submitted yet. Request a mortgage from any property page and it will
-                  appear here with the lender's feedback.
-                </p>
-              )}
-            </section>
+          {!isPartner ? (
+            <aside className="space-y-6">
+              <section className="rounded-lg border border-border bg-card p-6">
+                <h2 className="text-base font-semibold text-foreground">Submitted applications</h2>
+                {leads.length ? (
+                  <div className="mt-4 space-y-4">
+                    {leads.map((lead) => (
+                      <ApplicationCard key={lead.id} lead={lead} />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mt-3 text-sm text-muted-foreground">
+                    Nothing submitted yet. Request a mortgage from any property page and it will
+                    appear here with the lender's feedback.
+                  </p>
+                )}
+              </section>
 
-            <section className="rounded-lg border border-border bg-card p-6">
-              <h2 className="text-base font-semibold text-foreground">Unfinished forms</h2>
-              {unfinished.length ? (
-                <ul className="mt-4 space-y-3">
-                  {unfinished.map((d) => (
-                    <li
-                      key={`${d.propertyId}-${d.updatedAt}`}
-                      className="rounded-md border border-border p-3"
-                    >
-                      <div className="text-sm font-medium text-foreground">
-                        {d.propertyLabel ?? "Mortgage pre-approval"}
-                      </div>
-                      <div className="mt-1 text-xs text-muted-foreground">
-                        {d.completion}% complete · last edited {formatDateTime(d.updatedAt)}
-                      </div>
-                      <div className="mt-2 h-1.5 w-full rounded-full bg-muted">
-                        <div
-                          className="h-1.5 rounded-full bg-brand"
-                          style={{ width: `${d.completion}%` }}
-                        />
-                      </div>
-                      {d.propertyId ? (
-                        <Link
-                          to="/property/$propertyId"
-                          params={{ propertyId: String(d.propertyId) }}
-                          className="mt-3 inline-flex rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-brand-tint hover:text-brand"
-                        >
-                          Continue
-                        </Link>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => setWizardOpen(true)}
-                          className="mt-3 inline-flex rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-brand-tint hover:text-brand"
-                        >
-                          Continue
-                        </button>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="mt-3 text-sm text-muted-foreground">
-                  No forms in progress. Anything you start is saved automatically.
-                </p>
-              )}
-            </section>
-          </aside>
+              <section className="rounded-lg border border-border bg-card p-6">
+                <h2 className="text-base font-semibold text-foreground">Unfinished forms</h2>
+                {unfinished.length ? (
+                  <ul className="mt-4 space-y-3">
+                    {unfinished.map((d) => (
+                      <li
+                        key={`${d.propertyId}-${d.updatedAt}`}
+                        className="rounded-md border border-border p-3"
+                      >
+                        <div className="text-sm font-medium text-foreground">
+                          {d.propertyLabel ?? "Mortgage pre-approval"}
+                        </div>
+                        <div className="mt-1 text-xs text-muted-foreground">
+                          {d.completion}% complete · last edited {formatDateTime(d.updatedAt)}
+                        </div>
+                        <div className="mt-2 h-1.5 w-full rounded-full bg-muted">
+                          <div
+                            className="h-1.5 rounded-full bg-brand"
+                            style={{ width: `${d.completion}%` }}
+                          />
+                        </div>
+                        {d.propertyId ? (
+                          <Link
+                            to="/property/$propertyId"
+                            params={{ propertyId: String(d.propertyId) }}
+                            className="mt-3 inline-flex rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-brand-tint hover:text-brand"
+                          >
+                            Continue
+                          </Link>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setWizardOpen(true)}
+                            className="mt-3 inline-flex rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-brand-tint hover:text-brand"
+                          >
+                            Continue
+                          </button>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="mt-3 text-sm text-muted-foreground">
+                    No forms in progress. Anything you start is saved automatically.
+                  </p>
+                )}
+              </section>
+            </aside>
+          ) : null}
         </div>
       </main>
 

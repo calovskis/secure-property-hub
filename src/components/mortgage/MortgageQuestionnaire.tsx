@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -7,15 +8,19 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useAuth, fullName, type MortgageProfile } from "@/lib/auth";
+import { formatDate } from "@/lib/dates";
 import { useLeads } from "@/lib/leads";
 import { useMortgageDrafts } from "@/lib/mortgage-draft";
 import {
   QUESTIONNAIRE_STEPS,
+  documentExpiryState,
+  normalizeAssets,
   totalMonthlyIncome,
   usStatusOf,
   type MaritalStatus,
   type UsStatus,
 } from "@/lib/mortgage-form";
+import { DocumentUploadBox } from "@/components/mortgage/DocumentUploadBox";
 import {
   emptyQuestionnaire,
   type QuestionnaireData,
@@ -39,6 +44,44 @@ function completionOf(data: QuestionnaireData, usPerson: boolean): number {
     Boolean(data.demographics.sex),
   ];
   return Math.round((checks.filter(Boolean).length / checks.length) * 100);
+}
+
+/**
+ * Prefill the wizard from the last saved mortgage profile. The profile is
+ * also what My Profile edits write to, so the latest manual change always
+ * wins over an older questionnaire submission.
+ */
+function profileToQuestionnaire(p?: MortgageProfile): QuestionnaireData | null {
+  if (!p) return null;
+  const d = emptyQuestionnaire();
+  return {
+    ...d,
+    dob: p.dateOfBirth ?? "",
+    maritalStatus: p.maritalStatus ?? "",
+    unmarried: p.unmarriedAddendum ?? d.unmarried,
+    dependents: p.dependents ?? [],
+    hasItin: p.hasItin ?? false,
+    itin: p.itin ?? "",
+    countryOfResidence: p.countryOfResidence ?? "",
+    citizenship: p.citizenship ?? "",
+    secondCitizenship: p.secondCitizenship ?? "",
+    visaActive: p.usVisaActive ?? false,
+    visaType: p.visaType ?? "",
+    otherVisaType: p.otherVisaType ?? "",
+    visaIssued: p.visaIssued ?? "",
+    visaValidUntil: p.visaValidUntil ?? "",
+    propertyUse: p.propertyUse ?? "",
+    usBankAccount: p.usBankAccount ?? false,
+    addresses: p.addresses?.length ? p.addresses : d.addresses,
+    ssn: p.ssn ?? "",
+    ssnAccepted: p.ssnTermsAccepted ?? false,
+    incomes: p.incomes?.length ? p.incomes : d.incomes,
+    liabilities: p.liabilities ?? d.liabilities,
+    assets: normalizeAssets(p.assets),
+    declarations: p.declarations ?? d.declarations,
+    military: p.military ?? d.military,
+    demographics: p.demographics ?? d.demographics,
+  };
 }
 
 export function MortgageQuestionnaire({
@@ -65,11 +108,14 @@ export function MortgageQuestionnaire({
       const defaults = emptyQuestionnaire();
       const saved = draft.data as Partial<QuestionnaireData>;
       return {
-        data: { ...defaults, ...saved, assets: saved.assets ?? defaults.assets },
+        data: { ...defaults, ...saved, assets: normalizeAssets(saved.assets ?? defaults.assets) },
         step: Math.min(5, Math.max(1, draft.step)),
       };
     }
-    return { data: emptyQuestionnaire(), step: 1 };
+    /* No open draft — prefill from the last saved profile (which also
+     * reflects manual edits made via My Profile). */
+    const fromProfile = profileToQuestionnaire(user?.mortgageProfile);
+    return { data: fromProfile ?? emptyQuestionnaire(), step: 1 };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.email, propertyId, open]);
 
@@ -81,8 +127,46 @@ export function MortgageQuestionnaire({
   const [savedNote, setSavedNote] = useState(false);
   const [submittedProfile, setSubmittedProfile] = useState<MortgageProfile | null>(null);
   const [submittedLeadId, setSubmittedLeadId] = useState<string | null>(null);
-  const [visaDocs, setVisaDocs] = useState<{ id: string; name: string; url: string }[]>([]);
-  const [visaDocsConfirmed, setVisaDocsConfirmed] = useState(false);
+  /** Why a fresh visa document is required after submission (null = on file). */
+  const [visaFollowUp, setVisaFollowUp] = useState<"changed" | "expired" | "new" | null>(null);
+
+  /* Warn when the visa / status document on file expires within 3 days
+   * (or has already expired) — the client is asked to upload a renewal. */
+  const savedVisaValidUntil = user?.mortgageProfile?.visaValidUntil;
+  useEffect(() => {
+    if (!open) return;
+    const state = documentExpiryState(savedVisaValidUntil);
+    if (state === "expiring") {
+      toast.warning(
+        `Your US visa / status document expires ${formatDate(savedVisaValidUntil)} — please prepare a renewed document.`,
+      );
+    }
+    if (state === "expired") {
+      toast.error(
+        "Your US visa / status document on file has expired — please upload an updated document.",
+      );
+    }
+  }, [open, savedVisaValidUntil]);
+
+  /** Merge confirmed documents into the submitted profile + lead snapshot. */
+  function attachDocuments(
+    key: "visaDocuments" | "idDocuments" | "bankruptcyDocuments",
+    docs: { id: string; name: string; url: string }[],
+  ) {
+    if (!submittedProfile) return;
+    const now = new Date().toISOString();
+    const documents = docs.map((d) => ({ ...d, uploadedAt: now }));
+    const next: MortgageProfile = {
+      ...submittedProfile,
+      [key]: documents,
+      ...(key === "visaDocuments" && documents[0]?.name
+        ? { visaDocumentName: documents[0].name, visaDocumentUploadedAt: now }
+        : {}),
+    };
+    setSubmittedProfile(next);
+    saveMortgageProfile(next);
+    if (submittedLeadId) updateLead(submittedLeadId, { profile: next });
+  }
 
   const patch = (p: Partial<QuestionnaireData>) => {
     setData((prev) => ({ ...prev, ...p }));
@@ -151,11 +235,18 @@ export function MortgageQuestionnaire({
       return null;
     }
     if (s === 3) {
-      const invalidAsset = data.assets.financial.some(
-        (asset) => !asset.country || !asset.currency || !asset.value,
+      const invalidAsset = normalizeAssets(data.assets).entries.some(
+        (asset) =>
+          !asset.country ||
+          !asset.currency ||
+          !asset.value ||
+          (asset.type === "real_estate" && !asset.address.trim()) ||
+          (asset.type === "other" && !asset.description.trim()) ||
+          ((asset.type === "bank_account" || asset.type === "investment_account") &&
+            !asset.institution.trim()),
       );
       if (invalidAsset)
-        return "Please complete the country, currency and value for each financial asset.";
+        return "Please complete each asset: institution, country, currency and value (address for real estate, description for other).";
     }
     if (s === 5) {
       if (!data.demographics.ethnicityDeclined && data.demographics.ethnicity.length === 0)
@@ -199,6 +290,36 @@ export function MortgageQuestionnaire({
     }
 
     const monthly = totalMonthlyIncome(data.incomes);
+
+    /* Previously confirmed documents stay on file across re-submissions —
+     * unless the visa details changed or the visa expired, in which case a
+     * fresh document is required to verify the new information. */
+    const prevProfile = user?.mortgageProfile;
+    const visaExpiry = data.visaActive ? documentExpiryState(data.visaValidUntil) : null;
+    const visaChanged = Boolean(
+      prevProfile &&
+        (Boolean(prevProfile.usVisaActive) !== data.visaActive ||
+          (data.visaActive &&
+            ((prevProfile.visaType ?? "") !== (data.visaType || "") ||
+              (prevProfile.visaIssued ?? "") !== data.visaIssued ||
+              (prevProfile.visaValidUntil ?? "") !== data.visaValidUntil))),
+    );
+    const carriedVisaDocs =
+      data.visaActive && !visaChanged && visaExpiry !== "expired"
+        ? (prevProfile?.visaDocuments ?? [])
+        : [];
+    setVisaFollowUp(
+      !data.visaActive
+        ? null
+        : visaChanged
+          ? "changed"
+          : visaExpiry === "expired"
+            ? "expired"
+            : carriedVisaDocs.length
+              ? null
+              : "new",
+    );
+
     /* Answers we derive instead of asking the client twice. */
     const derivedDeclarations = {
       ...data.declarations,
@@ -253,6 +374,17 @@ export function MortgageQuestionnaire({
       declarations: derivedDeclarations,
       military: data.military,
       demographics: data.demographics,
+      ...(carriedVisaDocs.length
+        ? {
+            visaDocuments: carriedVisaDocs,
+            visaDocumentName: carriedVisaDocs[0]!.name,
+            visaDocumentUploadedAt: carriedVisaDocs[0]!.uploadedAt,
+          }
+        : {}),
+      ...(prevProfile?.idDocuments?.length ? { idDocuments: prevProfile.idDocuments } : {}),
+      ...(data.declarations.bankruptcy && prevProfile?.bankruptcyDocuments?.length
+        ? { bankruptcyDocuments: prevProfile.bankruptcyDocuments }
+        : {}),
       monthlyGross: monthly,
       usStatus: usStatusOf(
         {
@@ -311,103 +443,49 @@ export function MortgageQuestionnaire({
             </div>
 
             {data.visaActive ? (
-              <div className="rounded-lg border border-brand/40 bg-brand-tint/50 p-5 text-left">
-                <div className="text-sm font-semibold text-foreground">
-                  One more step: visa document verification
+              submittedProfile?.visaDocuments?.length ? (
+                <div className="rounded-lg border border-border bg-card p-5 text-left">
+                  <div className="text-sm font-semibold text-foreground">
+                    Visa document on file
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Shared with the lending partner together with your application.
+                  </p>
+                  <ul className="mt-1 text-xs text-muted-foreground">
+                    {submittedProfile.visaDocuments.map((doc) => (
+                      <li key={doc.id}>📎 {doc.name}</li>
+                    ))}
+                  </ul>
                 </div>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Because you hold a US visa or status, please upload a copy or scan of your valid
-                  visa document so the lending partner can verify it.
-                </p>
-                {visaDocsConfirmed ? (
-                  <div className="mt-3">
-                    <p className="text-sm font-semibold text-success">
-                      Documents confirmed and shared.
-                    </p>
-                    <ul className="mt-1 text-xs text-muted-foreground">
-                      {visaDocs.map((doc) => (
-                        <li key={doc.id}>📎 {doc.name}</li>
-                      ))}
-                    </ul>
-                  </div>
-                ) : (
-                  <div className="mt-3 space-y-3">
-                    <label className="mt-3 inline-flex cursor-pointer items-center gap-2 rounded-md border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground hover:bg-brand-tint">
-                      {visaDocs.length ? "Add more documents" : "Choose visa documents"}
-                      <input
-                        type="file"
-                        multiple
-                        accept="image/*,application/pdf"
-                        className="hidden"
-                        onChange={async (e) => {
-                          const selected = Array.from(e.target.files ?? []);
-                          const next = await Promise.all(
-                            selected.map(async (file) => ({
-                              id: Math.random().toString(36).slice(2, 10),
-                              name: file.name,
-                              url: await new Promise<string>((resolve) => {
-                                const reader = new FileReader();
-                                reader.onload = () =>
-                                  resolve(typeof reader.result === "string" ? reader.result : "");
-                                reader.readAsDataURL(file);
-                              }),
-                            })),
-                          );
-                          setVisaDocs((current) => [...current, ...next]);
-                          e.currentTarget.value = "";
-                        }}
-                      />
-                    </label>
-                    {visaDocs.length ? (
-                      <>
-                        <ul className="space-y-2">
-                          {visaDocs.map((doc) => (
-                            <li
-                              key={doc.id}
-                              className="flex items-center justify-between rounded-md border border-border bg-background px-3 py-2 text-xs"
-                            >
-                              <span className="text-foreground">📎 {doc.name}</span>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setVisaDocs((docs) => docs.filter((item) => item.id !== doc.id))
-                                }
-                                className="font-semibold text-destructive"
-                              >
-                                Remove
-                              </button>
-                            </li>
-                          ))}
-                        </ul>
-                        <p className="text-xs text-muted-foreground">
-                          Review the files above. They are not shared until you confirm.
-                        </p>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (!submittedProfile) return;
-                            const now = new Date().toISOString();
-                            const documents = visaDocs.map((doc) => ({ ...doc, uploadedAt: now }));
-                            const profileWithDocs: MortgageProfile = {
-                              ...submittedProfile,
-                              visaDocuments: documents,
-                            ...(documents[0]?.name ? { visaDocumentName: documents[0].name } : {}),
-                              visaDocumentUploadedAt: now,
-                            };
-                            saveMortgageProfile(profileWithDocs);
-                            if (submittedLeadId)
-                              updateLead(submittedLeadId, { profile: profileWithDocs });
-                            setVisaDocsConfirmed(true);
-                          }}
-                          className="rounded-md bg-brand px-4 py-2 text-sm font-semibold text-background hover:bg-brand-soft"
-                        >
-                          Confirm and share documents
-                        </button>
-                      </>
-                    ) : null}
-                  </div>
-                )}
-              </div>
+              ) : (
+                <DocumentUploadBox
+                  title="One more step: visa document verification"
+                  description={
+                    visaFollowUp === "changed"
+                      ? "Your visa / status details changed since your last application — please upload the new valid visa document so the lending partner can verify it."
+                      : visaFollowUp === "expired"
+                        ? "The visa document we had on file has expired — please upload the renewed document."
+                        : "Because you hold a US visa or status, please upload a copy or scan of your valid visa document so the lending partner can verify it."
+                  }
+                  onConfirm={(docs) => attachDocuments("visaDocuments", docs)}
+                />
+              )
+            ) : null}
+
+            {data.declarations.bankruptcy && !submittedProfile?.bankruptcyDocuments?.length ? (
+              <DocumentUploadBox
+                title="Bankruptcy discharge papers"
+                description="You declared a bankruptcy within the last 7 years. Please upload the bankruptcy discharge papers so the lending partner can verify the discharge."
+                onConfirm={(docs) => attachDocuments("bankruptcyDocuments", docs)}
+              />
+            ) : null}
+
+            {(usPerson || data.hasItin) && !submittedProfile?.idDocuments?.length ? (
+              <DocumentUploadBox
+                title="Identification document"
+                description="To verify the information for an accurate pre-approval, please upload your driver's license (front and back), green card, or passport."
+                onConfirm={(docs) => attachDocuments("idDocuments", docs)}
+              />
             ) : null}
 
             <button

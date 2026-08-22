@@ -11,7 +11,7 @@ export const COUNTRY_CURRENCY: Record<string, string> = {
   SI: "EUR", EE: "EUR", LV: "EUR", LT: "EUR", HR: "EUR", AD: "EUR", MC: "EUR",
   CH: "CHF", LI: "CHF", NO: "NOK", SE: "SEK", DK: "DKK", IS: "ISK",
   PL: "PLN", CZ: "CZK", HU: "HUF", RO: "RON", BG: "BGN", RS: "RSD",
-  MK: "MKD", AL: "ALL", BA: "BAM", MD: "MDL", UA: "UAH", GE: "GEL",
+  MK: "MKD", AL: "ALL", BA: "BAM", MD: "MDL", UA: "UAH", RU: "RUB", GE: "GEL",
   AM: "AMD", AZ: "AZN", KZ: "KZT", UZ: "UZS", TR: "TRY",
   IL: "ILS", AE: "AED", SA: "SAR", QA: "QAR", KW: "KWD", BH: "BHD",
   OM: "OMR", JO: "JOD", EG: "EGP", MA: "MAD", TN: "TND",

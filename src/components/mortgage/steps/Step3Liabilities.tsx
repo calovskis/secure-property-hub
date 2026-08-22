@@ -4,13 +4,14 @@ import { Field, InlineAddButton, Section, inputClass, money } from "@/components
 import type { StepProps } from "@/components/mortgage/questionnaire-state";
 import {
   ASSET_TYPE_LABEL,
-  emptyFinancialAsset,
-  emptyPropertyAsset,
+  BANK_ACCOUNT_KIND_LABEL,
+  emptyAsset,
+  normalizeAssets,
   totalAssets,
   totalLiabilities,
   uid,
+  type AssetEntry,
   type AssetType,
-  type Assets,
   type Liabilities,
 } from "@/lib/mortgage-form";
 
@@ -21,200 +22,176 @@ const LIABILITY_ROWS: { key: keyof Liabilities; label: string }[] = [
   { key: "studentLoans", label: "Student loans" },
 ];
 
+function AssetCard({
+  asset,
+  canRemove,
+  onPatch,
+  onRemove,
+}: {
+  asset: AssetEntry;
+  canRemove: boolean;
+  onPatch: (p: Partial<AssetEntry>) => void;
+  onRemove: () => void;
+}) {
+  return (
+    <div className="grid grid-cols-1 gap-3 rounded-md border border-border p-3 sm:grid-cols-2">
+      <Field label="Asset type" required>
+        <select
+          value={asset.type}
+          onChange={(e) => {
+            const type = e.target.value as AssetType;
+            onPatch({ type, kind: type === "bank_account" ? asset.kind || "checking" : "" });
+          }}
+          className={inputClass}
+        >
+          {(Object.keys(ASSET_TYPE_LABEL) as AssetType[]).map((type) => (
+            <option key={type} value={type}>
+              {ASSET_TYPE_LABEL[type]}
+            </option>
+          ))}
+        </select>
+      </Field>
+
+      {asset.type === "bank_account" ? (
+        <Field label="Account type" required>
+          <select
+            value={asset.kind || "checking"}
+            onChange={(e) => onPatch({ kind: e.target.value })}
+            className={inputClass}
+          >
+            {Object.entries(BANK_ACCOUNT_KIND_LABEL).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </Field>
+      ) : null}
+
+      {asset.type === "bank_account" || asset.type === "investment_account" ? (
+        <Field
+          label={asset.type === "bank_account" ? "Bank / financial institution" : "Platform / institution"}
+          required
+        >
+          <input
+            value={asset.institution}
+            onChange={(e) => onPatch({ institution: e.target.value })}
+            className={inputClass}
+          />
+        </Field>
+      ) : null}
+
+      {asset.type === "real_estate" ? (
+        <Field label="Property address" required>
+          <input
+            value={asset.address}
+            onChange={(e) => onPatch({ address: e.target.value })}
+            className={inputClass}
+          />
+        </Field>
+      ) : null}
+
+      {asset.type === "other" ? (
+        <Field label="Description" required hint="What is the asset?">
+          <input
+            value={asset.description}
+            onChange={(e) => onPatch({ description: e.target.value })}
+            className={inputClass}
+          />
+        </Field>
+      ) : null}
+
+      <Field label={asset.type === "real_estate" ? "Property country" : "Account country"} required>
+        <CountryCombobox value={asset.country} onChange={(country) => onPatch({ country })} />
+      </Field>
+
+      <Field label="Currency" required>
+        <CurrencyCombobox value={asset.currency} onChange={(currency) => onPatch({ currency })} />
+      </Field>
+
+      <Field
+        label={
+          asset.type === "real_estate"
+            ? "Estimated value"
+            : asset.type === "other"
+              ? "Amount"
+              : "Current balance / value"
+        }
+        required
+      >
+        <input
+          inputMode="decimal"
+          value={asset.value}
+          onChange={(e) => onPatch({ value: e.target.value })}
+          className={inputClass}
+        />
+      </Field>
+
+      {asset.type === "real_estate" ? (
+        <Field label="Existing lien amount" hint="Optional — mortgage or other lien on this property.">
+          <input
+            inputMode="decimal"
+            value={asset.lien}
+            onChange={(e) => onPatch({ lien: e.target.value })}
+            className={inputClass}
+          />
+        </Field>
+      ) : null}
+
+      {asset.type !== "other" ? (
+        <Field label="Notes">
+          <input
+            value={asset.description}
+            onChange={(e) => onPatch({ description: e.target.value })}
+            className={inputClass}
+          />
+        </Field>
+      ) : null}
+
+      {canRemove ? (
+        <button
+          type="button"
+          onClick={onRemove}
+          className="text-left text-xs font-semibold text-destructive"
+        >
+          Remove asset
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 export function Step3Liabilities({ data, patch, usPerson }: StepProps) {
   const l = data.liabilities;
   const patchL = (p: Partial<Liabilities>) => patch({ liabilities: { ...l, ...p } });
-  const assets = data.assets;
-  const patchAssets = (p: Partial<Assets>) => patch({ assets: { ...assets, ...p } });
+  const assets = normalizeAssets(data.assets);
+  const patchEntries = (entries: AssetEntry[]) => patch({ assets: { entries } });
   const showLiabilities = usPerson || data.hasItin;
 
   return (
     <div className="space-y-6">
       <Section
         title="Assets"
-        subtitle="Bank accounts, liquid funds, investments and other property available to you."
+        subtitle="Bank accounts, investments, real estate and other assets available to you — in any country."
       >
         <div className="space-y-3">
-          {assets.financial.map((asset) => (
-            <div
+          {assets.entries.map((asset) => (
+            <AssetCard
               key={asset.id}
-              className="grid grid-cols-1 gap-3 rounded-md border border-border p-3 sm:grid-cols-2"
-            >
-              <Field label="Asset / account type" required>
-                <select
-                  value={asset.type}
-                  onChange={(e) =>
-                    patchAssets({
-                      financial: assets.financial.map((x) =>
-                        x.id === asset.id ? { ...x, type: e.target.value as AssetType } : x,
-                      ),
-                    })
-                  }
-                  className={inputClass}
-                >
-                  {(Object.keys(ASSET_TYPE_LABEL) as AssetType[]).map((type) => (
-                    <option key={type} value={type}>
-                      {ASSET_TYPE_LABEL[type]}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-              <Field label="Bank / financial institution">
-                <input
-                  value={asset.institution}
-                  onChange={(e) =>
-                    patchAssets({
-                      financial: assets.financial.map((x) =>
-                        x.id === asset.id ? { ...x, institution: e.target.value } : x,
-                      ),
-                    })
-                  }
-                  className={inputClass}
-                />
-              </Field>
-              <Field label="Account country" required>
-                <CountryCombobox
-                  value={asset.country}
-                  onChange={(country) =>
-                    patchAssets({
-                      financial: assets.financial.map((x) =>
-                        x.id === asset.id ? { ...x, country } : x,
-                      ),
-                    })
-                  }
-                />
-              </Field>
-              <Field label="Currency" required>
-                <CurrencyCombobox
-                  value={asset.currency}
-                  onChange={(currency) =>
-                    patchAssets({
-                      financial: assets.financial.map((x) =>
-                        x.id === asset.id ? { ...x, currency } : x,
-                      ),
-                    })
-                  }
-                />
-              </Field>
-              <Field label="Current balance / value" required>
-                <input
-                  inputMode="decimal"
-                  value={asset.value}
-                  onChange={(e) =>
-                    patchAssets({
-                      financial: assets.financial.map((x) =>
-                        x.id === asset.id ? { ...x, value: e.target.value } : x,
-                      ),
-                    })
-                  }
-                  className={inputClass}
-                />
-              </Field>
-              <Field label="Description">
-                <input
-                  value={asset.description}
-                  onChange={(e) =>
-                    patchAssets({
-                      financial: assets.financial.map((x) =>
-                        x.id === asset.id ? { ...x, description: e.target.value } : x,
-                      ),
-                    })
-                  }
-                  className={inputClass}
-                />
-              </Field>
-              {assets.financial.length > 1 ? (
-                <button
-                  type="button"
-                  onClick={() =>
-                    patchAssets({ financial: assets.financial.filter((x) => x.id !== asset.id) })
-                  }
-                  className="text-left text-xs font-semibold text-destructive"
-                >
-                  Remove asset
-                </button>
-              ) : null}
-            </div>
+              asset={asset}
+              canRemove={assets.entries.length > 1}
+              onPatch={(p) =>
+                patchEntries(
+                  assets.entries.map((x) => (x.id === asset.id ? { ...x, ...p } : x)),
+                )
+              }
+              onRemove={() => patchEntries(assets.entries.filter((x) => x.id !== asset.id))}
+            />
           ))}
         </div>
         <InlineAddButton
-          label="+ Add another financial asset"
-          onClick={() => patchAssets({ financial: [...assets.financial, emptyFinancialAsset()] })}
-        />
-
-        <div className="mt-5 text-xs font-semibold uppercase text-muted-foreground">
-          Other real estate owned
-        </div>
-        {assets.properties.map((property) => (
-          <div
-            key={property.id}
-            className="mt-3 grid grid-cols-1 gap-3 rounded-md border border-border p-3 sm:grid-cols-2"
-          >
-            <Field label="Property address" required>
-              <input
-                value={property.address}
-                onChange={(e) =>
-                  patchAssets({
-                    properties: assets.properties.map((x) =>
-                      x.id === property.id ? { ...x, address: e.target.value } : x,
-                    ),
-                  })
-                }
-                className={inputClass}
-              />
-            </Field>
-            <Field label="Country" required>
-              <CountryCombobox
-                value={property.country}
-                onChange={(country) =>
-                  patchAssets({
-                    properties: assets.properties.map((x) =>
-                      x.id === property.id ? { ...x, country } : x,
-                    ),
-                  })
-                }
-              />
-            </Field>
-            <Field label="Estimated value" required>
-              <input
-                inputMode="decimal"
-                value={property.estimatedValue}
-                onChange={(e) =>
-                  patchAssets({
-                    properties: assets.properties.map((x) =>
-                      x.id === property.id ? { ...x, estimatedValue: e.target.value } : x,
-                    ),
-                  })
-                }
-                className={inputClass}
-              />
-            </Field>
-            <Field label="Currency" required>
-              <CurrencyCombobox
-                value={property.currency}
-                onChange={(currency) =>
-                  patchAssets({
-                    properties: assets.properties.map((x) =>
-                      x.id === property.id ? { ...x, currency } : x,
-                    ),
-                  })
-                }
-              />
-            </Field>
-            <button
-              type="button"
-              onClick={() =>
-                patchAssets({ properties: assets.properties.filter((x) => x.id !== property.id) })
-              }
-              className="text-left text-xs font-semibold text-destructive"
-            >
-              Remove property
-            </button>
-          </div>
-        ))}
-        <InlineAddButton
-          label="+ Add another property"
-          onClick={() => patchAssets({ properties: [...assets.properties, emptyPropertyAsset()] })}
+          label="+ Add another asset"
+          onClick={() => patchEntries([...assets.entries, emptyAsset()])}
         />
         <div className="mt-4 flex items-center justify-between rounded-md bg-brand-tint/60 p-3">
           <span className="text-xs uppercase text-muted-foreground">Total declared assets</span>

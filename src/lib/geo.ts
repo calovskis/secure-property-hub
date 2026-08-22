@@ -225,3 +225,50 @@ export async function searchAddress(
     return [];
   }
 }
+
+const zipCache = new Map<string, string>();
+
+/**
+ * Best-effort ZIP/postal-code lookup for a picked suggestion whose geocode
+ * result didn't include one (Nominatim often omits the postcode on the
+ * initial search hit). Uses a structured follow-up query; never throws and
+ * resolves to "" when no postcode is known.
+ */
+export async function lookupZip(
+  input: { street: string; city: string; state: string; country?: string },
+  signal?: AbortSignal,
+): Promise<string> {
+  if (!input.street && !input.city) return "";
+  const key = `${input.country ?? ""}|${input.street}|${input.city}|${input.state}`.toLowerCase();
+  const cached = zipCache.get(key);
+  if (cached !== undefined) return cached;
+
+  try {
+    const params = new URLSearchParams({
+      format: "jsonv2",
+      addressdetails: "1",
+      limit: "1",
+    });
+    if (input.street) params.set("street", input.street);
+    if (input.city) params.set("city", input.city);
+    if (input.state) params.set("state", input.state);
+    if (input.country) params.set("countrycodes", input.country.toLowerCase());
+
+    const res = await fetch(`${NOMINATIM_URL}?${params.toString()}`, {
+      signal: signal ?? null,
+      headers: {
+        Accept: "application/json",
+        "User-Agent": USER_AGENT,
+      },
+    });
+    if (!res.ok) return "";
+
+    const data: unknown = await res.json();
+    const first = Array.isArray(data) ? (data[0] as NominatimResult | undefined) : undefined;
+    const zip = pick(first?.address, ["postcode"]);
+    zipCache.set(key, zip);
+    return zip;
+  } catch {
+    return "";
+  }
+}

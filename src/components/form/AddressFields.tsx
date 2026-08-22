@@ -5,6 +5,7 @@ import {
   citiesFor,
   hasSubdivisions,
   loadCities,
+  lookupZip,
   regionTerm,
   searchAddress,
   subdivisionLabel,
@@ -138,6 +139,19 @@ export function AddressFields({
       ...(s.state ? { state: resolveStateCode(s.state) } : {}),
       ...(s.zip ? { zip: s.zip } : {}),
     });
+
+    // The geocoder often omits the postcode on the first hit — run a
+    // structured follow-up lookup and patch the ZIP once it resolves.
+    if (!s.zip) {
+      lookupZip({
+        street: s.street || s.label,
+        city: s.city,
+        state: s.state,
+        country,
+      }).then((zip) => {
+        if (zip) onChange({ zip });
+      });
+    }
   }
 
   return (

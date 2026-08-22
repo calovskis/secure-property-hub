@@ -18,11 +18,12 @@ import { countryLabel } from "@/data/countries";
 import { formatDate, formatDateTime } from "@/lib/dates";
 
 import { LENDER_ROLE_LABEL, useLenderTeam } from "@/lib/lender-team";
-import { usStatusOf, US_STATUS_LABEL, hasForeignIncome } from "@/lib/mortgage-form";
+import { usStatusOf, US_STATUS_LABEL, isMajorityForeignIncome } from "@/lib/mortgage-form";
 import { LenderHome } from "@/components/lender/LenderHome";
 import { LenderAnalytics } from "@/components/lender/LenderAnalytics";
 import { LenderMortgages } from "@/components/lender/LenderMortgages";
 import { LenderTeam } from "@/components/lender/LenderTeam";
+import { LenderEmployees } from "@/components/lender/LenderEmployees";
 import { InfoRequestDialog } from "@/components/lender/InfoRequestDialog";
 
 const money = (n: number) => `$${Math.round(n).toLocaleString()}`;
@@ -629,7 +630,7 @@ function RequestsInbox({
                       <span className="block">
                         {US_STATUS_LABEL[usStatusOf(l.profile, l.usPerson)]}
                       </span>
-                      {hasForeignIncome(l.profile.incomes ?? []) ? (
+                      {isMajorityForeignIncome(l.profile.incomes ?? []) ? (
                         <span className="mt-1 block w-fit rounded-full bg-gold-tint px-1.5 py-0.5 text-[10px] font-semibold text-gold underline decoration-gold decoration-2 underline-offset-2">
                           Foreign income
                         </span>
@@ -677,6 +678,7 @@ export const TABS = [
   { id: "home", label: "Home", icon: "🏠" },
   { id: "requests", label: "Pre-approval Requests", icon: "📥" },
   { id: "mortgages", label: "Mortgages", icon: "🏦" },
+  { id: "employees", label: "Employees", icon: "👥" },
   { id: "analytics", label: "Analytics", icon: "📈" },
   { id: "other", label: "Other", icon: "⚙️" },
 ] as const;
@@ -690,6 +692,7 @@ export function useLenderTabs() {
     home: true,
     requests: can("requests.view"),
     mortgages: can("mortgages.view"),
+    employees: true,
     analytics: can("analytics.view"),
     other: true,
   };
@@ -715,6 +718,7 @@ export function LenderPortal({
     home: true,
     requests: can("requests.view"),
     mortgages: can("mortgages.view"),
+    employees: true,
     analytics: can("analytics.view"),
     other: true,
   };
@@ -756,6 +760,7 @@ export function LenderPortal({
         <RequestsInbox canDecide={can("requests.decide")} focusLeadId={focusLeadId} />
       ) : null}
       {current === "mortgages" ? <LenderMortgages canManage={can("mortgages.manage")} /> : null}
+      {current === "employees" ? <LenderEmployees /> : null}
       {current === "analytics" ? <LenderAnalytics /> : null}
       {current === "other" ? <LenderTeam /> : null}
     </main>

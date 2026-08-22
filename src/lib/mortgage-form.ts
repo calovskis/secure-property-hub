@@ -7,12 +7,13 @@ export const uid = () => Math.random().toString(36).slice(2, 9);
 
 /* ------------------------------------------------------------- marital */
 
-export type MaritalStatus = "married" | "unmarried" | "separated";
+export type MaritalStatus = "married" | "unmarried" | "separated" | "divorced";
 
 export const MARITAL_LABEL: Record<MaritalStatus, string> = {
   married: "Married",
   unmarried: "Unmarried",
   separated: "Separated",
+  divorced: "Divorced",
 };
 
 export type UnmarriedRelationship =
@@ -220,6 +221,21 @@ export function totalMonthlyIncome(sources: IncomeSource[]): number {
   return sources.reduce((sum, s) => sum + monthlyForIncome(s), 0);
 }
 
+/** Share of qualifying monthly income earned outside the US (0–1). */
+export function foreignIncomeShare(sources: IncomeSource[]): number {
+  const total = totalMonthlyIncome(sources);
+  if (total <= 0) return 0;
+  const foreign = sources
+    .filter(isForeignIncome)
+    .reduce((sum, s) => sum + monthlyForIncome(s), 0);
+  return foreign / total;
+}
+
+/** Lenders flag a file as "foreign income" only when ≥51% of income is foreign. */
+export function isMajorityForeignIncome(sources: IncomeSource[]): boolean {
+  return foreignIncomeShare(sources) >= 0.51;
+}
+
 /* -------------------------------------------------------- declarations */
 
 export type Declarations = {
@@ -336,29 +352,71 @@ export const emptyDemographics = (): Demographics => ({
 
 /* --------------------------------------------------------------- assets */
 
-export type AssetType =
-  "checking" | "savings" | "safety_deposit" | "cash_liquid" | "investments" | "other";
+export type AssetType = "bank_account" | "investment_account" | "real_estate" | "other";
 
 export const ASSET_TYPE_LABEL: Record<AssetType, string> = {
+  bank_account: "Bank account",
+  investment_account: "Investment account",
+  real_estate: "Real estate",
+  other: "Other",
+};
+
+/** Sub-type offered inside a bank account asset. */
+export const BANK_ACCOUNT_KIND_LABEL: Record<string, string> = {
   checking: "Checking account",
   savings: "Savings account",
   safety_deposit: "Safety deposit account",
-  cash_liquid: "Liquid cash",
-  investments: "Investments / securities",
-  other: "Other asset",
+  cash_liquid: "Cash / liquid funds",
+  other: "Other",
 };
 
-export type FinancialAsset = {
+export type AssetEntry = {
   id: string;
   type: AssetType;
+  /** Bank account sub-type (checking / savings / safety_deposit / cash_liquid). */
+  kind: string;
+  /** Bank / financial institution or investment platform. */
+  institution: string;
+  country: string;
+  currency: string;
+  /** Balance, estimated value or amount in `currency`. */
+  value: string;
+  /** Real estate only: property address. */
+  address: string;
+  /** Real estate only: existing lien amount (optional). */
+  lien: string;
+  /** Free-text description — required for "other" assets. */
+  description: string;
+};
+
+export type Assets = { entries: AssetEntry[] };
+
+export const emptyAsset = (type: AssetType = "bank_account"): AssetEntry => ({
+  id: uid(),
+  type,
+  kind: type === "bank_account" ? "checking" : "",
+  institution: "",
+  country: "US",
+  currency: "USD",
+  value: "",
+  address: "",
+  lien: "",
+  description: "",
+});
+
+export const emptyAssets = (): Assets => ({ entries: [emptyAsset()] });
+
+/* Legacy saved shapes (drafts/profiles stored before the restructure). */
+type LegacyFinancialAsset = {
+  id: string;
+  type: string;
   institution: string;
   country: string;
   currency: string;
   value: string;
   description: string;
 };
-
-export type PropertyAsset = {
+type LegacyPropertyAsset = {
   id: string;
   address: string;
   country: string;
@@ -366,37 +424,62 @@ export type PropertyAsset = {
   currency: string;
 };
 
-export type Assets = {
-  financial: FinancialAsset[];
-  properties: PropertyAsset[];
+const LEGACY_ASSET_TYPE_MAP: Record<string, { type: AssetType; kind: string }> = {
+  checking: { type: "bank_account", kind: "checking" },
+  savings: { type: "bank_account", kind: "savings" },
+  safety_deposit: { type: "bank_account", kind: "safety_deposit" },
+  cash_liquid: { type: "bank_account", kind: "cash_liquid" },
+  investments: { type: "investment_account", kind: "" },
+  other: { type: "other", kind: "" },
 };
 
-export const emptyFinancialAsset = (): FinancialAsset => ({
-  id: uid(),
-  type: "checking",
-  institution: "",
-  country: "US",
-  currency: "USD",
-  value: "",
-  description: "",
-});
-
-export const emptyPropertyAsset = (): PropertyAsset => ({
-  id: uid(),
-  address: "",
-  country: "US",
-  estimatedValue: "",
-  currency: "USD",
-});
-
-export const emptyAssets = (): Assets => ({ financial: [emptyFinancialAsset()], properties: [] });
+/** Accepts both the current `{ entries }` shape and the legacy `{ financial, properties }` shape. */
+export function normalizeAssets(raw: unknown): Assets {
+  if (!raw || typeof raw !== "object") return emptyAssets();
+  const obj = raw as {
+    entries?: AssetEntry[];
+    financial?: LegacyFinancialAsset[];
+    properties?: LegacyPropertyAsset[];
+  };
+  if (Array.isArray(obj.entries)) {
+    return { entries: obj.entries.length ? obj.entries : [emptyAsset()] };
+  }
+  const entries: AssetEntry[] = [];
+  for (const f of obj.financial ?? []) {
+    const mapped = LEGACY_ASSET_TYPE_MAP[f.type] ?? { type: "other" as AssetType, kind: "" };
+    entries.push({
+      id: f.id || uid(),
+      type: mapped.type,
+      kind: mapped.kind,
+      institution: f.institution ?? "",
+      country: f.country ?? "US",
+      currency: f.currency ?? "USD",
+      value: f.value ?? "",
+      address: "",
+      lien: "",
+      description: f.description ?? "",
+    });
+  }
+  for (const pr of obj.properties ?? []) {
+    entries.push({
+      id: pr.id || uid(),
+      type: "real_estate",
+      kind: "",
+      institution: "",
+      country: pr.country ?? "US",
+      currency: pr.currency ?? "USD",
+      value: pr.estimatedValue ?? "",
+      address: pr.address ?? "",
+      lien: "",
+      description: "",
+    });
+  }
+  return { entries: entries.length ? entries : [emptyAsset()] };
+}
 
 export function totalAssets(a?: Assets): number {
   if (!a) return 0;
-  return (
-    a.financial.reduce((sum, x) => sum + num(x.value), 0) +
-    a.properties.reduce((sum, x) => sum + num(x.estimatedValue), 0)
-  );
+  return normalizeAssets(a).entries.reduce((sum, x) => sum + num(x.value), 0);
 }
 
 /* ---------------------------------------------------------- liabilities */
@@ -433,7 +516,7 @@ export function totalLiabilities(l: Liabilities): number {
 
 export const QUESTIONNAIRE_STEPS = [
   { id: 1, title: "Personal, citizenship & addresses" },
-  { id: 2, title: "Work, income & identification" },
+  { id: 2, title: "Income & employment" },
   { id: 3, title: "Assets & liabilities" },
   { id: 4, title: "Declarations & military service" },
   { id: 5, title: "Demographic information" },
@@ -450,4 +533,27 @@ export function usStatusOf(
   if (usPerson) return "citizen";
   if (profile?.usVisaActive && profile.visaType) return profile.visaType;
   return "none";
+}
+
+/* ---------------------------------------------------- document validity */
+
+/** Whole days until an ISO date (yyyy-mm-dd); negative when already past. */
+export function daysUntilIso(iso?: string): number | null {
+  if (!iso) return null;
+  const t = new Date(`${iso}T00:00:00`).getTime();
+  if (Number.isNaN(t)) return null;
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  return Math.round((t - start) / 86400000);
+}
+
+export type DocumentExpiryState = "expired" | "expiring" | null;
+
+/** Visa/ID validity: "expired" past the date, "expiring" within the last 3 days before it. */
+export function documentExpiryState(validUntil?: string): DocumentExpiryState {
+  const days = daysUntilIso(validUntil);
+  if (days === null) return null;
+  if (days < 0) return "expired";
+  if (days <= 3) return "expiring";
+  return null;
 }
