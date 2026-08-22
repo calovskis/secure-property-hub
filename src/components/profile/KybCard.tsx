@@ -82,10 +82,14 @@ function PersonFields({
             max={100}
             value={person.sharePct ?? ""}
             onChange={(e) =>
-              onChange({
-                ...person,
-                sharePct: e.target.value === "" ? undefined : Number(e.target.value),
-              })
+              onChange(
+                (() => {
+                  const next = { ...person };
+                  if (e.target.value === "") delete next.sharePct;
+                  else next.sharePct = Number(e.target.value);
+                  return next;
+                })(),
+              )
             }
             className={inputClass}
           />
@@ -117,7 +121,16 @@ function PersonFields({
         <FilePick
           label="ID document (passport / ID card)"
           value={person.idDoc ?? ""}
-          onChange={(name) => onChange({ ...person, idDoc: name || undefined })}
+          onChange={(name) =>
+            onChange(
+              (() => {
+                const next = { ...person };
+                if (name) next.idDoc = name;
+                else delete next.idDoc;
+                return next;
+              })(),
+            )
+          }
         />
       </div>
     </div>
