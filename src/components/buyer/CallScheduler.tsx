@@ -12,9 +12,9 @@ export function CallScheduler({
   onBook,
   accent = "brand",
 }: {
-  realtorId?: string;
+  realtorId?: string | undefined;
   /** ISO start time once a slot is booked through this scheduler. */
-  booked?: string;
+  booked?: string | undefined;
   onBook: (startAt: string) => void;
   accent?: "brand" | "success";
 }) {
