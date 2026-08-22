@@ -353,9 +353,9 @@ export function useBuyerProcess() {
       leadId: string,
       action: ClientNextAction,
       payload: {
-        details?: string;
-        extraInspections?: string[];
-        propertyChangeMode?: PropertyChangeMode;
+        details?: string | undefined;
+        extraInspections?: string[] | undefined;
+        propertyChangeMode?: PropertyChangeMode | undefined;
       } = {},
     ) => {
       const cur = load();
