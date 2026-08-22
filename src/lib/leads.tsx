@@ -277,6 +277,16 @@ type LeadsContextValue = {
    */
   agreeBuyerAgent: (leadId: string, languages?: string[]) => void;
   setBuyerAgentNextStep: (leadId: string, step: "live_call" | "start") => void;
+  /**
+   * Client picked who steers the purchase (Loqal personal manager or working
+   * with the buyer's agent directly) and, for the direct path, the kickoff.
+   */
+  setBuyerRepresentation: (
+    leadId: string,
+    representation: Representation,
+    kickoff?: KickoffRequest,
+    notes?: string,
+  ) => void;
 
   leadsForClient: (email: string) => MortgageLead[];
   leadForProperty: (email: string, propertyId: number) => MortgageLead | undefined;
