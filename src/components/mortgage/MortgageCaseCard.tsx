@@ -10,6 +10,7 @@ import {
 } from "@/lib/leads";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import { BuyerAgentDialog } from "@/components/mortgage/BuyerAgentDialog";
+import { BuyerProcessCard } from "@/components/buyer/BuyerProcessCard";
 
 const money = (n: number) => `$${Math.round(n).toLocaleString()}`;
 const uid = () => Math.random().toString(36).slice(2, 9);
@@ -608,6 +609,7 @@ export function MortgageCaseCard({ lead }: { lead: MortgageLead }) {
               You are pre-qualified. Complete Step 2 to estimate your maximum purchase price.
             </p>
             <ProceedPanel lead={lead} />
+            <BuyerProcessCard lead={lead} />
             <Step2Form lead={lead} />
           </>
         ) : null}
