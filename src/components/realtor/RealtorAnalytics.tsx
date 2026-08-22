@@ -95,7 +95,7 @@ export function RealtorAnalytics({ me, mine }: { me: Realtor; mine: MortgageLead
                       {l.buyerAgent?.kickoff ? KICKOFF_LABEL[l.buyerAgent.kickoff] : "—"}
                     </td>
                     <td className="py-2.5 pr-4 text-muted-foreground">
-                      {buyerAgentSummary(l, { photos, bookings, actions: {}, decisions: {} }) ?? "—"}
+                      {buyerAgentSummary(l, { photos, bookings, actions: {} }) ?? "—"}
                     </td>
                     <td className="py-2.5 font-semibold text-foreground">
                       {usd((l.propertyPrice * REALTOR_COMMISSION_PCT) / 100)}

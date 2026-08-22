@@ -14,7 +14,6 @@ import {
 import { formatDate } from "@/lib/dates";
 import { logActivity } from "@/lib/activity";
 import type { Realtor } from "@/lib/realtors";
-import { fullName } from "@/lib/auth";
 
 function Stat({ label, value, note }: { label: string; value: string | number; note?: string }) {
   return (
