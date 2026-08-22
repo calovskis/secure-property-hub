@@ -37,6 +37,7 @@ export const CURRENCIES: Currency[] = [
   { code: "RSD", name: "Serbian Dinar" },
   { code: "TRY", name: "Turkish Lira", symbol: "₺" },
   { code: "UAH", name: "Ukrainian Hryvnia" },
+  { code: "RUB", name: "Russian Ruble", symbol: "₽" },
   { code: "GEL", name: "Georgian Lari" },
   { code: "AMD", name: "Armenian Dram" },
   { code: "AZN", name: "Azerbaijani Manat" },
