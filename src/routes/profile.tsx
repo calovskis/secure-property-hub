@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { MortgageQuestionnaire } from "@/components/mortgage/MortgageQuestionnaire";
+import { FeedbackDialog } from "@/components/mortgage/FeedbackDialog";
 import {
   AddressTopic,
   AssetsTopic,
@@ -19,10 +20,7 @@ import { KybCard } from "@/components/profile/KybCard";
 import { PARTNER_LABEL, ROLE_LABEL, fullName, useAuth, type MortgageProfile } from "@/lib/auth";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import {
-  CLIENT_DECISION_LABEL,
   LEAD_STATUS_LABEL,
-  hasPricedOffer,
-  offerReminders,
   useLeads,
   type MortgageLead,
 } from "@/lib/leads";
@@ -71,110 +69,6 @@ function statusTone(lead: MortgageLead) {
   return "bg-brand-tint text-brand";
 }
 
-function FeedbackBlock({ lead }: { lead: MortgageLead }) {
-  const answered = lead.infoRequests.filter((r) => r.answeredAt);
-  const open = lead.infoRequests.filter((r) => !r.answeredAt);
-  const nextReminder = offerReminders(lead).find((r) => !r.due);
-
-  return (
-    <div className="mt-4 space-y-3 border-t border-border pt-4">
-      <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        Lender feedback
-      </div>
-
-      {lead.status === "new" ? (
-        <p className="text-sm text-muted-foreground">
-          Delivered to a Loqal lending partner. No feedback yet — you will see it here.
-        </p>
-      ) : null}
-
-      {lead.decidedAt ? (
-        <p className="text-xs text-muted-foreground">
-          Decision issued {formatDateTime(lead.decidedAt)}
-        </p>
-      ) : null}
-
-      {lead.lenderNote ? (
-        <p className="rounded-md bg-brand-tint/40 p-3 text-sm text-muted-foreground">
-          <strong className="text-foreground">Note: </strong>
-          {lead.lenderNote}
-        </p>
-      ) : null}
-
-      {lead.creditScore ? <Row label="Soft credit score" value={lead.creditScore} /> : null}
-
-      {hasPricedOffer(lead) && lead.terms ? (
-        <div className="rounded-md border border-success/30 bg-success/5 p-3">
-          <div className="text-sm font-semibold text-success">Priced pre-approval</div>
-          <div className="mt-2 grid gap-x-6 sm:grid-cols-2">
-            <Row label="Rate" value={`${lead.terms.ratePct}%`} />
-            <Row label="Term" value={`${lead.terms.termYears} years`} />
-            <Row label="Down payment" value={`${lead.terms.downPaymentPct}%`} />
-            <Row label="Closing costs" value={`${lead.terms.closingCostPct}%`} />
-            <Row
-              label="Your decision"
-              value={
-                lead.clientDecision
-                  ? `${CLIENT_DECISION_LABEL[lead.clientDecision]} · ${formatDate(lead.clientDecisionAt)}`
-                  : "Awaiting your response"
-              }
-            />
-            {!lead.clientDecision && nextReminder ? (
-              <Row
-                label="Next reminder"
-                value={`${formatDateTime(nextReminder.dueAt)}${nextReminder.email ? " · also by e-mail" : ""}`}
-              />
-            ) : null}
-            {lead.buyerAgent?.agentName ? (
-              <Row
-                label="Buyer's agent"
-                value={`${lead.buyerAgent.agentName} · ${lead.buyerAgent.feePct}% at closing`}
-              />
-            ) : null}
-          </div>
-        </div>
-      ) : null}
-
-      {open.length ? (
-        <div className="rounded-md border border-gold/40 bg-gold-tint/50 p-3 text-sm text-foreground">
-          {open.length} open question{open.length > 1 ? "s" : ""} from your lender — open the
-          property page to reply.
-        </div>
-      ) : null}
-
-      {answered.length ? (
-        <div className="space-y-2">
-          {answered.map((r) => (
-            <div key={r.id} className="rounded-md border border-border p-3">
-              <div className="text-sm font-medium text-foreground">{r.question}</div>
-              <div className="mt-1 text-sm text-muted-foreground">{r.answer}</div>
-              <div className="mt-1 text-[11px] text-muted-foreground">
-                Answered {formatDateTime(r.answeredAt)}
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : null}
-
-      {(lead.clientQuestions ?? []).length ? (
-        <div className="space-y-2">
-          <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Your questions to the lender
-          </div>
-          {(lead.clientQuestions ?? []).map((q) => (
-            <div key={q.id} className="rounded-md border border-border p-3">
-              <div className="text-sm font-medium text-foreground">{q.text}</div>
-              <div className="mt-1 text-sm text-muted-foreground">
-                {q.answer ?? "Waiting for the lender's answer…"}
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
 function ApplicationCard({ lead }: { lead: MortgageLead }) {
   const [open, setOpen] = useState(false);
 
@@ -197,10 +91,10 @@ function ApplicationCard({ lead }: { lead: MortgageLead }) {
       <div className="mt-3 flex flex-wrap gap-2">
         <button
           type="button"
-          onClick={() => setOpen(!open)}
+          onClick={() => setOpen(true)}
           className="rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-brand-tint hover:text-brand"
         >
-          {open ? "Hide details" : "View feedback"}
+          View feedback
         </button>
         <Link
           to="/property/$propertyId"
@@ -211,7 +105,7 @@ function ApplicationCard({ lead }: { lead: MortgageLead }) {
         </Link>
       </div>
 
-      {open ? <FeedbackBlock lead={lead} /> : null}
+      <FeedbackDialog lead={lead} open={open} onOpenChange={setOpen} />
     </article>
   );
 }
