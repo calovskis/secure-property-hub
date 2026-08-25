@@ -209,7 +209,31 @@ function PropertyDetailPage() {
           </div>
         </section>
 
-        {lead ? <MortgageCaseCard lead={lead} /> : null}
+        {lead ? (
+          priced ? (
+            <div className="mb-6 flex flex-col gap-3 rounded-lg border border-success/30 bg-success/10 p-5 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <div className="text-sm font-semibold text-success">
+                  This property has been pre-approved for a mortgage
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Your lender issued estimated pre-approval terms for this property. Open the
+                  feedback to review the terms and respond.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFeedbackOpen(true)}
+                className="shrink-0 rounded-md bg-brand px-4 py-2.5 text-sm font-semibold text-background transition-colors hover:bg-brand-soft"
+              >
+                View feedback
+              </button>
+            </div>
+          ) : (
+            <MortgageCaseCard lead={lead} />
+          )
+        ) : null}
+
 
         {/* TOP METRICS */}
         <section className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-3">
