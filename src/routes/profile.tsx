@@ -207,6 +207,7 @@ function ProfileTopics({ profile }: { profile: MortgageProfile }) {
   );
 }
 
+
 function ProfilePage() {
   const { user, ready } = useAuth();
   const { leadsForClient } = useLeads();
