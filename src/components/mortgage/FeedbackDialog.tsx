@@ -5,6 +5,7 @@
  * ceiling for applicants without an SSN, and renders taxes + insurance as a
  * dollar amount (percentages stay lender/admin-side).
  */
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -12,11 +13,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { BuyerAgentDialog } from "@/components/mortgage/BuyerAgentDialog";
 import {
   CLIENT_DECISION_LABEL,
   LEAD_STATUS_LABEL,
   hasPricedOffer,
   offerReminders,
+  useLeads,
   type MortgageLead,
 } from "@/lib/leads";
 import { formatDate, formatDateTime } from "@/lib/dates";
@@ -105,6 +108,10 @@ export function FeedbackDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const { setClientDecision, askClientQuestion } = useLeads();
+  const [agentOpen, setAgentOpen] = useState(false);
+  const [askOpen, setAskOpen] = useState(false);
+  const [question, setQuestion] = useState("");
   const terms = lead.terms;
   const taxesInsuranceYear = terms
     ? Math.round((lead.propertyPrice * terms.taxInsurancePct) / 100)
@@ -205,8 +212,8 @@ export function FeedbackDialog({
                   <div className="space-y-2">
                     <div className="text-sm font-semibold text-foreground">Awaiting your response</div>
                     <div className="text-xs text-muted-foreground">
-                      You can accept, place on hold, decline, or ask the lender a question from the
-                      property page.
+                      Use the buttons at the bottom of this window to accept, place on hold,
+                      decline, or request information from the lender.
                     </div>
                     {nextReminder ? (
                       <div className="mt-2 text-xs text-muted-foreground">
@@ -304,6 +311,98 @@ export function FeedbackDialog({
             </div>
           ) : null}
         </div>
+
+        {priced ? (
+          <div className="sticky bottom-0 space-y-3 border-t border-border bg-card/95 px-6 py-4 backdrop-blur">
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              {lead.clientDecision ? "Change your answer" : "Your answer to these terms"}
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => setAgentOpen(true)}
+                className="rounded-md bg-success px-4 py-2.5 text-sm font-semibold text-background hover:opacity-90"
+              >
+                Accept the terms
+              </button>
+              <button
+                type="button"
+                onClick={() => setClientDecision(lead.id, "hold")}
+                disabled={lead.clientDecision === "hold"}
+                className="rounded-md border border-border px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-gold-tint disabled:opacity-50"
+              >
+                Place on hold
+              </button>
+              <button
+                type="button"
+                onClick={() => setAskOpen((v) => !v)}
+                className="rounded-md border border-border px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-brand-tint"
+              >
+                Request information
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (
+                    window.confirm(
+                      "Decline these pre-approval terms? You can still proceed later.",
+                    )
+                  )
+                    setClientDecision(lead.id, "declined");
+                }}
+                disabled={lead.clientDecision === "declined"}
+                className="rounded-md border border-border px-4 py-2.5 text-sm font-semibold text-muted-foreground hover:text-destructive disabled:opacity-50"
+              >
+                Decline
+              </button>
+            </div>
+
+            {askOpen ? (
+              <div className="rounded-md border border-border bg-background p-3">
+                <textarea
+                  rows={3}
+                  autoFocus
+                  placeholder="What would you like to ask your lender about these terms?"
+                  value={question}
+                  onChange={(e) => setQuestion(e.target.value)}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-brand"
+                />
+                <div className="mt-2 flex gap-2">
+                  <button
+                    type="button"
+                    disabled={!question.trim()}
+                    onClick={() => {
+                      const text = question.trim();
+                      if (!text) return;
+                      askClientQuestion(lead.id, text);
+                      setQuestion("");
+                      setAskOpen(false);
+                    }}
+                    className="rounded-md bg-brand px-4 py-2 text-sm font-semibold text-background hover:bg-brand-soft disabled:opacity-50"
+                  >
+                    Send request
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAskOpen(false)}
+                    className="rounded-md border border-border px-4 py-2 text-sm font-semibold text-muted-foreground"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+
+        <BuyerAgentDialog
+          lead={lead}
+          open={agentOpen}
+          onOpenChange={(v) => {
+            setAgentOpen(v);
+            if (!v) onOpenChange(false);
+          }}
+        />
       </DialogContent>
     </Dialog>
   );
