@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { fullName, type LoqalUser } from "@/lib/auth";
+import { fullName, useAuth, type LoqalUser } from "@/lib/auth";
+import { maskEmail } from "@/lib/privacy";
 import { KICKOFF_LABEL, useLeads, type MortgageLead } from "@/lib/leads";
 import {
   CLIENT_ACTION_LABEL,
@@ -392,11 +393,14 @@ function ClientDecisions({ lead }: { lead: MortgageLead }) {
 
 /**
  * A buyer file shared with the assigned agent. Deliberately excludes SSN,
- * uploaded documents and the questionnaire answers — the agent gets contact
- * details, the property and the agreed terms, nothing more.
+ * uploaded documents, the questionnaire answers and the buyer's direct
+ * e-mail / phone — those stay with Loqal admins only.
  */
 function BuyerFile({ lead, me }: { lead: MortgageLead; me: Realtor }) {
   const [open, setOpen] = useState(false);
+  const { user } = useAuth();
+  /** Partners never see direct contact details — Loqal admins do. */
+  const seesContact = user?.role === "admin";
   const { bookings, bookCall } = useBuyerProcess();
   const [tourSlot, setTourSlot] = useState<string | null>(null);
   const t = lead.terms;
@@ -452,7 +456,14 @@ function BuyerFile({ lead, me }: { lead: MortgageLead; me: Realtor }) {
               <h3 className="text-sm font-semibold text-foreground">Buyer</h3>
               <div className="mt-2">
                 <Row label="Name" value={lead.clientName} />
-                <Row label="E-mail" value={lead.clientEmail} />
+                <Row
+                  label="E-mail"
+                  value={
+                    seesContact
+                      ? lead.clientEmail
+                      : `${maskEmail(lead.clientEmail)} — contact routed through Loqal`
+                  }
+                />
                 <Row
                   label="US status"
                   value={lead.usPerson ? "US citizen / green card" : "Non-US person"}
