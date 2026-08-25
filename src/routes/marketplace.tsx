@@ -301,8 +301,29 @@ function MarketplacePage() {
               <div
                 key={prop.id}
                 onClick={() => openProperty(prop.id)}
-                className="cursor-pointer overflow-hidden rounded-lg border border-border bg-card transition-all hover:border-brand-soft hover:shadow-md"
+                className={`cursor-pointer overflow-hidden rounded-lg border bg-card transition-all hover:shadow-md ${
+                  activeIds.has(prop.id)
+                    ? "border-brand ring-2 ring-brand/25"
+                    : "border-border hover:border-brand-soft"
+                }`}
               >
+                {activeIds.has(prop.id) ? (
+                  <div className="flex items-center justify-between gap-2 border-b border-brand/20 bg-brand-tint px-4 py-2">
+                    <span className="text-[11px] font-semibold uppercase tracking-wide text-brand">
+                      In action
+                    </span>
+                    <button
+                      className="text-[11px] font-semibold text-brand underline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setTab("action");
+                        window.scrollTo(0, 0);
+                      }}
+                    >
+                      See what is ongoing
+                    </button>
+                  </div>
+                ) : null}
 
                 <div className="relative flex h-[220px] items-center justify-center bg-gradient-to-br from-brand-tint to-gold-tint text-7xl">
                   <span aria-hidden="true">{prop.icon}</span>
