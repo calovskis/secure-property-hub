@@ -1,5 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { MortgageQuestionnaire } from "@/components/mortgage/MortgageQuestionnaire";
 import { MortgageCaseCard } from "@/components/mortgage/MortgageCaseCard";
