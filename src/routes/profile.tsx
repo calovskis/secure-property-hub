@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { MortgageQuestionnaire } from "@/components/mortgage/MortgageQuestionnaire";
 import { FeedbackDialog } from "@/components/mortgage/FeedbackDialog";
@@ -207,12 +207,30 @@ function ProfileTopics({ profile }: { profile: MortgageProfile }) {
   );
 }
 
+
 function ProfilePage() {
-  const { user, ready } = useAuth();
+  const { user, ready, saveMortgageProfile } = useAuth();
   const { leadsForClient } = useLeads();
   const { drafts: allDrafts } = useMortgageDrafts();
   const { t } = useI18n();
   const [wizardOpen, setWizardOpen] = useState(false);
+
+  const clientLeads = user ? leadsForClient(user.email) : [];
+  /* If the account has no stored profile yet, rebuild it from the most recent
+   * submitted pre-approval application so the client never sees an empty
+   * profile after applying. */
+  const recoveredProfile =
+    !user?.mortgageProfile && clientLeads.length
+      ? clientLeads
+          .slice()
+          .sort((a, b) => (a.submittedAt < b.submittedAt ? 1 : -1))
+          .find((l) => l.profile)?.profile
+      : undefined;
+
+  useEffect(() => {
+    if (recoveredProfile) saveMortgageProfile(recoveredProfile);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recoveredProfile?.submittedAt]);
 
   if (!ready) return null;
 
@@ -237,11 +255,12 @@ function ProfilePage() {
   }
 
   const isPartner = user.role === "partner";
-  const leads = leadsForClient(user.email)
+  const leads = clientLeads
     .slice()
     .sort((a, b) => (a.submittedAt < b.submittedAt ? 1 : -1));
-  const profile = user.mortgageProfile;
+  const profile = user.mortgageProfile ?? recoveredProfile;
   const unfinished = allDrafts(user.email).filter((d) => !d.submitted);
+
 
   const isRealtor = user.partnerType === "realtor";
   // Realtors keep their workspace header everywhere, including My Profile.
