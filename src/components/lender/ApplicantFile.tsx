@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
-import { maskEmail, maskPhone } from "@/lib/privacy";
 import type { MortgageLead } from "@/lib/leads";
 import { LEAD_STATUS_LABEL } from "@/lib/leads";
 import { countryLabel } from "@/data/countries";
