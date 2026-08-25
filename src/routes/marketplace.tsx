@@ -1,6 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { AppHeader } from "@/components/layout/AppHeader";
+import { PropertiesInAction } from "@/components/property/PropertiesInAction";
+import { useClientPropertyActivity } from "@/lib/property-activity";
 import { allProperties, formatPrice, type Property } from "@/data/properties";
 
 
@@ -38,6 +40,12 @@ function MarketplacePage() {
   const [sqftMin, setSqftMin] = useState("");
   const [sortBy, setSortBy] = useState("newest");
   const [currentPage, setCurrentPage] = useState(1);
+  const [tab, setTab] = useState<"search" | "action">("search");
+
+  /** Properties this client already has an active process on. */
+  const activity = useClientPropertyActivity();
+  const activeIds = useMemo(() => new Set(activity.map((a) => a.propertyId)), [activity]);
+  const awaitingTotal = activity.reduce((sum, a) => sum + a.awaitingClient, 0);
 
   const [appliedFilters, setAppliedFilters] = useState({
     location: "",
@@ -135,6 +143,48 @@ function MarketplacePage() {
           </p>
         </div>
 
+        {/* TABS: search vs properties with active processes */}
+        {activity.length > 0 ? (
+          <div className="mb-8 flex flex-wrap gap-2">
+            <button
+              className={`rounded-md border px-4 py-2.5 text-sm font-semibold transition-all ${
+                tab === "search"
+                  ? "border-brand bg-brand text-background"
+                  : "border-border bg-card text-foreground hover:bg-brand-tint"
+              }`}
+              onClick={() => setTab("search")}
+            >
+              All properties
+            </button>
+            <button
+              className={`inline-flex items-center gap-2 rounded-md border px-4 py-2.5 text-sm font-semibold transition-all ${
+                tab === "action"
+                  ? "border-brand bg-brand text-background"
+                  : "border-brand/40 bg-brand-tint text-brand hover:bg-brand/15"
+              }`}
+              onClick={() => setTab("action")}
+            >
+              Properties in action
+              <span
+                className={`rounded px-1.5 py-0.5 text-[11px] font-bold ${
+                  tab === "action" ? "bg-background/20" : "bg-brand/15"
+                }`}
+              >
+                {activity.length}
+              </span>
+              {awaitingTotal > 0 ? (
+                <span className="rounded border border-gold/40 bg-gold-tint px-1.5 py-0.5 text-[10px] font-semibold uppercase text-gold">
+                  {awaitingTotal} to answer
+                </span>
+              ) : null}
+            </button>
+          </div>
+        ) : null}
+
+        {tab === "action" ? (
+          <PropertiesInAction items={activity} />
+        ) : (
+          <>
         {/* FILTER SECTION */}
         <div className="mb-8 rounded-lg border border-border bg-card p-6">
           <div className="mb-5 text-base font-semibold text-foreground">
@@ -293,8 +343,29 @@ function MarketplacePage() {
               <div
                 key={prop.id}
                 onClick={() => openProperty(prop.id)}
-                className="cursor-pointer overflow-hidden rounded-lg border border-border bg-card transition-all hover:border-brand-soft hover:shadow-md"
+                className={`cursor-pointer overflow-hidden rounded-lg border bg-card transition-all hover:shadow-md ${
+                  activeIds.has(prop.id)
+                    ? "border-brand ring-2 ring-brand/25"
+                    : "border-border hover:border-brand-soft"
+                }`}
               >
+                {activeIds.has(prop.id) ? (
+                  <div className="flex items-center justify-between gap-2 border-b border-brand/20 bg-brand-tint px-4 py-2">
+                    <span className="text-[11px] font-semibold uppercase tracking-wide text-brand">
+                      In action
+                    </span>
+                    <button
+                      className="text-[11px] font-semibold text-brand underline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setTab("action");
+                        window.scrollTo(0, 0);
+                      }}
+                    >
+                      See what is ongoing
+                    </button>
+                  </div>
+                ) : null}
 
                 <div className="relative flex h-[220px] items-center justify-center bg-gradient-to-br from-brand-tint to-gold-tint text-7xl">
                   <span aria-hidden="true">{prop.icon}</span>
@@ -392,6 +463,8 @@ function MarketplacePage() {
             </button>
           ))}
         </div>
+          </>
+        )}
       </main>
     </div>
   );
