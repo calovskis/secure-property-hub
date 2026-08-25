@@ -650,6 +650,38 @@ export function MortgageCaseCard({ lead }: { lead: MortgageLead }) {
           </>
         ) : null}
       </div>
+
+      <Dialog open={confirmCancel} onOpenChange={setConfirmCancel}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Cancel this application?</DialogTitle>
+            <DialogDescription>
+              This pre-approval request will be marked <strong>Annulled</strong>. The mortgage lender
+              will not be able to pick it up or send feedback anymore. You can resubmit later with
+              your saved answers pre-filled.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-4 flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setConfirmCancel(false)}
+              className="rounded-md border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted"
+            >
+              Keep application
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                cancelLead(lead.id);
+                setConfirmCancel(false);
+              }}
+              className="rounded-md bg-destructive px-4 py-2 text-sm font-semibold text-destructive-foreground hover:opacity-90"
+            >
+              Yes, annul it
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }
