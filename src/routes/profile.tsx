@@ -266,6 +266,12 @@ function ProfilePage() {
   const { drafts: allDrafts } = useMortgageDrafts();
   const { t } = useI18n();
   const [wizardOpen, setWizardOpen] = useState(false);
+  const [staged, setStaged] = useState<Partial<Record<DocumentRequest["kind"], number>>>({});
+
+  useEffect(() => {
+    setStaged(stagedCounts(user?.email));
+  }, [user?.email, user?.mortgageProfile?.submittedAt, wizardOpen]);
+
 
   const clientLeads = user ? leadsForClient(user.email) : [];
   /* If the account has no stored profile yet, rebuild it from the most recent
