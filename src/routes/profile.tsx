@@ -281,6 +281,12 @@ function ProfilePage() {
   const { drafts: allDrafts } = useMortgageDrafts();
   const { t } = useI18n();
   const [wizardOpen, setWizardOpen] = useState(false);
+  const { doc: docParam, open: openParam } = Route.useSearch();
+
+  // A notification can deep-link straight into the form that needs filling.
+  useEffect(() => {
+    if (openParam === "questionnaire") setWizardOpen(true);
+  }, [openParam]);
   const [staged, setStaged] = useState<Partial<Record<DocumentRequest["kind"], number>>>({});
 
   useEffect(() => {
