@@ -41,7 +41,20 @@ import {
   type DocumentRequest,
 } from "@/lib/document-requests";
 
+const DOC_KINDS = ["idDocuments", "visaDocuments", "bankruptcyDocuments"] as const;
+
 export const Route = createFileRoute("/profile")({
+  /** `?doc=<kind>` opens that upload pop-up, `?open=questionnaire` the wizard. */
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { doc?: DocumentRequest["kind"]; open?: "questionnaire" } => {
+    const out: { doc?: DocumentRequest["kind"]; open?: "questionnaire" } = {};
+    const doc = search["doc"];
+    if (DOC_KINDS.includes(doc as (typeof DOC_KINDS)[number]))
+      out.doc = doc as DocumentRequest["kind"];
+    if (search["open"] === "questionnaire") out.open = "questionnaire";
+    return out;
+  },
   head: () => ({
     meta: [
       { title: "My Profile — Loqal" },
@@ -205,12 +218,18 @@ function DocumentRequestItem({
   request,
   profile,
   stagedCount,
+  autoOpen = false,
 }: {
   request: DocumentRequest;
   profile: MortgageProfile;
   stagedCount: number;
+  /** Opened straight away when the client arrived from its notification. */
+  autoOpen?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(autoOpen);
+  useEffect(() => {
+    if (autoOpen) setOpen(true);
+  }, [autoOpen]);
   return (
     <li className="rounded-md border border-gold/40 bg-gold-tint/40 p-3">
       <div className="text-sm font-medium text-foreground">{request.title}</div>
@@ -266,6 +285,12 @@ function ProfilePage() {
   const { drafts: allDrafts } = useMortgageDrafts();
   const { t } = useI18n();
   const [wizardOpen, setWizardOpen] = useState(false);
+  const { doc: docParam, open: openParam } = Route.useSearch();
+
+  // A notification can deep-link straight into the form that needs filling.
+  useEffect(() => {
+    if (openParam === "questionnaire") setWizardOpen(true);
+  }, [openParam]);
   const [staged, setStaged] = useState<Partial<Record<DocumentRequest["kind"], number>>>({});
 
   useEffect(() => {
@@ -449,6 +474,7 @@ function ProfilePage() {
                         request={request}
                         profile={profile}
                         stagedCount={staged[request.kind] ?? 0}
+                        autoOpen={docParam === request.kind}
                       />
                     ))}
                   </ul>

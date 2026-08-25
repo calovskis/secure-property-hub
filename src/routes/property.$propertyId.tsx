@@ -1,5 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { MortgageQuestionnaire } from "@/components/mortgage/MortgageQuestionnaire";
 import { MortgageCaseCard } from "@/components/mortgage/MortgageCaseCard";
@@ -18,6 +18,13 @@ import {
 
 export const Route = createFileRoute("/property/$propertyId")({
   component: PropertyDetailPage,
+  /** `?open=feedback|questionnaire` lets a notification jump straight into the pop-up. */
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { open?: "feedback" | "questionnaire" } => {
+    const value = search["open"];
+    return value === "feedback" || value === "questionnaire" ? { open: value } : {};
+  },
   loader: ({ params }) => {
     const property = getProperty(Number(params.propertyId));
     if (!property) throw notFound();
@@ -137,6 +144,13 @@ function PropertyDetailPage() {
   const lead = user ? leadForProperty(user.email, property.id) : undefined;
   const [questionnaireOpen, setQuestionnaireOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const { open: openParam } = Route.useSearch();
+
+  // Arriving from a notification opens the exact pop-up that needs attention.
+  useEffect(() => {
+    if (openParam === "feedback") setFeedbackOpen(true);
+    if (openParam === "questionnaire") setQuestionnaireOpen(true);
+  }, [openParam]);
 
 
   const privileged = user?.role === "admin" || user?.role === "partner";
