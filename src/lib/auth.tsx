@@ -119,6 +119,8 @@ export type LoqalUser = {
   role: Role;
   partnerType?: PartnerType;
   companyName?: string;
+  /** Mortgage lender partners: company NMLS / licence number taken from registration. */
+  lenderLicence?: string;
   mortgageProfile?: MortgageProfile;
 };
 
