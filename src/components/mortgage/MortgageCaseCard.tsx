@@ -540,6 +540,9 @@ function ProceedPanel({ lead }: { lead: MortgageLead }) {
 
 export function MortgageCaseCard({ lead }: { lead: MortgageLead }) {
   const openRequests = lead.infoRequests.filter((r) => !r.answeredAt).length;
+  const { cancelLead } = useLeads();
+  const [confirmCancel, setConfirmCancel] = useState(false);
+  const cancellable = canCancelLead(lead);
 
   return (
     <section className="mb-6 rounded-lg border border-border bg-card p-6">
@@ -558,24 +561,28 @@ export function MortgageCaseCard({ lead }: { lead: MortgageLead }) {
               ? "bg-success/10 text-success"
               : lead.status === "not_qualified"
                 ? "bg-destructive/10 text-destructive"
-                : lead.status === "info_required"
-                  ? "bg-gold-tint text-gold"
-                  : "bg-brand-tint text-brand"
+                : lead.status === "annulled"
+                  ? "bg-muted text-muted-foreground"
+                  : lead.status === "info_required"
+                    ? "bg-gold-tint text-gold"
+                    : "bg-brand-tint text-brand"
           }`}
         >
           {lead.status === "new"
             ? "In review with lender"
-            : lead.status === "info_required"
-              ? `Action needed${openRequests ? ` (${openRequests})` : ""}`
-              : lead.status === "qualified"
-                ? lead.clientDecision === "accepted"
-                  ? "Pre-approved — agent assigned"
-                  : lead.clientDecision === "hold"
-                    ? "On hold"
-                    : lead.clientDecision
-                      ? "Pre-qualified"
-                      : "Awaiting your response"
-                : "Not qualified"}
+            : lead.status === "annulled"
+              ? "Annulled by you"
+              : lead.status === "info_required"
+                ? `Action needed${openRequests ? ` (${openRequests})` : ""}`
+                : lead.status === "qualified"
+                  ? lead.clientDecision === "accepted"
+                    ? "Pre-approved — agent assigned"
+                    : lead.clientDecision === "hold"
+                      ? "On hold"
+                      : lead.clientDecision
+                        ? "Pre-qualified"
+                        : "Awaiting your response"
+                  : "Not qualified"}
         </span>
       </div>
 
@@ -588,11 +595,32 @@ export function MortgageCaseCard({ lead }: { lead: MortgageLead }) {
 
       <div className="mt-4">
         {lead.status === "new" ? (
-          <p className="text-sm text-muted-foreground">
-            Your application has been delivered. The lender will respond with a pre-qualification
-            decision.
-          </p>
+          <>
+            <p className="text-sm text-muted-foreground">
+              Your application has been delivered. The lender will respond with a pre-qualification
+              decision.
+            </p>
+            {cancellable ? (
+              <button
+                type="button"
+                onClick={() => setConfirmCancel(true)}
+                className="mt-3 rounded-md border border-destructive/40 px-3 py-1.5 text-xs font-semibold text-destructive hover:bg-destructive/10"
+              >
+                Cancel application
+              </button>
+            ) : null}
+          </>
         ) : null}
+
+        {lead.status === "annulled" ? (
+          <div className="rounded-md bg-muted/60 p-3 text-sm text-muted-foreground">
+            You annulled this application
+            {lead.annulledAt ? ` on ${formatDateTime(lead.annulledAt)}` : ""}. The lender can no
+            longer assign it or send feedback. Use <strong>Request Mortgage Info</strong> above to
+            resubmit — everything you already filled in is pre-saved and can be changed freely.
+          </div>
+        ) : null}
+
 
         {lead.status === "not_qualified" ? (
           <p className="text-sm text-muted-foreground">
