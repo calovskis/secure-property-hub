@@ -134,6 +134,8 @@ function PropertyDetailPage() {
   const { leadForProperty } = useLeads();
   const lead = user ? leadForProperty(user.email, property.id) : undefined;
   const [questionnaireOpen, setQuestionnaireOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+
 
   const privileged = user?.role === "admin" || user?.role === "partner";
   const priced = hasPricedOffer(lead);
