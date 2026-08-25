@@ -55,6 +55,20 @@ function useDerivedNotifications() {
     for (const lead of myLeads) {
       const href = `/property/${lead.propertyId}`;
 
+      if (lead.assignedAt && lead.status !== "annulled") {
+        list.push({
+          id: `assigned-${lead.id}-${lead.assignedAt}`,
+          to: email,
+          title: "Your pre-approval was assigned to a loan processor",
+          body: `${lead.propertyLabel} — a licensed loan processor is now reviewing your application.`,
+          href,
+          severity: "info",
+          createdAt: lead.assignedAt,
+        });
+      }
+
+
+
       if (pendingOfferDecision(lead)) {
         list.push({
           id: `offer-${lead.id}`,
