@@ -19,12 +19,12 @@ import {
 export const Route = createFileRoute("/property/$propertyId")({
   component: PropertyDetailPage,
   /** `?open=feedback|questionnaire` lets a notification jump straight into the pop-up. */
-  validateSearch: (search: Record<string, unknown>) => ({
-    open:
-      search.open === "feedback" || search.open === "questionnaire"
-        ? (search.open as "feedback" | "questionnaire")
-        : undefined,
-  }),
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { open?: "feedback" | "questionnaire" } => {
+    const value = search["open"];
+    return value === "feedback" || value === "questionnaire" ? { open: value } : {};
+  },
   loader: ({ params }) => {
     const property = getProperty(Number(params.propertyId));
     if (!property) throw notFound();
