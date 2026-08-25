@@ -453,14 +453,6 @@ function BuyerFile({ lead, me }: { lead: MortgageLead; me: Realtor }) {
               <div className="mt-2">
                 <Row label="Name" value={lead.clientName} />
                 <Row
-                  label="E-mail"
-                  value={
-                    seesContact
-                      ? lead.clientEmail
-                      : `${maskEmail(lead.clientEmail)} — contact routed through Loqal`
-                  }
-                />
-                <Row
                   label="US status"
                   value={lead.usPerson ? "US citizen / green card" : "Non-US person"}
                 />
