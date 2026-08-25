@@ -7,9 +7,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useAuth, type MortgageProfile, type StoredDocument } from "@/lib/auth";
+import { fullName, useAuth, type MortgageProfile, type StoredDocument } from "@/lib/auth";
 import { useLeads } from "@/lib/leads";
-import { uid } from "@/lib/mortgage-form";
+import { uid, US_STATUS_LABEL, usStatusOf } from "@/lib/mortgage-form";
+import { countryLabel } from "@/data/countries";
+import { formatDate, isoToUsDate } from "@/lib/dates";
 import {
   useStagedDocuments,
   type DocumentRequest,
@@ -61,6 +63,8 @@ export function DocumentRequestDialog({
     onOpenChange(false);
   };
 
+  const known = knownDetails(request.kind, profile, user?.usPerson ?? false);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
@@ -69,7 +73,25 @@ export function DocumentRequestDialog({
           <DialogDescription>{request.description}</DialogDescription>
         </DialogHeader>
 
+        <div className="rounded-md border border-border bg-background p-3 text-xs">
+          <div className="font-semibold text-foreground">Mortgage pre-approval questionnaire</div>
+          <div className="mt-0.5 text-muted-foreground">
+            {user ? fullName(user) : "—"} · submitted {formatDate(profile.submittedAt)}
+          </div>
+          {known.length ? (
+            <dl className="mt-3 grid gap-1.5 border-t border-border pt-3 sm:grid-cols-2">
+              {known.map((item) => (
+                <div key={item.label}>
+                  <dt className="text-muted-foreground">{item.label}</dt>
+                  <dd className="font-medium text-foreground">{item.value}</dd>
+                </div>
+              ))}
+            </dl>
+          ) : null}
+        </div>
+
         <p className="rounded-md bg-muted/60 p-3 text-xs text-muted-foreground">{request.reason}</p>
+
 
         <div className="mt-3 space-y-3">
           <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground hover:bg-brand-tint hover:text-brand">
@@ -155,4 +177,57 @@ export function DocumentRequestDialog({
       </DialogContent>
     </Dialog>
   );
+}
+
+/** Everything already on file that relates to the requested document. */
+function knownDetails(
+  kind: DocumentRequest["kind"],
+  profile: MortgageProfile,
+  usPerson: boolean,
+): { label: string; value: string }[] {
+  const out: { label: string; value: string }[] = [];
+  const date = (v?: string) => (v ? isoToUsDate(v) || v : "—");
+
+  if (kind === "visaDocuments") {
+    const status = usStatusOf(profile, usPerson);
+    out.push({
+      label: "Declared status",
+      value:
+        status === "other" && profile.otherVisaType
+          ? `Other — ${profile.otherVisaType}`
+          : US_STATUS_LABEL[status],
+    });
+    out.push({ label: "Issued", value: date(profile.visaIssued) });
+    out.push({ label: "Valid until", value: date(profile.visaValidUntil) });
+    out.push({ label: "Citizenship", value: countryLabel(profile.citizenship) || "—" });
+  }
+
+  if (kind === "idDocuments") {
+    out.push({
+      label: "Status on file",
+      value: US_STATUS_LABEL[usStatusOf(profile, usPerson)],
+    });
+    out.push({ label: "Date of birth", value: date(profile.dateOfBirth) });
+    out.push({ label: "Citizenship", value: countryLabel(profile.citizenship) || "—" });
+    if (profile.hasItin) out.push({ label: "ITIN", value: profile.itin ? "On file" : "Declared" });
+    out.push({
+      label: "Accepted documents",
+      value: "Driver's licence (front & back), green card or passport",
+    });
+  }
+
+  if (kind === "bankruptcyDocuments") {
+    const d = profile.declarations;
+    out.push({ label: "Bankruptcy declared", value: d?.bankruptcy ? "Yes" : "—" });
+    out.push({
+      label: "Chapter(s)",
+      value: d?.bankruptcyChapters?.length ? d.bankruptcyChapters.join(", ") : "—",
+    });
+    out.push({
+      label: "Discharge date",
+      value: d?.bankruptcyDischargeDate ? d.bankruptcyDischargeDate : "—",
+    });
+  }
+
+  return out.filter((i) => i.value && i.value !== "—");
 }
