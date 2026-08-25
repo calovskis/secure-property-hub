@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { MortgageQuestionnaire } from "@/components/mortgage/MortgageQuestionnaire";
 import { MortgageCaseCard } from "@/components/mortgage/MortgageCaseCard";
+import { BuyerProcessCard } from "@/components/buyer/BuyerProcessCard";
 import { FeedbackDialog } from "@/components/mortgage/FeedbackDialog";
 
 import { useLeads, hasPricedOffer, toLoanTerms } from "@/lib/leads";
