@@ -35,6 +35,7 @@ const STATUS_TONE: Record<LeadStatus, string> = {
   info_required: "bg-brand-tint text-brand",
   not_qualified: "bg-destructive/10 text-destructive",
   qualified: "bg-success/10 text-success",
+  annulled: "bg-muted text-muted-foreground",
 };
 
 const inputClass =
@@ -582,7 +583,16 @@ function RequestsInbox({
               </div>
               <StatusPill status={selected.status} />
             </div>
-            <AssignBar lead={selected} />
+            {selected.status === "annulled" ? (
+              <div className="rounded-md border border-border bg-muted/60 px-4 py-3 text-sm text-muted-foreground">
+                <strong className="text-foreground">Annulled by the client</strong>
+                {selected.annulledAt ? ` on ${date(selected.annulledAt)}` : ""}. This application can
+                no longer be assigned and no feedback can be issued. If the client resubmits, it will
+                reappear as a new inquiry.
+              </div>
+            ) : (
+              <AssignBar lead={selected} />
+            )}
             <div className="mt-4">
               <a
                 href={`/lender/file/${selected.id}`}
@@ -597,7 +607,12 @@ function RequestsInbox({
 
           {selected.debts ? <Step2Summary lead={selected} /> : null}
           <Thread lead={selected} />
-          {selected.status === "not_qualified" ? (
+          {selected.status === "annulled" ? (
+            <div className="rounded-lg border border-border bg-muted/60 p-4 text-sm text-muted-foreground">
+              The client annulled this application before it was picked up, so no decision can be
+              issued.
+            </div>
+          ) : selected.status === "not_qualified" ? (
             <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
               Marked not qualified
               {selected.creditScore ? ` (score ${selected.creditScore})` : ""}. This decision is
@@ -630,7 +645,7 @@ function RequestsInbox({
         <section className="rounded-lg border border-border bg-card">
           {view === "past" ? (
             <div className="flex flex-wrap gap-1.5 border-b border-border p-4">
-              {(["all", "qualified", "not_qualified"] as const).map((f) => (
+              {(["all", "qualified", "not_qualified", "annulled"] as const).map((f) => (
                 <button
                   key={f}
                   type="button"

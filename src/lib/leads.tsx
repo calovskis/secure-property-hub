@@ -16,13 +16,19 @@ import {
 } from "@/lib/lender-team";
 import { pickRealtor } from "@/lib/realtors";
 
-export type LeadStatus = "new" | "info_required" | "not_qualified" | "qualified";
+export type LeadStatus =
+  | "new"
+  | "info_required"
+  | "not_qualified"
+  | "qualified"
+  | "annulled";
 
 export const LEAD_STATUS_LABEL: Record<LeadStatus, string> = {
   new: "New inquiry",
   info_required: "More information required",
   not_qualified: "Not qualified",
   qualified: "Qualified",
+  annulled: "Annulled",
 };
 
 export type LeadDocument = {
@@ -154,6 +160,8 @@ export type MortgageLead = {
   assignedAt?: string | undefined;
   /** Set when the lender company was on vacation mode at submission time. */
   routedToOtherPartner?: boolean;
+  /** Set when the client annulled the application before it was picked up. */
+  annulledAt?: string;
 
   infoRequests: InfoRequest[];
   debts?: DebtProfile;
@@ -170,6 +178,25 @@ export function hasPricedOffer(lead?: MortgageLead): lead is MortgageLead {
       lead.status === "qualified" &&
       lead.terms &&
       (lead.creditScore || !lead.profile.ssn),
+  );
+}
+
+/** Client annulled the application — the lender desk can no longer touch it. */
+export function isAnnulled(lead: MortgageLead) {
+  return lead.status === "annulled";
+}
+
+/**
+ * The client may annul while the request is still untouched: nobody at the
+ * lender company was assigned and no decision/feedback exists yet.
+ */
+export function canCancelLead(lead: MortgageLead) {
+  return (
+    lead.status === "new" &&
+    !lead.assignedToId &&
+    !lead.terms &&
+    !lead.decidedAt &&
+    lead.infoRequests.length === 0
   );
 }
 
@@ -274,6 +301,8 @@ type LeadsContextValue = {
     input: Omit<MortgageLead, "id" | "status" | "infoRequests" | "submittedAt" | "dtiLimit">,
   ) => MortgageLead;
   updateLead: (id: string, patch: Partial<MortgageLead>) => void;
+  /** Client annuls an untouched application; the lender desk is locked out. */
+  cancelLead: (id: string) => void;
   addInfoRequest: (id: string, question: string, needsDocument: boolean) => void;
   answerInfoRequest: (
     leadId: string,
@@ -379,12 +408,17 @@ export function LeadsProvider({ children }: { children: ReactNode }) {
         /* A re-submission for the same client + property refreshes the file,
          * it does not wipe the lender's workflow state (decision, terms,
          * info requests, debts, assignment) or previously confirmed docs. */
-        const existing = leads.find(
+        const found = leads.find(
           (l) => l.clientEmail === input.clientEmail && l.propertyId === input.propertyId,
         );
+        /* A resubmission after the client annulled starts a clean file: the
+         * answers are pre-filled from the form, but no lender state carries
+         * over and the inquiry is routed again. */
+        const reviving = found?.status === "annulled";
+        const existing = reviving ? undefined : found;
         const lead: MortgageLead = {
           ...input,
-          id: existing?.id ?? uid(),
+          id: found?.id ?? uid(),
           status: existing?.status ?? "new",
           dtiLimit: existing?.dtiLimit ?? DEFAULT_DTI_LIMIT,
           infoRequests: existing?.infoRequests ?? [],
@@ -424,6 +458,19 @@ export function LeadsProvider({ children }: { children: ReactNode }) {
         return lead;
       },
       updateLead: (id, patch) => patchLead(id, (l) => ({ ...l, ...patch })),
+      cancelLead: (id) =>
+        patchLead(id, (l) =>
+          canCancelLead(l)
+            ? {
+                ...l,
+                status: "annulled",
+                annulledAt: new Date().toISOString(),
+                assignedToId: undefined,
+                assignedToName: undefined,
+                assignedAt: undefined,
+              }
+            : l,
+        ),
       addInfoRequest: (id, question, needsDocument) =>
         patchLead(id, (l) => ({
           ...l,
