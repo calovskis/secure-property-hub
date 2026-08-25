@@ -470,6 +470,7 @@ function ProfilePage() {
                         request={request}
                         profile={profile}
                         stagedCount={staged[request.kind] ?? 0}
+                        autoOpen={docParam === request.kind}
                       />
                     ))}
                   </ul>
