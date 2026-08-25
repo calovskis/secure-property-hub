@@ -15,6 +15,7 @@ import { useBuyerProcess } from "@/lib/buyer-process";
 import { usePartnerRequests } from "@/lib/partner-requests";
 import { useRealtors } from "@/lib/realtors";
 import { useMortgageDrafts } from "@/lib/mortgage-draft";
+import { outstandingDocumentRequests } from "@/lib/document-requests";
 import {
   syncNotifications,
   useNotifications,
@@ -199,37 +200,17 @@ function useDerivedNotifications() {
         }
       }
 
-      const idMissing = user.usPerson
-        ? !(p.idDocuments?.length)
-        : false;
-      if (idMissing) {
+      /* One notification per outstanding document request — each is its own
+       * upload form waiting under "Unfinished forms" in My Profile. */
+      for (const request of outstandingDocumentRequests(user, p)) {
         list.push({
-          id: `doc-id-${email}`,
+          id: `doc-${request.kind}-${email}`,
           to: email,
-          title: "ID document still missing",
-          body: "Upload your driver's licence / green card (front & back) or passport.",
-          href: "/my-properties",
+          title: `${request.title} still missing`,
+          body: `${request.description} ${request.reason}`,
+          href: "/profile",
           severity: "warning",
-        });
-      }
-      if (!user.usPerson && p.usVisaActive && !(p.visaDocuments?.length)) {
-        list.push({
-          id: `doc-visa-${email}`,
-          to: email,
-          title: "Visa document still missing",
-          body: "Upload your visa / status document to complete the file.",
-          href: "/my-properties",
-          severity: "warning",
-        });
-      }
-      if (p.declarations?.bankruptcy && !(p.bankruptcyDocuments?.length)) {
-        list.push({
-          id: `doc-bankr-${email}`,
-          to: email,
-          title: "Bankruptcy discharge papers still missing",
-          body: "You declared a bankruptcy — please upload the discharge papers.",
-          href: "/my-properties",
-          severity: "warning",
+          emailCopy: true,
         });
       }
     }

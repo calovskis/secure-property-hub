@@ -34,6 +34,12 @@ import {
 } from "@/lib/leads";
 import { useMortgageDrafts } from "@/lib/mortgage-draft";
 import { useI18n } from "@/lib/i18n";
+import { DocumentRequestDialog } from "@/components/mortgage/DocumentRequestDialog";
+import {
+  outstandingDocumentRequests,
+  stagedCounts,
+  type DocumentRequest,
+} from "@/lib/document-requests";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({
@@ -195,6 +201,42 @@ function ApplicationCard({ lead }: { lead: MortgageLead }) {
   );
 }
 
+function DocumentRequestItem({
+  request,
+  profile,
+  stagedCount,
+}: {
+  request: DocumentRequest;
+  profile: MortgageProfile;
+  stagedCount: number;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <li className="rounded-md border border-gold/40 bg-gold-tint/40 p-3">
+      <div className="text-sm font-medium text-foreground">{request.title}</div>
+      <div className="mt-1 text-xs text-muted-foreground">{request.label} · not submitted yet</div>
+      {stagedCount ? (
+        <div className="mt-1 text-xs font-semibold text-gold">
+          {stagedCount} file(s) pre-saved — confirm to submit
+        </div>
+      ) : null}
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="mt-3 inline-flex rounded-md border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-brand-tint hover:text-brand"
+      >
+        {stagedCount ? "Continue upload" : "Upload now"}
+      </button>
+      <DocumentRequestDialog
+        request={request}
+        profile={profile}
+        open={open}
+        onOpenChange={setOpen}
+      />
+    </li>
+  );
+}
+
 function ProfileTopics({ profile }: { profile: MortgageProfile }) {
   const { user, saveMortgageProfile } = useAuth();
   const save = (patch: Partial<MortgageProfile>) => {
@@ -224,6 +266,12 @@ function ProfilePage() {
   const { drafts: allDrafts } = useMortgageDrafts();
   const { t } = useI18n();
   const [wizardOpen, setWizardOpen] = useState(false);
+  const [staged, setStaged] = useState<Partial<Record<DocumentRequest["kind"], number>>>({});
+
+  useEffect(() => {
+    setStaged(stagedCounts(user?.email));
+  }, [user?.email, user?.mortgageProfile?.submittedAt, wizardOpen]);
+
 
   const clientLeads = user ? leadsForClient(user.email) : [];
   /* If the account has no stored profile yet, rebuild it from the most recent
@@ -270,6 +318,8 @@ function ProfilePage() {
     .sort((a, b) => (a.submittedAt < b.submittedAt ? 1 : -1));
   const profile = user.mortgageProfile ?? recoveredProfile;
   const unfinished = allDrafts(user.email).filter((d) => !d.submitted);
+  const docRequests = outstandingDocumentRequests(user, profile);
+
 
 
   const isRealtor = user.partnerType === "realtor";
@@ -391,6 +441,18 @@ function ProfilePage() {
 
               <section className="rounded-lg border border-border bg-card p-6">
                 <h2 className="text-base font-semibold text-foreground">Unfinished forms</h2>
+                {docRequests.length && profile ? (
+                  <ul className="mt-4 space-y-3">
+                    {docRequests.map((request) => (
+                      <DocumentRequestItem
+                        key={request.kind}
+                        request={request}
+                        profile={profile}
+                        stagedCount={staged[request.kind] ?? 0}
+                      />
+                    ))}
+                  </ul>
+                ) : null}
                 {unfinished.length ? (
                   <ul className="mt-4 space-y-3">
                     {unfinished.map((d) => (
@@ -430,7 +492,7 @@ function ProfilePage() {
                       </li>
                     ))}
                   </ul>
-                ) : (
+                ) : docRequests.length ? null : (
                   <p className="mt-3 text-sm text-muted-foreground">
                     No forms in progress. Anything you start is saved automatically.
                   </p>
