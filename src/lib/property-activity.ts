@@ -26,6 +26,8 @@ export type ActivityItem = {
   label: string;
   detail?: string | undefined;
   tone: ActivityTone;
+  /** Where the client has to go to deal with this item (pop-up deep link). */
+  action?: { href: string; cta: string } | undefined;
 };
 
 export type PropertyActivity = {
@@ -94,6 +96,7 @@ function buildActivity(
         label: "Lender requested information from you",
         detail: req.needsDocument ? `${req.question} (document upload required)` : req.question,
         tone: "pending",
+        action: { href: `/property/${lead.propertyId}?open=feedback`, cta: "Respond to lender" },
       });
     }
   }
@@ -121,6 +124,9 @@ function buildActivity(
       label: "Pre-approval terms received for this property",
       detail: `${lead.terms.ratePct}% over ${lead.terms.termYears} years, ${lead.terms.downPaymentPct}% down`,
       tone: lead.clientDecision ? "done" : "pending",
+      action: lead.clientDecision
+        ? undefined
+        : { href: `/property/${lead.propertyId}?open=feedback`, cta: "Review terms and answer" },
     });
     if (!lead.clientDecision) awaiting += 1;
   }
@@ -192,6 +198,7 @@ function buildActivity(
         label: `Fresh photos delivered (${delivery.photos.length}) — your decision is awaited`,
         detail: delivery.comments || undefined,
         tone: "pending",
+        action: { href: `/property/${lead.propertyId}`, cta: "Review photos and decide" },
       });
     } else if (delivery.status === "delayed") {
       push(items, {
