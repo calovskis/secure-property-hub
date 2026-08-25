@@ -212,14 +212,12 @@ export function ApplicantFile({
   const { user } = useAuth();
   /**
    * Contact privacy: only Loqal admins (and the applicant themselves) see the
-   * client's direct e-mail / phone. Partners always get the masked form.
+   * client's direct e-mail / phone. Partners do not see these fields at all.
    */
-  const seesContact =
+  const canSeeContact =
     user?.role === "admin" ||
     (Boolean(user?.email) && user!.email.toLowerCase() === lead.clientEmail.toLowerCase());
-  const contactEmail = seesContact ? lead.clientEmail : maskEmail(lead.clientEmail);
   const leadPhone = (lead as { clientPhone?: string }).clientPhone ?? "";
-  const contactPhone = leadPhone ? (seesContact ? leadPhone : maskPhone(leadPhone)) : "";
   const p = lead.profile;
   const incomes = p.incomes ?? [];
   const monthlyIncome = incomes.length ? totalMonthlyIncome(incomes) : p.monthlyGross;
