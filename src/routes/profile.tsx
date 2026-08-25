@@ -45,12 +45,16 @@ const DOC_KINDS = ["idDocuments", "visaDocuments", "bankruptcyDocuments"] as con
 
 export const Route = createFileRoute("/profile")({
   /** `?doc=<kind>` opens that upload pop-up, `?open=questionnaire` the wizard. */
-  validateSearch: (search: Record<string, unknown>) => ({
-    doc: DOC_KINDS.includes(search.doc as (typeof DOC_KINDS)[number])
-      ? (search.doc as DocumentRequest["kind"])
-      : undefined,
-    open: search.open === "questionnaire" ? ("questionnaire" as const) : undefined,
-  }),
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { doc?: DocumentRequest["kind"]; open?: "questionnaire" } => {
+    const out: { doc?: DocumentRequest["kind"]; open?: "questionnaire" } = {};
+    const doc = search["doc"];
+    if (DOC_KINDS.includes(doc as (typeof DOC_KINDS)[number]))
+      out.doc = doc as DocumentRequest["kind"];
+    if (search["open"] === "questionnaire") out.open = "questionnaire";
+    return out;
+  },
   head: () => ({
     meta: [
       { title: "My Profile — Loqal" },
