@@ -112,6 +112,7 @@ export function FeedbackDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const { setClientDecision, askClientQuestion } = useLeads();
+  const t = useT();
   const [agentOpen, setAgentOpen] = useState(false);
   const [askOpen, setAskOpen] = useState(false);
   const [question, setQuestion] = useState("");
