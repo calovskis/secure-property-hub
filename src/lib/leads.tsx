@@ -16,13 +16,19 @@ import {
 } from "@/lib/lender-team";
 import { pickRealtor } from "@/lib/realtors";
 
-export type LeadStatus = "new" | "info_required" | "not_qualified" | "qualified";
+export type LeadStatus =
+  | "new"
+  | "info_required"
+  | "not_qualified"
+  | "qualified"
+  | "annulled";
 
 export const LEAD_STATUS_LABEL: Record<LeadStatus, string> = {
   new: "New inquiry",
   info_required: "More information required",
   not_qualified: "Not qualified",
   qualified: "Qualified",
+  annulled: "Annulled",
 };
 
 export type LeadDocument = {
