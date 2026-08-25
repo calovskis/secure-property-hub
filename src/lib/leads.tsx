@@ -160,6 +160,8 @@ export type MortgageLead = {
   assignedAt?: string | undefined;
   /** Set when the lender company was on vacation mode at submission time. */
   routedToOtherPartner?: boolean;
+  /** Set when the client annulled the application before it was picked up. */
+  annulledAt?: string;
 
   infoRequests: InfoRequest[];
   debts?: DebtProfile;
@@ -176,6 +178,25 @@ export function hasPricedOffer(lead?: MortgageLead): lead is MortgageLead {
       lead.status === "qualified" &&
       lead.terms &&
       (lead.creditScore || !lead.profile.ssn),
+  );
+}
+
+/** Client annulled the application — the lender desk can no longer touch it. */
+export function isAnnulled(lead: MortgageLead) {
+  return lead.status === "annulled";
+}
+
+/**
+ * The client may annul while the request is still untouched: nobody at the
+ * lender company was assigned and no decision/feedback exists yet.
+ */
+export function canCancelLead(lead: MortgageLead) {
+  return (
+    lead.status === "new" &&
+    !lead.assignedToId &&
+    !lead.terms &&
+    !lead.decidedAt &&
+    lead.infoRequests.length === 0
   );
 }
 
