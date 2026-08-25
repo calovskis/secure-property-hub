@@ -205,8 +205,8 @@ export function FeedbackDialog({
                   <div className="space-y-2">
                     <div className="text-sm font-semibold text-foreground">Awaiting your response</div>
                     <div className="text-xs text-muted-foreground">
-                      You can accept, place on hold, decline, or ask the lender a question from the
-                      property page.
+                      Use the buttons at the bottom of this window to accept, place on hold,
+                      decline, or request information from the lender.
                     </div>
                     {nextReminder ? (
                       <div className="mt-2 text-xs text-muted-foreground">
