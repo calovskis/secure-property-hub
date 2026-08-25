@@ -214,12 +214,18 @@ function DocumentRequestItem({
   request,
   profile,
   stagedCount,
+  autoOpen = false,
 }: {
   request: DocumentRequest;
   profile: MortgageProfile;
   stagedCount: number;
+  /** Opened straight away when the client arrived from its notification. */
+  autoOpen?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(autoOpen);
+  useEffect(() => {
+    if (autoOpen) setOpen(true);
+  }, [autoOpen]);
   return (
     <li className="rounded-md border border-gold/40 bg-gold-tint/40 p-3">
       <div className="text-sm font-medium text-foreground">{request.title}</div>
