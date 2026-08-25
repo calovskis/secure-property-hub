@@ -82,7 +82,7 @@ function SubmittedApplicationPage() {
             </p>
 
             <div className="mt-6">
-              <ApplicantFile lead={lead} />
+              <ApplicantFile lead={lead} viewerRole={user!.role} />
             </div>
           </>
         )}
