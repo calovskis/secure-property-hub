@@ -312,6 +312,8 @@ function ProfilePage() {
     .sort((a, b) => (a.submittedAt < b.submittedAt ? 1 : -1));
   const profile = user.mortgageProfile ?? recoveredProfile;
   const unfinished = allDrafts(user.email).filter((d) => !d.submitted);
+  const docRequests = outstandingDocumentRequests(user, profile);
+
 
 
   const isRealtor = user.partnerType === "realtor";
