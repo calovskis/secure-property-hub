@@ -3,6 +3,8 @@ import { useState } from "react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { MortgageQuestionnaire } from "@/components/mortgage/MortgageQuestionnaire";
 import { MortgageCaseCard } from "@/components/mortgage/MortgageCaseCard";
+import { FeedbackDialog } from "@/components/mortgage/FeedbackDialog";
+
 import { useLeads, hasPricedOffer, toLoanTerms } from "@/lib/leads";
 import { useAuth } from "@/lib/auth";
 import {
