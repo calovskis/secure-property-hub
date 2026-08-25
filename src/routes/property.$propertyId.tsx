@@ -140,6 +140,9 @@ function PropertyDetailPage() {
 
 
   const privileged = user?.role === "admin" || user?.role === "partner";
+  /** Listing edits are a Loqal admin function — never available to clients or partners. */
+  const canEditProperty = user?.role === "admin";
+
   const priced = hasPricedOffer(lead);
   /** Estimates are precise only on lender-issued pricing; otherwise stay locked. */
   const terms = priced && lead?.terms ? toLoanTerms(lead.terms) : undefined;
