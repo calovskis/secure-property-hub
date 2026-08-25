@@ -108,6 +108,10 @@ export function FeedbackDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const { setClientDecision, askClientQuestion } = useLeads();
+  const [agentOpen, setAgentOpen] = useState(false);
+  const [askOpen, setAskOpen] = useState(false);
+  const [question, setQuestion] = useState("");
   const terms = lead.terms;
   const taxesInsuranceYear = terms
     ? Math.round((lead.propertyPrice * terms.taxInsurancePct) / 100)
