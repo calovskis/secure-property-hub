@@ -301,6 +301,8 @@ type LeadsContextValue = {
     input: Omit<MortgageLead, "id" | "status" | "infoRequests" | "submittedAt" | "dtiLimit">,
   ) => MortgageLead;
   updateLead: (id: string, patch: Partial<MortgageLead>) => void;
+  /** Client annuls an untouched application; the lender desk is locked out. */
+  cancelLead: (id: string) => void;
   addInfoRequest: (id: string, question: string, needsDocument: boolean) => void;
   answerInfoRequest: (
     leadId: string,
