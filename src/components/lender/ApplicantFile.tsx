@@ -299,7 +299,15 @@ export function ApplicantFile({
             <strong className="text-foreground">{money(lead.propertyPrice)}</strong>
           </span>
           <span>{lead.propertyLabel}</span>
-          {lead.assignedToName ? (
+          {viewerRole === "client" || viewerRole === "corporate" ? (
+            lead.assignedToName ? (
+              <span className="rounded-full bg-brand-tint px-2 py-0.5 text-[11px] font-semibold text-brand">
+                Assigned to a loan processor
+              </span>
+            ) : (
+              <span>Unassigned</span>
+            )
+          ) : lead.assignedToName ? (
             <span>
               Assignee: <strong className="text-foreground">{lead.assignedToName}</strong>
             </span>
