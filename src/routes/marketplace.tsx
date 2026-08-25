@@ -143,6 +143,48 @@ function MarketplacePage() {
           </p>
         </div>
 
+        {/* TABS: search vs properties with active processes */}
+        {activity.length > 0 ? (
+          <div className="mb-8 flex flex-wrap gap-2">
+            <button
+              className={`rounded-md border px-4 py-2.5 text-sm font-semibold transition-all ${
+                tab === "search"
+                  ? "border-brand bg-brand text-background"
+                  : "border-border bg-card text-foreground hover:bg-brand-tint"
+              }`}
+              onClick={() => setTab("search")}
+            >
+              All properties
+            </button>
+            <button
+              className={`inline-flex items-center gap-2 rounded-md border px-4 py-2.5 text-sm font-semibold transition-all ${
+                tab === "action"
+                  ? "border-brand bg-brand text-background"
+                  : "border-brand/40 bg-brand-tint text-brand hover:bg-brand/15"
+              }`}
+              onClick={() => setTab("action")}
+            >
+              Properties in action
+              <span
+                className={`rounded px-1.5 py-0.5 text-[11px] font-bold ${
+                  tab === "action" ? "bg-background/20" : "bg-brand/15"
+                }`}
+              >
+                {activity.length}
+              </span>
+              {awaitingTotal > 0 ? (
+                <span className="rounded border border-gold/40 bg-gold-tint px-1.5 py-0.5 text-[10px] font-semibold uppercase text-gold">
+                  {awaitingTotal} to answer
+                </span>
+              ) : null}
+            </button>
+          </div>
+        ) : null}
+
+        {tab === "action" ? (
+          <PropertiesInAction items={activity} />
+        ) : (
+          <>
         {/* FILTER SECTION */}
         <div className="mb-8 rounded-lg border border-border bg-card p-6">
           <div className="mb-5 text-base font-semibold text-foreground">
