@@ -211,31 +211,16 @@ function DecisionPanel({ lead }: { lead: MortgageLead }) {
       )}
 
       <div className="rounded-md border border-gold/40 bg-gold-tint/40 p-3">
-        <span className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Approved pricing (required for “Qualified” — unlocks the client estimate)
-        </span>
-        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <label className="block">
-            <span className="mb-1.5 block text-[11px] font-semibold text-muted-foreground">
-              Lending company name (shown to the client)
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Approved pricing (required for “Qualified” — unlocks the client estimate)
+          </span>
+          {lenderName ? (
+            <span className="text-[11px] text-muted-foreground">
+              Issued by <strong className="text-foreground">{lenderName}</strong>
+              {lenderNmls ? ` · ${lenderNmls}` : null}
             </span>
-            <input
-              value={lenderName}
-              onChange={(e) => setLenderName(e.target.value)}
-              className={inputClass}
-            />
-          </label>
-          <label className="block">
-            <span className="mb-1.5 block text-[11px] font-semibold text-muted-foreground">
-              Company NMLS № (shown to the client)
-            </span>
-            <input
-              placeholder="NMLS #2481907"
-              value={lenderNmls}
-              onChange={(e) => setLenderNmls(e.target.value)}
-              className={inputClass}
-            />
-          </label>
+          ) : null}
         </div>
         <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-5">
           {(
