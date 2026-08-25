@@ -200,7 +200,13 @@ const TABS = [
 
 type TabId = (typeof TABS)[number]["id"];
 
-export function ApplicantFile({ lead }: { lead: MortgageLead }) {
+export function ApplicantFile({
+  lead,
+  viewerRole,
+}: {
+  lead: MortgageLead;
+  viewerRole?: "client" | "corporate" | "partner" | "admin" | string;
+}) {
   const [tab, setTab] = useState<TabId>("personal");
   const p = lead.profile;
   const incomes = p.incomes ?? [];
