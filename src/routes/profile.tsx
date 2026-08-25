@@ -41,7 +41,16 @@ import {
   type DocumentRequest,
 } from "@/lib/document-requests";
 
+const DOC_KINDS = ["idDocuments", "visaDocuments", "bankruptcyDocuments"] as const;
+
 export const Route = createFileRoute("/profile")({
+  /** `?doc=<kind>` opens that upload pop-up, `?open=questionnaire` the wizard. */
+  validateSearch: (search: Record<string, unknown>) => ({
+    doc: DOC_KINDS.includes(search.doc as (typeof DOC_KINDS)[number])
+      ? (search.doc as DocumentRequest["kind"])
+      : undefined,
+    open: search.open === "questionnaire" ? ("questionnaire" as const) : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "My Profile — Loqal" },
