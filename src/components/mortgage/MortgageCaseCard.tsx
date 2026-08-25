@@ -577,7 +577,9 @@ export function MortgageCaseCard({ lead }: { lead: MortgageLead }) {
           }`}
         >
           {lead.status === "new"
-            ? "In review with lender"
+            ? lead.assignedAt
+              ? "Assigned to a loan processor"
+              : "In review with lender"
             : lead.status === "annulled"
               ? "Annulled by you"
               : lead.status === "info_required"
