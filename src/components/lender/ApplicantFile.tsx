@@ -287,14 +287,12 @@ export function ApplicantFile({
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2 className="text-lg font-bold text-foreground">{lead.clientName}</h2>
-            <p className="text-xs text-muted-foreground">
-              {contactEmail}
-              {seesContact ? null : (
-                <span className="ml-2 text-[11px] font-semibold text-brand">
-                  Contact routed through Loqal
-                </span>
-              )}
-            </p>
+            {canSeeContact ? (
+              <p className="text-xs text-muted-foreground">
+                {lead.clientEmail}
+                {leadPhone ? <span className="ml-2">{leadPhone}</span> : null}
+              </p>
+            ) : null}
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <span className="rounded-full bg-brand-tint px-3 py-1 text-[11px] font-semibold text-brand">
