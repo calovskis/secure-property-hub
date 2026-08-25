@@ -55,6 +55,7 @@ export function BuyerAgentDialog({
   const [kickoff, setKickoff] = useState<KickoffRequest | null>(null);
   const [notes, setNotes] = useState("");
   const [callSlot, setCallSlot] = useState<string | null>(null);
+  const [showFeeInfo, setShowFeeInfo] = useState(false);
 
   /* Reset every time the dialog opens; skip steps that are already done. */
   useEffect(() => {
