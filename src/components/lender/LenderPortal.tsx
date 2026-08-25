@@ -645,7 +645,7 @@ function RequestsInbox({
         <section className="rounded-lg border border-border bg-card">
           {view === "past" ? (
             <div className="flex flex-wrap gap-1.5 border-b border-border p-4">
-              {(["all", "qualified", "not_qualified"] as const).map((f) => (
+              {(["all", "qualified", "not_qualified", "annulled"] as const).map((f) => (
                 <button
                   key={f}
                   type="button"
