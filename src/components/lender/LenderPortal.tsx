@@ -35,6 +35,7 @@ const STATUS_TONE: Record<LeadStatus, string> = {
   info_required: "bg-brand-tint text-brand",
   not_qualified: "bg-destructive/10 text-destructive",
   qualified: "bg-success/10 text-success",
+  annulled: "bg-muted text-muted-foreground",
 };
 
 const inputClass =
