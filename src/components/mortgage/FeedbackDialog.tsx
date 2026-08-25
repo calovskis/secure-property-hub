@@ -6,6 +6,7 @@
  * dollar amount (percentages stay lender/admin-side).
  */
 import { useState } from "react";
+import { useT } from "@/lib/i18n";
 import {
   Dialog,
   DialogContent,
