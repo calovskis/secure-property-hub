@@ -65,12 +65,17 @@ function Row({ label, value }: { label: string; value?: string | number | null |
 function statusTone(lead: MortgageLead) {
   if (lead.status === "qualified") return "bg-success/10 text-success";
   if (lead.status === "not_qualified") return "bg-destructive/10 text-destructive";
+  if (lead.status === "annulled") return "bg-muted text-muted-foreground";
   if (lead.status === "info_required") return "bg-gold-tint text-gold";
   return "bg-brand-tint text-brand";
 }
 
 function ApplicationCard({ lead }: { lead: MortgageLead }) {
   const [open, setOpen] = useState(false);
+  const [confirmCancel, setConfirmCancel] = useState(false);
+  const { cancelLead } = useLeads();
+  const cancellable = canCancelLead(lead);
+  const annulled = lead.status === "annulled";
 
   return (
     <article className="rounded-lg border border-border bg-card p-5">
@@ -88,24 +93,75 @@ function ApplicationCard({ lead }: { lead: MortgageLead }) {
         </span>
       </div>
 
+      {annulled ? (
+        <p className="mt-3 rounded-md bg-muted/60 p-3 text-xs text-muted-foreground">
+          You annulled this application{lead.annulledAt ? ` on ${formatDateTime(lead.annulledAt)}` : ""}.
+          The lender can no longer assign it or send feedback. You can resubmit at any time — all your
+          saved answers are pre-filled and can be changed freely.
+        </p>
+      ) : null}
+
       <div className="mt-3 flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className="rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-brand-tint hover:text-brand"
-        >
-          View feedback
-        </button>
+        {!annulled ? (
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-brand-tint hover:text-brand"
+          >
+            View feedback
+          </button>
+        ) : null}
         <Link
           to="/property/$propertyId"
           params={{ propertyId: String(lead.propertyId) }}
           className="rounded-md bg-brand px-3 py-1.5 text-xs font-semibold text-background hover:bg-brand-soft"
         >
-          Open property
+          {annulled ? "Resubmit application" : "Open property"}
         </Link>
+        {cancellable ? (
+          <button
+            type="button"
+            onClick={() => setConfirmCancel(true)}
+            className="rounded-md border border-destructive/40 px-3 py-1.5 text-xs font-semibold text-destructive hover:bg-destructive/10"
+          >
+            Cancel application
+          </button>
+        ) : null}
       </div>
 
-      <FeedbackDialog lead={lead} open={open} onOpenChange={setOpen} />
+      {!annulled ? <FeedbackDialog lead={lead} open={open} onOpenChange={setOpen} /> : null}
+
+      <Dialog open={confirmCancel} onOpenChange={setConfirmCancel}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Cancel this application?</DialogTitle>
+            <DialogDescription>
+              The application for {lead.propertyLabel} will be marked <strong>Annulled</strong>. The
+              mortgage lender will not be able to pick it up or send feedback anymore. You can
+              resubmit later with your saved answers pre-filled.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-4 flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setConfirmCancel(false)}
+              className="rounded-md border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted"
+            >
+              Keep application
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                cancelLead(lead.id);
+                setConfirmCancel(false);
+              }}
+              className="rounded-md bg-destructive px-4 py-2 text-sm font-semibold text-destructive-foreground hover:opacity-90"
+            >
+              Yes, annul it
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </article>
   );
 }
