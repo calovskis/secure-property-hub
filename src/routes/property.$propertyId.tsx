@@ -140,6 +140,9 @@ function PropertyDetailPage() {
 
 
   const privileged = user?.role === "admin" || user?.role === "partner";
+  /** Listing edits are a Loqal admin function — never available to clients or partners. */
+  const canEditProperty = user?.role === "admin";
+
   const priced = hasPricedOffer(lead);
   /** Estimates are precise only on lender-issued pricing; otherwise stay locked. */
   const terms = priced && lead?.terms ? toLoanTerms(lead.terms) : undefined;
@@ -197,9 +200,11 @@ function PropertyDetailPage() {
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            <button className="rounded-md border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-brand-tint">
-              Edit Property
-            </button>
+            {canEditProperty ? (
+              <button className="rounded-md border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-brand-tint">
+                Edit Property
+              </button>
+            ) : null}
             <button
               type="button"
               onClick={openQuestionnaire}
