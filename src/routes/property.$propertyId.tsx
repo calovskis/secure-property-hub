@@ -572,6 +572,10 @@ function PropertyDetailPage() {
         propertyLabel={`${property.address}, ${property.location}`}
         property={{ id: property.id, price: property.price }}
       />
+      {lead ? (
+        <FeedbackDialog lead={lead} open={feedbackOpen} onOpenChange={setFeedbackOpen} />
+      ) : null}
+
     </div>
   );
 }
