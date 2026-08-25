@@ -5,6 +5,7 @@
  * ceiling for applicants without an SSN, and renders taxes + insurance as a
  * dollar amount (percentages stay lender/admin-side).
  */
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -12,11 +13,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { BuyerAgentDialog } from "@/components/mortgage/BuyerAgentDialog";
 import {
   CLIENT_DECISION_LABEL,
   LEAD_STATUS_LABEL,
   hasPricedOffer,
   offerReminders,
+  useLeads,
   type MortgageLead,
 } from "@/lib/leads";
 import { formatDate, formatDateTime } from "@/lib/dates";
