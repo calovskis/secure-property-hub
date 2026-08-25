@@ -55,6 +55,7 @@ export function BuyerAgentDialog({
   const [kickoff, setKickoff] = useState<KickoffRequest | null>(null);
   const [notes, setNotes] = useState("");
   const [callSlot, setCallSlot] = useState<string | null>(null);
+  const [showFeeInfo, setShowFeeInfo] = useState(false);
 
   /* Reset every time the dialog opens; skip steps that are already done. */
   useEffect(() => {
@@ -63,6 +64,7 @@ export function BuyerAgentDialog({
     setKickoff(null);
     setNotes("");
     setCallSlot(null);
+    setShowFeeInfo(false);
     setStep(
       lead.buyerAgent?.representation ? "done" : lead.buyerAgent ? "representation" : "agree",
     );
@@ -126,7 +128,24 @@ export function BuyerAgentDialog({
                 you — the buyer — not the seller.
               </p>
               <div className="rounded-md border border-gold/40 bg-gold-tint/40 p-3 text-foreground">
-                The buyer's agent fee is <strong>3% of the purchase price</strong>, due at closing.
+                The buyer's agent fee is{" "}
+                <button
+                  type="button"
+                  onClick={() => setShowFeeInfo((s) => !s)}
+                  className="font-semibold underline decoration-brand underline-offset-2 hover:text-brand"
+                >
+                  3% of the purchase price
+                </button>
+                , due at closing.
+                {showFeeInfo ? (
+                  <div className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                    <strong className="text-foreground">Learn more:</strong> In most U.S.
+                    transactions the seller pays the buyer's agent commission from the sale
+                    proceeds, often as a seller concession or credit — so it usually does not come
+                    out of your pocket. Your agent also negotiates the price and closing costs down
+                    on your behalf. Commissions are negotiable and not guaranteed.
+                  </div>
+                ) : null}
               </div>
               <div>
                 <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
