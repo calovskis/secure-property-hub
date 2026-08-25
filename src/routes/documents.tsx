@@ -157,7 +157,7 @@ function DocumentsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <AppHeader active="My Portfolio" />
+      <AppHeader active="My Loqal" />
       <main className="mx-auto max-w-[1400px] px-4 py-8 md:px-7">
         <div className="mb-8 flex flex-wrap items-start justify-between gap-5">
           <div className="flex-1">

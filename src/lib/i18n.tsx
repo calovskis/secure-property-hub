@@ -26,7 +26,7 @@ const RU: Record<string, string> = {
   Home: "Главная",
   Properties: "Объекты",
   Services: "Услуги",
-  "My Portfolio": "Мой портфель",
+  "My Loqal": "Мой Loqal",
   Other: "Прочее",
   "All Services": "Все услуги",
   Maintenance: "Обслуживание",
