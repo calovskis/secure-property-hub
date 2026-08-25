@@ -55,6 +55,8 @@ function useDerivedNotifications() {
     const myLeads = leads.filter((l) => l.clientEmail.toLowerCase() === email);
     for (const lead of myLeads) {
       const href = `/property/${lead.propertyId}`;
+      // Feedback-related alerts open the pre-approval pop-up directly.
+      const feedbackHref = `${href}?open=feedback`;
 
       if (lead.assignedAt && lead.status !== "annulled") {
         list.push({
@@ -62,7 +64,7 @@ function useDerivedNotifications() {
           to: email,
           title: "Your pre-approval was assigned to a loan processor",
           body: `${lead.propertyLabel} — a licensed loan processor is now reviewing your application.`,
-          href,
+          href: feedbackHref,
           severity: "info",
           createdAt: lead.assignedAt,
         });
@@ -76,7 +78,7 @@ function useDerivedNotifications() {
           to: email,
           title: "Your pre-approval terms are ready",
           body: `${lead.propertyLabel} — review the lender's terms and tell us whether you continue.`,
-          href,
+          href: feedbackHref,
           severity: "warning",
           createdAt: lead.terms?.issuedAt,
         });
@@ -87,7 +89,7 @@ function useDerivedNotifications() {
             to: email,
             title: `Reminder: your pre-approval terms are waiting (day ${r.day})`,
             body: "The lender's offer on your file still needs your answer.",
-            href,
+            href: feedbackHref,
             severity: r.day >= 14 ? "critical" : "warning",
             emailCopy: r.email,
             createdAt: r.dueAt,
@@ -102,7 +104,7 @@ function useDerivedNotifications() {
           to: email,
           title: "The lender requested more information",
           body: r.question,
-          href,
+          href: feedbackHref,
           severity: "warning",
           createdAt: r.requestedAt,
         });
@@ -152,7 +154,7 @@ function useDerivedNotifications() {
             id: `visa-expired-${email}`,
             to: email,
             title: "Your visa has expired — please upload an updated document",
-            href: "/profile",
+            href: "/profile?doc=visaDocuments",
             severity: "critical",
             emailCopy: true,
           });
@@ -162,7 +164,7 @@ function useDerivedNotifications() {
             to: email,
             title: `Your visa expires in ${left} day${left === 1 ? "" : "s"}`,
             body: "Upload the renewed document so your file stays active.",
-            href: "/profile",
+            href: "/profile?doc=visaDocuments",
             severity: "critical",
             emailCopy: true,
           });
@@ -179,7 +181,7 @@ function useDerivedNotifications() {
             to: email,
             title: "Visa validity dropped below the 3-month pre-closing requirement",
             body: "Mortgage closing requires your visa to be valid at least 3 months beyond it. Please renew and upload the new document.",
-            href: "/profile",
+            href: "/profile?doc=visaDocuments",
             severity: "critical",
             emailCopy: true,
           });
@@ -191,7 +193,7 @@ function useDerivedNotifications() {
                 to: email,
                 title: `${label} left to keep the 3-month visa window for closing`,
                 body: `Your visa is currently valid until ${formatDateTime(visaIso).split(",")[0]}. Renew it in time — closings require 3 months of remaining validity.`,
-                href: "/profile",
+                href: "/profile?doc=visaDocuments",
                 severity: "warning",
               });
               break;
@@ -208,7 +210,7 @@ function useDerivedNotifications() {
           to: email,
           title: `${request.title} still missing`,
           body: `${request.description} ${request.reason}`,
-          href: "/profile",
+          href: `/profile?doc=${request.kind}`,
           severity: "warning",
           emailCopy: true,
         });
@@ -222,7 +224,9 @@ function useDerivedNotifications() {
         to: email,
         title: "Unfinished pre-approval questionnaire",
         body: `${d.propertyLabel ?? "Mortgage questionnaire"} — ${d.completion}% complete.`,
-        href: d.propertyId ? `/property/${d.propertyId}` : "/my-properties",
+        href: d.propertyId
+          ? `/property/${d.propertyId}?open=questionnaire`
+          : "/profile?open=questionnaire",
         severity: "info",
         createdAt: d.updatedAt,
       });
@@ -462,7 +466,7 @@ export function NotificationBell() {
                       own.markRead(n.id);
                       admins.markRead(n.id);
                       setOpen(false);
-                      if (n.href) navigate({ to: n.href });
+                      if (n.href) openNotification(navigate, n.href);
                     }}
                     className={`flex w-full gap-3 px-4 py-3 text-left transition-colors hover:bg-brand-tint ${
                       n.readAt ? "opacity-60" : ""
@@ -496,4 +500,12 @@ export function NotificationBell() {
   );
 }
 
-
+/** Notifications deep-link with a query string so the target pop-up opens itself. */
+function openNotification(
+  navigate: ReturnType<typeof useNavigate>,
+  href: string,
+) {
+  const [path, query] = href.split("?");
+  const search = query ? Object.fromEntries(new URLSearchParams(query)) : undefined;
+  navigate({ to: path, ...(search ? { search } : {}) } as never);
+}
