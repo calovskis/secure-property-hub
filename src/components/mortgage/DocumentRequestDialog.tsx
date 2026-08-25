@@ -62,6 +62,8 @@ export function DocumentRequestDialog({
     onOpenChange(false);
   };
 
+  const known = knownDetails(request.kind, profile, user?.usPerson ?? false);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
@@ -70,7 +72,25 @@ export function DocumentRequestDialog({
           <DialogDescription>{request.description}</DialogDescription>
         </DialogHeader>
 
+        <div className="rounded-md border border-border bg-background p-3 text-xs">
+          <div className="font-semibold text-foreground">Mortgage pre-approval questionnaire</div>
+          <div className="mt-0.5 text-muted-foreground">
+            {user ? fullName(user) : "—"} · submitted {formatDate(profile.submittedAt)}
+          </div>
+          {known.length ? (
+            <dl className="mt-3 grid gap-1.5 border-t border-border pt-3 sm:grid-cols-2">
+              {known.map((item) => (
+                <div key={item.label}>
+                  <dt className="text-muted-foreground">{item.label}</dt>
+                  <dd className="font-medium text-foreground">{item.value}</dd>
+                </div>
+              ))}
+            </dl>
+          ) : null}
+        </div>
+
         <p className="rounded-md bg-muted/60 p-3 text-xs text-muted-foreground">{request.reason}</p>
+
 
         <div className="mt-3 space-y-3">
           <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground hover:bg-brand-tint hover:text-brand">
