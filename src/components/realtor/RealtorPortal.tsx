@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { fullName, useAuth, type LoqalUser } from "@/lib/auth";
-import { maskEmail } from "@/lib/privacy";
 import { KICKOFF_LABEL, useLeads, type MortgageLead } from "@/lib/leads";
 import {
   CLIENT_ACTION_LABEL,
