@@ -136,7 +136,7 @@ export function FeedbackDialog({
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="space-y-1">
                 <DialogTitle className="text-lg font-semibold text-foreground">
-                  {priced ? "Lender feedback" : "Pre-approval status"}
+                  {priced ? t("Lender feedback") : t("Pre-approval status")}
                 </DialogTitle>
                 <DialogDescription className="text-sm text-muted-foreground">
                   {lead.propertyLabel}
