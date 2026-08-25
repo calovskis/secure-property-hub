@@ -144,6 +144,13 @@ function PropertyDetailPage() {
   const lead = user ? leadForProperty(user.email, property.id) : undefined;
   const [questionnaireOpen, setQuestionnaireOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const { open: openParam } = Route.useSearch();
+
+  // Arriving from a notification opens the exact pop-up that needs attention.
+  useEffect(() => {
+    if (openParam === "feedback") setFeedbackOpen(true);
+    if (openParam === "questionnaire") setQuestionnaireOpen(true);
+  }, [openParam]);
 
 
   const privileged = user?.role === "admin" || user?.role === "partner";
