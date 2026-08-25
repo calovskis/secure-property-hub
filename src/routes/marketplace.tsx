@@ -40,6 +40,12 @@ function MarketplacePage() {
   const [sqftMin, setSqftMin] = useState("");
   const [sortBy, setSortBy] = useState("newest");
   const [currentPage, setCurrentPage] = useState(1);
+  const [tab, setTab] = useState<"search" | "action">("search");
+
+  /** Properties this client already has an active process on. */
+  const activity = useClientPropertyActivity();
+  const activeIds = useMemo(() => new Set(activity.map((a) => a.propertyId)), [activity]);
+  const awaitingTotal = activity.reduce((sum, a) => sum + a.awaitingClient, 0);
 
   const [appliedFilters, setAppliedFilters] = useState({
     location: "",
