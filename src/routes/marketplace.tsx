@@ -463,6 +463,8 @@ function MarketplacePage() {
             </button>
           ))}
         </div>
+          </>
+        )}
       </main>
     </div>
   );
