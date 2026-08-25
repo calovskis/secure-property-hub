@@ -492,7 +492,7 @@ function ProfilePage() {
                       </li>
                     ))}
                   </ul>
-                ) : (
+                ) : docRequests.length ? null : (
                   <p className="mt-3 text-sm text-muted-foreground">
                     No forms in progress. Anything you start is saved automatically.
                   </p>
