@@ -195,6 +195,42 @@ function ApplicationCard({ lead }: { lead: MortgageLead }) {
   );
 }
 
+function DocumentRequestItem({
+  request,
+  profile,
+  stagedCount,
+}: {
+  request: DocumentRequest;
+  profile: MortgageProfile;
+  stagedCount: number;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <li className="rounded-md border border-gold/40 bg-gold-tint/40 p-3">
+      <div className="text-sm font-medium text-foreground">{request.title}</div>
+      <div className="mt-1 text-xs text-muted-foreground">{request.label} · not submitted yet</div>
+      {stagedCount ? (
+        <div className="mt-1 text-xs font-semibold text-gold">
+          {stagedCount} file(s) pre-saved — confirm to submit
+        </div>
+      ) : null}
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="mt-3 inline-flex rounded-md border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-brand-tint hover:text-brand"
+      >
+        {stagedCount ? "Continue upload" : "Upload now"}
+      </button>
+      <DocumentRequestDialog
+        request={request}
+        profile={profile}
+        open={open}
+        onOpenChange={setOpen}
+      />
+    </li>
+  );
+}
+
 function ProfileTopics({ profile }: { profile: MortgageProfile }) {
   const { user, saveMortgageProfile } = useAuth();
   const save = (patch: Partial<MortgageProfile>) => {
