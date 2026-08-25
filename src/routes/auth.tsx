@@ -87,6 +87,9 @@ function AuthPage() {
             partnerType: loginPartnerType,
             companyName:
               loginPartnerType === "lender" ? "Demo Mortgage Partners" : "Demo Partner Co.",
+            ...(loginPartnerType === "lender"
+              ? { lenderLicence: "NMLS-2481907" }
+              : {}),
           }
         : {}),
     });

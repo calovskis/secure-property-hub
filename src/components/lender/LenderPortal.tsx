@@ -12,6 +12,7 @@ import {
   type LeadStatus,
   type MortgageLead,
 } from "@/lib/leads";
+import { useAuth } from "@/lib/auth";
 
 import { ApplicantFile, Row } from "@/components/lender/ApplicantFile";
 import { countryLabel } from "@/data/countries";
@@ -88,15 +89,15 @@ function Step2Summary({ lead }: { lead: MortgageLead }) {
 
 function DecisionPanel({ lead }: { lead: MortgageLead }) {
   const { updateLead, addInfoRequest } = useLeads();
+  const { user } = useAuth();
+  /** Company name and NMLS come from the partner's registration; lenders cannot edit them. */
+  const lenderName = user?.companyName?.trim() || "";
+  const lenderNmls = user?.lenderLicence?.trim() || "";
   /** No SSN → no US credit file: no soft score and no DTI ceiling is issued. */
   const hasSsn = Boolean(lead.profile.ssn?.trim());
   const [score, setScore] = useState(lead.creditScore ? String(lead.creditScore) : "");
   const [note, setNote] = useState(lead.lenderNote ?? "");
   const [dtiLimit, setDtiLimit] = useState(String(Math.round(lead.dtiLimit * 100)));
-  const [lenderName, setLenderName] = useState(
-    lead.terms?.lenderName ?? "Loqal Mortgage Partners LLC",
-  );
-  const [lenderNmls, setLenderNmls] = useState(lead.terms?.lenderNmls ?? "");
   const [ratePct, setRatePct] = useState(lead.terms ? String(lead.terms.ratePct) : "");
   const [termYears, setTermYears] = useState(lead.terms ? String(lead.terms.termYears) : "30");
   const [downPct, setDownPct] = useState(lead.terms ? String(lead.terms.downPaymentPct) : "");
@@ -121,6 +122,12 @@ function DecisionPanel({ lead }: { lead: MortgageLead }) {
     const closing = Number(closingPct);
     const taxIns = Number(taxInsPct);
     if (status === "qualified") {
+      if (!lenderName || !lenderNmls) {
+        setError(
+          "Your partner profile is missing the registered company name or NMLS number. Please complete partner registration before issuing terms.",
+        );
+        return;
+      }
       const valid =
         rate > 0 &&
         rate < 25 &&
@@ -138,12 +145,6 @@ function DecisionPanel({ lead }: { lead: MortgageLead }) {
         );
         return;
       }
-      if (!lenderName.trim() || !lenderNmls.trim()) {
-        setError(
-          "Enter the lending company name and its NMLS number — the client sees who issued these terms.",
-        );
-        return;
-      }
     }
     setError(null);
     const limit = Math.min(Math.max(Number(dtiLimit) || 50, 20), 60) / 100;
@@ -156,8 +157,8 @@ function DecisionPanel({ lead }: { lead: MortgageLead }) {
       ...(status === "qualified"
         ? {
             terms: {
-              lenderName: lenderName.trim(),
-              lenderNmls: lenderNmls.trim(),
+              lenderName,
+              lenderNmls,
               ratePct: rate,
               termYears: years,
               downPaymentPct: down,
@@ -210,31 +211,16 @@ function DecisionPanel({ lead }: { lead: MortgageLead }) {
       )}
 
       <div className="rounded-md border border-gold/40 bg-gold-tint/40 p-3">
-        <span className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Approved pricing (required for “Qualified” — unlocks the client estimate)
-        </span>
-        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <label className="block">
-            <span className="mb-1.5 block text-[11px] font-semibold text-muted-foreground">
-              Lending company name (shown to the client)
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Approved pricing (required for “Qualified” — unlocks the client estimate)
+          </span>
+          {lenderName ? (
+            <span className="text-[11px] text-muted-foreground">
+              Issued by <strong className="text-foreground">{lenderName}</strong>
+              {lenderNmls ? ` · ${lenderNmls}` : null}
             </span>
-            <input
-              value={lenderName}
-              onChange={(e) => setLenderName(e.target.value)}
-              className={inputClass}
-            />
-          </label>
-          <label className="block">
-            <span className="mb-1.5 block text-[11px] font-semibold text-muted-foreground">
-              Company NMLS № (shown to the client)
-            </span>
-            <input
-              placeholder="NMLS #2481907"
-              value={lenderNmls}
-              onChange={(e) => setLenderNmls(e.target.value)}
-              className={inputClass}
-            />
-          </label>
+          ) : null}
         </div>
         <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-5">
           {(
