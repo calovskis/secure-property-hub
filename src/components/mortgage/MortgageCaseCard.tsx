@@ -1,5 +1,6 @@
 import { useState } from "react";
 import {
+  canCancelLead,
   computeDti,
   offerReminders,
   totalMonthlyObligations,
@@ -11,6 +12,13 @@ import {
 import { formatDate, formatDateTime } from "@/lib/dates";
 import { BuyerAgentDialog } from "@/components/mortgage/BuyerAgentDialog";
 import { BuyerProcessCard } from "@/components/buyer/BuyerProcessCard";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const money = (n: number) => `$${Math.round(n).toLocaleString()}`;
 const uid = () => Math.random().toString(36).slice(2, 9);
