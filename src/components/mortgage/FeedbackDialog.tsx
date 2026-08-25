@@ -180,6 +180,62 @@ export function FeedbackDialog({
             </div>
           ) : null}
 
+          {!priced && lead.assignedAt ? (
+            <Section icon={UserCheck} title="Assigned to a loan processor">
+              <div className="rounded-xl border border-brand/20 bg-brand-tint/40 p-4">
+                <p className="text-sm text-foreground">
+                  <strong>Status update:</strong> your pre-approval application was assigned to a
+                  licensed loan processor on {formatDate(lead.assignedAt)}. They are reviewing your
+                  file and will respond with a pre-qualification decision.
+                </p>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  The processor's name is kept private until feedback is issued.
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-border bg-card p-4">
+                <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <HelpCircle className="h-4 w-4 text-brand" />
+                  Have any questions?
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Send a message to the lending desk. It will be attached to this file and answered
+                  before or with your pre-approval terms.
+                </p>
+                <textarea
+                  rows={3}
+                  placeholder="Type your question…"
+                  value={question}
+                  onChange={(e) => setQuestion(e.target.value)}
+                  className="mt-3 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-brand"
+                />
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={!question.trim()}
+                    onClick={() => {
+                      const text = question.trim();
+                      if (!text) return;
+                      askClientQuestion(lead.id, text);
+                      setQuestion("");
+                    }}
+                    className="rounded-md bg-brand px-4 py-2 text-sm font-semibold text-background hover:bg-brand-soft disabled:opacity-50"
+                  >
+                    Send question
+                  </button>
+                  <span className="text-xs text-muted-foreground">or</span>
+                  <a
+                    href="mailto:hello@loqal.com?subject=Question%20about%20my%20Loqal%20pre-approval"
+                    className="inline-flex items-center gap-1.5 rounded-md border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-brand-tint hover:text-brand"
+                  >
+                    <Mail className="h-3.5 w-3.5" />
+                    Contact Us
+                  </a>
+                </div>
+              </div>
+            </Section>
+          ) : null}
+
           {priced && terms ? (
             <Section icon={CheckCircle2} title="Priced pre-approval terms">
               <div className="grid grid-cols-2 gap-3">
