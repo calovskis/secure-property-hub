@@ -23,6 +23,7 @@ import { Route as PartnerRouteImport } from './routes/partner'
 import { Route as PartnerAccessRouteImport } from './routes/partner-access'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as SsnTermsRouteImport } from './routes/ssn-terms'
+import { Route as ApplicationLeadIdRouteImport } from './routes/application.$leadId'
 import { Route as PropertyPropertyIdRouteImport } from './routes/property.$propertyId'
 import { Route as LenderFileLeadIdRouteImport } from './routes/lender.file.$leadId'
 
@@ -96,6 +97,11 @@ const SsnTermsRoute = SsnTermsRouteImport.update({
   path: '/ssn-terms',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApplicationLeadIdRoute = ApplicationLeadIdRouteImport.update({
+  id: '/application/$leadId',
+  path: '/application/$leadId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PropertyPropertyIdRoute = PropertyPropertyIdRouteImport.update({
   id: '/property/$propertyId',
   path: '/property/$propertyId',
@@ -122,6 +128,7 @@ export interface FileRoutesByFullPath {
   '/partner-access': typeof PartnerAccessRoute
   '/profile': typeof ProfileRoute
   '/ssn-terms': typeof SsnTermsRoute
+  '/application/$leadId': typeof ApplicationLeadIdRoute
   '/property/$propertyId': typeof PropertyPropertyIdRoute
   '/lender/file/$leadId': typeof LenderFileLeadIdRoute
 }
@@ -140,6 +147,7 @@ export interface FileRoutesByTo {
   '/partner-access': typeof PartnerAccessRoute
   '/profile': typeof ProfileRoute
   '/ssn-terms': typeof SsnTermsRoute
+  '/application/$leadId': typeof ApplicationLeadIdRoute
   '/property/$propertyId': typeof PropertyPropertyIdRoute
   '/lender/file/$leadId': typeof LenderFileLeadIdRoute
 }
@@ -159,6 +167,7 @@ export interface FileRoutesById {
   '/partner-access': typeof PartnerAccessRoute
   '/profile': typeof ProfileRoute
   '/ssn-terms': typeof SsnTermsRoute
+  '/application/$leadId': typeof ApplicationLeadIdRoute
   '/property/$propertyId': typeof PropertyPropertyIdRoute
   '/lender/file/$leadId': typeof LenderFileLeadIdRoute
 }
@@ -179,6 +188,7 @@ export interface FileRouteTypes {
     | '/partner-access'
     | '/profile'
     | '/ssn-terms'
+    | '/application/$leadId'
     | '/property/$propertyId'
     | '/lender/file/$leadId'
   fileRoutesByTo: FileRoutesByTo
@@ -197,6 +207,7 @@ export interface FileRouteTypes {
     | '/partner-access'
     | '/profile'
     | '/ssn-terms'
+    | '/application/$leadId'
     | '/property/$propertyId'
     | '/lender/file/$leadId'
   id:
@@ -215,6 +226,7 @@ export interface FileRouteTypes {
     | '/partner-access'
     | '/profile'
     | '/ssn-terms'
+    | '/application/$leadId'
     | '/property/$propertyId'
     | '/lender/file/$leadId'
   fileRoutesById: FileRoutesById
@@ -234,6 +246,7 @@ export interface RootRouteChildren {
   PartnerAccessRoute: typeof PartnerAccessRoute
   ProfileRoute: typeof ProfileRoute
   SsnTermsRoute: typeof SsnTermsRoute
+  ApplicationLeadIdRoute: typeof ApplicationLeadIdRoute
   PropertyPropertyIdRoute: typeof PropertyPropertyIdRoute
   LenderFileLeadIdRoute: typeof LenderFileLeadIdRoute
 }
@@ -338,6 +351,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SsnTermsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/application/$leadId': {
+      id: '/application/$leadId'
+      path: '/application/$leadId'
+      fullPath: '/application/$leadId'
+      preLoaderRoute: typeof ApplicationLeadIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/property/$propertyId': {
       id: '/property/$propertyId'
       path: '/property/$propertyId'
@@ -370,6 +390,7 @@ const rootRouteChildren: RootRouteChildren = {
   PartnerAccessRoute: PartnerAccessRoute,
   ProfileRoute: ProfileRoute,
   SsnTermsRoute: SsnTermsRoute,
+  ApplicationLeadIdRoute: ApplicationLeadIdRoute,
   PropertyPropertyIdRoute: PropertyPropertyIdRoute,
   LenderFileLeadIdRoute: LenderFileLeadIdRoute,
 }

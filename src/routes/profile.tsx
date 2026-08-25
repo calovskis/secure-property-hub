@@ -121,6 +121,15 @@ function ApplicationCard({ lead }: { lead: MortgageLead }) {
       ) : null}
 
       <div className="mt-3 flex flex-wrap gap-2">
+        <Link
+          to="/application/$leadId"
+          params={{ leadId: lead.id }}
+          target="_blank"
+          rel="noreferrer"
+          className="rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-brand-tint hover:text-brand"
+        >
+          View submitted form
+        </Link>
         {!annulled ? (
           <button
             type="button"
@@ -130,6 +139,7 @@ function ApplicationCard({ lead }: { lead: MortgageLead }) {
             View feedback
           </button>
         ) : null}
+
         <Link
           to="/property/$propertyId"
           params={{ propertyId: String(lead.propertyId) }}
