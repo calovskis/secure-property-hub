@@ -408,12 +408,17 @@ export function LeadsProvider({ children }: { children: ReactNode }) {
         /* A re-submission for the same client + property refreshes the file,
          * it does not wipe the lender's workflow state (decision, terms,
          * info requests, debts, assignment) or previously confirmed docs. */
-        const existing = leads.find(
+        const found = leads.find(
           (l) => l.clientEmail === input.clientEmail && l.propertyId === input.propertyId,
         );
+        /* A resubmission after the client annulled starts a clean file: the
+         * answers are pre-filled from the form, but no lender state carries
+         * over and the inquiry is routed again. */
+        const reviving = found?.status === "annulled";
+        const existing = reviving ? undefined : found;
         const lead: MortgageLead = {
           ...input,
-          id: existing?.id ?? uid(),
+          id: found?.id ?? uid(),
           status: existing?.status ?? "new",
           dtiLimit: existing?.dtiLimit ?? DEFAULT_DTI_LIMIT,
           infoRequests: existing?.infoRequests ?? [],
