@@ -10,6 +10,7 @@ import {
 import { fullName, useAuth, type MortgageProfile, type StoredDocument } from "@/lib/auth";
 import { useLeads } from "@/lib/leads";
 import { uid, US_STATUS_LABEL, usStatusOf } from "@/lib/mortgage-form";
+import { countryLabel } from "@/data/countries";
 import { formatDate, isoToUsDate } from "@/lib/dates";
 import {
   useStagedDocuments,
@@ -176,4 +177,57 @@ export function DocumentRequestDialog({
       </DialogContent>
     </Dialog>
   );
+}
+
+/** Everything already on file that relates to the requested document. */
+function knownDetails(
+  kind: DocumentRequest["kind"],
+  profile: MortgageProfile,
+  usPerson: boolean,
+): { label: string; value: string }[] {
+  const out: { label: string; value: string }[] = [];
+  const date = (v?: string) => (v ? isoToUsDate(v) || v : "—");
+
+  if (kind === "visaDocuments") {
+    const status = usStatusOf(profile, usPerson);
+    out.push({
+      label: "Declared status",
+      value:
+        status === "other" && profile.otherVisaType
+          ? `Other — ${profile.otherVisaType}`
+          : US_STATUS_LABEL[status],
+    });
+    out.push({ label: "Issued", value: date(profile.visaIssued) });
+    out.push({ label: "Valid until", value: date(profile.visaValidUntil) });
+    out.push({ label: "Citizenship", value: countryLabel(profile.citizenship) || "—" });
+  }
+
+  if (kind === "idDocuments") {
+    out.push({
+      label: "Status on file",
+      value: US_STATUS_LABEL[usStatusOf(profile, usPerson)],
+    });
+    out.push({ label: "Date of birth", value: date(profile.dateOfBirth) });
+    out.push({ label: "Citizenship", value: countryLabel(profile.citizenship) || "—" });
+    if (profile.hasItin) out.push({ label: "ITIN", value: profile.itin ? "On file" : "Declared" });
+    out.push({
+      label: "Accepted documents",
+      value: "Driver's licence (front & back), green card or passport",
+    });
+  }
+
+  if (kind === "bankruptcyDocuments") {
+    const d = profile.declarations;
+    out.push({ label: "Bankruptcy declared", value: d?.bankruptcy ? "Yes" : "—" });
+    out.push({
+      label: "Chapter(s)",
+      value: d?.bankruptcyChapters?.length ? d.bankruptcyChapters.join(", ") : "—",
+    });
+    out.push({
+      label: "Discharge date",
+      value: d?.bankruptcyDischargeDate ? d.bankruptcyDischargeDate : "—",
+    });
+  }
+
+  return out.filter((i) => i.value && i.value !== "—");
 }
