@@ -139,7 +139,7 @@ const NAV: NavItem[] = [
     ],
   },
   {
-    label: "My Portfolio",
+    label: "My Loqal",
     icon: "📁",
     items: [
       { label: "My Profile", icon: "👤", to: "/profile" },
