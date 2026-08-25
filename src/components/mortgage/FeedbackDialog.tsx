@@ -31,7 +31,9 @@ import {
   Clock,
   HelpCircle,
   Home,
+  Mail,
   MessageSquare,
+  UserCheck,
 } from "lucide-react";
 
 const money = (n: number) => `$${Math.round(n).toLocaleString()}`;
