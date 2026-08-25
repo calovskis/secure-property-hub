@@ -607,7 +607,12 @@ function RequestsInbox({
 
           {selected.debts ? <Step2Summary lead={selected} /> : null}
           <Thread lead={selected} />
-          {selected.status === "not_qualified" ? (
+          {selected.status === "annulled" ? (
+            <div className="rounded-lg border border-border bg-muted/60 p-4 text-sm text-muted-foreground">
+              The client annulled this application before it was picked up, so no decision can be
+              issued.
+            </div>
+          ) : selected.status === "not_qualified" ? (
             <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
               Marked not qualified
               {selected.creditScore ? ` (score ${selected.creditScore})` : ""}. This decision is
