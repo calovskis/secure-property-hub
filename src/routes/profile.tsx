@@ -97,9 +97,20 @@ function ApplicationCard({ lead }: { lead: MortgageLead }) {
           </p>
         </div>
         <span className={`rounded-full px-3 py-1 text-[11px] font-semibold ${statusTone(lead)}`}>
-          {LEAD_STATUS_LABEL[lead.status]}
+          {lead.status === "new" && lead.assignedAt
+            ? "Assigned to a loan processor"
+            : LEAD_STATUS_LABEL[lead.status]}
         </span>
       </div>
+
+      {lead.status === "new" && lead.assignedAt ? (
+        <p className="mt-3 rounded-md bg-brand-tint/40 p-3 text-xs text-muted-foreground">
+          <strong className="text-foreground">Status update: </strong>
+          your application was assigned to a licensed loan processor on{" "}
+          {formatDateTime(lead.assignedAt)}. They are reviewing your file and will respond with a
+          pre-qualification decision.
+        </p>
+      ) : null}
 
       {annulled ? (
         <p className="mt-3 rounded-md bg-muted/60 p-3 text-xs text-muted-foreground">
