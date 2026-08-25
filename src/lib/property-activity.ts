@@ -24,14 +24,14 @@ export type ActivityTone = "pending" | "update" | "done";
 export type ActivityItem = {
   at: string;
   label: string;
-  detail?: string;
+  detail?: string | undefined;
   tone: ActivityTone;
 };
 
 export type PropertyActivity = {
   leadId: string;
   propertyId: number;
-  property?: Property;
+  property?: Property | undefined;
   propertyLabel: string;
   propertyPrice: number;
   /** One-line summary of where the property stands right now. */
