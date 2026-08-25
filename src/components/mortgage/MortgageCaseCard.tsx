@@ -606,10 +606,19 @@ export function MortgageCaseCard({ lead }: { lead: MortgageLead }) {
       <div className="mt-4">
         {lead.status === "new" ? (
           <>
-            <p className="text-sm text-muted-foreground">
-              Your application has been delivered. The lender will respond with a pre-qualification
-              decision.
-            </p>
+            {lead.assignedAt ? (
+              <p className="text-sm text-muted-foreground">
+                <strong className="text-foreground">Status update:</strong> your application has been
+                assigned to a licensed loan processor at the lending partner
+                {` on ${formatDateTime(lead.assignedAt)}`}. They are reviewing your file and will come
+                back with a pre-qualification decision.
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Your application has been delivered. The lender will respond with a pre-qualification
+                decision.
+              </p>
+            )}
             {cancellable ? (
               <button
                 type="button"
