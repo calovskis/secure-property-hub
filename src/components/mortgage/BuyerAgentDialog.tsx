@@ -64,6 +64,7 @@ export function BuyerAgentDialog({
     setKickoff(null);
     setNotes("");
     setCallSlot(null);
+    setShowFeeInfo(false);
     setStep(
       lead.buyerAgent?.representation ? "done" : lead.buyerAgent ? "representation" : "agree",
     );
