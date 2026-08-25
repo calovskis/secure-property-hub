@@ -234,6 +234,8 @@ function PropertyDetailPage() {
 
         {lead ? (
           priced ? (
+            <>
+
             <div className="mb-6 flex flex-col gap-3 rounded-lg border border-success/30 bg-success/10 p-5 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <div className="text-sm font-semibold text-success">
