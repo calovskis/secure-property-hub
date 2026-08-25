@@ -453,6 +453,19 @@ export function LeadsProvider({ children }: { children: ReactNode }) {
         return lead;
       },
       updateLead: (id, patch) => patchLead(id, (l) => ({ ...l, ...patch })),
+      cancelLead: (id) =>
+        patchLead(id, (l) =>
+          canCancelLead(l)
+            ? {
+                ...l,
+                status: "annulled",
+                annulledAt: new Date().toISOString(),
+                assignedToId: undefined,
+                assignedToName: undefined,
+                assignedAt: undefined,
+              }
+            : l,
+        ),
       addInfoRequest: (id, question, needsDocument) =>
         patchLead(id, (l) => ({
           ...l,
