@@ -397,9 +397,6 @@ function ClientDecisions({ lead }: { lead: MortgageLead }) {
  */
 function BuyerFile({ lead, me }: { lead: MortgageLead; me: Realtor }) {
   const [open, setOpen] = useState(false);
-  const { user } = useAuth();
-  /** Partners never see direct contact details — Loqal admins do. */
-  const seesContact = user?.role === "admin";
   const { bookings, bookCall } = useBuyerProcess();
   const [tourSlot, setTourSlot] = useState<string | null>(null);
   const t = lead.terms;
