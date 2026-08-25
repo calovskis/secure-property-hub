@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useAuth } from "@/lib/auth";
+import { maskEmail, maskPhone } from "@/lib/privacy";
 import type { MortgageLead } from "@/lib/leads";
 import { LEAD_STATUS_LABEL } from "@/lib/leads";
 import { countryLabel } from "@/data/countries";
@@ -208,6 +210,17 @@ export function ApplicantFile({
   viewerRole?: "client" | "corporate" | "partner" | "admin" | string;
 }) {
   const [tab, setTab] = useState<TabId>("personal");
+  const { user } = useAuth();
+  /**
+   * Contact privacy: only Loqal admins (and the applicant themselves) see the
+   * client's direct e-mail / phone. Partners always get the masked form.
+   */
+  const seesContact =
+    user?.role === "admin" ||
+    (Boolean(user?.email) && user!.email.toLowerCase() === lead.clientEmail.toLowerCase());
+  const contactEmail = seesContact ? lead.clientEmail : maskEmail(lead.clientEmail);
+  const leadPhone = (lead as { clientPhone?: string }).clientPhone ?? "";
+  const contactPhone = leadPhone ? (seesContact ? leadPhone : maskPhone(leadPhone)) : "";
   const p = lead.profile;
   const incomes = p.incomes ?? [];
   const monthlyIncome = incomes.length ? totalMonthlyIncome(incomes) : p.monthlyGross;
@@ -277,7 +290,14 @@ export function ApplicantFile({
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2 className="text-lg font-bold text-foreground">{lead.clientName}</h2>
-            <p className="text-xs text-muted-foreground">{lead.clientEmail}</p>
+            <p className="text-xs text-muted-foreground">
+              {contactEmail}
+              {seesContact ? null : (
+                <span className="ml-2 text-[11px] font-semibold text-brand">
+                  Contact routed through Loqal
+                </span>
+              )}
+            </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <span className="rounded-full bg-brand-tint px-3 py-1 text-[11px] font-semibold text-brand">
@@ -339,7 +359,11 @@ export function ApplicantFile({
         <div className="space-y-4">
           <Block title="Applicant">
             <Row label="Name" value={lead.clientName} />
-            <Row label="Email" value={lead.clientEmail} />
+            <Row
+              label="Email"
+              value={seesContact ? contactEmail : `${contactEmail} (hidden — Loqal handles contact)`}
+            />
+            {contactPhone ? <Row label="Phone" value={contactPhone} /> : null}
             <Row label="Date of birth" value={p.dateOfBirth ? formatDate(p.dateOfBirth) : "—"} />
             <Row
               label="Marital status"
