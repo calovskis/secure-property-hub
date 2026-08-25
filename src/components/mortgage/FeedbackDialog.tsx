@@ -126,7 +126,7 @@ export function FeedbackDialog({
   const reminders = offerReminders(lead);
   const nextReminder = reminders.find((r) => !r.due);
   const pastReminders = reminders.filter((r) => r.due);
-  const priced = hasPricedOffer(lead);
+  const priced = hasPricedOffer(lead) as boolean;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
