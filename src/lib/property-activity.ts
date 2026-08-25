@@ -42,6 +42,8 @@ export type PropertyActivity = {
   items: ActivityItem[];
   /** Number of items waiting on the client. */
   awaitingClient: number;
+  /** Deep link for the next action the client has to take, if any. */
+  action?: { href: string; cta: string } | undefined;
 };
 
 function push(items: ActivityItem[], item: ActivityItem) {
@@ -246,6 +248,7 @@ function buildActivity(
     headline,
     items,
     awaitingClient: awaiting,
+    action: items.find((i) => i.tone === "pending" && i.action)?.action,
   };
 }
 

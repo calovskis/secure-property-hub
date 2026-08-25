@@ -4,7 +4,8 @@
  * lender correspondence, agent visits, photos, decisions), shown from the
  * client's perspective.
  */
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { openDeepLink } from "@/lib/deep-link";
 import { formatPrice } from "@/data/properties";
 import { formatDateTime } from "@/lib/dates";
 import type { ActivityTone, PropertyActivity } from "@/lib/property-activity";
@@ -22,6 +23,8 @@ const TONE_DOT: Record<ActivityTone, string> = {
 };
 
 export function PropertiesInAction({ items }: { items: PropertyActivity[] }) {
+  const navigate = useNavigate();
+
   if (items.length === 0) {
     return (
       <div className="rounded-lg border border-border bg-card px-10 py-16 text-center">
@@ -77,6 +80,15 @@ export function PropertiesInAction({ items }: { items: PropertyActivity[] }) {
                 Where it stands
               </div>
               <div className="text-sm font-semibold text-foreground">{entry.headline}</div>
+              {entry.action ? (
+                <button
+                  type="button"
+                  onClick={() => openDeepLink(navigate, entry.action!.href)}
+                  className="mt-2 rounded-md bg-gold px-3 py-2 text-xs font-semibold text-background transition-colors hover:opacity-90"
+                >
+                  {entry.action.cta} →
+                </button>
+              ) : null}
             </div>
 
             <div className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
@@ -92,15 +104,26 @@ export function PropertiesInAction({ items }: { items: PropertyActivity[] }) {
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="text-sm font-semibold text-foreground">{item.label}</span>
-                      <span
-                        className={`rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase ${TONE_STYLE[item.tone]}`}
-                      >
-                        {item.tone === "pending"
-                          ? "Action needed"
-                          : item.tone === "update"
-                            ? "In progress"
-                            : "Done"}
-                      </span>
+                      {item.tone === "pending" && item.action ? (
+                        <button
+                          type="button"
+                          onClick={() => openDeepLink(navigate, item.action!.href)}
+                          title={item.action.cta}
+                          className={`rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase underline-offset-2 transition-colors hover:underline ${TONE_STYLE[item.tone]}`}
+                        >
+                          Action needed →
+                        </button>
+                      ) : (
+                        <span
+                          className={`rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase ${TONE_STYLE[item.tone]}`}
+                        >
+                          {item.tone === "pending"
+                            ? "Action needed"
+                            : item.tone === "update"
+                              ? "In progress"
+                              : "Done"}
+                        </span>
+                      )}
                     </div>
                     {item.detail ? (
                       <div className="text-sm text-muted-foreground">{item.detail}</div>
