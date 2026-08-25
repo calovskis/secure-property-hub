@@ -3,6 +3,8 @@ import { useState } from "react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { MortgageQuestionnaire } from "@/components/mortgage/MortgageQuestionnaire";
 import { MortgageCaseCard } from "@/components/mortgage/MortgageCaseCard";
+import { FeedbackDialog } from "@/components/mortgage/FeedbackDialog";
+
 import { useLeads, hasPricedOffer, toLoanTerms } from "@/lib/leads";
 import { useAuth } from "@/lib/auth";
 import {
@@ -134,6 +136,8 @@ function PropertyDetailPage() {
   const { leadForProperty } = useLeads();
   const lead = user ? leadForProperty(user.email, property.id) : undefined;
   const [questionnaireOpen, setQuestionnaireOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+
 
   const privileged = user?.role === "admin" || user?.role === "partner";
   const priced = hasPricedOffer(lead);
@@ -209,7 +213,31 @@ function PropertyDetailPage() {
           </div>
         </section>
 
-        {lead ? <MortgageCaseCard lead={lead} /> : null}
+        {lead ? (
+          priced ? (
+            <div className="mb-6 flex flex-col gap-3 rounded-lg border border-success/30 bg-success/10 p-5 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <div className="text-sm font-semibold text-success">
+                  This property has been pre-approved for a mortgage
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Your lender issued estimated pre-approval terms for this property. Open the
+                  feedback to review the terms and respond.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFeedbackOpen(true)}
+                className="shrink-0 rounded-md bg-brand px-4 py-2.5 text-sm font-semibold text-background transition-colors hover:bg-brand-soft"
+              >
+                View feedback
+              </button>
+            </div>
+          ) : (
+            <MortgageCaseCard lead={lead} />
+          )
+        ) : null}
+
 
         {/* TOP METRICS */}
         <section className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-3">
@@ -546,6 +574,10 @@ function PropertyDetailPage() {
         propertyLabel={`${property.address}, ${property.location}`}
         property={{ id: property.id, price: property.price }}
       />
+      {lead ? (
+        <FeedbackDialog lead={lead} open={feedbackOpen} onOpenChange={setFeedbackOpen} />
+      ) : null}
+
     </div>
   );
 }
