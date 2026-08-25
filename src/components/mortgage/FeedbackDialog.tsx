@@ -6,6 +6,7 @@
  * dollar amount (percentages stay lender/admin-side).
  */
 import { useState } from "react";
+import { useT } from "@/lib/i18n";
 import {
   Dialog,
   DialogContent,
@@ -31,7 +32,9 @@ import {
   Clock,
   HelpCircle,
   Home,
+  Mail,
   MessageSquare,
+  UserCheck,
 } from "lucide-react";
 
 const money = (n: number) => `$${Math.round(n).toLocaleString()}`;
@@ -109,6 +112,7 @@ export function FeedbackDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const { setClientDecision, askClientQuestion } = useLeads();
+  const t = useT();
   const [agentOpen, setAgentOpen] = useState(false);
   const [askOpen, setAskOpen] = useState(false);
   const [question, setQuestion] = useState("");
@@ -122,7 +126,7 @@ export function FeedbackDialog({
   const reminders = offerReminders(lead);
   const nextReminder = reminders.find((r) => !r.due);
   const pastReminders = reminders.filter((r) => r.due);
-  const priced = hasPricedOffer(lead);
+  const priced = hasPricedOffer(lead) as boolean;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -132,7 +136,7 @@ export function FeedbackDialog({
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="space-y-1">
                 <DialogTitle className="text-lg font-semibold text-foreground">
-                  Lender feedback
+                  {priced ? t("Lender feedback") : t("Pre-approval status")}
                 </DialogTitle>
                 <DialogDescription className="text-sm text-muted-foreground">
                   {lead.propertyLabel}
@@ -176,6 +180,67 @@ export function FeedbackDialog({
               <span className="text-sm text-muted-foreground">Soft credit report score</span>
               <strong className="text-2xl font-bold text-brand">{lead.creditScore}</strong>
             </div>
+          ) : null}
+
+          {!priced && lead.assignedAt ? (
+            <Section icon={UserCheck} title={t("Assigned to a loan processor")}>
+              <div className="rounded-xl border border-brand/20 bg-brand-tint/40 p-4">
+                <p className="text-sm text-foreground">
+                  <strong>{t("Status update:")}</strong>{" "}
+                  {t(
+                    "your pre-approval application was assigned to a licensed loan processor on",
+                  )}{" "}
+                  {formatDate(lead.assignedAt)}. {t(
+                    "They are reviewing your file and will respond with a pre-qualification decision.",
+                  )}
+                </p>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {t("The processor's name is kept private until feedback is issued.")}
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-border bg-card p-4">
+                <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <HelpCircle className="h-4 w-4 text-brand" />
+                  {t("Have any questions?")}
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {t(
+                    "Send a message to the lending desk. It will be attached to this file and answered before or with your pre-approval terms.",
+                  )}
+                </p>
+                <textarea
+                  rows={3}
+                  placeholder={t("Type your question…")}
+                  value={question}
+                  onChange={(e) => setQuestion(e.target.value)}
+                  className="mt-3 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-brand"
+                />
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={!question.trim()}
+                    onClick={() => {
+                      const text = question.trim();
+                      if (!text) return;
+                      askClientQuestion(lead.id, text);
+                      setQuestion("");
+                    }}
+                    className="rounded-md bg-brand px-4 py-2 text-sm font-semibold text-background hover:bg-brand-soft disabled:opacity-50"
+                  >
+                    {t("Send question")}
+                  </button>
+                  <span className="text-xs text-muted-foreground">or</span>
+                  <a
+                    href="mailto:hello@loqal.com?subject=Question%20about%20my%20Loqal%20pre-approval"
+                    className="inline-flex items-center gap-1.5 rounded-md border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-brand-tint hover:text-brand"
+                  >
+                    <Mail className="h-3.5 w-3.5" />
+                    {t("Contact Us")}
+                  </a>
+                </div>
+              </div>
+            </Section>
           ) : null}
 
           {priced && terms ? (
