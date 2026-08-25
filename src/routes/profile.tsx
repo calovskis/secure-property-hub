@@ -20,7 +20,15 @@ import { KybCard } from "@/components/profile/KybCard";
 import { PARTNER_LABEL, ROLE_LABEL, fullName, useAuth, type MortgageProfile } from "@/lib/auth";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   LEAD_STATUS_LABEL,
+  canCancelLead,
   useLeads,
   type MortgageLead,
 } from "@/lib/leads";
