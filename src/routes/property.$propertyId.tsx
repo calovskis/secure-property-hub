@@ -254,6 +254,8 @@ function PropertyDetailPage() {
                 View feedback
               </button>
             </div>
+            {lead.buyerAgent ? <BuyerProcessCard lead={lead} /> : null}
+            </>
           ) : (
             <MortgageCaseCard lead={lead} />
           )
