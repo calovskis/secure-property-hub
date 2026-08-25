@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { MortgageQuestionnaire } from "@/components/mortgage/MortgageQuestionnaire";
 import { MortgageCaseCard } from "@/components/mortgage/MortgageCaseCard";
+import { BuyerProcessCard } from "@/components/buyer/BuyerProcessCard";
 import { FeedbackDialog } from "@/components/mortgage/FeedbackDialog";
 
 import { useLeads, hasPricedOffer, toLoanTerms } from "@/lib/leads";
@@ -234,6 +235,8 @@ function PropertyDetailPage() {
 
         {lead ? (
           priced ? (
+            <>
+
             <div className="mb-6 flex flex-col gap-3 rounded-lg border border-success/30 bg-success/10 p-5 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <div className="text-sm font-semibold text-success">
@@ -252,6 +255,8 @@ function PropertyDetailPage() {
                 View feedback
               </button>
             </div>
+            {lead.buyerAgent ? <BuyerProcessCard lead={lead} /> : null}
+            </>
           ) : (
             <MortgageCaseCard lead={lead} />
           )
