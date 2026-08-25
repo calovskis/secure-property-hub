@@ -34,6 +34,12 @@ import {
 } from "@/lib/leads";
 import { useMortgageDrafts } from "@/lib/mortgage-draft";
 import { useI18n } from "@/lib/i18n";
+import { DocumentRequestDialog } from "@/components/mortgage/DocumentRequestDialog";
+import {
+  outstandingDocumentRequests,
+  stagedCounts,
+  type DocumentRequest,
+} from "@/lib/document-requests";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({
