@@ -12,6 +12,7 @@ import {
   type LeadStatus,
   type MortgageLead,
 } from "@/lib/leads";
+import { useAuth } from "@/lib/auth";
 
 import { ApplicantFile, Row } from "@/components/lender/ApplicantFile";
 import { countryLabel } from "@/data/countries";
