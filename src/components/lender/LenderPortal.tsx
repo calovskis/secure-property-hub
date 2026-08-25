@@ -583,7 +583,16 @@ function RequestsInbox({
               </div>
               <StatusPill status={selected.status} />
             </div>
-            <AssignBar lead={selected} />
+            {selected.status === "annulled" ? (
+              <div className="rounded-md border border-border bg-muted/60 px-4 py-3 text-sm text-muted-foreground">
+                <strong className="text-foreground">Annulled by the client</strong>
+                {selected.annulledAt ? ` on ${date(selected.annulledAt)}` : ""}. This application can
+                no longer be assigned and no feedback can be issued. If the client resubmits, it will
+                reappear as a new inquiry.
+              </div>
+            ) : (
+              <AssignBar lead={selected} />
+            )}
             <div className="mt-4">
               <a
                 href={`/lender/file/${selected.id}`}
