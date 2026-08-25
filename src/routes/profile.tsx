@@ -441,6 +441,18 @@ function ProfilePage() {
 
               <section className="rounded-lg border border-border bg-card p-6">
                 <h2 className="text-base font-semibold text-foreground">Unfinished forms</h2>
+                {docRequests.length && profile ? (
+                  <ul className="mt-4 space-y-3">
+                    {docRequests.map((request) => (
+                      <DocumentRequestItem
+                        key={request.kind}
+                        request={request}
+                        profile={profile}
+                        stagedCount={staged[request.kind] ?? 0}
+                      />
+                    ))}
+                  </ul>
+                ) : null}
                 {unfinished.length ? (
                   <ul className="mt-4 space-y-3">
                     {unfinished.map((d) => (
