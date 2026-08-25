@@ -1,6 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { AppHeader } from "@/components/layout/AppHeader";
+import { PropertiesInAction } from "@/components/property/PropertiesInAction";
+import { useClientPropertyActivity } from "@/lib/property-activity";
 import { allProperties, formatPrice, type Property } from "@/data/properties";
 
 
