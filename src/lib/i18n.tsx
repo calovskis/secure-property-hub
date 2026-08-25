@@ -60,8 +60,24 @@ const RU: Record<string, string> = {
   Language: "Язык",
   "📖 Help Center": "📖 Центр помощи",
   "☎️ Contact Us": "☎️ Связаться с нами",
+  "Contact Us": "Связаться с нами",
   "❔ FAQ": "❔ Частые вопросы",
   "💬 Send us Feedback": "💬 Оставить отзыв",
+  "Lender feedback": "Ответ кредитора",
+  "Pre-approval status": "Статус предварительного одобрения",
+  "Assigned to a loan processor": "Назначен кредитному специалисту",
+  "Status update:": "Обновление статуса:",
+  "your pre-approval application was assigned to a licensed loan processor on":
+    "ваша заявка на предварительное одобрение была назначена лицензированному кредитному специалисту",
+  "They are reviewing your file and will respond with a pre-qualification decision.":
+    "Он изучает ваше дело и ответит с решением о предварительном одобрении.",
+  "The processor's name is kept private until feedback is issued.":
+    "Имя специалиста не отображается до выдачи обратной связи.",
+  "Have any questions?": "Есть вопросы?",
+  "Send a message to the lending desk. It will be attached to this file and answered before or with your pre-approval terms.":
+    "Отправьте сообщение в кредитный отдел. Оно будет прикреплено к делу и получит ответ до или вместе с условиями предварительного одобрения.",
+  "Type your question…": "Введите ваш вопрос…",
+  "Send question": "Отправить вопрос",
   Client: "Клиент",
   "Corporate client": "Корпоративный клиент",
   Partner: "Партнер",
