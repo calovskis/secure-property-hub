@@ -359,7 +359,11 @@ export function ApplicantFile({
         <div className="space-y-4">
           <Block title="Applicant">
             <Row label="Name" value={lead.clientName} />
-            <Row label="Email" value={lead.clientEmail} />
+            <Row
+              label="Email"
+              value={seesContact ? contactEmail : `${contactEmail} (hidden — Loqal handles contact)`}
+            />
+            {contactPhone ? <Row label="Phone" value={contactPhone} /> : null}
             <Row label="Date of birth" value={p.dateOfBirth ? formatDate(p.dateOfBirth) : "—"} />
             <Row
               label="Marital status"
