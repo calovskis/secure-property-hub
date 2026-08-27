@@ -53,6 +53,12 @@ export type CallBooking = {
   proposedSlots?: string[];
   /** Buyer's note attached to the proposal. */
   note?: string;
+  /** Google Calendar event created in the agent's calendar. */
+  googleEventId?: string;
+  /** Google Meet link for the appointment. */
+  meetUrl?: string;
+  /** Link to the event in Google Calendar. */
+  calendarLink?: string;
   confirmedAt?: string;
   /* ---- recording & AI transcript (in-platform video calls) ---- */
   recordingConsentedAt?: string;
@@ -355,6 +361,9 @@ export function useBuyerProcess() {
       propertyLabel: string;
       kind: CallKind;
       startAt: string;
+      googleEventId?: string;
+      meetUrl?: string | null;
+      calendarLink?: string | null;
     }) => {
       const cur = load();
       const end = new Date(new Date(input.startAt).getTime() + 60 * 60 * 1000);
@@ -370,6 +379,9 @@ export function useBuyerProcess() {
         status: "confirmed",
         confirmedAt: new Date().toISOString(),
         ...(input.realtorId ? { realtorId: input.realtorId } : {}),
+        ...(input.googleEventId ? { googleEventId: input.googleEventId } : {}),
+        ...(input.meetUrl ? { meetUrl: input.meetUrl } : {}),
+        ...(input.calendarLink ? { calendarLink: input.calendarLink } : {}),
       };
       commit({ ...cur, bookings: [...cur.bookings, booking] });
       return booking;

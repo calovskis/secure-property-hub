@@ -8,6 +8,7 @@ import {
   type PartnerType,
   type Role,
 } from "@/lib/auth";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/auth")({
   component: AuthPage,
@@ -59,22 +60,66 @@ function AuthPage() {
   const [middleName, setMiddleName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
   const [usPerson, setUsPerson] = useState<boolean | null>(null);
   const [showInternal, setShowInternal] = useState(false);
   const [loginRole, setLoginRole] = useState<Role>("client");
   const [loginPartnerType, setLoginPartnerType] = useState<PartnerType>("lender");
   const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
   function complete(user: LoqalUser) {
     signIn(user);
     navigate({ to: homeRouteFor(user.role) });
   }
 
-  function onLogin(e: React.FormEvent) {
+  /**
+   * Backs the profile with a real Loqal Cloud account. Calendar and Meet
+   * bookings are stored per account, so a backend session is required.
+   */
+  async function ensureBackendSession(kind: "login" | "register") {
+    if (kind === "register") {
+      const { error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { emailRedirectTo: `${window.location.origin}/auth` },
+      });
+      if (signUpError && !/already registered/i.test(signUpError.message)) throw signUpError;
+    }
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+    if (signInError) {
+      if (kind === "login" && /invalid login credentials/i.test(signInError.message)) {
+        // First sign-in for an existing prototype profile — create the account.
+        const { error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { emailRedirectTo: `${window.location.origin}/auth` },
+        });
+        if (signUpError) throw signUpError;
+        const retry = await supabase.auth.signInWithPassword({ email, password });
+        if (retry.error) throw retry.error;
+        return;
+      }
+      throw signInError;
+    }
+  }
+
+  async function onLogin(e: React.FormEvent) {
     e.preventDefault();
     if (!email) return setError("Enter the e-mail you registered with.");
+    if (password.length < 6) return setError("Enter your password (at least 6 characters).");
     setError(null);
+    setBusy(true);
+    try {
+      await ensureBackendSession("login");
+    } catch (err) {
+      setBusy(false);
+      return setError(
+        err instanceof Error ? err.message : "We could not sign you in. Please try again.",
+      );
+    }
+    setBusy(false);
     complete({
       firstName: email.split("@")[0]?.replace(/[^a-zA-Z]/g, "") || "Loqal",
       lastName: "Member",
@@ -87,22 +132,31 @@ function AuthPage() {
             partnerType: loginPartnerType,
             companyName:
               loginPartnerType === "lender" ? "Demo Mortgage Partners" : "Demo Partner Co.",
-            ...(loginPartnerType === "lender"
-              ? { lenderLicence: "NMLS-2481907" }
-              : {}),
+            ...(loginPartnerType === "lender" ? { lenderLicence: "NMLS-2481907" } : {}),
           }
         : {}),
     });
   }
 
-  function onRegister(e: React.FormEvent) {
+  async function onRegister(e: React.FormEvent) {
     e.preventDefault();
     if (!firstName || !lastName) return setError("First name and last name are required.");
     if (!email) return setError("E-mail is required.");
+    if (password.length < 6) return setError("Choose a password of at least 6 characters.");
     if (!phone) return setError("Phone number is required.");
     if (usPerson === null)
       return setError("Please tell us whether you are a US citizen or green card holder.");
     setError(null);
+    setBusy(true);
+    try {
+      await ensureBackendSession("register");
+    } catch (err) {
+      setBusy(false);
+      return setError(
+        err instanceof Error ? err.message : "We could not create your account. Please try again.",
+      );
+    }
+    setBusy(false);
     complete({
       firstName,
       lastName,
@@ -113,6 +167,7 @@ function AuthPage() {
       ...(middleName ? { middleName } : {}),
     });
   }
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-brand-tint via-background to-gold-tint px-4 py-10">
@@ -154,7 +209,7 @@ function AuthPage() {
             ))}
           </div>
 
-          <form onSubmit={mode === "login" ? onLogin : onRegister} className="space-y-4">
+          <form onSubmit={mode === "login" ? (e) => void onLogin(e) : (e) => void onRegister(e)} className="space-y-4">
             {mode === "register" ? (
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <label>
@@ -205,12 +260,19 @@ function AuthPage() {
                     className={inputClass}
                   />
                 </label>
-              ) : (
-                <label>
-                  <Label required>Password</Label>
-                  <input type="password" placeholder="••••••••" className={inputClass} />
-                </label>
-              )}
+              ) : null}
+              <label>
+                <Label required>Password</Label>
+                <input
+                  type="password"
+                  placeholder="••••••••"
+                  autoComplete={mode === "login" ? "current-password" : "new-password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className={inputClass}
+                />
+              </label>
+
             </div>
 
             {mode === "register" ? (
@@ -246,9 +308,14 @@ function AuthPage() {
 
             <button
               type="submit"
-              className="w-full rounded-md bg-brand py-3 text-sm font-semibold text-background transition-colors hover:bg-brand-soft"
+              disabled={busy}
+              className="w-full rounded-md bg-brand py-3 text-sm font-semibold text-background transition-colors hover:bg-brand-soft disabled:opacity-60"
             >
-              {mode === "login" ? "Log in" : "Create my Loqal profile"}
+              {busy
+                ? "Please wait…"
+                : mode === "login"
+                  ? "Log in"
+                  : "Create my Loqal profile"}
             </button>
           </form>
 
@@ -313,8 +380,10 @@ function AuthPage() {
           )}
 
           <p className="mt-4 text-center text-[11px] text-muted-foreground">
-            Prototype access — accounts are stored locally on this device only.
+            Your account is secured by Loqal Cloud — a real account is required to connect Google
+            Calendar and Google Meet.
           </p>
+
         </div>
       </div>
     </div>

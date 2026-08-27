@@ -26,6 +26,7 @@ import { Route as SsnTermsRouteImport } from './routes/ssn-terms'
 import { Route as ApplicationLeadIdRouteImport } from './routes/application.$leadId'
 import { Route as PropertyPropertyIdRouteImport } from './routes/property.$propertyId'
 import { Route as LenderFileLeadIdRouteImport } from './routes/lender.file.$leadId'
+import { Route as OauthGoogleReturnRouteImport } from './routes/oauth.google.return'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -112,6 +113,11 @@ const LenderFileLeadIdRoute = LenderFileLeadIdRouteImport.update({
   path: '/lender/file/$leadId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OauthGoogleReturnRoute = OauthGoogleReturnRouteImport.update({
+  id: '/oauth/google/return',
+  path: '/oauth/google/return',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -131,6 +137,7 @@ export interface FileRoutesByFullPath {
   '/application/$leadId': typeof ApplicationLeadIdRoute
   '/property/$propertyId': typeof PropertyPropertyIdRoute
   '/lender/file/$leadId': typeof LenderFileLeadIdRoute
+  '/oauth/google/return': typeof OauthGoogleReturnRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -150,6 +157,7 @@ export interface FileRoutesByTo {
   '/application/$leadId': typeof ApplicationLeadIdRoute
   '/property/$propertyId': typeof PropertyPropertyIdRoute
   '/lender/file/$leadId': typeof LenderFileLeadIdRoute
+  '/oauth/google/return': typeof OauthGoogleReturnRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -170,6 +178,7 @@ export interface FileRoutesById {
   '/application/$leadId': typeof ApplicationLeadIdRoute
   '/property/$propertyId': typeof PropertyPropertyIdRoute
   '/lender/file/$leadId': typeof LenderFileLeadIdRoute
+  '/oauth/google/return': typeof OauthGoogleReturnRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -191,6 +200,7 @@ export interface FileRouteTypes {
     | '/application/$leadId'
     | '/property/$propertyId'
     | '/lender/file/$leadId'
+    | '/oauth/google/return'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -210,6 +220,7 @@ export interface FileRouteTypes {
     | '/application/$leadId'
     | '/property/$propertyId'
     | '/lender/file/$leadId'
+    | '/oauth/google/return'
   id:
     | '__root__'
     | '/'
@@ -229,6 +240,7 @@ export interface FileRouteTypes {
     | '/application/$leadId'
     | '/property/$propertyId'
     | '/lender/file/$leadId'
+    | '/oauth/google/return'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -249,6 +261,7 @@ export interface RootRouteChildren {
   ApplicationLeadIdRoute: typeof ApplicationLeadIdRoute
   PropertyPropertyIdRoute: typeof PropertyPropertyIdRoute
   LenderFileLeadIdRoute: typeof LenderFileLeadIdRoute
+  OauthGoogleReturnRoute: typeof OauthGoogleReturnRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -372,6 +385,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LenderFileLeadIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/oauth/google/return': {
+      id: '/oauth/google/return'
+      path: '/oauth/google/return'
+      fullPath: '/oauth/google/return'
+      preLoaderRoute: typeof OauthGoogleReturnRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -393,6 +413,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApplicationLeadIdRoute: ApplicationLeadIdRoute,
   PropertyPropertyIdRoute: PropertyPropertyIdRoute,
   LenderFileLeadIdRoute: LenderFileLeadIdRoute,
+  OauthGoogleReturnRoute: OauthGoogleReturnRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

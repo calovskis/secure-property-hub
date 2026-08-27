@@ -1,29 +1,121 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { availableSlots, useBuyerProcess } from "@/lib/buyer-process";
+import { bookAgentMeeting, getAgentAvailability } from "@/lib/google-calendar.functions";
+
+export type BookedMeeting = {
+  eventId: string;
+  meetUrl: string | null;
+  htmlLink: string | null;
+};
+
+type SlotDay = { day: string; label: string; slots: { startAt: string; label: string }[] };
 
 /**
- * Real-time booking into the assigned realtor's calendar: weekday 1-hour
- * slots for the next two weeks, minus what is already booked. Picking a slot
- * confirms the booking immediately and notifies the agent's calendar.
+ * Real-time booking into the assigned agent's calendar. When the agent has
+ * connected Google Calendar, the slots come from their live free/busy data and
+ * the booking is created as a Google Calendar event with a Google Meet link
+ * and invites for both sides. Otherwise we fall back to Loqal's own slot grid.
  */
 export function CallScheduler({
   realtorId,
+  agentEmail,
   booked,
+  meetUrl,
   onBook,
   accent = "brand",
+  summary = "Loqal — buyer's agent call",
+  description,
+  attendeeEmails,
+  withMeet = true,
 }: {
   realtorId?: string | undefined;
+  /** Fallback lookup key when the agent connected Google under their e-mail. */
+  agentEmail?: string | undefined;
   /** ISO start time once a slot is booked through this scheduler. */
   booked?: string | undefined;
-  onBook: (startAt: string) => void;
+  meetUrl?: string | null | undefined;
+  onBook: (startAt: string, meeting?: BookedMeeting) => void;
   accent?: "brand" | "success";
+  summary?: string;
+  description?: string | undefined;
+  attendeeEmails?: string[] | undefined;
+  /** Video calls get a Meet link; in-person visits do not need one. */
+  withMeet?: boolean;
 }) {
   const { bookings } = useBuyerProcess();
-  const days = useMemo(() => availableSlots(realtorId, bookings), [realtorId, bookings]);
+  const loadAvailability = useServerFn(getAgentAvailability);
+  const createMeeting = useServerFn(bookAgentMeeting);
+
+  const fallbackDays = useMemo(
+    () => availableSlots(realtorId, bookings),
+    [realtorId, bookings],
+  );
+  const [googleDays, setGoogleDays] = useState<SlotDay[] | null>(null);
+  const [loading, setLoading] = useState(true);
   const [day, setDay] = useState<string | null>(null);
   const [slot, setSlot] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    void loadAvailability({
+      data: { ...(realtorId ? { agentRef: realtorId } : {}), ...(agentEmail ? { agentEmail } : {}) },
+    })
+      .then((res) => {
+        if (!active) return;
+        setGoogleDays(res.connected ? (res.days as SlotDay[]) : null);
+      })
+      .catch(() => {
+        if (active) setGoogleDays(null);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [loadAvailability, realtorId, agentEmail]);
+
+  const googleConnected = googleDays !== null;
+  const days = googleDays ?? fallbackDays;
   const active = days.find((d) => d.day === day) ?? days[0];
+
+  async function confirm() {
+    if (!slot) return;
+    if (!googleConnected) {
+      onBook(slot);
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    try {
+      const meeting = await createMeeting({
+        data: {
+          ...(realtorId ? { agentRef: realtorId } : {}),
+          ...(agentEmail ? { agentEmail } : {}),
+          startAt: slot,
+          durationMin: 60,
+          summary,
+          ...(description ? { description } : {}),
+          ...(attendeeEmails?.length ? { attendeeEmails } : {}),
+        },
+      });
+      onBook(slot, {
+        eventId: meeting.eventId,
+        meetUrl: withMeet ? meeting.meetUrl : null,
+        htmlLink: meeting.htmlLink,
+      });
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Google Calendar could not create the appointment.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
 
   if (booked) {
     return (
@@ -36,8 +128,26 @@ export function CallScheduler({
           hour: "numeric",
           minute: "2-digit",
         })}{" "}
-        (1 hour). The agent is notified and sees it in their calendar.
+        (1 hour). The agent is notified and sees it in their Google Calendar.
+        {meetUrl ? (
+          <a
+            href={meetUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="ml-2 font-semibold text-brand underline-offset-2 hover:underline"
+          >
+            Join Google Meet
+          </a>
+        ) : null}
       </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <p className="rounded-md border border-border bg-background p-3 text-sm text-muted-foreground">
+        Loading the agent's calendar…
+      </p>
     );
   }
 
@@ -52,7 +162,8 @@ export function CallScheduler({
   return (
     <div className="rounded-lg border border-border bg-background p-3">
       <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        Pick a time — 1 hour, agent's live calendar
+        Pick a time — 1 hour,{" "}
+        {googleConnected ? "live Google Calendar availability" : "agent's live calendar"}
       </div>
       <div className="mt-2 flex flex-wrap gap-1.5">
         {days.map((d) => (
@@ -91,16 +202,26 @@ export function CallScheduler({
           ))}
         </div>
       ) : null}
+      {error ? (
+        <p className="mt-2 rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
+          {error}
+        </p>
+      ) : null}
       <button
         type="button"
-        disabled={!slot}
-        onClick={() => slot && onBook(slot)}
+        disabled={!slot || saving}
+        onClick={() => void confirm()}
         className={`mt-3 rounded-md px-4 py-2 text-sm font-semibold text-background disabled:opacity-50 ${
           accent === "success" ? "bg-success hover:opacity-90" : "bg-brand hover:bg-brand-soft"
         }`}
       >
-        Book this slot
+        {saving ? "Creating the Google invite…" : "Book this slot"}
       </button>
+      {googleConnected && withMeet ? (
+        <p className="mt-2 text-[11px] text-muted-foreground">
+          A Google Meet link and calendar invite are sent to you and the agent.
+        </p>
+      ) : null}
     </div>
   );
 }

@@ -55,6 +55,7 @@ export function BuyerAgentDialog({
   const [kickoff, setKickoff] = useState<KickoffRequest | null>(null);
   const [notes, setNotes] = useState("");
   const [callSlot, setCallSlot] = useState<string | null>(null);
+  const [callMeetUrl, setCallMeetUrl] = useState<string | null>(null);
   const [showFeeInfo, setShowFeeInfo] = useState(false);
 
   /* Reset every time the dialog opens; skip steps that are already done. */
@@ -316,7 +317,10 @@ export function BuyerAgentDialog({
                 <CallScheduler
                   realtorId={lead.buyerAgent?.agentId}
                   {...(callSlot ? { booked: callSlot } : {})}
-                  onBook={(startAt) => {
+                  {...(callMeetUrl ? { meetUrl: callMeetUrl } : {})}
+                  summary={`Loqal intro call — ${lead.propertyLabel}`}
+                  description={`Buyer's agent intro call for ${lead.propertyLabel}, arranged through Loqal.`}
+                  onBook={(startAt, meeting) => {
                     bookCall({
                       leadId: lead.id,
                       clientName: lead.clientName,
@@ -326,8 +330,12 @@ export function BuyerAgentDialog({
                       ...(lead.buyerAgent?.agentId
                         ? { realtorId: lead.buyerAgent.agentId }
                         : {}),
+                      ...(meeting?.eventId ? { googleEventId: meeting.eventId } : {}),
+                      ...(meeting?.meetUrl ? { meetUrl: meeting.meetUrl } : {}),
+                      ...(meeting?.htmlLink ? { calendarLink: meeting.htmlLink } : {}),
                     });
                     setCallSlot(startAt);
+                    setCallMeetUrl(meeting?.meetUrl ?? null);
                   }}
                 />
               ) : null}

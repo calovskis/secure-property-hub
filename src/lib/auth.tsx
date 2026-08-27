@@ -7,6 +7,8 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { supabase } from "@/integrations/supabase/client";
+
 
 export type Role = "client" | "corporate" | "partner" | "admin";
 export type PartnerType = "realtor" | "lender" | "cleaning" | "other";
@@ -127,6 +129,8 @@ export type LoqalUser = {
 type AuthContextValue = {
   user: LoqalUser | null;
   ready: boolean;
+  /** Backend (Lovable Cloud) user id — present once a real session exists. */
+  authUserId: string | null;
   signIn: (user: LoqalUser) => void;
   signOut: () => void;
   updateUser: (patch: Partial<LoqalUser>) => void;
@@ -142,6 +146,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<LoqalUser | null>(null);
   const [ready, setReady] = useState(false);
+  const [authUserId, setAuthUserId] = useState<string | null>(null);
 
   useEffect(() => {
     try {
@@ -151,6 +156,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       /* ignore corrupted session */
     }
     setReady(true);
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    void supabase.auth.getSession().then(({ data }) => {
+      if (active) setAuthUserId(data.session?.user.id ?? null);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
+      setAuthUserId(session?.user.id ?? null);
+    });
+    return () => {
+      active = false;
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
   const persist = useCallback((next: LoqalUser | null) => {
@@ -168,14 +188,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return {
       user,
       ready,
+      authUserId,
       signIn: (u) => persist(u),
-      signOut: () => persist(null),
+      signOut: () => {
+        void supabase.auth.signOut();
+        persist(null);
+      },
       updateUser: (patch) => persist(user ? { ...user, ...patch } : null),
       saveMortgageProfile: (profile) =>
         persist(user ? { ...user, mortgageProfile: profile } : null),
       canSeeEstimates: Boolean(user) && (privileged || Boolean(user?.mortgageProfile)),
     };
-  }, [user, ready, persist]);
+  }, [user, ready, authUserId, persist]);
+
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
