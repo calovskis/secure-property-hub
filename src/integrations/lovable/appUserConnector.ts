@@ -82,7 +82,7 @@ export interface CallAsAppUserParams {
   connectorId: string;
   /** Path under the connector, e.g. "/calendar/v3/users/me/calendarList". */
   path: string;
-  init?: RequestInit;
+  init?: RequestInit | undefined;
 }
 
 export async function callAsAppUser({
