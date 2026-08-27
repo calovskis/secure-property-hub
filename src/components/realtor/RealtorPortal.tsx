@@ -17,6 +17,7 @@ import {
 import { formatDate, formatDateTime } from "@/lib/dates";
 import { DateInput } from "@/components/form/DateInput";
 import { CallScheduler } from "@/components/buyer/CallScheduler";
+import { GoogleCalendarCard } from "@/components/google/GoogleCalendarCard";
 import { RealtorAnalytics } from "@/components/realtor/RealtorAnalytics";
 import { RealtorAccounting } from "@/components/realtor/RealtorAccounting";
 import { RealtorFinancialAnalytics } from "@/components/realtor/RealtorFinancialAnalytics";
@@ -533,7 +534,10 @@ function BuyerFile({ lead, me }: { lead: MortgageLead; me: Realtor }) {
                         <CallScheduler
                           realtorId={me.id}
                           {...(tourSlot ? { booked: tourSlot } : {})}
-                          onBook={(startAt) => {
+                          agentEmail={me.email}
+                          summary={`Loqal video walkthrough — ${lead.propertyLabel}`}
+                          description={`Live video walkthrough of ${lead.propertyLabel} with your Loqal buyer's agent.`}
+                          onBook={(startAt, meeting) => {
                             bookCall({
                               leadId: lead.id,
                               realtorId: me.id,
@@ -541,6 +545,9 @@ function BuyerFile({ lead, me }: { lead: MortgageLead; me: Realtor }) {
                               propertyLabel: lead.propertyLabel,
                               kind: "video_tour",
                               startAt,
+                              ...(meeting?.eventId ? { googleEventId: meeting.eventId } : {}),
+                              ...(meeting?.meetUrl ? { meetUrl: meeting.meetUrl } : {}),
+                              ...(meeting?.htmlLink ? { calendarLink: meeting.htmlLink } : {}),
                             });
                             setTourSlot(startAt);
                           }}
@@ -839,10 +846,15 @@ export function RealtorPortal({
             />
           </section>
 
+          <div className="mb-6">
+            <GoogleCalendarCard agentRef={me.id} agentEmail={me.email} />
+          </div>
+
           <div className="grid gap-6 lg:grid-cols-2">
             <VacationMode me={me} />
             <LicensesCard me={me} />
           </div>
+
         </>
       ) : tab === "buyers" ? (
         <section>

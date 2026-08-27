@@ -68,6 +68,7 @@ export function BuyerProcessCard({ lead }: { lead: MortgageLead }) {
   const [extraInspection, setExtraInspection] = useState("");
   const [changeMode, setChangeMode] = useState<PropertyChangeMode>("agent_propose");
   const [callSlot, setCallSlot] = useState<string | null>(null);
+  const [callMeetUrl, setCallMeetUrl] = useState<string | null>(null);
 
   const ba = lead.buyerAgent;
   if (!ba || lead.clientDecision !== "accepted") return null;
@@ -461,7 +462,10 @@ export function BuyerProcessCard({ lead }: { lead: MortgageLead }) {
                     <CallScheduler
                       realtorId={ba.agentId}
                       {...(callSlot ? { booked: callSlot } : {})}
-                      onBook={(startAt) => {
+                      {...(callMeetUrl ? { meetUrl: callMeetUrl } : {})}
+                      summary={`Loqal intro call — ${lead.propertyLabel}`}
+                      description={`Buyer's agent intro call for ${lead.propertyLabel}, arranged through Loqal.`}
+                      onBook={(startAt, meeting) => {
                         bookCall({
                           leadId: lead.id,
                           clientName: lead.clientName,
@@ -469,8 +473,12 @@ export function BuyerProcessCard({ lead }: { lead: MortgageLead }) {
                           kind: "intro_call",
                           startAt,
                           ...(ba.agentId ? { realtorId: ba.agentId } : {}),
+                          ...(meeting?.eventId ? { googleEventId: meeting.eventId } : {}),
+                          ...(meeting?.meetUrl ? { meetUrl: meeting.meetUrl } : {}),
+                          ...(meeting?.htmlLink ? { calendarLink: meeting.htmlLink } : {}),
                         });
                         setCallSlot(startAt);
+                        setCallMeetUrl(meeting?.meetUrl ?? null);
                       }}
                     />
                     <div className="flex gap-2">

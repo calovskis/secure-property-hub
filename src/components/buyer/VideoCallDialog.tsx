@@ -109,6 +109,16 @@ export function VideoCallDialog({
               />
               I understand and agree that the call is recorded and AI-transcribed.
             </label>
+            {booking.meetUrl ? (
+              <a
+                href={booking.meetUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="block w-full rounded-md border border-border py-3 text-center text-sm font-semibold text-brand hover:bg-brand-tint"
+              >
+                Open in Google Meet
+              </a>
+            ) : null}
             <button
               type="button"
               disabled={!consented}
