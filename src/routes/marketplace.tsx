@@ -3,7 +3,10 @@ import { useMemo, useState } from "react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { PropertiesInAction } from "@/components/property/PropertiesInAction";
 import { useClientPropertyActivity } from "@/lib/property-activity";
+import { useAuth } from "@/lib/auth";
+import { recordSearch } from "@/lib/presence";
 import { allProperties, formatPrice, type Property } from "@/data/properties";
+
 
 
 export const Route = createFileRoute("/marketplace")({
