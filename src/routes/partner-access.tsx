@@ -180,7 +180,8 @@ function PartnerAccessPage() {
         );
     }
 
-    submit({
+    try {
+      await submit({
       kind,
       ...(kind === "partner" ? { partnerType } : {}),
       companyName: companyName.trim(),
