@@ -280,6 +280,28 @@ function AuthPage() {
             </div>
 
             {mode === "register" ? (
+              <ul className="grid grid-cols-1 gap-1 sm:grid-cols-2">
+                {[
+                  { ok: password.length >= 8, label: "At least 8 characters" },
+                  { ok: /[a-z]/.test(password), label: "One lowercase letter" },
+                  { ok: /[A-Z]/.test(password), label: "One uppercase letter" },
+                  { ok: /\d/.test(password), label: "One number" },
+                  { ok: /[^A-Za-z0-9]/.test(password), label: "One special character (!@#$…)" },
+                ].map((r) => (
+                  <li
+                    key={r.label}
+                    className={`flex items-center gap-1.5 text-xs ${
+                      r.ok ? "text-emerald-600" : "text-muted-foreground"
+                    }`}
+                  >
+                    <span aria-hidden>{r.ok ? "✓" : "○"}</span>
+                    {r.label}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+
+            {mode === "register" ? (
               <div>
                 <Label required>US citizen or green card holder?</Label>
                 <div className="flex gap-2">
