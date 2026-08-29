@@ -4,6 +4,8 @@ import { AppHeader } from "@/components/layout/AppHeader";
 import { PARTNER_LABEL, fullName, useAuth, type PartnerType } from "@/lib/auth";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import { usePartnerRequests, type PartnerRequest } from "@/lib/partner-requests";
+import { PartnerRequestDialog } from "@/components/admin/PartnerRequestDialog";
+import { uid } from "@/lib/mortgage-form";
 import { useRealtors } from "@/lib/realtors";
 import { logActivity } from "@/lib/activity";
 import { toast } from "sonner";
@@ -48,7 +50,8 @@ function typeOf(r: PartnerRequest): TypeFilter {
 
 function AdminPartnerRequestsPage() {
   const { user, ready } = useAuth();
-  const { requests, setStatus } = usePartnerRequests();
+  const { requests, setStatus, updateRequest } = usePartnerRequests();
+  const [ask, setAsk] = useState<{ request: PartnerRequest; kind: "info" | "call" } | null>(null);
   const { addRealtor } = useRealtors();
   const [filter, setFilter] = useState<TypeFilter>("all");
 
@@ -99,6 +102,30 @@ function AdminPartnerRequestsPage() {
         approvedAt: new Date().toISOString(),
       });
     }
+  }
+
+  function sendAdminRequest(r: PartnerRequest, kind: "info" | "call", message: string, requiresDocument: boolean) {
+    updateRequest(r.id, {
+      adminRequests: [
+        ...(r.adminRequests ?? []),
+        {
+          id: uid(),
+          kind,
+          message,
+          ...(kind === "info" ? { requiresDocument } : {}),
+          requestedAt: new Date().toISOString(),
+          requestedBy: fullName(user!),
+        },
+      ],
+    });
+    logActivity(
+      "Loqal admin",
+      kind === "info" ? "requested more information from a partner" : "requested a video call with a partner",
+      r.companyName,
+    );
+    toast(kind === "info" ? "Information requested" : "Video call requested", {
+      description: `${r.companyName} will see it in their Loqal profile.`,
+    });
   }
 
   function decline(r: PartnerRequest) {
@@ -205,13 +232,48 @@ function AdminPartnerRequestsPage() {
                         {r.companyPhone ? ` · Company phone: ${r.companyPhone}` : ""}
                       </div>
                     ) : null}
+                    {r.adminRequests?.length ? (
+                      <div className="mt-2 space-y-1">
+                        {r.adminRequests.map((a) => (
+                          <div key={a.id} className="text-xs text-muted-foreground">
+                            <span className="font-semibold text-brand">
+                              {a.kind === "info" ? "Info requested" : "Video call requested"}
+                            </span>{" "}
+                            {formatDateTime(a.requestedAt)} —{" "}
+                            {a.kind === "info"
+                              ? a.answeredAt
+                                ? `answered ${formatDateTime(a.answeredAt)}: ${a.answer}${
+                                    a.answerDocs?.length ? ` (${a.answerDocs.join(", ")})` : ""
+                                  }`
+                                : "awaiting the partner's answer"
+                              : a.scheduledAt
+                                ? `booked ${formatDateTime(a.scheduledAt)}`
+                                : "awaiting the partner to book a slot"}
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
                     {r.verificationDocs.length ? (
                       <div className="mt-1 text-xs text-muted-foreground">
                         Verification docs: {r.verificationDocs.join(", ")}
                       </div>
                     ) : null}
                   </div>
-                  <div className="flex shrink-0 gap-2">
+                  <div className="flex shrink-0 flex-wrap justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setAsk({ request: r, kind: "info" })}
+                      className="rounded-md border border-brand/50 bg-brand-tint px-4 py-2 text-xs font-semibold text-brand hover:bg-brand-tint/70"
+                    >
+                      Request information
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAsk({ request: r, kind: "call" })}
+                      className="rounded-md border border-brand/50 bg-brand-tint px-4 py-2 text-xs font-semibold text-brand hover:bg-brand-tint/70"
+                    >
+                      Request video call
+                    </button>
                     <button
                       type="button"
                       onClick={() => approve(r)}
@@ -233,6 +295,20 @@ function AdminPartnerRequestsPage() {
           </ul>
         )}
       </main>
+
+      {ask ? (
+        <PartnerRequestDialog
+          request={ask.request}
+          kind={ask.kind}
+          open
+          onOpenChange={(next) => {
+            if (!next) setAsk(null);
+          }}
+          onSend={(message, requiresDocument) =>
+            sendAdminRequest(ask.request, ask.kind, message, requiresDocument)
+          }
+        />
+      ) : null}
     </div>
   );
 }

@@ -48,6 +48,27 @@ export type KycInfo = {
   submittedAt: string;
 };
 
+/**
+ * Something Loqal asked the partner for while the registration is open:
+ * either written information (optionally with documents) or a video call.
+ */
+export type PartnerAdminRequest = {
+  id: string;
+  kind: "info" | "call";
+  message: string;
+  /** Info requests only — the partner must attach a document. */
+  requiresDocument?: boolean;
+  requestedAt: string;
+  requestedBy: string;
+  /** Info requests — the partner's written reply. */
+  answer?: string;
+  answerDocs?: string[];
+  answeredAt?: string;
+  /** Call requests — the slot the partner booked. */
+  scheduledAt?: string;
+  meetUrl?: string | null;
+};
+
 export type PartnerRequest = {
   id: string;
   kind: "partner" | "corporate";
@@ -82,6 +103,8 @@ export type PartnerRequest = {
   verificationDocs: string[];
   /** Corporate / non-realtor partner KYB questionnaire. */
   kyc?: KycInfo;
+  /** Information / video-call requests raised by a Loqal admin. */
+  adminRequests: PartnerAdminRequest[];
   /** Loqal partnership agreement, signed by the partner after approval. */
   agreementSignedAt?: string;
   agreementSignedBy?: string;
@@ -127,6 +150,7 @@ function fromRow(r: Row): PartnerRequest {
     tcAcceptedAt: s(r["tc_accepted_at"]),
     verificationDocs: (r["verification_docs"] as string[] | null) ?? [],
     kyc: (r["kyc"] as KycInfo | null) ?? undefined,
+    adminRequests: (r["admin_requests"] as PartnerAdminRequest[] | null) ?? [],
     agreementSignedAt: s(r["agreement_signed_at"]),
     agreementSignedBy: s(r["agreement_signed_by"]),
     agreementCountersignedAt: s(r["agreement_countersigned_at"]),
@@ -163,6 +187,7 @@ const COLUMN: Record<string, string> = {
   tcAcceptedAt: "tc_accepted_at",
   verificationDocs: "verification_docs",
   kyc: "kyc",
+  adminRequests: "admin_requests",
   agreementSignedAt: "agreement_signed_at",
   agreementSignedBy: "agreement_signed_by",
   agreementCountersignedAt: "agreement_countersigned_at",
@@ -236,7 +261,7 @@ export function usePartnerRequests() {
   }, []);
 
   const submit = useCallback(
-    async (input: Omit<PartnerRequest, "id" | "submittedAt" | "status" | "verificationDocs">) => {
+    async (input: Omit<PartnerRequest, "id" | "submittedAt" | "status" | "verificationDocs" | "adminRequests">) => {
       const { data: userData } = await supabase.auth.getUser();
       const userId = userData.user?.id;
       if (!userId) throw new Error("You must be signed in to submit a registration.");
