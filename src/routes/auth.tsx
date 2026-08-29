@@ -345,6 +345,10 @@ function AuthPage() {
               </p>
             ) : null}
 
+            {notice ? (
+              <p className="rounded-md bg-brand-tint px-3 py-2 text-sm text-brand">{notice}</p>
+            ) : null}
+
             <button
               type="submit"
               disabled={busy}
