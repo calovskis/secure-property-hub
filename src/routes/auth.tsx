@@ -96,7 +96,19 @@ function AuthPage() {
         password,
         options: { emailRedirectTo: `${window.location.origin}/auth` },
       });
-      if (signUpError && !/already registered/i.test(signUpError.message)) throw signUpError;
+      const alreadyRegistered =
+        signUpError &&
+        ((signUpError as { code?: string }).code === "user_already_exists" ||
+          /already registered|already been registered|already exists/i.test(signUpError.message));
+      if (signUpError && !alreadyRegistered) throw signUpError;
+      if (alreadyRegistered) {
+        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+        if (signInError)
+          throw new Error(
+            "An account already exists for this e-mail. Switch to “Log in” and use your existing password.",
+          );
+        return;
+      }
     }
     const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
     if (signInError) {
@@ -106,6 +118,7 @@ function AuthPage() {
       throw signInError;
     }
   }
+
 
   async function onLogin(e: React.FormEvent) {
     e.preventDefault();

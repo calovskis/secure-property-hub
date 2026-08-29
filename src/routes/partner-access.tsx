@@ -163,8 +163,23 @@ function PartnerAccessPage() {
       password,
       options: { emailRedirectTo: `${window.location.origin}/auth` },
     });
-    if (signUpError && !/already registered/i.test(signUpError.message))
-      return setError(signUpError.message);
+    const alreadyRegistered =
+      signUpError &&
+      ((signUpError as { code?: string }).code === "user_already_exists" ||
+        /already registered|already been registered|already exists/i.test(signUpError.message));
+    if (signUpError && !alreadyRegistered) return setError(signUpError.message);
+    if (alreadyRegistered) {
+      // Account exists already — make sure the password given here actually signs in.
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+      if (signInError)
+        return setError(
+          "An account already exists for this e-mail. Enter its existing password here, or use a different e-mail address.",
+        );
+    }
+
     submit({
       kind,
       ...(kind === "partner" ? { partnerType } : {}),
