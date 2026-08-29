@@ -402,7 +402,8 @@ export function useBuyerProcess() {
     }) => {
       if (!input.slots.length) return null;
       const cur = load();
-      const sorted = [...input.slots].sort();
+      // Order matters: the buyer ranks the options, priority 1 first.
+      const sorted = [...input.slots];
       const end = new Date(new Date(sorted[0]!).getTime() + 60 * 60 * 1000);
       const booking: CallBooking = {
         id: uid(),

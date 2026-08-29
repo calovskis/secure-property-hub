@@ -48,13 +48,15 @@ export function BuyerAgentDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const { agreeBuyerAgent, setBuyerRepresentation } = useLeads();
-  const { requestPhotos, bookCall } = useBuyerProcess();
+  const { requestPhotos, bookCall, proposeSlots } = useBuyerProcess();
   const { lang } = useI18n();
   const [step, setStep] = useState<Step>("agree");
   const [representation, setRepresentation] = useState<Representation | null>(null);
   const [kickoff, setKickoff] = useState<KickoffRequest | null>(null);
   const [notes, setNotes] = useState("");
   const [callSlot, setCallSlot] = useState<string | null>(null);
+  /** Prioritised slots the buyer proposes for the live video showcasing. */
+  const [tourSlots, setTourSlots] = useState<string[]>([]);
   const [callMeetUrl, setCallMeetUrl] = useState<string | null>(null);
   const [showFeeInfo, setShowFeeInfo] = useState(false);
 
@@ -65,6 +67,7 @@ export function BuyerAgentDialog({
     setKickoff(null);
     setNotes("");
     setCallSlot(null);
+    setTourSlots([]);
     setShowFeeInfo(false);
     setStep(
       lead.buyerAgent?.representation ? "done" : lead.buyerAgent ? "representation" : "agree",
@@ -94,8 +97,20 @@ export function BuyerAgentDialog({
   function confirmKickoff() {
     if (!kickoff) return;
     if (kickoff === "live_call" && !callSlot) return;
+    if (kickoff === "video_showcase" && !tourSlots.length) return;
     setBuyerRepresentation(lead.id, "buyer_direct", kickoff, notes.trim() || undefined);
     if (kickoff === "photo_visit") requestPhotos(lead.id);
+    if (kickoff === "video_showcase") {
+      proposeSlots({
+        leadId: lead.id,
+        clientName: lead.clientName,
+        propertyLabel: lead.propertyLabel,
+        kind: "video_tour",
+        slots: tourSlots,
+        ...(lead.buyerAgent?.agentId ? { realtorId: lead.buyerAgent.agentId } : {}),
+        ...(notes.trim() ? { note: notes.trim() } : {}),
+      });
+    }
     setStep("done");
   }
 
@@ -340,6 +355,26 @@ export function BuyerAgentDialog({
                 />
               ) : null}
 
+              {kickoff === "video_showcase" ? (
+                <CallScheduler
+                  realtorId={lead.buyerAgent?.agentId}
+                  mode="multi"
+                  proposeLabel={
+                    tourSlots.length ? `Save ${tourSlots.length} preferred time(s)` : "Save my preferred times"
+                  }
+                  summary={`Loqal live video walkthrough — ${lead.propertyLabel}`}
+                  onPropose={(slots) => setTourSlots(slots)}
+                  onBook={() => undefined}
+                />
+              ) : null}
+
+              {kickoff === "video_showcase" && tourSlots.length ? (
+                <p className="rounded-md border border-success/40 bg-success/5 px-3 py-2 text-xs text-foreground">
+                  ✓ {tourSlots.length} option{tourSlots.length > 1 ? "s" : ""} saved — priority 1:{" "}
+                  {formatDateTime(tourSlots[0]!)}. Your agent confirms one of them with the seller.
+                </p>
+              ) : null}
+
               <label className="block">
                 <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Comments / notes (optional)
@@ -360,7 +395,11 @@ export function BuyerAgentDialog({
               </button>
               <button
                 type="button"
-                disabled={!kickoff || (kickoff === "live_call" && !callSlot)}
+                disabled={
+                  !kickoff ||
+                  (kickoff === "live_call" && !callSlot) ||
+                  (kickoff === "video_showcase" && !tourSlots.length)
+                }
                 onClick={confirmKickoff}
                 className={btnPrimary}
               >
