@@ -25,6 +25,7 @@ import { Route as PartnerAccessRouteImport } from './routes/partner-access'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SsnTermsRouteImport } from './routes/ssn-terms'
+import { Route as AdminPeoplePersonIdRouteImport } from './routes/admin-people.$personId'
 import { Route as ApplicationLeadIdRouteImport } from './routes/application.$leadId'
 import { Route as PropertyPropertyIdRouteImport } from './routes/property.$propertyId'
 import { Route as LenderFileLeadIdRouteImport } from './routes/lender.file.$leadId'
@@ -110,6 +111,11 @@ const SsnTermsRoute = SsnTermsRouteImport.update({
   path: '/ssn-terms',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminPeoplePersonIdRoute = AdminPeoplePersonIdRouteImport.update({
+  id: '/admin-people/$personId',
+  path: '/admin-people/$personId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApplicationLeadIdRoute = ApplicationLeadIdRouteImport.update({
   id: '/application/$leadId',
   path: '/application/$leadId',
@@ -148,6 +154,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
   '/ssn-terms': typeof SsnTermsRoute
+  '/admin-people/$personId': typeof AdminPeoplePersonIdRoute
   '/application/$leadId': typeof ApplicationLeadIdRoute
   '/property/$propertyId': typeof PropertyPropertyIdRoute
   '/lender/file/$leadId': typeof LenderFileLeadIdRoute
@@ -170,6 +177,7 @@ export interface FileRoutesByTo {
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
   '/ssn-terms': typeof SsnTermsRoute
+  '/admin-people/$personId': typeof AdminPeoplePersonIdRoute
   '/application/$leadId': typeof ApplicationLeadIdRoute
   '/property/$propertyId': typeof PropertyPropertyIdRoute
   '/lender/file/$leadId': typeof LenderFileLeadIdRoute
@@ -193,6 +201,7 @@ export interface FileRoutesById {
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
   '/ssn-terms': typeof SsnTermsRoute
+  '/admin-people/$personId': typeof AdminPeoplePersonIdRoute
   '/application/$leadId': typeof ApplicationLeadIdRoute
   '/property/$propertyId': typeof PropertyPropertyIdRoute
   '/lender/file/$leadId': typeof LenderFileLeadIdRoute
@@ -217,6 +226,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/reset-password'
     | '/ssn-terms'
+    | '/admin-people/$personId'
     | '/application/$leadId'
     | '/property/$propertyId'
     | '/lender/file/$leadId'
@@ -239,6 +249,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/reset-password'
     | '/ssn-terms'
+    | '/admin-people/$personId'
     | '/application/$leadId'
     | '/property/$propertyId'
     | '/lender/file/$leadId'
@@ -261,6 +272,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/reset-password'
     | '/ssn-terms'
+    | '/admin-people/$personId'
     | '/application/$leadId'
     | '/property/$propertyId'
     | '/lender/file/$leadId'
@@ -284,6 +296,7 @@ export interface RootRouteChildren {
   ProfileRoute: typeof ProfileRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SsnTermsRoute: typeof SsnTermsRoute
+  AdminPeoplePersonIdRoute: typeof AdminPeoplePersonIdRoute
   ApplicationLeadIdRoute: typeof ApplicationLeadIdRoute
   PropertyPropertyIdRoute: typeof PropertyPropertyIdRoute
   LenderFileLeadIdRoute: typeof LenderFileLeadIdRoute
@@ -404,6 +417,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SsnTermsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin-people/$personId': {
+      id: '/admin-people/$personId'
+      path: '/admin-people/$personId'
+      fullPath: '/admin-people/$personId'
+      preLoaderRoute: typeof AdminPeoplePersonIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/application/$leadId': {
       id: '/application/$leadId'
       path: '/application/$leadId'
@@ -452,6 +472,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileRoute: ProfileRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SsnTermsRoute: SsnTermsRoute,
+  AdminPeoplePersonIdRoute: AdminPeoplePersonIdRoute,
   ApplicationLeadIdRoute: ApplicationLeadIdRoute,
   PropertyPropertyIdRoute: PropertyPropertyIdRoute,
   LenderFileLeadIdRoute: LenderFileLeadIdRoute,
