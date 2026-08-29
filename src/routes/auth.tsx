@@ -78,6 +78,17 @@ function AuthPage() {
    * Backs the profile with a real Loqal Cloud account. Calendar and Meet
    * bookings are stored per account, so a backend session is required.
    */
+  /** Secure password rules applied at registration only. */
+  function passwordIssues(pw: string): string[] {
+    const issues: string[] = [];
+    if (pw.length < 8) issues.push("At least 8 characters");
+    if (!/[a-z]/.test(pw)) issues.push("One lowercase letter");
+    if (!/[A-Z]/.test(pw)) issues.push("One uppercase letter");
+    if (!/\d/.test(pw)) issues.push("One number");
+    if (!/[^A-Za-z0-9]/.test(pw)) issues.push("One special character (!@#$…)");
+    return issues;
+  }
+
   async function ensureBackendSession(kind: "login" | "register") {
     if (kind === "register") {
       const { error: signUpError } = await supabase.auth.signUp({
@@ -89,17 +100,8 @@ function AuthPage() {
     }
     const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
     if (signInError) {
-      if (kind === "login" && /invalid login credentials/i.test(signInError.message)) {
-        // First sign-in for an existing prototype profile — create the account.
-        const { error: signUpError } = await supabase.auth.signUp({
-          email,
-          password,
-          options: { emailRedirectTo: `${window.location.origin}/auth` },
-        });
-        if (signUpError) throw signUpError;
-        const retry = await supabase.auth.signInWithPassword({ email, password });
-        if (retry.error) throw retry.error;
-        return;
+      if (/invalid login credentials/i.test(signInError.message)) {
+        throw new Error("Invalid e-mail or password.");
       }
       throw signInError;
     }
