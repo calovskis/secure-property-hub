@@ -179,6 +179,9 @@ function InfoItem({
         </div>
       ) : (
         <div className="mt-3 space-y-3">
+          {restored ? (
+            <p className="text-[11px] font-semibold text-gold">Draft restored — not sent yet.</p>
+          ) : null}
           <textarea
             rows={3}
             value={answer}
