@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 /**
  * Personal greeting for the signed-in dashboards.
  *
@@ -130,4 +132,17 @@ export function greetingFor(
   if (local && seed % 3 === 0) phrase = local;
 
   return name ? `${phrase}, ${name}` : phrase;
+}
+
+/**
+ * React hook: records the visit once and returns the greeting line.
+ * Renders an empty string on the server so hydration stays stable.
+ */
+export function useGreeting(firstName: string, email?: string): string {
+  const [line, setLine] = useState("");
+  useEffect(() => {
+    const previous = email ? markVisit(email) : undefined;
+    setLine(greetingFor(firstName, previous));
+  }, [firstName, email]);
+  return line;
 }
