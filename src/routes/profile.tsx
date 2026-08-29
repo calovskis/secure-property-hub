@@ -445,6 +445,7 @@ function ProfilePage() {
                   </p>
                 )}
               </section>
+              </>
             )}
           </div>
 
