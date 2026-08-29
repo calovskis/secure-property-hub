@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth";
 import { useT } from "@/lib/i18n";
 import { offerReminders, pendingOfferDecision, useLeads } from "@/lib/leads";
 import { formatDateTime } from "@/lib/dates";
+import { useGreeting } from "@/lib/greeting";
 
 export const Route = createFileRoute("/")({
   head: () => ({

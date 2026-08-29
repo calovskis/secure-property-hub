@@ -21,6 +21,7 @@ import { AdminSupport } from "@/components/admin/AdminSupport";
 import { AdminPeople } from "@/components/admin/AdminPeople";
 import { AdminSettings } from "@/components/admin/AdminSettings";
 import { AdminNav, type AdminTab } from "@/components/admin/AdminNav";
+import { useGreeting } from "@/lib/greeting";
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
