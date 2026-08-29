@@ -138,7 +138,9 @@ function RootComponent() {
             <MortgageDraftProvider>
               {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
               <Outlet />
+              <PresenceTracker />
               <SupportChat />
+
               <Toaster />
             </MortgageDraftProvider>
           </LeadsProvider>
