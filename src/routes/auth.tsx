@@ -110,7 +110,7 @@ function AuthPage() {
   async function onLogin(e: React.FormEvent) {
     e.preventDefault();
     if (!email) return setError("Enter the e-mail you registered with.");
-    if (password.length < 6) return setError("Enter your password (at least 6 characters).");
+    if (!password) return setError("Enter your password.");
     setError(null);
     setBusy(true);
     try {
@@ -144,7 +144,9 @@ function AuthPage() {
     e.preventDefault();
     if (!firstName || !lastName) return setError("First name and last name are required.");
     if (!email) return setError("E-mail is required.");
-    if (password.length < 6) return setError("Choose a password of at least 6 characters.");
+    const pwIssues = passwordIssues(password);
+    if (pwIssues.length > 0)
+      return setError(`Your password needs: ${pwIssues.join(", ").toLowerCase()}.`);
     if (!phone) return setError("Phone number is required.");
     if (usPerson === null)
       return setError("Please tell us whether you are a US citizen or green card holder.");
