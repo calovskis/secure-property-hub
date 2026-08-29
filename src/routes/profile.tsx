@@ -288,6 +288,7 @@ function ProfilePage() {
   const { leadsForClient } = useLeads();
   const { drafts: allDrafts } = useMortgageDrafts();
   const { t } = useI18n();
+  const { requests: partnerRequests } = usePartnerRequests();
   const [wizardOpen, setWizardOpen] = useState(false);
   const { doc: docParam, open: openParam } = Route.useSearch();
 
