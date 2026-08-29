@@ -55,6 +55,8 @@ export function BuyerAgentDialog({
   const [kickoff, setKickoff] = useState<KickoffRequest | null>(null);
   const [notes, setNotes] = useState("");
   const [callSlot, setCallSlot] = useState<string | null>(null);
+  /** Prioritised slots the buyer proposes for the live video showcasing. */
+  const [tourSlots, setTourSlots] = useState<string[]>([]);
   const [callMeetUrl, setCallMeetUrl] = useState<string | null>(null);
   const [showFeeInfo, setShowFeeInfo] = useState(false);
 
