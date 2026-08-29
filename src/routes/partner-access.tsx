@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { PARTNER_LABEL, type PartnerType } from "@/lib/auth";
-import { StateCombobox, StateMultiSelect } from "@/components/form/StateCombobox";
-import { CountryCombobox } from "@/components/form/CountryCombobox";
+import { StateMultiSelect } from "@/components/form/StateCombobox";
+import { AddressFields } from "@/components/form/AddressFields";
+
 import { DateInput } from "@/components/form/DateInput";
 import { LanguageMultiSelect } from "@/components/form/LanguageMultiSelect";
 import { US_STATE_CODES } from "@/data/us-states";
@@ -308,34 +309,19 @@ function PartnerAccessPage() {
                     className={inputClass}
                   />
                 </label>
-                <label>
-                  <Label required>Street address</Label>
-                  <input
-                    placeholder="Street and number"
-                    value={street}
-                    onChange={(e) => setStreet(e.target.value)}
-                    className={inputClass}
+                <div className="sm:col-span-2">
+                  <Label required>Legal address</Label>
+                  <AddressFields
+                    value={{ country, state: addressState, city, street, zip }}
+                    streetPlaceholder="Street and number — start typing for suggestions"
+                    onChange={(patch) => {
+                      if (patch.country !== undefined) setCountry(patch.country);
+                      if (patch.state !== undefined) setAddressState(patch.state);
+                      if (patch.city !== undefined) setCity(patch.city);
+                      if (patch.street !== undefined) setStreet(patch.street);
+                      if (patch.zip !== undefined) setZip(patch.zip);
+                    }}
                   />
-                </label>
-                <label>
-                  <Label required>City</Label>
-                  <input
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    className={inputClass}
-                  />
-                </label>
-                <div>
-                  <Label required>State</Label>
-                  <StateCombobox value={addressState} onChange={setAddressState} />
-                </div>
-                <label>
-                  <Label required>ZIP code</Label>
-                  <input value={zip} onChange={(e) => setZip(e.target.value)} className={inputClass} />
-                </label>
-                <div>
-                  <Label required>Country</Label>
-                  <CountryCombobox value={country} onChange={setCountry} />
                 </div>
               </div>
 
@@ -354,7 +340,7 @@ function PartnerAccessPage() {
                     <Label required>Company phone number</Label>
                     <input
                       type="tel"
-                      placeholder="Brokerage switchboard"
+                      placeholder="+1 555 010 0000"
                       value={companyPhone}
                       onChange={(e) => setCompanyPhone(e.target.value)}
                       className={inputClass}
