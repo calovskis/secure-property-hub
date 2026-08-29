@@ -100,7 +100,7 @@ type Row = Record<string, unknown>;
 
 function fromRow(r: Row): PartnerRequest {
   const s = (v: unknown) => (typeof v === "string" ? v : undefined);
-  return {
+  const out = {
     id: String(r["id"]),
     kind: (s(r["kind"]) as PartnerRequest["kind"]) ?? "partner",
     partnerType: s(r["partner_type"]) as PartnerType | undefined,
@@ -134,6 +134,7 @@ function fromRow(r: Row): PartnerRequest {
     status: (s(r["status"]) as PartnerRequestStatus) ?? "pending",
     decidedAt: s(r["decided_at"]),
   };
+  return out as PartnerRequest;
 }
 
 const COLUMN: Record<string, string> = {
