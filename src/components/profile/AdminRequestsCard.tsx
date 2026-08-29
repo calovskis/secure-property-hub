@@ -3,40 +3,20 @@
  * written information requests (with optional document uploads) and video
  * call requests, which the partner books straight into the Loqal calendar.
  */
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { fullName, type LoqalUser } from "@/lib/auth";
 import { usePartnerRequests, type PartnerAdminRequest } from "@/lib/partner-requests";
 import { CallScheduler } from "@/components/buyer/CallScheduler";
 import { logActivity } from "@/lib/activity";
 import { formatDateTime } from "@/lib/dates";
+import { UploadRequestDialog } from "@/components/profile/UploadRequestDialog";
+import { useUploadDrafts } from "@/lib/upload-drafts";
 
 const LOQAL_ADMIN_EMAIL = "it@loqal.global";
 
 const inputClass =
   "w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-brand";
-
-/** Unsent answers survive a reload so nothing typed here is ever lost. */
-const draftKey = (id: string) => `loqal.partner-request-draft.${id}`;
-
-function loadDraft(id: string): { answer: string; docs: string[] } {
-  try {
-    const raw = window.localStorage.getItem(draftKey(id));
-    if (raw) return JSON.parse(raw) as { answer: string; docs: string[] };
-  } catch {
-    /* ignore */
-  }
-  return { answer: "", docs: [] };
-}
-
-function saveDraft(id: string, draft: { answer: string; docs: string[] }) {
-  try {
-    if (!draft.answer && !draft.docs.length) window.localStorage.removeItem(draftKey(id));
-    else window.localStorage.setItem(draftKey(id), JSON.stringify(draft));
-  } catch {
-    /* storage unavailable */
-  }
-}
 
 export function AdminRequestsCard({ user }: { user: LoqalUser }) {
   const { requests, updateRequest } = usePartnerRequests();
