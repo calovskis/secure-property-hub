@@ -144,6 +144,38 @@ function AdminPartnerRequestsPage() {
     toast("Partner declined", { description: r.companyName });
   }
 
+  function decideChange(r: PartnerRequest, changeId: string, approved: boolean) {
+    const change = r.profileChangeRequests.find((c) => c.id === changeId);
+    if (!change) return;
+    const decidedAt = new Date().toISOString();
+    updateRequest(r.id, {
+      profileChangeRequests: r.profileChangeRequests.map((c) =>
+        c.id === changeId ? { ...c, status: approved ? "approved" : "declined", decidedAt } : c,
+      ),
+      ...(approved ? { [change.field]: change.requestedValue } : {}),
+    });
+    notify({
+      id: `partner-change-${changeId}`,
+      to: r.email.toLowerCase(),
+      title: approved ? "Loqal approved your profile change" : "Loqal declined your profile change",
+      body: `${change.label}: ${change.currentValue || "—"} → ${change.requestedValue}`,
+      href: "/profile",
+      severity: approved ? "info" : "warning",
+    });
+    logActivity(
+      "Loqal admin",
+      approved ? "approved a partner profile change" : "declined a partner profile change",
+      `${r.companyName} · ${change.label}`,
+    );
+    toast(approved ? "Change approved" : "Change declined", { description: r.companyName });
+  }
+
+  const pendingChanges = requests.flatMap((r) =>
+    (r.profileChangeRequests ?? [])
+      .filter((c) => c.status === "pending")
+      .map((c) => ({ request: r, change: c })),
+  );
+
   const counts = new Map<TypeFilter, number>();
   for (const r of requests.filter((x) => x.status === "pending")) {
     counts.set(typeOf(r), (counts.get(typeOf(r)) ?? 0) + 1);
@@ -164,6 +196,49 @@ function AdminPartnerRequestsPage() {
             Pending registrations, oldest first — {fullName(user)}, approve or decline each request.
           </p>
         </div>
+
+        {pendingChanges.length ? (
+          <section className="mb-6 rounded-lg border border-gold/40 bg-gold-tint/30 p-5">
+            <h2 className="text-sm font-semibold text-foreground">
+              Profile change requests · {pendingChanges.length} awaiting approval
+            </h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Name, surname and company name appear on the Loqal agreement, so partners cannot
+              change them on their own.
+            </p>
+            <ul className="mt-3 space-y-2">
+              {pendingChanges.map(({ request: r, change: c }) => (
+                <li
+                  key={c.id}
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-card p-3"
+                >
+                  <div className="text-xs text-muted-foreground">
+                    <span className="text-sm font-semibold text-foreground">{r.companyName}</span> ·{" "}
+                    {c.label}: {c.currentValue || "—"} →{" "}
+                    <strong className="text-foreground">{c.requestedValue}</strong> · requested{" "}
+                    {formatDateTime(c.requestedAt)}
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => decideChange(r, c.id, true)}
+                      className="rounded-md bg-success px-3 py-1.5 text-xs font-semibold text-background hover:opacity-90"
+                    >
+                      Approve
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => decideChange(r, c.id, false)}
+                      className="rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-destructive"
+                    >
+                      Decline
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
 
         <div className="mb-6 flex flex-wrap gap-2">
           {TYPE_FILTERS.map((f) => {

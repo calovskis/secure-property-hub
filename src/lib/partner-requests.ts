@@ -69,6 +69,46 @@ export type PartnerAdminRequest = {
   meetUrl?: string | null;
 };
 
+/**
+ * Realtor identity & licence verification — replaces the KYB questionnaire for
+ * real estate agents. One identity document (driver's licence or passport) plus
+ * one licence copy for every state declared at registration. Whenever a licence
+ * number or validity date changes, Loqal must see a fresh copy, so the entry is
+ * flagged and the old copy is dropped.
+ */
+export type RealtorLicenseDoc = {
+  state: string;
+  number: string;
+  validUntil: string;
+  /** Uploaded licence copy (file name). */
+  doc?: string;
+  uploadedAt?: string;
+  /** Set when the number/validity changed and a new copy is required. */
+  recopyRequestedAt?: string;
+};
+
+export type RealtorVerification = {
+  identityType?: "drivers_license" | "passport";
+  identityDoc?: string;
+  identityUploadedAt?: string;
+  licenseDocs: RealtorLicenseDoc[];
+};
+
+/**
+ * Change to a name, surname or company name — those are on the Loqal
+ * agreement, so an admin approves them before they take effect.
+ */
+export type ProfileChangeRequest = {
+  id: string;
+  field: "firstName" | "lastName" | "companyName";
+  label: string;
+  currentValue: string;
+  requestedValue: string;
+  requestedAt: string;
+  status: "pending" | "approved" | "declined";
+  decidedAt?: string;
+};
+
 export type PartnerRequest = {
   id: string;
   kind: "partner" | "corporate";
@@ -105,6 +145,10 @@ export type PartnerRequest = {
   kyc?: KycInfo;
   /** Information / video-call requests raised by a Loqal admin. */
   adminRequests: PartnerAdminRequest[];
+  /** Realtors: identity document + one licence copy per licensed state. */
+  realtorVerification?: RealtorVerification;
+  /** Name / surname / company name edits awaiting a Loqal admin decision. */
+  profileChangeRequests: ProfileChangeRequest[];
   /** Loqal partnership agreement, signed by the partner after approval. */
   agreementSignedAt?: string;
   agreementSignedBy?: string;
@@ -151,6 +195,8 @@ function fromRow(r: Row): PartnerRequest {
     verificationDocs: (r["verification_docs"] as string[] | null) ?? [],
     kyc: (r["kyc"] as KycInfo | null) ?? undefined,
     adminRequests: (r["admin_requests"] as PartnerAdminRequest[] | null) ?? [],
+    realtorVerification: (r["realtor_verification"] as RealtorVerification | null) ?? undefined,
+    profileChangeRequests: (r["profile_change_requests"] as ProfileChangeRequest[] | null) ?? [],
     agreementSignedAt: s(r["agreement_signed_at"]),
     agreementSignedBy: s(r["agreement_signed_by"]),
     agreementCountersignedAt: s(r["agreement_countersigned_at"]),
@@ -188,6 +234,8 @@ const COLUMN: Record<string, string> = {
   verificationDocs: "verification_docs",
   kyc: "kyc",
   adminRequests: "admin_requests",
+  realtorVerification: "realtor_verification",
+  profileChangeRequests: "profile_change_requests",
   agreementSignedAt: "agreement_signed_at",
   agreementSignedBy: "agreement_signed_by",
   agreementCountersignedAt: "agreement_countersigned_at",
@@ -261,7 +309,12 @@ export function usePartnerRequests() {
   }, []);
 
   const submit = useCallback(
-    async (input: Omit<PartnerRequest, "id" | "submittedAt" | "status" | "verificationDocs" | "adminRequests">) => {
+    async (
+      input: Omit<
+        PartnerRequest,
+        "id" | "submittedAt" | "status" | "verificationDocs" | "adminRequests" | "profileChangeRequests"
+      >,
+    ) => {
       const { data: userData } = await supabase.auth.getUser();
       const userId = userData.user?.id;
       if (!userId) throw new Error("You must be signed in to submit a registration.");

@@ -17,6 +17,8 @@ import {
 import { PartnerProfile } from "@/components/profile/PartnerProfile";
 import { AgreementCard } from "@/components/profile/AgreementCard";
 import { KybCard } from "@/components/profile/KybCard";
+import { RealtorVerificationCard } from "@/components/profile/RealtorVerificationCard";
+import { PartnerAccountCard } from "@/components/profile/PartnerAccountCard";
 import { AdminRequestsCard } from "@/components/profile/AdminRequestsCard";
 import { PARTNER_LABEL, ROLE_LABEL, fullName, useAuth, type MortgageProfile } from "@/lib/auth";
 import { formatDate, formatDateTime } from "@/lib/dates";
@@ -388,35 +390,35 @@ function ProfilePage() {
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="space-y-6">
-            <section className="rounded-lg border border-border bg-card p-6">
-              <h2 className="text-base font-semibold text-foreground">Account details</h2>
-              <div className="mt-3">
-                <Row label="Full name" value={fullName(user)} />
-                <Row label="Email" value={user.email} />
-                <Row label="Phone" value={user.phone} />
-                {!isPartner ? (
-                  <Row label="US citizen / green card" value={user.usPerson ? "Yes" : "No"} />
-                ) : null}
-                {user.role === "admin" ? (
-                  <Row
-                    label="Access"
-                    value={`${ROLE_LABEL[user.role]}${
-                      user.partnerType ? ` · ${PARTNER_LABEL[user.partnerType]}` : ""
-                    }`}
-                  />
-                ) : null}
-                {user.companyName ? <Row label="Company" value={user.companyName} /> : null}
-              </div>
-            </section>
-
             {isPartner ? (
               <>
+                <PartnerAccountCard user={user} />
                 <AdminRequestsCard user={user} />
                 <AgreementCard user={user} />
-                <KybCard user={user} />
+                {isRealtor ? <RealtorVerificationCard user={user} /> : <KybCard user={user} />}
                 <PartnerProfile user={user} />
               </>
             ) : (
+              <>
+                <section className="rounded-lg border border-border bg-card p-6">
+                  <h2 className="text-base font-semibold text-foreground">Account details</h2>
+                  <div className="mt-3">
+                    <Row label="Full name" value={fullName(user)} />
+                    <Row label="Email" value={user.email} />
+                    <Row label="Phone" value={user.phone} />
+                    <Row label="US citizen / green card" value={user.usPerson ? "Yes" : "No"} />
+                    {user.role === "admin" ? (
+                      <Row
+                        label="Access"
+                        value={`${ROLE_LABEL[user.role]}${
+                          user.partnerType ? ` · ${PARTNER_LABEL[user.partnerType]}` : ""
+                        }`}
+                      />
+                    ) : null}
+                    {user.companyName ? <Row label="Company" value={user.companyName} /> : null}
+                  </div>
+                </section>
+
               <section className="rounded-lg border border-border bg-card p-6">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <h2 className="text-base font-semibold text-foreground">
@@ -445,6 +447,7 @@ function ProfilePage() {
                   </p>
                 )}
               </section>
+              </>
             )}
           </div>
 

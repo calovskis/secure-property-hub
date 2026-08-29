@@ -91,7 +91,9 @@ export type Database = {
           partner_type: string | null
           phone: string
           position: string
+          profile_change_requests: Json
           realtor_licenses: Json
+          realtor_verification: Json | null
           registration_number: string
           state: string
           states: string[]
@@ -129,7 +131,9 @@ export type Database = {
           partner_type?: string | null
           phone?: string
           position?: string
+          profile_change_requests?: Json
           realtor_licenses?: Json
+          realtor_verification?: Json | null
           registration_number?: string
           state?: string
           states?: string[]
@@ -167,7 +171,9 @@ export type Database = {
           partner_type?: string | null
           phone?: string
           position?: string
+          profile_change_requests?: Json
           realtor_licenses?: Json
+          realtor_verification?: Json | null
           registration_number?: string
           state?: string
           states?: string[]
