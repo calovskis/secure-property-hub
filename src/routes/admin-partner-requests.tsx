@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { AppHeader } from "@/components/layout/AppHeader";
+import { AdminNav } from "@/components/admin/AdminNav";
 import { PARTNER_LABEL, fullName, useAuth, type PartnerType } from "@/lib/auth";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import { usePartnerRequests, type PartnerRequest } from "@/lib/partner-requests";
@@ -141,7 +142,7 @@ function AdminPartnerRequestsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <AppHeader navSlot={<span className="text-sm font-semibold text-brand">Admin · Partner requests</span>} />
+      <AppHeader navSlot={<AdminNav tab={"partners"} />} />
       <main className="mx-auto max-w-[1100px] px-4 py-8 md:px-7">
         <div className="mb-6">
           <span className="rounded-full bg-gold-tint px-3 py-1 text-xs font-semibold text-gold">

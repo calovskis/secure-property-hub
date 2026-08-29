@@ -8,7 +8,7 @@ import { useRealtors } from "@/lib/realtors";
 import { KICKOFF_LABEL, useLeads } from "@/lib/leads";
 import { buyerAgentSummary, useBuyerProcess } from "@/lib/buyer-process";
 import { logActivity } from "@/lib/activity";
-import { openSupportThread, useSupportInbox } from "@/lib/chat";
+import { openSupportThread } from "@/lib/chat";
 import {
   ActivityFeed,
   EmployeeTracking,
@@ -20,22 +20,15 @@ import { AdminAccounting } from "@/components/admin/AdminAccounting";
 import { AdminSupport } from "@/components/admin/AdminSupport";
 import { AdminPeople } from "@/components/admin/AdminPeople";
 import { AdminSettings } from "@/components/admin/AdminSettings";
-
-type AdminTab =
-  | "overview"
-  | "cases"
-  | "partners"
-  | "people"
-  | "people_clients"
-  | "people_partners"
-  | "accounting"
-  | "support"
-  | "employees"
-  | "activity"
-  | "settings";
+import { AdminNav, type AdminTab } from "@/components/admin/AdminNav";
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
+  /** Admin sub-pages link back here with ?tab=… so the section stays selected. */
+  validateSearch: (search: Record<string, unknown>): { tab?: AdminTab } => {
+    const tab = typeof search["tab"] === "string" ? (search["tab"] as AdminTab) : undefined;
+    return tab ? { tab } : {};
+  },
   head: () => ({
     meta: [
       { title: "Admin Console — Loqal" },
@@ -78,26 +71,17 @@ const QUEUES: [string, string, string][] = [
 
 function AdminPage() {
   const { user, ready } = useAuth();
-  const [tab, setTab] = useState<AdminTab>("overview");
-  const [teamMenu, setTeamMenu] = useState(false);
-  const [peopleMenu, setPeopleMenu] = useState(false);
+  const search = Route.useSearch();
+  const [tab, setTab] = useState<AdminTab>(search.tab ?? "overview");
   const [focusThread, setFocusThread] = useState<string | null>(null);
-  const { unreadTotal } = useSupportInbox();
   const { requests, setStatus } = usePartnerRequests();
   const { addRealtor } = useRealtors();
   const { leads } = useLeads();
   const proc = useBuyerProcess();
 
   useEffect(() => {
-    function onDocClick(e: MouseEvent) {
-      if (!(e.target as HTMLElement | null)?.closest?.("[data-admin-menu]")) {
-        setTeamMenu(false);
-        setPeopleMenu(false);
-      }
-    }
-    document.addEventListener("click", onDocClick);
-    return () => document.removeEventListener("click", onDocClick);
-  }, []);
+    if (search.tab) setTab(search.tab);
+  }, [search.tab]);
 
   if (!ready) return <div className="min-h-screen bg-background" />;
 
@@ -147,115 +131,9 @@ function AdminPage() {
     setTab("support");
   }
 
-  const itemCls = (active: boolean) =>
-    `flex items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-      active ? "bg-brand-tint text-brand" : "text-muted-foreground hover:bg-brand-tint hover:text-brand"
-    }`;
-  const subCls = (active: boolean) =>
-    `flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-brand-tint hover:text-brand ${
-      active ? "font-semibold text-brand" : "text-foreground"
-    }`;
-  const go = (t: AdminTab) => {
-    setTab(t);
-    setTeamMenu(false);
-    setPeopleMenu(false);
-  };
-
-  const peopleActive = tab === "people" || tab === "people_clients" || tab === "people_partners";
-
-  const teamActive = tab === "employees" || tab === "activity" || tab === "settings";
-
   return (
     <div className="min-h-screen bg-background">
-      <AppHeader
-        navSlot={
-          <>
-            <button type="button" onClick={() => go("overview")} className={itemCls(tab === "overview")}>
-              <span aria-hidden>🏠</span> Home
-            </button>
-            <button type="button" onClick={() => go("cases")} className={itemCls(tab === "cases")}>
-              <span aria-hidden>🗂</span> Cases
-            </button>
-            <div className="relative" data-admin-menu>
-              <button
-                type="button"
-                onClick={() => setPeopleMenu(!peopleMenu)}
-                className={itemCls(peopleActive)}
-              >
-                <span aria-hidden>👥</span> People
-                <span className="text-[9px] opacity-60">▼</span>
-              </button>
-              {peopleMenu ? (
-                <div className="absolute left-0 top-[calc(100%+8px)] w-56 rounded-lg border border-border bg-popover p-1.5 shadow-lg">
-                  <button type="button" onClick={() => go("people")} className={subCls(tab === "people")}>
-                    <span aria-hidden>📇</span> All
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => go("people_clients")}
-                    className={subCls(tab === "people_clients")}
-                  >
-                    <span aria-hidden>🙋</span> Clients
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => go("people_partners")}
-                    className={subCls(tab === "people_partners")}
-                  >
-                    <span aria-hidden>🤝</span> Partners
-                  </button>
-                </div>
-              ) : null}
-            </div>
-            <button
-              type="button"
-              onClick={() => go("accounting")}
-              className={itemCls(tab === "accounting")}
-            >
-              <span aria-hidden>💳</span> Accounting
-            </button>
-            <button type="button" onClick={() => go("support")} className={itemCls(tab === "support")}>
-              <span aria-hidden>💬</span> Support
-              {unreadTotal ? (
-                <span className="flex size-5 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-background">
-                  {unreadTotal}
-                </span>
-              ) : null}
-            </button>
-            <div className="relative hidden lg:block" data-admin-menu>
-              <button
-                type="button"
-                onClick={() => setTeamMenu(!teamMenu)}
-                className={itemCls(teamActive)}
-              >
-                <span aria-hidden>🛠</span> Team
-                <span className="text-[9px] opacity-60">▼</span>
-              </button>
-              {teamMenu ? (
-                <div className="absolute left-0 top-[calc(100%+8px)] w-56 rounded-lg border border-border bg-popover p-1.5 shadow-lg">
-                  <button type="button" onClick={() => go("employees")} className={subCls(tab === "employees")}>
-                    <span aria-hidden>🧑‍💼</span> Employees
-                  </button>
-                  <button type="button" onClick={() => go("activity")} className={subCls(tab === "activity")}>
-                    <span aria-hidden>📈</span> Activity log
-                  </button>
-                  <button type="button" onClick={() => go("settings")} className={subCls(tab === "settings")}>
-                    <span aria-hidden>⚙️</span> Platform settings
-                  </button>
-                </div>
-              ) : null}
-            </div>
-            {/* Mobile fallbacks for the Team items */}
-            <button
-              type="button"
-              onClick={() => go("employees")}
-              className={`${itemCls(tab === "employees")} lg:hidden`}
-            >
-              <span aria-hidden>🧑‍💼</span> Team
-            </button>
-          </>
-        }
-      />
+      <AppHeader navSlot={<AdminNav tab={tab} onSelect={setTab} />} />
       <main className="mx-auto max-w-[1400px] px-4 py-8 md:px-7">
         <div className="mb-8">
           <span className="rounded-full bg-brand-tint px-3 py-1 text-xs font-semibold text-brand">

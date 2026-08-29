@@ -28,7 +28,16 @@ function LenderApplicantFilePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <AppHeader />
+      <AppHeader
+        navSlot={
+          <Link
+            to="/partner"
+            className="flex items-center gap-1.5 whitespace-nowrap rounded-md bg-brand-tint px-3 py-1.5 text-sm font-semibold text-brand"
+          >
+            <span aria-hidden>🏦</span> Lender workspace
+          </Link>
+        }
+      />
       <main className="mx-auto max-w-5xl px-4 py-8">
         <Link
           to="/partner"
