@@ -20,6 +20,7 @@ import { KybCard } from "@/components/profile/KybCard";
 import { RealtorVerificationCard } from "@/components/profile/RealtorVerificationCard";
 import { PartnerAccountCard } from "@/components/profile/PartnerAccountCard";
 import { AdminRequestsCard } from "@/components/profile/AdminRequestsCard";
+import { useUploadDrafts, requestOpenUpload } from "@/lib/upload-drafts";
 import { PARTNER_LABEL, ROLE_LABEL, fullName, useAuth, type MortgageProfile } from "@/lib/auth";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import {
@@ -458,8 +459,13 @@ function ProfilePage() {
             )}
           </div>
 
-          {!isPartner ? (
+          {isPartner ? (
             <aside className="space-y-6">
+              <UnfinishedUploads />
+            </aside>
+          ) : (
+            <aside className="space-y-6">
+
               <section className="rounded-lg border border-border bg-card p-6">
                 <h2 className="text-base font-semibold text-foreground">Submitted applications</h2>
                 {leads.length ? (
@@ -537,11 +543,48 @@ function ProfilePage() {
                 )}
               </section>
             </aside>
-          ) : null}
+          )}
         </div>
       </main>
 
       <MortgageQuestionnaire open={wizardOpen} onOpenChange={setWizardOpen} />
     </div>
+  );
+}
+
+/** Pre-saved document uploads a partner started but has not submitted yet. */
+function UnfinishedUploads() {
+  const drafts = useUploadDrafts();
+  return (
+    <section className="rounded-lg border border-border bg-card p-6">
+      <h2 className="text-base font-semibold text-foreground">Unfinished uploads</h2>
+      {drafts.length ? (
+        <ul className="mt-4 space-y-3">
+          {drafts.map((d) => {
+            const staged = d.states ? Object.keys(d.states).length : d.files.length;
+            return (
+              <li key={d.id} className="rounded-md border border-border p-3">
+                <div className="text-sm font-semibold text-foreground">{d.label}</div>
+                <div className="mt-0.5 text-xs text-muted-foreground">
+                  {staged} of {d.expected ?? 1} attached · saved {formatDateTime(d.updatedAt)}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => requestOpenUpload(d.id)}
+                  className="mt-2 rounded-md bg-brand px-3 py-1.5 text-xs font-semibold text-background hover:bg-brand-soft"
+                >
+                  Continue
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      ) : (
+        <p className="mt-3 text-sm text-muted-foreground">
+          Nothing pending. Anything you start uploading is saved automatically so you can finish
+          later.
+        </p>
+      )}
+    </section>
   );
 }

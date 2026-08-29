@@ -25,6 +25,9 @@ import { formatDate, formatDateTime } from "@/lib/dates";
 import { DateInput } from "@/components/form/DateInput";
 import { StateCombobox } from "@/components/form/StateCombobox";
 import { uid } from "@/lib/mortgage-form";
+import { LicenceUploadDialog } from "@/components/profile/LicenceUploadDialog";
+import { UploadRequestDialog } from "@/components/profile/UploadRequestDialog";
+import { useUploadDrafts } from "@/lib/upload-drafts";
 
 const inputClass =
   "w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-brand";
@@ -73,6 +76,12 @@ export function RealtorVerificationCard({ user }: { user: LoqalUser }) {
   const [editState, setEditState] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
+  const [licDialog, setLicDialog] = useState(false);
+  const [idDialog, setIdDialog] = useState(false);
+  const drafts = useUploadDrafts();
+  const licDraftId = "realtor-licences";
+  const licDraft = drafts.find((d) => d.id === licDraftId);
+  const idDraft = drafts.find((d) => d.id === "realtor-identity");
 
   const request = requests.find((r) => r.email.toLowerCase() === user.email.toLowerCase());
   if (!request) return null;
@@ -130,25 +139,32 @@ export function RealtorVerificationCard({ user }: { user: LoqalUser }) {
     toast("Identity document uploaded", { description: "Loqal will verify it shortly." });
   }
 
-  function uploadCopy(state: string, doc: string) {
+  /** Applies every copy staged in the pop-up in one go. */
+  function uploadCopies(copies: Record<string, string>) {
+    const at = new Date().toISOString();
     const next = licenses.map((l) =>
-      l.state === state
-        ? (() => {
-            const entry: RealtorLicenseDoc = {
-              state: l.state,
-              number: l.number,
-              validUntil: l.validUntil,
-              doc,
-              uploadedAt: new Date().toISOString(),
-            };
-            return entry;
-          })()
+      copies[l.state]
+        ? ({
+            state: l.state,
+            number: l.number,
+            validUntil: l.validUntil,
+            doc: copies[l.state]!,
+            uploadedAt: at,
+          } as RealtorLicenseDoc)
         : l,
     );
-    persist(next, `uploaded the ${state} licence copy`, [
-      { state, action: "copy_uploaded", after: doc },
-    ]);
-    toast("Licence copy uploaded", { description: `${state} licence sent for verification.` });
+    persist(
+      next,
+      `uploaded ${Object.keys(copies).length} licence copy(ies)`,
+      Object.entries(copies).map(([state, doc]) => ({
+        state,
+        action: "copy_uploaded" as const,
+        after: doc,
+      })),
+    );
+    toast("Licence copies submitted", {
+      description: `${Object.keys(copies).length} state(s) sent for verification.`,
+    });
   }
 
   function saveLicense() {
@@ -231,7 +247,7 @@ export function RealtorVerificationCard({ user }: { user: LoqalUser }) {
               <span className="text-xs"> · uploaded {formatDateTime(verification.identityUploadedAt)}</span>
             ) : null}
             <div className="mt-2">
-              <IdentityUpload onPick={saveIdentity} label="Replace document" />
+              <IdentityUpload onPick={saveIdentity} label="Replace document" open={idDialog} setOpen={setIdDialog} hasDraft={Boolean(idDraft)} />
             </div>
           </div>
         ) : (
@@ -239,7 +255,7 @@ export function RealtorVerificationCard({ user }: { user: LoqalUser }) {
             <p className="text-xs text-muted-foreground">
               Upload your driver&apos;s licence or passport.
             </p>
-            <IdentityUpload onPick={saveIdentity} label="Upload identity document" />
+            <IdentityUpload onPick={saveIdentity} label="Upload" open={idDialog} setOpen={setIdDialog} hasDraft={Boolean(idDraft)} />
           </div>
         )}
       </div>
@@ -248,6 +264,16 @@ export function RealtorVerificationCard({ user }: { user: LoqalUser }) {
       <div className="mt-4 rounded-lg border border-border bg-background p-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h3 className="text-sm font-semibold text-foreground">State licences</h3>
+          <div className="flex flex-wrap gap-2">
+          {licenses.length ? (
+            <button
+              type="button"
+              onClick={() => setLicDialog(true)}
+              className="rounded-md bg-brand px-3 py-1.5 text-xs font-semibold text-background hover:bg-brand-soft"
+            >
+              {licDraft ? "Continue licence upload" : "Upload licence copies"}
+            </button>
+          ) : null}
           {edit === null ? (
             <button
               type="button"
@@ -260,7 +286,21 @@ export function RealtorVerificationCard({ user }: { user: LoqalUser }) {
               + Add licence
             </button>
           ) : null}
+          </div>
         </div>
+        {licDraft ? (
+          <p className="mt-2 text-[11px] font-semibold text-gold">
+            {Object.keys(licDraft.states ?? {}).length} licence copy(ies) pre-saved — continue when
+            you are ready.
+          </p>
+        ) : null}
+        <LicenceUploadDialog
+          open={licDialog}
+          onOpenChange={setLicDialog}
+          draftId={licDraftId}
+          licenses={licenses}
+          onSubmit={uploadCopies}
+        />
 
         {licenses.length === 0 ? (
           <p className="mt-2 text-xs text-muted-foreground">
@@ -292,18 +332,13 @@ export function RealtorVerificationCard({ user }: { user: LoqalUser }) {
                     )}
                   </div>
                   <div className="flex shrink-0 flex-wrap gap-2">
-                    <label className="cursor-pointer rounded-md border border-dashed border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:border-brand">
-                      <input
-                        type="file"
-                        className="hidden"
-                        onChange={(e) => {
-                          const name = e.target.files?.[0]?.name;
-                          if (name) uploadCopy(l.state, name);
-                          e.target.value = "";
-                        }}
-                      />
+                    <button
+                      type="button"
+                      onClick={() => setLicDialog(true)}
+                      className="rounded-md border border-dashed border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:border-brand"
+                    >
                       {l.doc ? "Replace copy" : "Upload copy"}
-                    </label>
+                    </button>
                     <button
                       type="button"
                       onClick={() => {
@@ -432,9 +467,15 @@ export function RealtorVerificationCard({ user }: { user: LoqalUser }) {
 function IdentityUpload({
   onPick,
   label,
+  open,
+  setOpen,
+  hasDraft,
 }: {
   onPick: (type: "drivers_license" | "passport", doc: string) => void;
   label: string;
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  hasDraft: boolean;
 }) {
   const [type, setType] = useState<"drivers_license" | "passport">("drivers_license");
   return (
@@ -447,18 +488,27 @@ function IdentityUpload({
         <option value="drivers_license">Driver&apos;s licence</option>
         <option value="passport">Passport</option>
       </select>
-      <label className="cursor-pointer rounded-md border border-dashed border-border px-3 py-2 text-sm font-semibold text-foreground hover:border-brand">
-        <input
-          type="file"
-          className="hidden"
-          onChange={(e) => {
-            const name = e.target.files?.[0]?.name;
-            if (name) onPick(type, name);
-            e.target.value = "";
-          }}
-        />
-        {label}
-      </label>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="rounded-md bg-brand px-4 py-2 text-sm font-semibold text-background hover:bg-brand-soft"
+      >
+        {hasDraft ? "Continue upload" : label}
+      </button>
+      <UploadRequestDialog
+        open={open}
+        onOpenChange={setOpen}
+        draftId="realtor-identity"
+        label="Identity document"
+        title="Upload your identity document"
+        description="Attach a clear photo or scan of your driver's licence or passport. You can change or delete the file before submitting."
+        requireDocument
+        askNote={false}
+        onSubmit={({ files }) => {
+          const doc = files[0];
+          if (doc) onPick(type, doc);
+        }}
+      />
     </div>
   );
 }
