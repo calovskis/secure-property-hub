@@ -141,7 +141,7 @@ function AdminPage() {
             Staff console
           </span>
           <h1 className="mt-3 text-2xl font-bold text-foreground md:text-[32px]">
-            Welcome back, {fullName(user)}
+            {greeting}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Cases, partners, people, accounting, support and platform settings in one place.

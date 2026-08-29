@@ -799,7 +799,7 @@ export function RealtorPortal({
           Realtor partner
         </span>
         <h1 className="mt-3 text-2xl font-bold text-foreground md:text-[32px]">
-          Welcome back, {fullName(user)}
+          {greeting}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Buyers assigned to you, your calendar, licenses and availability.
