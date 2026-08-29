@@ -453,8 +453,8 @@ function Dashboard() {
 
       <main className="mx-auto max-w-[1400px] px-4 py-8 md:px-7">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-[32px]">
-            {t("Welcome back")}, {user.firstName}
+          <h1 className="min-h-8 text-2xl font-bold tracking-tight text-foreground md:text-[32px]">
+            {greeting}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {t("Here's what's happening with your properties today")}
