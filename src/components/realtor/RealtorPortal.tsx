@@ -772,6 +772,7 @@ export function RealtorPortal({
   const { realtors, ensureSeat } = useRealtors();
   const { leads, ready: leadsReady } = useLeads();
   const { photos } = useBuyerProcess();
+  const greeting = useGreeting(user.firstName, user.email);
 
   const me = realtors.find((r) => r.email.toLowerCase() === user.email.toLowerCase());
 
