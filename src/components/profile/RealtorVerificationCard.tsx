@@ -35,6 +35,13 @@ const btnPrimary =
 const btnGhost =
   "rounded-md border border-border px-4 py-2 text-sm font-semibold text-muted-foreground hover:bg-brand-tint";
 
+const HISTORY_LABEL: Record<string, string> = {
+  added: "Licence added",
+  updated: "Details updated",
+  removed: "Licence removed",
+  copy_uploaded: "Copy uploaded",
+};
+
 const ID_LABEL: Record<string, string> = {
   drivers_license: "Driver's licence",
   passport: "Passport",
@@ -73,6 +80,7 @@ export function RealtorVerificationCard({ user }: { user: LoqalUser }) {
   const verification = request.realtorVerification;
   const licenses = licenseDocsOf(request);
   const missing = licenses.filter((l) => !l.doc);
+  const history = verification?.licenseHistory ?? [];
   const outstanding = missing.length + (verification?.identityDoc ? 0 : 1);
 
   function persist(next: RealtorLicenseDoc[], note: string, events: Omit<RealtorLicenseEvent, "id" | "at" | "by">[] = []) {
@@ -320,6 +328,13 @@ export function RealtorVerificationCard({ user }: { user: LoqalUser }) {
           </ul>
         )}
 
+        {missing.length ? (
+          <p className="mt-3 rounded-md bg-gold-tint/40 px-3 py-2 text-[11px] font-semibold text-gold">
+            {missing.length} of {licenses.length} licences declared at registration are still
+            missing document verification — upload a copy for each state.
+          </p>
+        ) : null}
+
         {edit !== null ? (
           <div className="mt-4 space-y-4 rounded-md border border-brand/40 bg-brand-tint/30 p-4">
             <h4 className="text-sm font-semibold text-foreground">
@@ -374,6 +389,41 @@ export function RealtorVerificationCard({ user }: { user: LoqalUser }) {
             </div>
           </div>
         ) : null}
+
+        <div className="mt-4 border-t border-border pt-3">
+          <button
+            type="button"
+            onClick={() => setShowHistory((v) => !v)}
+            className="text-xs font-semibold text-brand hover:underline"
+          >
+            {showHistory ? "Hide licence history" : `Show licence history (${history.length})`}
+          </button>
+          {showHistory ? (
+            history.length === 0 ? (
+              <p className="mt-2 text-xs text-muted-foreground">
+                No changes yet — the licences shown are the ones declared at registration.
+              </p>
+            ) : (
+              <ul className="mt-2 space-y-1.5">
+                {history.map((h) => (
+                  <li key={h.id} className="text-xs text-muted-foreground">
+                    <span className="font-semibold text-foreground">{h.state}</span> ·{" "}
+                    <span className="font-semibold text-brand">{HISTORY_LABEL[h.action]}</span> ·{" "}
+                    {formatDateTime(h.at)} by {h.by}
+                    {h.before || h.after ? (
+                      <span>
+                        {" "}
+                        — {h.before ? h.before : ""}
+                        {h.before && h.after ? " → " : ""}
+                        {h.after ? h.after : ""}
+                      </span>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            )
+          ) : null}
+        </div>
       </div>
     </section>
   );
