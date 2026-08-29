@@ -145,6 +145,10 @@ export type PartnerRequest = {
   kyc?: KycInfo;
   /** Information / video-call requests raised by a Loqal admin. */
   adminRequests: PartnerAdminRequest[];
+  /** Realtors: identity document + one licence copy per licensed state. */
+  realtorVerification?: RealtorVerification;
+  /** Name / surname / company name edits awaiting a Loqal admin decision. */
+  profileChangeRequests: ProfileChangeRequest[];
   /** Loqal partnership agreement, signed by the partner after approval. */
   agreementSignedAt?: string;
   agreementSignedBy?: string;
