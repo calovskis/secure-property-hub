@@ -124,42 +124,10 @@ function InfoItem({
   user: LoqalUser;
   onAnswer: (id: string, changes: Partial<PartnerAdminRequest>) => void;
 }) {
-  const [answer, setAnswerState] = useState("");
-  const [docs, setDocsState] = useState<string[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [restored, setRestored] = useState(false);
-
-  useEffect(() => {
-    const d = loadDraft(item.id);
-    setAnswerState(d.answer);
-    setDocsState(d.docs);
-    setRestored(Boolean(d.answer || d.docs.length));
-  }, [item.id]);
-
-  const setAnswer = (v: string) => {
-    setAnswerState(v);
-    saveDraft(item.id, { answer: v, docs });
-  };
-  const setDocs = (v: string[]) => {
-    setDocsState(v);
-    saveDraft(item.id, { answer, docs: v });
-  };
-
-  function send() {
-    if (!answer.trim()) return setError("Write your answer before sending it.");
-    if (item.requiresDocument && docs.length === 0)
-      return setError("This request needs at least one document.");
-    setError(null);
-    onAnswer(item.id, {
-      answer: answer.trim(),
-      answerDocs: docs,
-      answeredAt: new Date().toISOString(),
-    });
-    saveDraft(item.id, { answer: "", docs: [] });
-    setRestored(false);
-    logActivity(fullName(user), "answered a Loqal information request", docs.join(", "));
-    toast("Answer sent to Loqal", { description: "Your registration stays in the review queue." });
-  }
+  const [open, setOpen] = useState(false);
+  const drafts = useUploadDrafts();
+  const draftId = `partner-request:${item.id}`;
+  const draft = drafts.find((d) => d.id === draftId);
 
   return (
     <ItemShell item={item} badge="Information requested">
@@ -178,56 +146,37 @@ function InfoItem({
           ) : null}
         </div>
       ) : (
-        <div className="mt-3 space-y-3">
-          {restored ? (
-            <p className="text-[11px] font-semibold text-gold">Draft restored — not sent yet.</p>
+        <div className="mt-3">
+          {draft ? (
+            <p className="mb-2 text-[11px] font-semibold text-gold">
+              {(draft.files.length || 0)} file(s) and your answer are pre-saved — not submitted yet.
+            </p>
           ) : null}
-          <textarea
-            rows={3}
-            value={answer}
-            onChange={(e) => setAnswer(e.target.value)}
-            placeholder="Your answer to Loqal"
-            className={inputClass}
-          />
-          <div>
-            <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground hover:bg-brand-tint">
-              <input
-                type="file"
-                multiple
-                className="hidden"
-                onChange={(e) => {
-                  const names = Array.from(e.target.files ?? []).map((f) => f.name);
-                  if (names.length) setDocs([...docs, ...names]);
-                  e.target.value = "";
-                }}
-              />
-              Attach document{item.requiresDocument ? " (required)" : " (optional)"}
-            </label>
-            {docs.length ? (
-              <ul className="mt-2 text-xs text-muted-foreground">
-                {docs.map((d) => (
-                  <li key={d} className="flex items-center gap-2">
-                    📎 {d}
-                    <button
-                      type="button"
-                      className="text-destructive"
-                      onClick={() => setDocs(docs.filter((x) => x !== d))}
-                    >
-                      Remove
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-          </div>
-          {error ? <p className="text-xs font-medium text-destructive">{error}</p> : null}
           <button
             type="button"
-            onClick={send}
-            className="rounded-md bg-brand px-4 py-2.5 text-sm font-semibold text-background hover:bg-brand-soft"
+            onClick={() => setOpen(true)}
+            className="rounded-md bg-brand px-4 py-2 text-sm font-semibold text-background hover:bg-brand-soft"
           >
-            Send answer
+            {draft ? "Continue upload" : "Upload"}
           </button>
+          <UploadRequestDialog
+            open={open}
+            onOpenChange={setOpen}
+            draftId={draftId}
+            label={item.message.slice(0, 60) || "Loqal information request"}
+            title="Respond to Loqal"
+            description={item.message}
+            requireDocument={Boolean(item.requiresDocument)}
+            onSubmit={({ note, files }) => {
+              onAnswer(item.id, {
+                answer: note,
+                answerDocs: files,
+                answeredAt: new Date().toISOString(),
+              });
+              logActivity(fullName(user), "answered a Loqal information request", files.join(", "));
+              toast("Sent to Loqal", { description: "Your registration stays in the review queue." });
+            }}
+          />
         </div>
       )}
     </ItemShell>
