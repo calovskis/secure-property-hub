@@ -290,6 +290,15 @@ function AuthPage() {
                 />
               </label>
 
+              {mode === "login" ? (
+                <button
+                  type="button"
+                  onClick={() => void onForgotPassword()}
+                  className="self-start text-xs font-semibold text-brand underline-offset-2 hover:underline"
+                >
+                  Forgot your password?
+                </button>
+              ) : null}
             </div>
 
             {mode === "register" ? (
