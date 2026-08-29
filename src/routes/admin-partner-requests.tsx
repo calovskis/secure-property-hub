@@ -9,6 +9,7 @@ import { PartnerRequestDialog } from "@/components/admin/PartnerRequestDialog";
 import { uid } from "@/lib/mortgage-form";
 import { useRealtors } from "@/lib/realtors";
 import { logActivity } from "@/lib/activity";
+import { notify } from "@/lib/notifications";
 import { toast } from "sonner";
 
 /**
@@ -118,6 +119,14 @@ function AdminPartnerRequestsPage() {
           requestedBy: fullName(user!),
         },
       ],
+    });
+    notify({
+      id: `partner-admin-request-${r.id}-${Date.now()}`,
+      to: r.email.toLowerCase(),
+      title: kind === "info" ? "Loqal requested more information" : "Loqal requested a video call",
+      body: message,
+      href: "/profile",
+      severity: "warning",
     });
     logActivity(
       "Loqal admin",

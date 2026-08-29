@@ -4,6 +4,7 @@
  * here and the admin console's Inbox tab answers.
  */
 import { useCallback, useSyncExternalStore } from "react";
+import { notify } from "@/lib/notifications";
 
 export type ChatMessage = {
   id: string;
@@ -148,6 +149,14 @@ export function useSupportInbox() {
   const reply = useCallback((threadId: string, text: string) => {
     if (!text.trim()) return;
     const cur = load();
+    // The recipient sees the reply in the header bell, not only in the widget.
+    notify({
+      id: `support-reply-${threadId}-${Date.now()}`,
+      to: threadId,
+      title: "New message from Loqal support",
+      body: text.trim().slice(0, 140),
+      severity: "info",
+    });
     commit({
       threads: cur.threads.map((t) =>
         t.id === threadId
