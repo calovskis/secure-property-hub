@@ -355,6 +355,26 @@ export function BuyerAgentDialog({
                 />
               ) : null}
 
+              {kickoff === "video_showcase" ? (
+                <CallScheduler
+                  realtorId={lead.buyerAgent?.agentId}
+                  mode="multi"
+                  proposeLabel={
+                    tourSlots.length ? `Save ${tourSlots.length} preferred time(s)` : "Save my preferred times"
+                  }
+                  summary={`Loqal live video walkthrough — ${lead.propertyLabel}`}
+                  onPropose={(slots) => setTourSlots(slots)}
+                  onBook={() => undefined}
+                />
+              ) : null}
+
+              {kickoff === "video_showcase" && tourSlots.length ? (
+                <p className="rounded-md border border-success/40 bg-success/5 px-3 py-2 text-xs text-foreground">
+                  ✓ {tourSlots.length} option{tourSlots.length > 1 ? "s" : ""} saved — priority 1:{" "}
+                  {formatDateTime(tourSlots[0]!)}. Your agent confirms one of them with the seller.
+                </p>
+              ) : null}
+
               <label className="block">
                 <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Comments / notes (optional)
