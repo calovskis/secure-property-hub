@@ -162,6 +162,10 @@ export function PartnerAccountCard({ user }: { user: LoqalUser }) {
             label="Partner type"
             value={user.partnerType ? PARTNER_LABEL[user.partnerType] : undefined}
           />
+          <Row
+            label="Account created"
+            value={request ? formatDateTime(request.submittedAt) : undefined}
+          />
         </div>
       )}
 

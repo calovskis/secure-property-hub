@@ -1,0 +1,1 @@
+ALTER TABLE public.partner_requests ADD COLUMN IF NOT EXISTS additional_contacts jsonb NOT NULL DEFAULT '[]'::jsonb;

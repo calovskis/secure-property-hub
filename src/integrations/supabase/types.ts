@@ -67,6 +67,7 @@ export type Database = {
       }
       partner_requests: {
         Row: {
+          additional_contacts: Json
           admin_requests: Json
           agreement_countersigned_at: string | null
           agreement_signed_at: string | null
@@ -107,6 +108,7 @@ export type Database = {
           zip: string
         }
         Insert: {
+          additional_contacts?: Json
           admin_requests?: Json
           agreement_countersigned_at?: string | null
           agreement_signed_at?: string | null
@@ -147,6 +149,7 @@ export type Database = {
           zip?: string
         }
         Update: {
+          additional_contacts?: Json
           admin_requests?: Json
           agreement_countersigned_at?: string | null
           agreement_signed_at?: string | null

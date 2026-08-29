@@ -21,7 +21,14 @@ import { RealtorVerificationCard } from "@/components/profile/RealtorVerificatio
 import { PartnerAccountCard } from "@/components/profile/PartnerAccountCard";
 import { AdminRequestsCard } from "@/components/profile/AdminRequestsCard";
 import { useUploadDrafts, requestOpenUpload } from "@/lib/upload-drafts";
-import { PARTNER_LABEL, ROLE_LABEL, fullName, useAuth, type MortgageProfile } from "@/lib/auth";
+import {
+  PARTNER_LABEL,
+  ROLE_LABEL,
+  fullName,
+  useAuth,
+  type LoqalUser,
+  type MortgageProfile,
+} from "@/lib/auth";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import {
   Dialog,
@@ -45,6 +52,7 @@ import {
   type DocumentRequest,
 } from "@/lib/document-requests";
 import { usePartnerRequests } from "@/lib/partner-requests";
+import { licenseDocsOf } from "@/components/profile/realtor-licences";
 
 const DOC_KINDS = ["idDocuments", "visaDocuments", "bankruptcyDocuments"] as const;
 
@@ -402,7 +410,6 @@ function ProfilePage() {
               <>
                 <PartnerAccountCard user={user} />
                 <AdminRequestsCard user={user} />
-                <AgreementCard user={user} />
                 {isRealtor ? <RealtorVerificationCard user={user} /> : <KybCard user={user} />}
                 <PartnerProfile user={user} />
               </>
@@ -461,7 +468,8 @@ function ProfilePage() {
 
           {isPartner ? (
             <aside className="space-y-6">
-              <UnfinishedUploads />
+              <AgreementCard user={user} />
+              <OpenRequests user={user} />
             </aside>
           ) : (
             <aside className="space-y-6">
@@ -552,28 +560,77 @@ function ProfilePage() {
   );
 }
 
-/** Pre-saved document uploads a partner started but has not submitted yet. */
-function UnfinishedUploads() {
+/**
+ * Everything Loqal is still waiting for from a partner: document upload
+ * requests, missing verification documents and uploads left half-finished.
+ */
+function OpenRequests({ user }: { user: LoqalUser }) {
   const drafts = useUploadDrafts();
+  const { requests } = usePartnerRequests();
+  const registration = requests.find(
+    (r) => r.email.toLowerCase() === user.email.toLowerCase(),
+  );
+
+  const items: { id: string; title: string; detail: string }[] = [];
+
+  for (const item of registration?.adminRequests ?? []) {
+    if (item.kind === "info" && !item.answeredAt)
+      items.push({
+        id: `partner-request:${item.id}`,
+        title: item.requiresDocument ? "Document requested by Loqal" : "Information requested",
+        detail: item.message,
+      });
+  }
+
+  if (registration && (user.partnerType === "realtor" || registration.partnerType === "realtor")) {
+    if (!registration.realtorVerification?.identityDoc)
+      items.push({
+        id: "realtor-identity",
+        title: "Identity document",
+        detail: "Upload your driver's licence or passport.",
+      });
+    const licences = licenseDocsOf(registration);
+    const missing = licences.filter((l) => !l.doc).length;
+    if (missing)
+      items.push({
+        id: "realtor-licences",
+        title: "State licence copies",
+        detail: `${missing} of ${licences.length} state(s) still need a copy.`,
+      });
+  }
+
+  for (const d of drafts)
+    if (!items.some((i) => i.id === d.id))
+      items.push({ id: d.id, title: d.label, detail: "Pre-saved upload — not submitted yet." });
+
   return (
     <section className="rounded-lg border border-border bg-card p-6">
-      <h2 className="text-base font-semibold text-foreground">Unfinished uploads</h2>
-      {drafts.length ? (
+      <h2 className="text-base font-semibold text-foreground">Open requests</h2>
+      {items.length ? (
         <ul className="mt-4 space-y-3">
-          {drafts.map((d) => {
-            const staged = d.states ? Object.keys(d.states).length : d.files.length;
+          {items.map((item) => {
+            const draft = drafts.find((d) => d.id === item.id);
+            const staged = draft
+              ? draft.states
+                ? Object.keys(draft.states).length
+                : draft.files.length
+              : 0;
             return (
-              <li key={d.id} className="rounded-md border border-border p-3">
-                <div className="text-sm font-semibold text-foreground">{d.label}</div>
-                <div className="mt-0.5 text-xs text-muted-foreground">
-                  {staged} of {d.expected ?? 1} attached · saved {formatDateTime(d.updatedAt)}
-                </div>
+              <li key={item.id} className="rounded-md border border-border p-3">
+                <div className="text-sm font-semibold text-foreground">{item.title}</div>
+                <div className="mt-0.5 text-xs text-muted-foreground">{item.detail}</div>
+                {draft ? (
+                  <div className="mt-1 text-[11px] font-semibold text-gold">
+                    {staged} of {draft.expected ?? 1} attached · saved{" "}
+                    {formatDateTime(draft.updatedAt)}
+                  </div>
+                ) : null}
                 <button
                   type="button"
-                  onClick={() => requestOpenUpload(d.id)}
+                  onClick={() => requestOpenUpload(item.id)}
                   className="mt-2 rounded-md bg-brand px-3 py-1.5 text-xs font-semibold text-background hover:bg-brand-soft"
                 >
-                  Continue
+                  {draft ? "Continue" : "Upload"}
                 </button>
               </li>
             );
@@ -581,8 +638,8 @@ function UnfinishedUploads() {
         </ul>
       ) : (
         <p className="mt-3 text-sm text-muted-foreground">
-          Nothing pending. Anything you start uploading is saved automatically so you can finish
-          later.
+          Nothing pending. Anything Loqal asks you for shows up here, and unfinished uploads are
+          saved automatically.
         </p>
       )}
     </section>
