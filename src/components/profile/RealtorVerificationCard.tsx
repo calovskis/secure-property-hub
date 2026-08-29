@@ -25,6 +25,9 @@ import { formatDate, formatDateTime } from "@/lib/dates";
 import { DateInput } from "@/components/form/DateInput";
 import { StateCombobox } from "@/components/form/StateCombobox";
 import { uid } from "@/lib/mortgage-form";
+import { LicenceUploadDialog } from "@/components/profile/LicenceUploadDialog";
+import { UploadRequestDialog } from "@/components/profile/UploadRequestDialog";
+import { useUploadDrafts } from "@/lib/upload-drafts";
 
 const inputClass =
   "w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-brand";
@@ -73,6 +76,9 @@ export function RealtorVerificationCard({ user }: { user: LoqalUser }) {
   const [editState, setEditState] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
+  const [licDialog, setLicDialog] = useState(false);
+  const [idDialog, setIdDialog] = useState(false);
+  const drafts = useUploadDrafts();
 
   const request = requests.find((r) => r.email.toLowerCase() === user.email.toLowerCase());
   if (!request) return null;
@@ -130,25 +136,32 @@ export function RealtorVerificationCard({ user }: { user: LoqalUser }) {
     toast("Identity document uploaded", { description: "Loqal will verify it shortly." });
   }
 
-  function uploadCopy(state: string, doc: string) {
+  /** Applies every copy staged in the pop-up in one go. */
+  function uploadCopies(copies: Record<string, string>) {
+    const at = new Date().toISOString();
     const next = licenses.map((l) =>
-      l.state === state
-        ? (() => {
-            const entry: RealtorLicenseDoc = {
-              state: l.state,
-              number: l.number,
-              validUntil: l.validUntil,
-              doc,
-              uploadedAt: new Date().toISOString(),
-            };
-            return entry;
-          })()
+      copies[l.state]
+        ? ({
+            state: l.state,
+            number: l.number,
+            validUntil: l.validUntil,
+            doc: copies[l.state]!,
+            uploadedAt: at,
+          } as RealtorLicenseDoc)
         : l,
     );
-    persist(next, `uploaded the ${state} licence copy`, [
-      { state, action: "copy_uploaded", after: doc },
-    ]);
-    toast("Licence copy uploaded", { description: `${state} licence sent for verification.` });
+    persist(
+      next,
+      `uploaded ${Object.keys(copies).length} licence copy(ies)`,
+      Object.entries(copies).map(([state, doc]) => ({
+        state,
+        action: "copy_uploaded" as const,
+        after: doc,
+      })),
+    );
+    toast("Licence copies submitted", {
+      description: `${Object.keys(copies).length} state(s) sent for verification.`,
+    });
   }
 
   function saveLicense() {
