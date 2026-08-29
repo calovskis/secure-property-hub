@@ -34,7 +34,9 @@ const PROPERTIES_PER_PAGE = 6;
 
 function MarketplacePage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [locationInput, setLocationInput] = useState("");
+
 
   const [priceRange, setPriceRange] = useState("");
   const [propType, setPropType] = useState("");
