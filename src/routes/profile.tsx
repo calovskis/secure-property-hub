@@ -458,8 +458,13 @@ function ProfilePage() {
             )}
           </div>
 
-          {!isPartner ? (
+          {isPartner ? (
             <aside className="space-y-6">
+              <UnfinishedUploads />
+            </aside>
+          ) : (
+            <aside className="space-y-6">
+
               <section className="rounded-lg border border-border bg-card p-6">
                 <h2 className="text-base font-semibold text-foreground">Submitted applications</h2>
                 {leads.length ? (
