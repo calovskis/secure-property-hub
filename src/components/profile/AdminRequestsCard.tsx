@@ -15,9 +15,6 @@ import { useUploadDrafts } from "@/lib/upload-drafts";
 
 const LOQAL_ADMIN_EMAIL = "it@loqal.global";
 
-const inputClass =
-  "w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-brand";
-
 export function AdminRequestsCard({ user }: { user: LoqalUser }) {
   const { requests, updateRequest } = usePartnerRequests();
   const request = requests.find((r) => r.email.toLowerCase() === user.email.toLowerCase());
