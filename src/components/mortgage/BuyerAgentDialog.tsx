@@ -48,7 +48,7 @@ export function BuyerAgentDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const { agreeBuyerAgent, setBuyerRepresentation } = useLeads();
-  const { requestPhotos, bookCall } = useBuyerProcess();
+  const { requestPhotos, bookCall, proposeSlots } = useBuyerProcess();
   const { lang } = useI18n();
   const [step, setStep] = useState<Step>("agree");
   const [representation, setRepresentation] = useState<Representation | null>(null);
