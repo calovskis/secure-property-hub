@@ -78,6 +78,17 @@ function AuthPage() {
    * Backs the profile with a real Loqal Cloud account. Calendar and Meet
    * bookings are stored per account, so a backend session is required.
    */
+  /** Secure password rules applied at registration only. */
+  function passwordIssues(pw: string): string[] {
+    const issues: string[] = [];
+    if (pw.length < 8) issues.push("At least 8 characters");
+    if (!/[a-z]/.test(pw)) issues.push("One lowercase letter");
+    if (!/[A-Z]/.test(pw)) issues.push("One uppercase letter");
+    if (!/\d/.test(pw)) issues.push("One number");
+    if (!/[^A-Za-z0-9]/.test(pw)) issues.push("One special character (!@#$…)");
+    return issues;
+  }
+
   async function ensureBackendSession(kind: "login" | "register") {
     if (kind === "register") {
       const { error: signUpError } = await supabase.auth.signUp({
@@ -89,17 +100,8 @@ function AuthPage() {
     }
     const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
     if (signInError) {
-      if (kind === "login" && /invalid login credentials/i.test(signInError.message)) {
-        // First sign-in for an existing prototype profile — create the account.
-        const { error: signUpError } = await supabase.auth.signUp({
-          email,
-          password,
-          options: { emailRedirectTo: `${window.location.origin}/auth` },
-        });
-        if (signUpError) throw signUpError;
-        const retry = await supabase.auth.signInWithPassword({ email, password });
-        if (retry.error) throw retry.error;
-        return;
+      if (/invalid login credentials/i.test(signInError.message)) {
+        throw new Error("Invalid e-mail or password.");
       }
       throw signInError;
     }
@@ -108,7 +110,7 @@ function AuthPage() {
   async function onLogin(e: React.FormEvent) {
     e.preventDefault();
     if (!email) return setError("Enter the e-mail you registered with.");
-    if (password.length < 6) return setError("Enter your password (at least 6 characters).");
+    if (!password) return setError("Enter your password.");
     setError(null);
     setBusy(true);
     try {
@@ -142,7 +144,9 @@ function AuthPage() {
     e.preventDefault();
     if (!firstName || !lastName) return setError("First name and last name are required.");
     if (!email) return setError("E-mail is required.");
-    if (password.length < 6) return setError("Choose a password of at least 6 characters.");
+    const pwIssues = passwordIssues(password);
+    if (pwIssues.length > 0)
+      return setError(`Your password needs: ${pwIssues.join(", ").toLowerCase()}.`);
     if (!phone) return setError("Phone number is required.");
     if (usPerson === null)
       return setError("Please tell us whether you are a US citizen or green card holder.");
@@ -274,6 +278,28 @@ function AuthPage() {
               </label>
 
             </div>
+
+            {mode === "register" ? (
+              <ul className="grid grid-cols-1 gap-1 sm:grid-cols-2">
+                {[
+                  { ok: password.length >= 8, label: "At least 8 characters" },
+                  { ok: /[a-z]/.test(password), label: "One lowercase letter" },
+                  { ok: /[A-Z]/.test(password), label: "One uppercase letter" },
+                  { ok: /\d/.test(password), label: "One number" },
+                  { ok: /[^A-Za-z0-9]/.test(password), label: "One special character (!@#$…)" },
+                ].map((r) => (
+                  <li
+                    key={r.label}
+                    className={`flex items-center gap-1.5 text-xs ${
+                      r.ok ? "text-emerald-600" : "text-muted-foreground"
+                    }`}
+                  >
+                    <span aria-hidden>{r.ok ? "✓" : "○"}</span>
+                    {r.label}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
 
             {mode === "register" ? (
               <div>
