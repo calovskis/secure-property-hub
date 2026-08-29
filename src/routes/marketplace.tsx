@@ -3,7 +3,10 @@ import { useMemo, useState } from "react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { PropertiesInAction } from "@/components/property/PropertiesInAction";
 import { useClientPropertyActivity } from "@/lib/property-activity";
+import { useAuth } from "@/lib/auth";
+import { recordSearch } from "@/lib/presence";
 import { allProperties, formatPrice, type Property } from "@/data/properties";
+
 
 
 export const Route = createFileRoute("/marketplace")({
@@ -31,7 +34,9 @@ const PROPERTIES_PER_PAGE = 6;
 
 function MarketplacePage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [locationInput, setLocationInput] = useState("");
+
 
   const [priceRange, setPriceRange] = useState("");
   const [propType, setPropType] = useState("");
@@ -107,8 +112,18 @@ function MarketplacePage() {
       beds,
       baths,
     });
+    const [minStr, maxStr] = priceRange ? priceRange.split("-") : [];
+    recordSearch(user?.email, {
+      query: [propType, beds ? `${beds}+ beds` : "", baths ? `${baths}+ baths` : ""]
+        .filter(Boolean)
+        .join(" · "),
+      area: locationInput,
+      priceMin: minStr ? Number(minStr) : undefined,
+      priceMax: maxStr ? Number(maxStr) : undefined,
+    });
     setCurrentPage(1);
   };
+
 
   const handleReset = () => {
     setLocationInput("");

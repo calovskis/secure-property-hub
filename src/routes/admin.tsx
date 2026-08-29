@@ -26,6 +26,8 @@ type AdminTab =
   | "cases"
   | "partners"
   | "people"
+  | "people_clients"
+  | "people_partners"
   | "accounting"
   | "support"
   | "employees"
@@ -78,6 +80,7 @@ function AdminPage() {
   const { user, ready } = useAuth();
   const [tab, setTab] = useState<AdminTab>("overview");
   const [teamMenu, setTeamMenu] = useState(false);
+  const [peopleMenu, setPeopleMenu] = useState(false);
   const [focusThread, setFocusThread] = useState<string | null>(null);
   const { unreadTotal } = useSupportInbox();
   const { requests, setStatus } = usePartnerRequests();
@@ -87,7 +90,10 @@ function AdminPage() {
 
   useEffect(() => {
     function onDocClick(e: MouseEvent) {
-      if (!(e.target as HTMLElement | null)?.closest?.("[data-admin-menu]")) setTeamMenu(false);
+      if (!(e.target as HTMLElement | null)?.closest?.("[data-admin-menu]")) {
+        setTeamMenu(false);
+        setPeopleMenu(false);
+      }
     }
     document.addEventListener("click", onDocClick);
     return () => document.removeEventListener("click", onDocClick);
@@ -152,7 +158,10 @@ function AdminPage() {
   const go = (t: AdminTab) => {
     setTab(t);
     setTeamMenu(false);
+    setPeopleMenu(false);
   };
+
+  const peopleActive = tab === "people" || tab === "people_clients" || tab === "people_partners";
 
   const teamActive = tab === "employees" || tab === "activity" || tab === "settings";
 
@@ -170,9 +179,37 @@ function AdminPage() {
             <button type="button" onClick={() => go("partners")} className={itemCls(tab === "partners")}>
               <span aria-hidden>🤝</span> Partners
             </button>
-            <button type="button" onClick={() => go("people")} className={itemCls(tab === "people")}>
-              <span aria-hidden>👥</span> People
-            </button>
+            <div className="relative" data-admin-menu>
+              <button
+                type="button"
+                onClick={() => setPeopleMenu(!peopleMenu)}
+                className={itemCls(peopleActive)}
+              >
+                <span aria-hidden>👥</span> People
+                <span className="text-[9px] opacity-60">▼</span>
+              </button>
+              {peopleMenu ? (
+                <div className="absolute left-0 top-[calc(100%+8px)] w-56 rounded-lg border border-border bg-popover p-1.5 shadow-lg">
+                  <button type="button" onClick={() => go("people")} className={subCls(tab === "people")}>
+                    <span aria-hidden>📇</span> All
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => go("people_clients")}
+                    className={subCls(tab === "people_clients")}
+                  >
+                    <span aria-hidden>🙋</span> Clients
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => go("people_partners")}
+                    className={subCls(tab === "people_partners")}
+                  >
+                    <span aria-hidden>🤝</span> Partners
+                  </button>
+                </div>
+              ) : null}
+            </div>
             <button
               type="button"
               onClick={() => go("accounting")}
@@ -238,7 +275,13 @@ function AdminPage() {
         {tab === "cases" ? <AdminCases /> : null}
         {tab === "accounting" ? <AdminAccounting /> : null}
         {tab === "support" ? <AdminSupport focusThread={focusThread} /> : null}
-        {tab === "people" ? <AdminPeople onMessage={messagePerson} /> : null}
+        {tab === "people" ? <AdminPeople scope="all" onMessage={messagePerson} /> : null}
+        {tab === "people_clients" ? (
+          <AdminPeople scope="clients" onMessage={messagePerson} />
+        ) : null}
+        {tab === "people_partners" ? (
+          <AdminPeople scope="partners" onMessage={messagePerson} />
+        ) : null}
         {tab === "employees" ? <EmployeeTracking /> : null}
         {tab === "activity" ? <ActivityFeed /> : null}
         {tab === "settings" ? <AdminSettings /> : null}
