@@ -163,6 +163,8 @@ export type PartnerRequest = {
   /** Realtors: the brokerage's own license and switchboard number. */
   companyLicence?: string;
   companyPhone?: string;
+  /** Extra company contact people the partner maintains in My Profile. */
+  additionalContacts?: AdditionalContact[];
   /** Partner-specific T&C accepted at registration. */
   tcAcceptedAt?: string;
   /** Verification documents uploaded while awaiting approval (file names). */
@@ -217,6 +219,7 @@ function fromRow(r: Row): PartnerRequest {
     languages: (r["languages"] as string[] | null) ?? [],
     companyLicence: s(r["company_licence"]),
     companyPhone: s(r["company_phone"]),
+    additionalContacts: (r["additional_contacts"] as AdditionalContact[] | null) ?? [],
     tcAcceptedAt: s(r["tc_accepted_at"]),
     verificationDocs: (r["verification_docs"] as string[] | null) ?? [],
     kyc: (r["kyc"] as KycInfo | null) ?? undefined,
@@ -256,6 +259,7 @@ const COLUMN: Record<string, string> = {
   languages: "languages",
   companyLicence: "company_licence",
   companyPhone: "company_phone",
+  additionalContacts: "additional_contacts",
   tcAcceptedAt: "tc_accepted_at",
   verificationDocs: "verification_docs",
   kyc: "kyc",
