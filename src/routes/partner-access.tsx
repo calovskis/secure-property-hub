@@ -114,7 +114,7 @@ function PartnerAccessPage() {
     });
   }
 
-  function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!companyName.trim()) return setError("Company name is required.");
     if (!companyType.trim()) return setError("Company type is required.");
@@ -133,6 +133,9 @@ function PartnerAccessPage() {
     if (!position.trim()) return setError("Position is required.");
     if (!email.trim()) return setError("Personal e-mail is required.");
     if (!phone.trim()) return setError("Personal phone number is required.");
+    const pwIssues = passwordIssues(password);
+    if (pwIssues.length > 0)
+      return setError(`Your password needs: ${pwIssues.join(", ").toLowerCase()}.`);
     if (kind === "partner") {
       if (partnerType === "lender" && !licenceNumber.trim())
         return setError("Licence number is required for mortgage lenders.");
