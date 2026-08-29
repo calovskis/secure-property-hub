@@ -21,7 +21,14 @@ import { RealtorVerificationCard } from "@/components/profile/RealtorVerificatio
 import { PartnerAccountCard } from "@/components/profile/PartnerAccountCard";
 import { AdminRequestsCard } from "@/components/profile/AdminRequestsCard";
 import { useUploadDrafts, requestOpenUpload } from "@/lib/upload-drafts";
-import { PARTNER_LABEL, ROLE_LABEL, fullName, useAuth, type MortgageProfile } from "@/lib/auth";
+import {
+  PARTNER_LABEL,
+  ROLE_LABEL,
+  fullName,
+  useAuth,
+  type LoqalUser,
+  type MortgageProfile,
+} from "@/lib/auth";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import {
   Dialog,
@@ -45,6 +52,7 @@ import {
   type DocumentRequest,
 } from "@/lib/document-requests";
 import { usePartnerRequests } from "@/lib/partner-requests";
+import { licenseDocsOf } from "@/components/profile/realtor-licences";
 
 const DOC_KINDS = ["idDocuments", "visaDocuments", "bankruptcyDocuments"] as const;
 
