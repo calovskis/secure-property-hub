@@ -433,17 +433,26 @@ function AdminPage() {
                           <td className="py-3 pr-4 font-semibold text-foreground">{l.clientName}</td>
                           <td className="py-3 pr-4 text-muted-foreground">{l.propertyLabel}</td>
                           <td className="py-3 pr-4">
-                            {l.buyerAgent?.representation === "loqal_rep" ? (
-                              <span className="rounded-full bg-gold-tint px-2.5 py-1 text-[11px] font-semibold text-gold">
-                                🛡 Loqal advocate (+1% fee)
-                              </span>
-                            ) : (
-                              <span className="rounded-full bg-brand-tint px-2.5 py-1 text-[11px] font-semibold text-brand">
-                                {l.buyerAgent?.agentName
-                                  ? `Direct · ${l.buyerAgent.agentName}`
-                                  : "Awaiting choice"}
-                              </span>
-                            )}
+                            <div className="flex flex-col gap-1">
+                              {l.buyerAgent?.representation === "loqal_rep" ? (
+                                <span className="w-fit rounded-full bg-gold-tint px-2.5 py-1 text-[11px] font-semibold text-gold">
+                                  🛡 Loqal advocate (+1% fee)
+                                </span>
+                              ) : l.buyerAgent?.representation === "buyer_direct" ? (
+                                <span className="w-fit rounded-full bg-brand-tint px-2.5 py-1 text-[11px] font-semibold text-brand">
+                                  Direct representation
+                                </span>
+                              ) : (
+                                <span className="w-fit rounded-full bg-muted px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
+                                  Awaiting choice
+                                </span>
+                              )}
+                              {l.buyerAgent?.agentName ? (
+                                <span className="text-xs text-muted-foreground">
+                                  {l.buyerAgent.agentName}
+                                </span>
+                              ) : null}
+                            </div>
                           </td>
                           <td className="py-3 pr-4 text-muted-foreground">
                             {l.buyerAgent?.kickoff ? KICKOFF_LABEL[l.buyerAgent.kickoff] : "—"}
