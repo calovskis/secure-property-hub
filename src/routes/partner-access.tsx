@@ -156,6 +156,15 @@ function PartnerAccessPage() {
       }
     }
     setError(null);
+    // Create the login account up front — partners sign in with this e-mail
+    // and password immediately, even while their access is pending approval.
+    const { error: signUpError } = await supabase.auth.signUp({
+      email: email.trim(),
+      password,
+      options: { emailRedirectTo: `${window.location.origin}/auth` },
+    });
+    if (signUpError && !/already registered/i.test(signUpError.message))
+      return setError(signUpError.message);
     submit({
       kind,
       ...(kind === "partner" ? { partnerType } : {}),
@@ -413,6 +422,45 @@ function PartnerAccessPage() {
                   />
                 </label>
               </div>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <label>
+                  <Label required>Create a password</Label>
+                  <input
+                    type="password"
+                    placeholder="••••••••"
+                    autoComplete="new-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className={inputClass}
+                  />
+                </label>
+                <ul className="grid grid-cols-1 content-center gap-1">
+                  {[
+                    { ok: password.length >= 8, label: "At least 8 characters" },
+                    { ok: /[a-z]/.test(password), label: "One lowercase letter" },
+                    { ok: /[A-Z]/.test(password), label: "One uppercase letter" },
+                    { ok: /\d/.test(password), label: "One number" },
+                    {
+                      ok: /[^A-Za-z0-9]/.test(password),
+                      label: "One special character (!@#$…)",
+                    },
+                  ].map((r) => (
+                    <li
+                      key={r.label}
+                      className={`flex items-center gap-1.5 text-xs ${
+                        r.ok ? "text-emerald-600" : "text-muted-foreground"
+                      }`}
+                    >
+                      <span aria-hidden>{r.ok ? "✓" : "○"}</span>
+                      {r.label}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <p className="-mt-2 text-xs text-muted-foreground">
+                You will use this e-mail and password to log in to your partner portal while your
+                registration is reviewed.
+              </p>
 
               {kind === "partner" ? (
                 <>
