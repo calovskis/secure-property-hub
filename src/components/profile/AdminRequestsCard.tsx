@@ -124,9 +124,26 @@ function InfoItem({
   user: LoqalUser;
   onAnswer: (id: string, changes: Partial<PartnerAdminRequest>) => void;
 }) {
-  const [answer, setAnswer] = useState("");
-  const [docs, setDocs] = useState<string[]>([]);
+  const [answer, setAnswerState] = useState("");
+  const [docs, setDocsState] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [restored, setRestored] = useState(false);
+
+  useEffect(() => {
+    const d = loadDraft(item.id);
+    setAnswerState(d.answer);
+    setDocsState(d.docs);
+    setRestored(Boolean(d.answer || d.docs.length));
+  }, [item.id]);
+
+  const setAnswer = (v: string) => {
+    setAnswerState(v);
+    saveDraft(item.id, { answer: v, docs });
+  };
+  const setDocs = (v: string[]) => {
+    setDocsState(v);
+    saveDraft(item.id, { answer, docs: v });
+  };
 
   function send() {
     if (!answer.trim()) return setError("Write your answer before sending it.");
@@ -138,6 +155,8 @@ function InfoItem({
       answerDocs: docs,
       answeredAt: new Date().toISOString(),
     });
+    saveDraft(item.id, { answer: "", docs: [] });
+    setRestored(false);
     logActivity(fullName(user), "answered a Loqal information request", docs.join(", "));
     toast("Answer sent to Loqal", { description: "Your registration stays in the review queue." });
   }
