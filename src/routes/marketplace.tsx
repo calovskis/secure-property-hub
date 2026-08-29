@@ -107,8 +107,18 @@ function MarketplacePage() {
       beds,
       baths,
     });
+    const [minStr, maxStr] = priceRange ? priceRange.split("-") : [];
+    recordSearch(user?.email, {
+      query: [propType, beds ? `${beds}+ beds` : "", baths ? `${baths}+ baths` : ""]
+        .filter(Boolean)
+        .join(" · "),
+      area: locationInput,
+      priceMin: minStr ? Number(minStr) : undefined,
+      priceMax: maxStr ? Number(maxStr) : undefined,
+    });
     setCurrentPage(1);
   };
+
 
   const handleReset = () => {
     setLocationInput("");
