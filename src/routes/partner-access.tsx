@@ -10,6 +10,7 @@ import { US_STATE_CODES } from "@/data/us-states";
 import { usePartnerRequests } from "@/lib/partner-requests";
 import { notify } from "@/lib/notifications";
 import { logActivity } from "@/lib/activity";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/partner-access")({
   component: PartnerAccessPage,
@@ -80,6 +81,18 @@ function PartnerAccessPage() {
   const [position, setPosition] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
+
+  /** Secure password rules — same standard as client registration. */
+  function passwordIssues(pw: string): string[] {
+    const issues: string[] = [];
+    if (pw.length < 8) issues.push("At least 8 characters");
+    if (!/[a-z]/.test(pw)) issues.push("One lowercase letter");
+    if (!/[A-Z]/.test(pw)) issues.push("One uppercase letter");
+    if (!/\d/.test(pw)) issues.push("One number");
+    if (!/[^A-Za-z0-9]/.test(pw)) issues.push("One special character (!@#$…)");
+    return issues;
+  }
 
   const [licenceNumber, setLicenceNumber] = useState("");
   const [allStates, setAllStates] = useState(false);
