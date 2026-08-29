@@ -195,6 +195,8 @@ function fromRow(r: Row): PartnerRequest {
     verificationDocs: (r["verification_docs"] as string[] | null) ?? [],
     kyc: (r["kyc"] as KycInfo | null) ?? undefined,
     adminRequests: (r["admin_requests"] as PartnerAdminRequest[] | null) ?? [],
+    realtorVerification: (r["realtor_verification"] as RealtorVerification | null) ?? undefined,
+    profileChangeRequests: (r["profile_change_requests"] as ProfileChangeRequest[] | null) ?? [],
     agreementSignedAt: s(r["agreement_signed_at"]),
     agreementSignedBy: s(r["agreement_signed_by"]),
     agreementCountersignedAt: s(r["agreement_countersigned_at"]),
