@@ -441,6 +441,7 @@ function Dashboard() {
   const { user, ready } = useAuth();
   const { leadsForClient } = useLeads();
   const t = useT();
+  const greeting = useGreeting(user?.firstName ?? "", user?.email);
 
   if (!ready) return <div className="min-h-screen bg-background" />;
   if (!user) return <Landing />;
