@@ -67,6 +67,7 @@ function AuthPage() {
   const [loginRole, setLoginRole] = useState<Role>("client");
   const [loginPartnerType, setLoginPartnerType] = useState<PartnerType>("lender");
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   function complete(user: LoqalUser) {
