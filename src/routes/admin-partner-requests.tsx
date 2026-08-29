@@ -144,6 +144,38 @@ function AdminPartnerRequestsPage() {
     toast("Partner declined", { description: r.companyName });
   }
 
+  function decideChange(r: PartnerRequest, changeId: string, approved: boolean) {
+    const change = r.profileChangeRequests.find((c) => c.id === changeId);
+    if (!change) return;
+    const decidedAt = new Date().toISOString();
+    updateRequest(r.id, {
+      profileChangeRequests: r.profileChangeRequests.map((c) =>
+        c.id === changeId ? { ...c, status: approved ? "approved" : "declined", decidedAt } : c,
+      ),
+      ...(approved ? { [change.field]: change.requestedValue } : {}),
+    });
+    notify({
+      id: `partner-change-${changeId}`,
+      to: r.email.toLowerCase(),
+      title: approved ? "Loqal approved your profile change" : "Loqal declined your profile change",
+      body: `${change.label}: ${change.currentValue || "—"} → ${change.requestedValue}`,
+      href: "/profile",
+      severity: approved ? "info" : "warning",
+    });
+    logActivity(
+      "Loqal admin",
+      approved ? "approved a partner profile change" : "declined a partner profile change",
+      `${r.companyName} · ${change.label}`,
+    );
+    toast(approved ? "Change approved" : "Change declined", { description: r.companyName });
+  }
+
+  const pendingChanges = requests.flatMap((r) =>
+    (r.profileChangeRequests ?? [])
+      .filter((c) => c.status === "pending")
+      .map((c) => ({ request: r, change: c })),
+  );
+
   const counts = new Map<TypeFilter, number>();
   for (const r of requests.filter((x) => x.status === "pending")) {
     counts.set(typeOf(r), (counts.get(typeOf(r)) ?? 0) + 1);
