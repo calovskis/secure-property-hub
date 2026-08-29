@@ -17,12 +17,14 @@ import {
   usePartnerRequests,
   type PartnerRequest,
   type RealtorLicenseDoc,
+  type RealtorLicenseEvent,
 } from "@/lib/partner-requests";
 import { useRealtors } from "@/lib/realtors";
 import { logActivity } from "@/lib/activity";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import { DateInput } from "@/components/form/DateInput";
 import { StateCombobox } from "@/components/form/StateCombobox";
+import { uid } from "@/lib/mortgage-form";
 
 const inputClass =
   "w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-brand";
@@ -32,6 +34,13 @@ const btnPrimary =
   "rounded-md bg-brand px-4 py-2 text-sm font-semibold text-background hover:bg-brand-soft disabled:opacity-50";
 const btnGhost =
   "rounded-md border border-border px-4 py-2 text-sm font-semibold text-muted-foreground hover:bg-brand-tint";
+
+const HISTORY_LABEL: Record<string, string> = {
+  added: "Licence added",
+  updated: "Details updated",
+  removed: "Licence removed",
+  copy_uploaded: "Copy uploaded",
+};
 
 const ID_LABEL: Record<string, string> = {
   drivers_license: "Driver's licence",
@@ -50,6 +59,10 @@ function licenseDocsOf(request: PartnerRequest): RealtorLicenseDoc[] {
   return merged;
 }
 
+function describe(l: { number: string; validUntil: string }) {
+  return `${l.number} · valid till ${formatDate(l.validUntil)}`;
+}
+
 export function RealtorVerificationCard({ user }: { user: LoqalUser }) {
   const { requests, updateRequest } = usePartnerRequests();
   const { realtors, updateRealtor } = useRealtors();
@@ -59,6 +72,7 @@ export function RealtorVerificationCard({ user }: { user: LoqalUser }) {
   /** State code being edited — null while adding a new licence. */
   const [editState, setEditState] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
 
   const request = requests.find((r) => r.email.toLowerCase() === user.email.toLowerCase());
   if (!request) return null;
@@ -66,14 +80,22 @@ export function RealtorVerificationCard({ user }: { user: LoqalUser }) {
   const verification = request.realtorVerification;
   const licenses = licenseDocsOf(request);
   const missing = licenses.filter((l) => !l.doc);
+  const history = verification?.licenseHistory ?? [];
   const outstanding = missing.length + (verification?.identityDoc ? 0 : 1);
 
-  function persist(next: RealtorLicenseDoc[], note: string) {
+  function persist(next: RealtorLicenseDoc[], note: string, events: Omit<RealtorLicenseEvent, "id" | "at" | "by">[] = []) {
     if (!request) return;
+    const stamped: RealtorLicenseEvent[] = events.map((e) => ({
+      ...e,
+      id: uid(),
+      at: new Date().toISOString(),
+      by: fullName(user),
+    }));
     updateRequest(request.id, {
       realtorVerification: {
         ...(request.realtorVerification ?? {}),
         licenseDocs: next,
+        licenseHistory: [...stamped, ...(request.realtorVerification?.licenseHistory ?? [])],
       },
       realtorLicenses: next.map((l) => ({
         state: l.state,
@@ -123,7 +145,9 @@ export function RealtorVerificationCard({ user }: { user: LoqalUser }) {
           })()
         : l,
     );
-    persist(next, `uploaded the ${state} licence copy`);
+    persist(next, `uploaded the ${state} licence copy`, [
+      { state, action: "copy_uploaded", after: doc },
+    ]);
     toast("Licence copy uploaded", { description: `${state} licence sent for verification.` });
   }
 
@@ -149,7 +173,15 @@ export function RealtorVerificationCard({ user }: { user: LoqalUser }) {
     const next = editState
       ? licenses.map((l) => (l.state === editState ? entry : l))
       : [...licenses.filter((l) => l.state !== entry.state), entry];
-    persist(next, editState ? `updated the ${entry.state} licence details` : `added a ${entry.state} licence`);
+    persist(
+      next,
+      editState ? `updated the ${entry.state} licence details` : `added a ${entry.state} licence`,
+      [
+        previous && editState
+          ? { state: entry.state, action: "updated", before: describe(previous), after: describe(entry) }
+          : { state: entry.state, action: "added", after: describe(entry) },
+      ],
+    );
     setEdit(null);
     setEditState(null);
     toast(changed ? "New licence copy required" : "Licence saved", {
@@ -157,6 +189,16 @@ export function RealtorVerificationCard({ user }: { user: LoqalUser }) {
         ? "The details changed, so please upload a fresh copy of the licence."
         : `${entry.state} licence details saved.`,
     });
+  }
+
+  function removeLicense(l: RealtorLicenseDoc) {
+    if (!window.confirm(`Remove the ${l.state} licence from your profile?`)) return;
+    persist(
+      licenses.filter((x) => x.state !== l.state),
+      `removed the ${l.state} licence`,
+      [{ state: l.state, action: "removed", before: describe(l) }],
+    );
+    toast("Licence removed", { description: `${l.state} is no longer part of your coverage.` });
   }
 
   return (
@@ -272,12 +314,26 @@ export function RealtorVerificationCard({ user }: { user: LoqalUser }) {
                     >
                       Edit details
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => removeLicense(l)}
+                      className="rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-destructive"
+                    >
+                      Remove
+                    </button>
                   </div>
                 </div>
               </li>
             ))}
           </ul>
         )}
+
+        {missing.length ? (
+          <p className="mt-3 rounded-md bg-gold-tint/40 px-3 py-2 text-[11px] font-semibold text-gold">
+            {missing.length} of {licenses.length} licences declared at registration are still
+            missing document verification — upload a copy for each state.
+          </p>
+        ) : null}
 
         {edit !== null ? (
           <div className="mt-4 space-y-4 rounded-md border border-brand/40 bg-brand-tint/30 p-4">
@@ -333,6 +389,41 @@ export function RealtorVerificationCard({ user }: { user: LoqalUser }) {
             </div>
           </div>
         ) : null}
+
+        <div className="mt-4 border-t border-border pt-3">
+          <button
+            type="button"
+            onClick={() => setShowHistory((v) => !v)}
+            className="text-xs font-semibold text-brand hover:underline"
+          >
+            {showHistory ? "Hide licence history" : `Show licence history (${history.length})`}
+          </button>
+          {showHistory ? (
+            history.length === 0 ? (
+              <p className="mt-2 text-xs text-muted-foreground">
+                No changes yet — the licences shown are the ones declared at registration.
+              </p>
+            ) : (
+              <ul className="mt-2 space-y-1.5">
+                {history.map((h) => (
+                  <li key={h.id} className="text-xs text-muted-foreground">
+                    <span className="font-semibold text-foreground">{h.state}</span> ·{" "}
+                    <span className="font-semibold text-brand">{HISTORY_LABEL[h.action]}</span> ·{" "}
+                    {formatDateTime(h.at)} by {h.by}
+                    {h.before || h.after ? (
+                      <span>
+                        {" "}
+                        — {h.before ? h.before : ""}
+                        {h.before && h.after ? " → " : ""}
+                        {h.after ? h.after : ""}
+                      </span>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            )
+          ) : null}
+        </div>
       </div>
     </section>
   );

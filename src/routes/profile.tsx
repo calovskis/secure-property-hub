@@ -43,6 +43,7 @@ import {
   stagedCounts,
   type DocumentRequest,
 } from "@/lib/document-requests";
+import { usePartnerRequests } from "@/lib/partner-requests";
 
 const DOC_KINDS = ["idDocuments", "visaDocuments", "bankruptcyDocuments"] as const;
 
@@ -287,6 +288,7 @@ function ProfilePage() {
   const { leadsForClient } = useLeads();
   const { drafts: allDrafts } = useMortgageDrafts();
   const { t } = useI18n();
+  const { requests: partnerRequests } = usePartnerRequests();
   const [wizardOpen, setWizardOpen] = useState(false);
   const { doc: docParam, open: openParam } = Route.useSearch();
 
@@ -350,7 +352,12 @@ function ProfilePage() {
 
 
 
-  const isRealtor = user.partnerType === "realtor";
+  // The registration on file is the source of truth for the partner type —
+  // the sign-in selector can be left on another type by mistake.
+  const myRegistration = partnerRequests.find(
+    (r) => r.email.toLowerCase() === user.email.toLowerCase(),
+  );
+  const isRealtor = user.partnerType === "realtor" || myRegistration?.partnerType === "realtor";
   // Realtors keep their workspace header everywhere, including My Profile.
   const realtorNav = [
     { label: "Home", icon: "🏠", to: "/partner" },

@@ -87,11 +87,25 @@ export type RealtorLicenseDoc = {
   recopyRequestedAt?: string;
 };
 
+/** One tracked change to the realtor's licence list. */
+export type RealtorLicenseEvent = {
+  id: string;
+  state: string;
+  action: "added" | "updated" | "removed" | "copy_uploaded";
+  /** Human readable before → after, e.g. "FL-1234 · valid till 01/01/2030". */
+  before?: string;
+  after?: string;
+  at: string;
+  by: string;
+};
+
 export type RealtorVerification = {
   identityType?: "drivers_license" | "passport";
   identityDoc?: string;
   identityUploadedAt?: string;
   licenseDocs: RealtorLicenseDoc[];
+  /** Full audit trail of licence additions, edits, removals and uploads. */
+  licenseHistory?: RealtorLicenseEvent[];
 };
 
 /**
