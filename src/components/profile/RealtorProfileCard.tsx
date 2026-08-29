@@ -15,6 +15,7 @@ import { usePartnerRequests } from "@/lib/partner-requests";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import { StateCombobox } from "@/components/form/StateCombobox";
 import { LanguageMultiSelect } from "@/components/form/LanguageMultiSelect";
+import { TopicCard } from "@/components/profile/TopicCard";
 
 const inputClass =
   "w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-brand";
@@ -104,29 +105,30 @@ export function RealtorProfileCard({ user }: { user: LoqalUser }) {
     toast.success("Contact details updated.");
   }
 
-  return (
-    <div className="space-y-6">
-      <section className="rounded-lg border border-border bg-card p-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-base font-semibold text-foreground">Contact details</h2>
-          {info ? (
-            <div className="flex gap-2">
-              <button type="button" onClick={() => setInfo(null)} className={btnGhost}>
-                Cancel
-              </button>
-              <button type="button" onClick={save} className={btnPrimary}>
-                Save changes
-              </button>
-            </div>
-          ) : (
-            <button type="button" onClick={startEdit} className={btnGhost}>
-              Edit contact details
-            </button>
-          )}
-        </div>
+  const licenceSummary = (registration?.realtorLicenses ?? [])
+    .map((l) => `${l.state} · ${l.number} · valid till ${formatDate(l.validUntil)}`)
+    .join(" | ");
+  const businessAddress = registration
+    ? [
+        registration.street,
+        registration.city,
+        `${registration.state} ${registration.zip}`.trim(),
+        registration.country,
+      ]
+        .filter(Boolean)
+        .join(", ")
+    : "";
 
+  return (
+    <div className="space-y-3">
+      <TopicCard
+        title="Contact & languages"
+        summary={[me.phone, address].filter(Boolean).join(" · ") || "Add your contact details"}
+        onEdit={info ? undefined : startEdit}
+        defaultOpen={Boolean(info)}
+      >
         {info ? (
-          <div className="mt-4 space-y-4">
+          <div className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block">
                 <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -192,9 +194,17 @@ export function RealtorProfileCard({ user }: { user: LoqalUser }) {
                 Buyers are matched to agents who speak their language — keep this up to date.
               </p>
             </div>
+            <div className="flex justify-end gap-2">
+              <button type="button" onClick={() => setInfo(null)} className={btnGhost}>
+                Cancel
+              </button>
+              <button type="button" onClick={save} className={btnPrimary}>
+                Save changes
+              </button>
+            </div>
           </div>
         ) : (
-          <div className="mt-3">
+          <div>
             <Row label="Phone" value={me.phone} />
             <Row label="Address" value={address} />
             <div className="flex items-baseline justify-between gap-4 py-2">
@@ -218,70 +228,61 @@ export function RealtorProfileCard({ user }: { user: LoqalUser }) {
             </div>
           </div>
         )}
-      </section>
+      </TopicCard>
 
       {registration ? (
-        <section className="rounded-lg border border-border bg-card p-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-base font-semibold text-foreground">Registration information</h2>
-            <span className="rounded-full bg-brand-tint px-3 py-1 text-[11px] font-semibold text-brand">
-              Submitted {formatDate(registration.submittedAt)}
-            </span>
-          </div>
-
-          <h3 className="mt-4 text-xs font-semibold uppercase tracking-wide text-brand">Brokerage</h3>
-          <div className="mt-1">
+        <>
+          <TopicCard
+            title="Brokerage"
+            summary={
+              [registration.companyName, registration.companyType].filter(Boolean).join(" · ") ||
+              "On file"
+            }
+          >
             <Row label="Company" value={registration.companyName} />
             <Row label="Legal form" value={registration.companyType} />
             <Row label="Registration №" value={registration.registrationNumber} />
             <Row label="Company licence" value={registration.companyLicence} />
             <Row label="Company phone" value={registration.companyPhone} />
-          </div>
+            <Row label="Position" value={registration.position} />
+          </TopicCard>
 
-          <h3 className="mt-5 text-xs font-semibold uppercase tracking-wide text-brand">
-            Business address
-          </h3>
-          <div className="mt-1">
+          <TopicCard title="Business address" summary={businessAddress || "On file"}>
             <Row label="Street" value={registration.street} />
             <Row label="City" value={registration.city} />
             <Row label="State / ZIP" value={`${registration.state} ${registration.zip}`.trim()} />
             <Row label="Country" value={registration.country} />
-          </div>
+          </TopicCard>
 
-          <h3 className="mt-5 text-xs font-semibold uppercase tracking-wide text-brand">
-            Contact person
-          </h3>
-          <div className="mt-1">
-            <Row
-              label="Name"
-              value={`${registration.firstName} ${registration.lastName}`.trim()}
-            />
-            <Row label="Position" value={registration.position} />
-            <Row label="Email" value={registration.email} />
-            <Row label="Phone" value={registration.phone} />
-          </div>
-
-          <h3 className="mt-5 text-xs font-semibold uppercase tracking-wide text-brand">
-            Coverage &amp; licences
-          </h3>
-          <div className="mt-1">
+          <TopicCard
+            title="Coverage & licences"
+            summary={
+              registration.allStates
+                ? "All states"
+                : registration.states.length
+                  ? `${registration.states.length} state${registration.states.length === 1 ? "" : "s"} served`
+                  : "No states declared"
+            }
+          >
             <Row
               label="States served"
               value={registration.allStates ? "All states" : registration.states.join(", ")}
             />
-            <Row
-              label="Personal licences"
-              value={(registration.realtorLicenses ?? [])
-                .map((l) => `${l.state} · ${l.number} · valid till ${formatDate(l.validUntil)}`)
-                .join(" | ")}
-            />
+            <Row label="Personal licences" value={licenceSummary} />
             <Row label="Languages declared" value={(registration.languages ?? []).join(", ")} />
-          </div>
+          </TopicCard>
 
-          <h3 className="mt-5 text-xs font-semibold uppercase tracking-wide text-brand">
-            Agreements
-          </h3>
-          <div className="mt-1">
+          <TopicCard
+            title="Agreements & status"
+            summary={`${
+              registration.status === "approved"
+                ? "Approved"
+                : registration.status === "declined"
+                  ? "Declined"
+                  : "Pending review"
+            } · submitted ${formatDate(registration.submittedAt)}`}
+          >
+            <Row label="Submitted" value={formatDate(registration.submittedAt)} />
             <Row
               label="Partner T&C accepted"
               value={registration.tcAcceptedAt ? formatDateTime(registration.tcAcceptedAt) : undefined}
@@ -314,8 +315,8 @@ export function RealtorProfileCard({ user }: { user: LoqalUser }) {
                     : "Pending review"
               }
             />
-          </div>
-        </section>
+          </TopicCard>
+        </>
       ) : null}
 
       <section className="rounded-lg border border-border bg-card p-6">
