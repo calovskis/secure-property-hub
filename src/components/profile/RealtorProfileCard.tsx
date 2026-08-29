@@ -1,24 +1,29 @@
 /**
- * Realtor partner profile. Name, surname, email and company live in the
- * account card at the top of My Profile (a change there needs Loqal approval),
- * so this card holds what the agent may edit freely — contact details, address
- * and spoken languages — plus the full registration record and work stats.
- * Licences and their copies live in the identity & licence verification card.
+ * Realtor partner profile, organised by topic:
+ *   • Contact details (editable)
+ *   • Languages (add / edit / delete one by one)
+ *   • Company information (registration data + extra contact people)
+ *   • Coverage & licences (state table with verification status)
+ *   • Agreements & status
  */
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { type LoqalUser } from "@/lib/auth";
+import { fullName, type LoqalUser } from "@/lib/auth";
 import { useLeads } from "@/lib/leads";
 import { useBuyerProcess } from "@/lib/buyer-process";
 import { activeLicenseStates, useRealtors } from "@/lib/realtors";
-import { usePartnerRequests } from "@/lib/partner-requests";
+import { usePartnerRequests, type AdditionalContact } from "@/lib/partner-requests";
 import { formatDate, formatDateTime } from "@/lib/dates";
+import { WORLD_LANGUAGES } from "@/lib/languages";
 import { StateCombobox } from "@/components/form/StateCombobox";
-import { LanguageMultiSelect } from "@/components/form/LanguageMultiSelect";
 import { TopicCard } from "@/components/profile/TopicCard";
+import { LicenceCoverageTable } from "@/components/profile/realtor-licences";
+import { uid } from "@/lib/mortgage-form";
 
 const inputClass =
   "w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-brand";
+const labelClass =
+  "mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground";
 const btnPrimary =
   "rounded-md bg-brand px-4 py-2 text-sm font-semibold text-background hover:bg-brand-soft disabled:opacity-50";
 const btnGhost =
@@ -50,12 +55,11 @@ type InfoForm = {
   city: string;
   state: string;
   zip: string;
-  languages: string[];
 };
 
 export function RealtorProfileCard({ user }: { user: LoqalUser }) {
   const { realtors, ensureSeat, updateRealtor } = useRealtors();
-  const { requests } = usePartnerRequests();
+  const { requests, updateRequest } = usePartnerRequests();
   const { leads } = useLeads();
   const { photos } = useBuyerProcess();
   const me = realtors.find((r) => r.email.toLowerCase() === user.email.toLowerCase());
@@ -84,7 +88,6 @@ export function RealtorProfileCard({ user }: { user: LoqalUser }) {
       city: me.address.city,
       state: me.address.state,
       zip: me.address.zip,
-      languages: me.languages,
     });
   }
 
@@ -92,7 +95,6 @@ export function RealtorProfileCard({ user }: { user: LoqalUser }) {
     if (!me || !info) return;
     updateRealtor(me.id, {
       phone: info.phone.trim(),
-      languages: info.languages,
       address: {
         street: info.street.trim(),
         city: info.city.trim(),
@@ -105,9 +107,12 @@ export function RealtorProfileCard({ user }: { user: LoqalUser }) {
     toast.success("Contact details updated.");
   }
 
-  const licenceSummary = (registration?.realtorLicenses ?? [])
-    .map((l) => `${l.state} · ${l.number} · valid till ${formatDate(l.validUntil)}`)
-    .join(" | ");
+  function saveLanguages(next: string[]) {
+    if (!me) return;
+    updateRealtor(me.id, { languages: next });
+    if (registration) updateRequest(registration.id, { languages: next });
+  }
+
   const businessAddress = registration
     ? [
         registration.street,
@@ -122,7 +127,7 @@ export function RealtorProfileCard({ user }: { user: LoqalUser }) {
   return (
     <div className="space-y-3">
       <TopicCard
-        title="Contact & languages"
+        title="Contact details"
         summary={[me.phone, address].filter(Boolean).join(" · ") || "Add your contact details"}
         onEdit={info ? undefined : startEdit}
         defaultOpen={Boolean(info)}
@@ -131,9 +136,7 @@ export function RealtorProfileCard({ user }: { user: LoqalUser }) {
           <div className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block">
-                <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Phone
-                </span>
+                <span className={labelClass}>Phone</span>
                 <input
                   value={info.phone}
                   onChange={(e) => setInfo({ ...info, phone: e.target.value })}
@@ -141,9 +144,7 @@ export function RealtorProfileCard({ user }: { user: LoqalUser }) {
                 />
               </label>
               <label className="block">
-                <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Street
-                </span>
+                <span className={labelClass}>Street</span>
                 <input
                   value={info.street}
                   onChange={(e) => setInfo({ ...info, street: e.target.value })}
@@ -151,9 +152,7 @@ export function RealtorProfileCard({ user }: { user: LoqalUser }) {
                 />
               </label>
               <label className="block">
-                <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  City
-                </span>
+                <span className={labelClass}>City</span>
                 <input
                   value={info.city}
                   onChange={(e) => setInfo({ ...info, city: e.target.value })}
@@ -162,18 +161,14 @@ export function RealtorProfileCard({ user }: { user: LoqalUser }) {
               </label>
               <div className="grid grid-cols-2 gap-3">
                 <label className="block">
-                  <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    State
-                  </span>
+                  <span className={labelClass}>State</span>
                   <StateCombobox
                     value={info.state}
                     onChange={(code) => setInfo({ ...info, state: code })}
                   />
                 </label>
                 <label className="block">
-                  <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    ZIP
-                  </span>
+                  <span className={labelClass}>ZIP</span>
                   <input
                     value={info.zip}
                     onChange={(e) => setInfo({ ...info, zip: e.target.value })}
@@ -181,18 +176,6 @@ export function RealtorProfileCard({ user }: { user: LoqalUser }) {
                   />
                 </label>
               </div>
-            </div>
-            <div>
-              <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Languages I speak
-              </span>
-              <LanguageMultiSelect
-                values={info.languages}
-                onChange={(languages) => setInfo({ ...info, languages })}
-              />
-              <p className="mt-1.5 text-[11px] text-muted-foreground">
-                Buyers are matched to agents who speak their language — keep this up to date.
-              </p>
             </div>
             <div className="flex justify-end gap-2">
               <button type="button" onClick={() => setInfo(null)} className={btnGhost}>
@@ -207,51 +190,44 @@ export function RealtorProfileCard({ user }: { user: LoqalUser }) {
           <div>
             <Row label="Phone" value={me.phone} />
             <Row label="Address" value={address} />
-            <div className="flex items-baseline justify-between gap-4 py-2">
-              <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Languages
-              </span>
-              <span className="flex flex-wrap justify-end gap-1.5">
-                {me.languages.length ? (
-                  me.languages.map((l) => (
-                    <span
-                      key={l}
-                      className="rounded-full bg-brand-tint px-2.5 py-0.5 text-[11px] font-semibold text-brand"
-                    >
-                      {l}
-                    </span>
-                  ))
-                ) : (
-                  <span className="text-sm text-foreground">—</span>
-                )}
-              </span>
-            </div>
           </div>
         )}
+      </TopicCard>
+
+      <TopicCard
+        title="Languages"
+        summary={me.languages.length ? me.languages.join(", ") : "No languages added yet"}
+      >
+        <LanguagesEditor values={me.languages} onChange={saveLanguages} />
       </TopicCard>
 
       {registration ? (
         <>
           <TopicCard
-            title="Brokerage"
+            title="Company information"
             summary={
               [registration.companyName, registration.companyType].filter(Boolean).join(" · ") ||
               "On file"
             }
           >
-            <Row label="Company" value={registration.companyName} />
-            <Row label="Legal form" value={registration.companyType} />
+            <Row label="Company name" value={registration.companyName} />
+            <Row label="Company type" value={registration.companyType} />
             <Row label="Registration №" value={registration.registrationNumber} />
-            <Row label="Company licence" value={registration.companyLicence} />
+            <Row
+              label="Realtor licence №"
+              value={(registration.realtorLicenses ?? [])
+                .map((l) => `${l.state} · ${l.number}`)
+                .join(" | ")}
+            />
+            <Row label="Company licence №" value={registration.companyLicence} />
+            <Row label="Business address" value={businessAddress} />
             <Row label="Company phone" value={registration.companyPhone} />
-            <Row label="Position" value={registration.position} />
-          </TopicCard>
+            <Row label="My position" value={registration.position} />
 
-          <TopicCard title="Business address" summary={businessAddress || "On file"}>
-            <Row label="Street" value={registration.street} />
-            <Row label="City" value={registration.city} />
-            <Row label="State / ZIP" value={`${registration.state} ${registration.zip}`.trim()} />
-            <Row label="Country" value={registration.country} />
+            <AdditionalContacts
+              contacts={registration.additionalContacts ?? []}
+              onChange={(next) => updateRequest(registration.id, { additionalContacts: next })}
+            />
           </TopicCard>
 
           <TopicCard
@@ -268,8 +244,9 @@ export function RealtorProfileCard({ user }: { user: LoqalUser }) {
               label="States served"
               value={registration.allStates ? "All states" : registration.states.join(", ")}
             />
-            <Row label="Personal licences" value={licenceSummary} />
-            <Row label="Languages declared" value={(registration.languages ?? []).join(", ")} />
+            <div className="mt-4">
+              <LicenceCoverageTable user={user} />
+            </div>
           </TopicCard>
 
           <TopicCard
@@ -328,6 +305,294 @@ export function RealtorProfileCard({ user }: { user: LoqalUser }) {
           <Stat label="Licensed states" value={activeLicenseStates(me).length} />
         </div>
       </section>
+      <p className="sr-only">{fullName(user)}</p>
+    </div>
+  );
+}
+
+/** Add, replace or delete one language at a time. */
+function LanguagesEditor({
+  values,
+  onChange,
+}: {
+  values: string[];
+  onChange: (next: string[]) => void;
+}) {
+  const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState<string | null>(null);
+
+  return (
+    <div>
+      {values.length === 0 ? (
+        <p className="text-xs text-muted-foreground">
+          No languages yet — buyers are matched to agents who speak their language.
+        </p>
+      ) : (
+        <ul className="space-y-2">
+          {values.map((lang) => (
+            <li
+              key={lang}
+              className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border px-3 py-2"
+            >
+              {editing === lang ? (
+                <LanguagePicker
+                  exclude={values.filter((v) => v !== lang)}
+                  onCancel={() => setEditing(null)}
+                  onPick={(next) => {
+                    onChange(values.map((v) => (v === lang ? next : v)));
+                    setEditing(null);
+                    toast.success("Language updated.");
+                  }}
+                />
+              ) : (
+                <>
+                  <span className="text-sm font-medium text-foreground">{lang}</span>
+                  <span className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setEditing(lang)}
+                      className="rounded-md border border-border px-2.5 py-1 text-xs font-semibold text-brand hover:bg-brand-tint"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onChange(values.filter((v) => v !== lang));
+                        toast.success(`${lang} removed.`);
+                      }}
+                      className="rounded-md border border-border px-2.5 py-1 text-xs font-semibold text-muted-foreground hover:text-destructive"
+                    >
+                      Delete
+                    </button>
+                  </span>
+                </>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <div className="mt-3">
+        {adding ? (
+          <LanguagePicker
+            exclude={values}
+            onCancel={() => setAdding(false)}
+            onPick={(next) => {
+              onChange([...values, next]);
+              setAdding(false);
+              toast.success(`${next} added.`);
+            }}
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={() => setAdding(true)}
+            className="rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-brand-tint"
+          >
+            + Add language
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function LanguagePicker({
+  exclude,
+  onPick,
+  onCancel,
+}: {
+  exclude: string[];
+  onPick: (language: string) => void;
+  onCancel: () => void;
+}) {
+  const [query, setQuery] = useState("");
+  const matches = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const pool = WORLD_LANGUAGES.filter((l) => !exclude.includes(l));
+    return (q ? pool.filter((l) => l.toLowerCase().includes(q)) : pool).slice(0, 8);
+  }, [query, exclude]);
+
+  return (
+    <div className="w-full">
+      <div className="flex gap-2">
+        <input
+          autoFocus
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Type a language…"
+          className={inputClass}
+        />
+        <button type="button" onClick={onCancel} className={btnGhost}>
+          Cancel
+        </button>
+      </div>
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        {matches.map((l) => (
+          <button
+            key={l}
+            type="button"
+            onClick={() => onPick(l)}
+            className="rounded-full bg-brand-tint px-3 py-1 text-xs font-semibold text-brand hover:bg-brand hover:text-background"
+          >
+            {l}
+          </button>
+        ))}
+        {matches.length === 0 ? (
+          <span className="text-xs text-muted-foreground">No match.</span>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+/** Extra company contact people — name, surname, email, phone, position. */
+function AdditionalContacts({
+  contacts,
+  onChange,
+}: {
+  contacts: AdditionalContact[];
+  onChange: (next: AdditionalContact[]) => void;
+}) {
+  const [form, setForm] = useState<AdditionalContact | null>(null);
+  const isNew = form ? !contacts.some((c) => c.id === form.id) : false;
+
+  function submit() {
+    if (!form) return;
+    if (!form.firstName.trim() || !form.email.trim()) {
+      toast.error("Name and email are required for a contact person.");
+      return;
+    }
+    onChange(
+      isNew ? [...contacts, form] : contacts.map((c) => (c.id === form.id ? form : c)),
+    );
+    setForm(null);
+    toast.success("Contact person saved.");
+  }
+
+  return (
+    <div className="mt-4 border-t border-border pt-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h4 className="text-sm font-semibold text-foreground">Additional contact people</h4>
+        {form === null ? (
+          <button
+            type="button"
+            onClick={() =>
+              setForm({
+                id: uid(),
+                firstName: "",
+                lastName: "",
+                email: "",
+                phone: "",
+                position: "",
+              })
+            }
+            className="rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-brand-tint"
+          >
+            + Add contact
+          </button>
+        ) : null}
+      </div>
+
+      {contacts.length === 0 ? (
+        <p className="mt-2 text-xs text-muted-foreground">
+          Nobody else added yet. Add colleagues Loqal may contact about this company.
+        </p>
+      ) : (
+        <ul className="mt-3 space-y-2">
+          {contacts.map((c) => (
+            <li key={c.id} className="rounded-md border border-border p-3">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div>
+                  <div className="text-sm font-semibold text-foreground">
+                    {`${c.firstName} ${c.lastName}`.trim()}
+                    {c.position ? (
+                      <span className="text-muted-foreground"> · {c.position}</span>
+                    ) : null}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {[c.email, c.phone].filter(Boolean).join(" · ")}
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setForm(c)}
+                    className="rounded-md border border-border px-2.5 py-1 text-xs font-semibold text-brand hover:bg-brand-tint"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onChange(contacts.filter((x) => x.id !== c.id))}
+                    className="rounded-md border border-border px-2.5 py-1 text-xs font-semibold text-muted-foreground hover:text-destructive"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {form ? (
+        <div className="mt-3 space-y-3 rounded-md border border-brand/40 bg-brand-tint/30 p-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="block">
+              <span className={labelClass}>Name</span>
+              <input
+                value={form.firstName}
+                onChange={(e) => setForm({ ...form, firstName: e.target.value })}
+                className={inputClass}
+              />
+            </label>
+            <label className="block">
+              <span className={labelClass}>Surname</span>
+              <input
+                value={form.lastName}
+                onChange={(e) => setForm({ ...form, lastName: e.target.value })}
+                className={inputClass}
+              />
+            </label>
+            <label className="block">
+              <span className={labelClass}>Email</span>
+              <input
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                className={inputClass}
+              />
+            </label>
+            <label className="block">
+              <span className={labelClass}>Phone</span>
+              <input
+                value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                placeholder="+1 (555) 123-4567"
+                className={inputClass}
+              />
+            </label>
+            <label className="block sm:col-span-2">
+              <span className={labelClass}>Position</span>
+              <input
+                value={form.position}
+                onChange={(e) => setForm({ ...form, position: e.target.value })}
+                placeholder="e.g. Office manager"
+                className={inputClass}
+              />
+            </label>
+          </div>
+          <div className="flex justify-end gap-2">
+            <button type="button" onClick={() => setForm(null)} className={btnGhost}>
+              Cancel
+            </button>
+            <button type="button" onClick={submit} className={btnPrimary}>
+              Save contact
+            </button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
