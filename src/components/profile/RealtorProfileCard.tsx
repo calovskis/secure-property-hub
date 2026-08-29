@@ -8,7 +8,7 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { fullName, type LoqalUser } from "@/lib/auth";
+import { type LoqalUser } from "@/lib/auth";
 import { useLeads } from "@/lib/leads";
 import { useBuyerProcess } from "@/lib/buyer-process";
 import { activeLicenseStates, useRealtors } from "@/lib/realtors";
@@ -305,7 +305,6 @@ export function RealtorProfileCard({ user }: { user: LoqalUser }) {
           <Stat label="Licensed states" value={activeLicenseStates(me).length} />
         </div>
       </section>
-      <p className="sr-only">{fullName(user)}</p>
     </div>
   );
 }
