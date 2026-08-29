@@ -69,6 +69,46 @@ export type PartnerAdminRequest = {
   meetUrl?: string | null;
 };
 
+/**
+ * Realtor identity & licence verification — replaces the KYB questionnaire for
+ * real estate agents. One identity document (driver's licence or passport) plus
+ * one licence copy for every state declared at registration. Whenever a licence
+ * number or validity date changes, Loqal must see a fresh copy, so the entry is
+ * flagged and the old copy is dropped.
+ */
+export type RealtorLicenseDoc = {
+  state: string;
+  number: string;
+  validUntil: string;
+  /** Uploaded licence copy (file name). */
+  doc?: string;
+  uploadedAt?: string;
+  /** Set when the number/validity changed and a new copy is required. */
+  recopyRequestedAt?: string;
+};
+
+export type RealtorVerification = {
+  identityType?: "drivers_license" | "passport";
+  identityDoc?: string;
+  identityUploadedAt?: string;
+  licenseDocs: RealtorLicenseDoc[];
+};
+
+/**
+ * Change to a name, surname or company name — those are on the Loqal
+ * agreement, so an admin approves them before they take effect.
+ */
+export type ProfileChangeRequest = {
+  id: string;
+  field: "firstName" | "lastName" | "companyName";
+  label: string;
+  currentValue: string;
+  requestedValue: string;
+  requestedAt: string;
+  status: "pending" | "approved" | "declined";
+  decidedAt?: string;
+};
+
 export type PartnerRequest = {
   id: string;
   kind: "partner" | "corporate";
