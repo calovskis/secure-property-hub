@@ -72,6 +72,7 @@ const QUEUES: [string, string, string][] = [
 
 function AdminPage() {
   const { user, ready } = useAuth();
+  const greeting = useGreeting(user?.firstName ?? "", user?.email);
   const search = Route.useSearch();
   const [tab, setTab] = useState<AdminTab>(search.tab ?? "overview");
   const [focusThread, setFocusThread] = useState<string | null>(null);
