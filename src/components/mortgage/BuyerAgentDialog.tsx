@@ -97,8 +97,20 @@ export function BuyerAgentDialog({
   function confirmKickoff() {
     if (!kickoff) return;
     if (kickoff === "live_call" && !callSlot) return;
+    if (kickoff === "video_showcase" && !tourSlots.length) return;
     setBuyerRepresentation(lead.id, "buyer_direct", kickoff, notes.trim() || undefined);
     if (kickoff === "photo_visit") requestPhotos(lead.id);
+    if (kickoff === "video_showcase") {
+      proposeSlots({
+        leadId: lead.id,
+        clientName: lead.clientName,
+        propertyLabel: lead.propertyLabel,
+        kind: "video_tour",
+        slots: tourSlots,
+        ...(lead.buyerAgent?.agentId ? { realtorId: lead.buyerAgent.agentId } : {}),
+        ...(notes.trim() ? { note: notes.trim() } : {}),
+      });
+    }
     setStep("done");
   }
 
