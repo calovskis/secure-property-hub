@@ -176,9 +176,6 @@ function AdminPage() {
             <button type="button" onClick={() => go("cases")} className={itemCls(tab === "cases")}>
               <span aria-hidden>🗂</span> Cases
             </button>
-            <button type="button" onClick={() => go("partners")} className={itemCls(tab === "partners")}>
-              <span aria-hidden>🤝</span> Partners
-            </button>
             <div className="relative" data-admin-menu>
               <button
                 type="button"
