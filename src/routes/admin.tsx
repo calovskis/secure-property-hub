@@ -440,7 +440,7 @@ function AdminPage() {
                                 </span>
                               ) : l.buyerAgent?.representation === "buyer_direct" ? (
                                 <span className="w-fit rounded-full bg-brand-tint px-2.5 py-1 text-[11px] font-semibold text-brand">
-                                  Direct representation
+                                  Direct
                                 </span>
                               ) : (
                                 <span className="w-fit rounded-full bg-muted px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
