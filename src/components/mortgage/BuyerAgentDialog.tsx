@@ -395,7 +395,11 @@ export function BuyerAgentDialog({
               </button>
               <button
                 type="button"
-                disabled={!kickoff || (kickoff === "live_call" && !callSlot)}
+                disabled={
+                  !kickoff ||
+                  (kickoff === "live_call" && !callSlot) ||
+                  (kickoff === "video_showcase" && !tourSlots.length)
+                }
                 onClick={confirmKickoff}
                 className={btnPrimary}
               >
