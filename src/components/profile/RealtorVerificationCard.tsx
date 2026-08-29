@@ -52,6 +52,10 @@ function licenseDocsOf(request: PartnerRequest): RealtorLicenseDoc[] {
   return merged;
 }
 
+function describe(l: { number: string; validUntil: string }) {
+  return `${l.number} · valid till ${formatDate(l.validUntil)}`;
+}
+
 export function RealtorVerificationCard({ user }: { user: LoqalUser }) {
   const { requests, updateRequest } = usePartnerRequests();
   const { realtors, updateRealtor } = useRealtors();
@@ -133,7 +137,9 @@ export function RealtorVerificationCard({ user }: { user: LoqalUser }) {
           })()
         : l,
     );
-    persist(next, `uploaded the ${state} licence copy`);
+    persist(next, `uploaded the ${state} licence copy`, [
+      { state, action: "copy_uploaded", after: doc },
+    ]);
     toast("Licence copy uploaded", { description: `${state} licence sent for verification.` });
   }
 
@@ -159,7 +165,15 @@ export function RealtorVerificationCard({ user }: { user: LoqalUser }) {
     const next = editState
       ? licenses.map((l) => (l.state === editState ? entry : l))
       : [...licenses.filter((l) => l.state !== entry.state), entry];
-    persist(next, editState ? `updated the ${entry.state} licence details` : `added a ${entry.state} licence`);
+    persist(
+      next,
+      editState ? `updated the ${entry.state} licence details` : `added a ${entry.state} licence`,
+      [
+        previous && editState
+          ? { state: entry.state, action: "updated", before: describe(previous), after: describe(entry) }
+          : { state: entry.state, action: "added", after: describe(entry) },
+      ],
+    );
     setEdit(null);
     setEditState(null);
     toast(changed ? "New licence copy required" : "Licence saved", {
@@ -167,6 +181,16 @@ export function RealtorVerificationCard({ user }: { user: LoqalUser }) {
         ? "The details changed, so please upload a fresh copy of the licence."
         : `${entry.state} licence details saved.`,
     });
+  }
+
+  function removeLicense(l: RealtorLicenseDoc) {
+    if (!window.confirm(`Remove the ${l.state} licence from your profile?`)) return;
+    persist(
+      licenses.filter((x) => x.state !== l.state),
+      `removed the ${l.state} licence`,
+      [{ state: l.state, action: "removed", before: describe(l) }],
+    );
+    toast("Licence removed", { description: `${l.state} is no longer part of your coverage.` });
   }
 
   return (
@@ -281,6 +305,13 @@ export function RealtorVerificationCard({ user }: { user: LoqalUser }) {
                       className="rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-brand hover:bg-brand-tint"
                     >
                       Edit details
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeLicense(l)}
+                      className="rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-destructive"
+                    >
+                      Remove
                     </button>
                   </div>
                 </div>
