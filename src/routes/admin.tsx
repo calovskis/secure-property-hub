@@ -469,7 +469,28 @@ function AdminPage() {
             </section>
 
             <section className="grid grid-cols-1 gap-6 lg:grid-cols-[1.6fr_1fr]">
-              <div className="rounded-lg border border-border bg-card p-6">
+              <div className="space-y-6">
+                <a
+                  href="/admin-partner-requests"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between gap-4 rounded-lg border border-gold/40 bg-gold-tint/30 p-6 transition-colors hover:bg-gold-tint/50"
+                >
+                  <div>
+                    <h2 className="text-base font-semibold text-foreground">
+                      Open Partner Requests
+                    </h2>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {pending.length
+                        ? `${pending.length} registration${pending.length === 1 ? "" : "s"} awaiting review — opens in a new tab, oldest first, filterable by partner type.`
+                        : "No registrations waiting — the queue opens in a new tab."}
+                    </p>
+                  </div>
+                  <span className="flex shrink-0 items-center gap-2 rounded-md bg-gold px-4 py-2 text-xs font-semibold text-background">
+                    {pending.length} pending <span aria-hidden>↗</span>
+                  </span>
+                </a>
+                <div className="rounded-lg border border-border bg-card p-6">
                 <h2 className="text-base font-semibold text-foreground">Accounts</h2>
                 <p className="mt-1 text-xs text-muted-foreground">
                   Every access type across the platform.

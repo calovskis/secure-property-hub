@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AdminPartnerRequestsRouteImport } from './routes/admin-partner-requests'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DocumentsRouteImport } from './routes/documents'
@@ -37,6 +38,11 @@ const IndexRoute = IndexRouteImport.update({
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminPartnerRequestsRoute = AdminPartnerRequestsRouteImport.update({
+  id: '/admin-partner-requests',
+  path: '/admin-partner-requests',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AnalyticsRoute = AnalyticsRouteImport.update({
@@ -128,6 +134,7 @@ const OauthGoogleReturnRoute = OauthGoogleReturnRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/admin-partner-requests': typeof AdminPartnerRequestsRoute
   '/analytics': typeof AnalyticsRoute
   '/auth': typeof AuthRoute
   '/documents': typeof DocumentsRoute
@@ -149,6 +156,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/admin-partner-requests': typeof AdminPartnerRequestsRoute
   '/analytics': typeof AnalyticsRoute
   '/auth': typeof AuthRoute
   '/documents': typeof DocumentsRoute
@@ -171,6 +179,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/admin-partner-requests': typeof AdminPartnerRequestsRoute
   '/analytics': typeof AnalyticsRoute
   '/auth': typeof AuthRoute
   '/documents': typeof DocumentsRoute
@@ -194,6 +203,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/admin-partner-requests'
     | '/analytics'
     | '/auth'
     | '/documents'
@@ -215,6 +225,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/admin'
+    | '/admin-partner-requests'
     | '/analytics'
     | '/auth'
     | '/documents'
@@ -236,6 +247,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
+    | '/admin-partner-requests'
     | '/analytics'
     | '/auth'
     | '/documents'
@@ -258,6 +270,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
+  AdminPartnerRequestsRoute: typeof AdminPartnerRequestsRoute
   AnalyticsRoute: typeof AnalyticsRoute
   AuthRoute: typeof AuthRoute
   DocumentsRoute: typeof DocumentsRoute
@@ -291,6 +304,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-partner-requests': {
+      id: '/admin-partner-requests'
+      path: '/admin-partner-requests'
+      fullPath: '/admin-partner-requests'
+      preLoaderRoute: typeof AdminPartnerRequestsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/analytics': {
@@ -418,6 +438,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
+  AdminPartnerRequestsRoute: AdminPartnerRequestsRoute,
   AnalyticsRoute: AnalyticsRoute,
   AuthRoute: AuthRoute,
   DocumentsRoute: DocumentsRoute,
