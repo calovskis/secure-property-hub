@@ -425,6 +425,12 @@ export function BuyerAgentDialog({
                   (+1% fee at closing). {agentName ? `${agentName} stays involved as the licensed buyer's agent. ` : ""}
                   You will be informed about every recommended step.
                 </p>
+              ) : saved?.kickoff === "video_showcase" ? (
+                <p>
+                  <strong className="text-foreground">{agentName ?? "Your buyer's agent"}</strong>{" "}
+                  represents you. The agent will schedule your live video tour of the property.
+                  We will notify you once the chosen time has been confirmed on the seller's side.
+                </p>
               ) : (
                 <p>
                   <strong className="text-foreground">{agentName ?? "Your buyer's agent"}</strong>{" "}
@@ -433,9 +439,7 @@ export function BuyerAgentDialog({
                     ? " Your intro call is booked — see the confirmation below."
                     : saved?.kickoff === "photo_visit"
                       ? " The agent will visit the property and upload fresh photos within 3 days."
-                      : saved?.kickoff === "video_showcase"
-                        ? " The agent will schedule your live video tour of the property."
-                        : " The agent starts working on your brief right away."}
+                      : " The agent starts working on your brief right away."}
                 </p>
               )}
               {callSlot ? (
@@ -443,10 +447,12 @@ export function BuyerAgentDialog({
                   📞 Intro call: {formatDateTime(callSlot)} (1 hour)
                 </p>
               ) : null}
-              <p>
-                Your lender is now running the hard credit check and preparing the formal mortgage
-                proposal.
-              </p>
+              {saved?.kickoff !== "video_showcase" ? (
+                <p>
+                  Your lender is now running the hard credit check and preparing the formal mortgage
+                  proposal.
+                </p>
+              ) : null}
             </div>
             <DialogFooter>
               <button type="button" onClick={close} className={btnPrimary}>
