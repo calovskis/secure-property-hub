@@ -180,7 +180,8 @@ function PartnerAccessPage() {
         );
     }
 
-    submit({
+    try {
+      await submit({
       kind,
       ...(kind === "partner" ? { partnerType } : {}),
       companyName: companyName.trim(),
@@ -209,7 +210,12 @@ function PartnerAccessPage() {
             languages,
           }
         : {}),
-    });
+      });
+    } catch (err) {
+      return setError(
+        err instanceof Error ? err.message : "We could not save your registration. Please try again.",
+      );
+    }
     logActivity(
       `${firstName.trim()} ${lastName.trim()}`,
       kind === "partner" ? "requested partner registration" : "requested corporate access",

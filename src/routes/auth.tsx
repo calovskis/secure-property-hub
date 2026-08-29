@@ -67,6 +67,7 @@ function AuthPage() {
   const [loginRole, setLoginRole] = useState<Role>("client");
   const [loginPartnerType, setLoginPartnerType] = useState<PartnerType>("lender");
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   function complete(user: LoqalUser) {
@@ -87,6 +88,22 @@ function AuthPage() {
     if (!/\d/.test(pw)) issues.push("One number");
     if (!/[^A-Za-z0-9]/.test(pw)) issues.push("One special character (!@#$…)");
     return issues;
+  }
+
+  /** Sends a password-reset link to the e-mail typed in the form. */
+  async function onForgotPassword() {
+    setError(null);
+    setNotice(null);
+    if (!email.trim()) return setError("Enter your e-mail first, then tap “Forgot your password?”.");
+    setBusy(true);
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setBusy(false);
+    if (resetError) return setError(resetError.message);
+    setNotice(
+      "If an account exists for that e-mail, a password-reset link is on its way. The link opens a page where you set a new password.",
+    );
   }
 
   async function ensureBackendSession(kind: "login" | "register") {
@@ -290,6 +307,15 @@ function AuthPage() {
                 />
               </label>
 
+              {mode === "login" ? (
+                <button
+                  type="button"
+                  onClick={() => void onForgotPassword()}
+                  className="self-start text-xs font-semibold text-brand underline-offset-2 hover:underline"
+                >
+                  Forgot your password?
+                </button>
+              ) : null}
             </div>
 
             {mode === "register" ? (
@@ -343,6 +369,10 @@ function AuthPage() {
               <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
                 {error}
               </p>
+            ) : null}
+
+            {notice ? (
+              <p className="rounded-md bg-brand-tint px-3 py-2 text-sm text-brand">{notice}</p>
             ) : null}
 
             <button

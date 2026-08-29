@@ -50,15 +50,162 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_requests: {
+        Row: {
+          agreement_countersigned_at: string | null
+          agreement_signed_at: string | null
+          agreement_signed_by: string | null
+          all_states: boolean
+          city: string
+          company_licence: string | null
+          company_name: string
+          company_phone: string | null
+          company_type: string
+          country: string
+          created_at: string
+          decided_at: string | null
+          email: string
+          first_name: string
+          id: string
+          kind: string
+          kyc: Json | null
+          languages: string[]
+          last_name: string
+          lender_licence: string | null
+          partner_type: string | null
+          phone: string
+          position: string
+          realtor_licenses: Json
+          registration_number: string
+          state: string
+          states: string[]
+          status: string
+          street: string
+          submitted_at: string
+          tc_accepted_at: string | null
+          updated_at: string
+          user_id: string
+          verification_docs: string[]
+          zip: string
+        }
+        Insert: {
+          agreement_countersigned_at?: string | null
+          agreement_signed_at?: string | null
+          agreement_signed_by?: string | null
+          all_states?: boolean
+          city?: string
+          company_licence?: string | null
+          company_name?: string
+          company_phone?: string | null
+          company_type?: string
+          country?: string
+          created_at?: string
+          decided_at?: string | null
+          email?: string
+          first_name?: string
+          id?: string
+          kind: string
+          kyc?: Json | null
+          languages?: string[]
+          last_name?: string
+          lender_licence?: string | null
+          partner_type?: string | null
+          phone?: string
+          position?: string
+          realtor_licenses?: Json
+          registration_number?: string
+          state?: string
+          states?: string[]
+          status?: string
+          street?: string
+          submitted_at?: string
+          tc_accepted_at?: string | null
+          updated_at?: string
+          user_id: string
+          verification_docs?: string[]
+          zip?: string
+        }
+        Update: {
+          agreement_countersigned_at?: string | null
+          agreement_signed_at?: string | null
+          agreement_signed_by?: string | null
+          all_states?: boolean
+          city?: string
+          company_licence?: string | null
+          company_name?: string
+          company_phone?: string | null
+          company_type?: string
+          country?: string
+          created_at?: string
+          decided_at?: string | null
+          email?: string
+          first_name?: string
+          id?: string
+          kind?: string
+          kyc?: Json | null
+          languages?: string[]
+          last_name?: string
+          lender_licence?: string | null
+          partner_type?: string | null
+          phone?: string
+          position?: string
+          realtor_licenses?: Json
+          registration_number?: string
+          state?: string
+          states?: string[]
+          status?: string
+          street?: string
+          submitted_at?: string
+          tc_accepted_at?: string | null
+          updated_at?: string
+          user_id?: string
+          verification_docs?: string[]
+          zip?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role:
+        | "admin"
+        | "lender"
+        | "realtor"
+        | "partner"
+        | "corporate"
+        | "client"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -185,6 +332,15 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: [
+        "admin",
+        "lender",
+        "realtor",
+        "partner",
+        "corporate",
+        "client",
+      ],
+    },
   },
 } as const
