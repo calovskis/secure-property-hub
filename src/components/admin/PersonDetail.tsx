@@ -79,7 +79,8 @@ export function PersonDetailContent({
   onMessage?: (p: { email: string; name: string; role: string }) => void;
 }) {
   const [tab, setTab] = useState<Tab>("profile");
-  const pageUrl = `${window.location.origin}/admin-people/${encodeURIComponent(person.key)}`;
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const pageUrl = origin ? `${origin}/admin-people/${encodeURIComponent(person.key)}` : "";
 
   return (
     <>
