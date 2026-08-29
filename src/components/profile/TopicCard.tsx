@@ -97,7 +97,7 @@ export function ConfirmChangesDialog({
 }
 
 /** Collapsible topic card: collapsed summary line, expands to full detail + edit. */
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 export function TopicCard({
   title,
   summary,
