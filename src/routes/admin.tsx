@@ -8,7 +8,7 @@ import { useRealtors } from "@/lib/realtors";
 import { KICKOFF_LABEL, useLeads } from "@/lib/leads";
 import { buyerAgentSummary, useBuyerProcess } from "@/lib/buyer-process";
 import { logActivity } from "@/lib/activity";
-import { openSupportThread, useSupportInbox } from "@/lib/chat";
+import { openSupportThread } from "@/lib/chat";
 import {
   ActivityFeed,
   EmployeeTracking,
@@ -74,7 +74,6 @@ function AdminPage() {
   const search = Route.useSearch();
   const [tab, setTab] = useState<AdminTab>(search.tab ?? "overview");
   const [focusThread, setFocusThread] = useState<string | null>(null);
-  const { unreadTotal } = useSupportInbox();
   const { requests, setStatus } = usePartnerRequests();
   const { addRealtor } = useRealtors();
   const { leads } = useLeads();

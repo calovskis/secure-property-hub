@@ -1,5 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { AppHeader } from "@/components/layout/AppHeader";
+import { AdminNav } from "@/components/admin/AdminNav";
 import { PersonDetailContent } from "@/components/admin/PersonDetail";
 import { useAdminPeople } from "@/components/admin/people-model";
 import { fullName, useAuth } from "@/lib/auth";
@@ -61,7 +62,7 @@ function AdminPeopleDetailPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <AppHeader navSlot={<span className="text-sm font-semibold text-brand">Admin · People · Profile</span>} />
+      <AppHeader navSlot={<AdminNav tab={"people"} />} />
       <main className="mx-auto max-w-[1100px] px-4 py-8 md:px-7">
         <div className="rounded-lg border border-border bg-card shadow-sm">
           <PersonDetailContent person={person} mode="page" />
