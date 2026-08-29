@@ -3,6 +3,10 @@
  * inline editing), account/password controls, every uploaded document, the
  * property files they are involved in, their activity history and their
  * platform engagement metrics.
+ *
+ * PersonDetail is the drawer wrapper; PersonDetailContent is the reusable
+ * body used both in the drawer and on the dedicated /admin-people/$personId
+ * page.
  */
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -40,8 +44,6 @@ export function PersonDetail({
   onClose: () => void;
   onMessage: (p: { email: string; name: string; role: string }) => void;
 }) {
-  const [tab, setTab] = useState<Tab>("profile");
-
   return (
     <div
       className="fixed inset-0 z-[70] flex justify-end bg-black/50"
@@ -54,19 +56,47 @@ export function PersonDetail({
         className="flex h-full w-full max-w-3xl flex-col overflow-hidden border-l border-border bg-card shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <header className="border-b border-border px-6 py-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <h2 className="truncate text-lg font-bold text-foreground">{person.name}</h2>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                {person.roleLabel} · {person.email}
-                {person.phone ? ` · ${person.phone}` : ""}
-              </p>
-              {person.company ? (
-                <p className="text-xs text-muted-foreground">{person.company}</p>
-              ) : null}
-            </div>
-            <div className="flex shrink-0 gap-2">
+        <PersonDetailContent
+          person={person}
+          mode="drawer"
+          onClose={onClose}
+          onMessage={onMessage}
+        />
+      </div>
+    </div>
+  );
+}
+
+export function PersonDetailContent({
+  person,
+  mode,
+  onClose,
+  onMessage,
+}: {
+  person: AdminPerson;
+  mode: "drawer" | "page";
+  onClose?: () => void;
+  onMessage?: (p: { email: string; name: string; role: string }) => void;
+}) {
+  const [tab, setTab] = useState<Tab>("profile");
+  const pageUrl = `${window.location.origin}/admin-people/${encodeURIComponent(person.key)}`;
+
+  return (
+    <>
+      <header className="border-b border-border px-6 py-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h2 className="truncate text-lg font-bold text-foreground">{person.name}</h2>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              {person.roleLabel} · {person.email}
+              {person.phone ? ` · ${person.phone}` : ""}
+            </p>
+            {person.company ? (
+              <p className="text-xs text-muted-foreground">{person.company}</p>
+            ) : null}
+          </div>
+          <div className="flex shrink-0 flex-wrap justify-end gap-2">
+            {onMessage ? (
               <button
                 type="button"
                 onClick={() =>
@@ -76,42 +106,63 @@ export function PersonDetail({
               >
                 Message
               </button>
-              <button
-                type="button"
-                onClick={onClose}
-                className="rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground"
+            ) : null}
+            {mode === "drawer" ? (
+              <>
+                <a
+                  href={pageUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground"
+                  aria-label="Open profile in a new tab"
+                  title="Open profile in a new tab"
+                >
+                  <span aria-hidden>↗</span> Enlarge
+                </a>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground"
+                >
+                  Close
+                </button>
+              </>
+            ) : (
+              <a
+                href="/admin"
+                className="rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground"
               >
-                Close
-              </button>
-            </div>
+                ← Back to People
+              </a>
+            )}
           </div>
-          <nav className="mt-3 flex gap-1 overflow-x-auto">
-            {TABS.map(([id, icon, label]) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => setTab(id)}
-                className={`whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
-                  tab === id
-                    ? "bg-brand-tint text-brand"
-                    : "text-muted-foreground hover:bg-brand-tint hover:text-brand"
-                }`}
-              >
-                <span aria-hidden>{icon}</span> {label}
-              </button>
-            ))}
-          </nav>
-        </header>
-
-        <div className="flex-1 overflow-y-auto px-6 py-5">
-          {tab === "profile" ? <ProfileTab person={person} /> : null}
-          {tab === "documents" ? <DocumentsTab person={person} /> : null}
-          {tab === "properties" ? <PropertiesTab person={person} /> : null}
-          {tab === "activity" ? <ActivityTab person={person} /> : null}
-          {tab === "metrics" ? <MetricsTab person={person} /> : null}
         </div>
+        <nav className="mt-3 flex gap-1 overflow-x-auto">
+          {TABS.map(([id, icon, label]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setTab(id)}
+              className={`whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
+                tab === id
+                  ? "bg-brand-tint text-brand"
+                  : "text-muted-foreground hover:bg-brand-tint hover:text-brand"
+              }`}
+            >
+              <span aria-hidden>{icon}</span> {label}
+            </button>
+          ))}
+        </nav>
+      </header>
+
+      <div className="flex-1 overflow-y-auto px-6 py-5">
+        {tab === "profile" ? <ProfileTab person={person} /> : null}
+        {tab === "documents" ? <DocumentsTab person={person} /> : null}
+        {tab === "properties" ? <PropertiesTab person={person} /> : null}
+        {tab === "activity" ? <ActivityTab person={person} /> : null}
+        {tab === "metrics" ? <MetricsTab person={person} /> : null}
       </div>
-    </div>
+    </>
   );
 }
 
