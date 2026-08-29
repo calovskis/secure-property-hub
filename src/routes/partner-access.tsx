@@ -10,6 +10,7 @@ import { US_STATE_CODES } from "@/data/us-states";
 import { usePartnerRequests } from "@/lib/partner-requests";
 import { notify } from "@/lib/notifications";
 import { logActivity } from "@/lib/activity";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/partner-access")({
   component: PartnerAccessPage,
@@ -80,6 +81,18 @@ function PartnerAccessPage() {
   const [position, setPosition] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
+
+  /** Secure password rules — same standard as client registration. */
+  function passwordIssues(pw: string): string[] {
+    const issues: string[] = [];
+    if (pw.length < 8) issues.push("At least 8 characters");
+    if (!/[a-z]/.test(pw)) issues.push("One lowercase letter");
+    if (!/[A-Z]/.test(pw)) issues.push("One uppercase letter");
+    if (!/\d/.test(pw)) issues.push("One number");
+    if (!/[^A-Za-z0-9]/.test(pw)) issues.push("One special character (!@#$…)");
+    return issues;
+  }
 
   const [licenceNumber, setLicenceNumber] = useState("");
   const [allStates, setAllStates] = useState(false);
@@ -101,7 +114,7 @@ function PartnerAccessPage() {
     });
   }
 
-  function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!companyName.trim()) return setError("Company name is required.");
     if (!companyType.trim()) return setError("Company type is required.");
@@ -120,6 +133,9 @@ function PartnerAccessPage() {
     if (!position.trim()) return setError("Position is required.");
     if (!email.trim()) return setError("Personal e-mail is required.");
     if (!phone.trim()) return setError("Personal phone number is required.");
+    const pwIssues = passwordIssues(password);
+    if (pwIssues.length > 0)
+      return setError(`Your password needs: ${pwIssues.join(", ").toLowerCase()}.`);
     if (kind === "partner") {
       if (partnerType === "lender" && !licenceNumber.trim())
         return setError("Licence number is required for mortgage lenders.");
@@ -140,6 +156,15 @@ function PartnerAccessPage() {
       }
     }
     setError(null);
+    // Create the login account up front — partners sign in with this e-mail
+    // and password immediately, even while their access is pending approval.
+    const { error: signUpError } = await supabase.auth.signUp({
+      email: email.trim(),
+      password,
+      options: { emailRedirectTo: `${window.location.origin}/auth` },
+    });
+    if (signUpError && !/already registered/i.test(signUpError.message))
+      return setError(signUpError.message);
     submit({
       kind,
       ...(kind === "partner" ? { partnerType } : {}),
@@ -397,6 +422,45 @@ function PartnerAccessPage() {
                   />
                 </label>
               </div>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <label>
+                  <Label required>Create a password</Label>
+                  <input
+                    type="password"
+                    placeholder="••••••••"
+                    autoComplete="new-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className={inputClass}
+                  />
+                </label>
+                <ul className="grid grid-cols-1 content-center gap-1">
+                  {[
+                    { ok: password.length >= 8, label: "At least 8 characters" },
+                    { ok: /[a-z]/.test(password), label: "One lowercase letter" },
+                    { ok: /[A-Z]/.test(password), label: "One uppercase letter" },
+                    { ok: /\d/.test(password), label: "One number" },
+                    {
+                      ok: /[^A-Za-z0-9]/.test(password),
+                      label: "One special character (!@#$…)",
+                    },
+                  ].map((r) => (
+                    <li
+                      key={r.label}
+                      className={`flex items-center gap-1.5 text-xs ${
+                        r.ok ? "text-emerald-600" : "text-muted-foreground"
+                      }`}
+                    >
+                      <span aria-hidden>{r.ok ? "✓" : "○"}</span>
+                      {r.label}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <p className="-mt-2 text-xs text-muted-foreground">
+                You will use this e-mail and password to log in to your partner portal while your
+                registration is reviewed.
+              </p>
 
               {kind === "partner" ? (
                 <>
