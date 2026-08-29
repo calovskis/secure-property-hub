@@ -309,7 +309,12 @@ export function usePartnerRequests() {
   }, []);
 
   const submit = useCallback(
-    async (input: Omit<PartnerRequest, "id" | "submittedAt" | "status" | "verificationDocs" | "adminRequests">) => {
+    async (
+      input: Omit<
+        PartnerRequest,
+        "id" | "submittedAt" | "status" | "verificationDocs" | "adminRequests" | "profileChangeRequests"
+      >,
+    ) => {
       const { data: userData } = await supabase.auth.getUser();
       const userId = userData.user?.id;
       if (!userId) throw new Error("You must be signed in to submit a registration.");
