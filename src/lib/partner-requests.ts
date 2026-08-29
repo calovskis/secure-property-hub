@@ -234,6 +234,8 @@ const COLUMN: Record<string, string> = {
   verificationDocs: "verification_docs",
   kyc: "kyc",
   adminRequests: "admin_requests",
+  realtorVerification: "realtor_verification",
+  profileChangeRequests: "profile_change_requests",
   agreementSignedAt: "agreement_signed_at",
   agreementSignedBy: "agreement_signed_by",
   agreementCountersignedAt: "agreement_countersigned_at",
