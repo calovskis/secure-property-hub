@@ -16,11 +16,33 @@ const LOQAL_ADMIN_EMAIL = "it@loqal.global";
 const inputClass =
   "w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-brand";
 
+/** Unsent answers survive a reload so nothing typed here is ever lost. */
+const draftKey = (id: string) => `loqal.partner-request-draft.${id}`;
+
+function loadDraft(id: string): { answer: string; docs: string[] } {
+  try {
+    const raw = window.localStorage.getItem(draftKey(id));
+    if (raw) return JSON.parse(raw) as { answer: string; docs: string[] };
+  } catch {
+    /* ignore */
+  }
+  return { answer: "", docs: [] };
+}
+
+function saveDraft(id: string, draft: { answer: string; docs: string[] }) {
+  try {
+    if (!draft.answer && !draft.docs.length) window.localStorage.removeItem(draftKey(id));
+    else window.localStorage.setItem(draftKey(id), JSON.stringify(draft));
+  } catch {
+    /* storage unavailable */
+  }
+}
+
 export function AdminRequestsCard({ user }: { user: LoqalUser }) {
   const { requests, updateRequest } = usePartnerRequests();
   const request = requests.find((r) => r.email.toLowerCase() === user.email.toLowerCase());
   const items = request?.adminRequests ?? [];
-  if (!request || items.length === 0) return null;
+  if (!request) return null;
 
   function patch(id: string, changes: Partial<PartnerAdminRequest>) {
     if (!request) return;
@@ -34,25 +56,36 @@ export function AdminRequestsCard({ user }: { user: LoqalUser }) {
   return (
     <section className="rounded-lg border border-border bg-card p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-base font-semibold text-foreground">Requests from Loqal</h2>
+        <h2 className="text-base font-semibold text-foreground">Requests &amp; correspondence with Loqal</h2>
         <span
           className={`rounded-full px-3 py-1 text-[11px] font-semibold ${
             open.length ? "bg-gold-tint text-gold" : "bg-success/10 text-success"
           }`}
         >
-          {open.length ? `${open.length} awaiting you` : "All answered"}
+          {open.length ? `${open.length} awaiting you` : items.length ? "All answered" : "Nothing open"}
         </span>
       </div>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Everything Loqal asks you for — information requests, document requests and video calls —
+        appears here, together with your answers. Unsent replies are kept as drafts.
+      </p>
 
-      <div className="mt-4 space-y-4">
-        {items.map((item) =>
-          item.kind === "info" ? (
-            <InfoItem key={item.id} item={item} user={user} onAnswer={patch} />
-          ) : (
-            <CallItem key={item.id} item={item} user={user} onBooked={patch} />
-          ),
-        )}
-      </div>
+      {items.length === 0 ? (
+        <p className="mt-4 rounded-md border border-dashed border-border p-4 text-sm text-muted-foreground">
+          No open requests. When a Loqal admin or manager needs something from you, it will show up
+          here and in your notifications.
+        </p>
+      ) : (
+        <div className="mt-4 space-y-4">
+          {items.map((item) =>
+            item.kind === "info" ? (
+              <InfoItem key={item.id} item={item} user={user} onAnswer={patch} />
+            ) : (
+              <CallItem key={item.id} item={item} user={user} onBooked={patch} />
+            ),
+          )}
+        </div>
+      )}
     </section>
   );
 }
