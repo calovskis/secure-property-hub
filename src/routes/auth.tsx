@@ -89,6 +89,22 @@ function AuthPage() {
     return issues;
   }
 
+  /** Sends a password-reset link to the e-mail typed in the form. */
+  async function onForgotPassword() {
+    setError(null);
+    setNotice(null);
+    if (!email.trim()) return setError("Enter your e-mail first, then tap “Forgot your password?”.");
+    setBusy(true);
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setBusy(false);
+    if (resetError) return setError(resetError.message);
+    setNotice(
+      "If an account exists for that e-mail, a password-reset link is on its way. The link opens a page where you set a new password.",
+    );
+  }
+
   async function ensureBackendSession(kind: "login" | "register") {
     if (kind === "register") {
       const { error: signUpError } = await supabase.auth.signUp({
