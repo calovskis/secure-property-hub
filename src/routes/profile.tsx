@@ -402,7 +402,6 @@ function ProfilePage() {
               <>
                 <PartnerAccountCard user={user} />
                 <AdminRequestsCard user={user} />
-                <AgreementCard user={user} />
                 {isRealtor ? <RealtorVerificationCard user={user} /> : <KybCard user={user} />}
                 <PartnerProfile user={user} />
               </>
