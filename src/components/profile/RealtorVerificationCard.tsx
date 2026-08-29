@@ -17,12 +17,14 @@ import {
   usePartnerRequests,
   type PartnerRequest,
   type RealtorLicenseDoc,
+  type RealtorLicenseEvent,
 } from "@/lib/partner-requests";
 import { useRealtors } from "@/lib/realtors";
 import { logActivity } from "@/lib/activity";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import { DateInput } from "@/components/form/DateInput";
 import { StateCombobox } from "@/components/form/StateCombobox";
+import { uid } from "@/lib/mortgage-form";
 
 const inputClass =
   "w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-brand";
@@ -59,6 +61,7 @@ export function RealtorVerificationCard({ user }: { user: LoqalUser }) {
   /** State code being edited — null while adding a new licence. */
   const [editState, setEditState] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
 
   const request = requests.find((r) => r.email.toLowerCase() === user.email.toLowerCase());
   if (!request) return null;
@@ -68,12 +71,19 @@ export function RealtorVerificationCard({ user }: { user: LoqalUser }) {
   const missing = licenses.filter((l) => !l.doc);
   const outstanding = missing.length + (verification?.identityDoc ? 0 : 1);
 
-  function persist(next: RealtorLicenseDoc[], note: string) {
+  function persist(next: RealtorLicenseDoc[], note: string, events: Omit<RealtorLicenseEvent, "id" | "at" | "by">[] = []) {
     if (!request) return;
+    const stamped: RealtorLicenseEvent[] = events.map((e) => ({
+      ...e,
+      id: uid(),
+      at: new Date().toISOString(),
+      by: fullName(user),
+    }));
     updateRequest(request.id, {
       realtorVerification: {
         ...(request.realtorVerification ?? {}),
         licenseDocs: next,
+        licenseHistory: [...stamped, ...(request.realtorVerification?.licenseHistory ?? [])],
       },
       realtorLicenses: next.map((l) => ({
         state: l.state,
