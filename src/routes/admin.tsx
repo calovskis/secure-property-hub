@@ -21,6 +21,7 @@ import { AdminSupport } from "@/components/admin/AdminSupport";
 import { AdminPeople } from "@/components/admin/AdminPeople";
 import { AdminSettings } from "@/components/admin/AdminSettings";
 import { AdminNav, type AdminTab } from "@/components/admin/AdminNav";
+import { useGreeting } from "@/lib/greeting";
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
@@ -71,6 +72,7 @@ const QUEUES: [string, string, string][] = [
 
 function AdminPage() {
   const { user, ready } = useAuth();
+  const greeting = useGreeting(user?.firstName ?? "", user?.email);
   const search = Route.useSearch();
   const [tab, setTab] = useState<AdminTab>(search.tab ?? "overview");
   const [focusThread, setFocusThread] = useState<string | null>(null);
@@ -140,7 +142,7 @@ function AdminPage() {
             Staff console
           </span>
           <h1 className="mt-3 text-2xl font-bold text-foreground md:text-[32px]">
-            Welcome back, {fullName(user)}
+            {greeting}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Cases, partners, people, accounting, support and platform settings in one place.

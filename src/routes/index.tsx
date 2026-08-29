@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth";
 import { useT } from "@/lib/i18n";
 import { offerReminders, pendingOfferDecision, useLeads } from "@/lib/leads";
 import { formatDateTime } from "@/lib/dates";
+import { useGreeting } from "@/lib/greeting";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -441,6 +442,7 @@ function Dashboard() {
   const { user, ready } = useAuth();
   const { leadsForClient } = useLeads();
   const t = useT();
+  const greeting = useGreeting(user?.firstName ?? "", user?.email);
 
   if (!ready) return <div className="min-h-screen bg-background" />;
   if (!user) return <Landing />;
@@ -453,8 +455,8 @@ function Dashboard() {
 
       <main className="mx-auto max-w-[1400px] px-4 py-8 md:px-7">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-[32px]">
-            {t("Welcome back")}, {user.firstName}
+          <h1 className="min-h-8 text-2xl font-bold tracking-tight text-foreground md:text-[32px]">
+            {greeting}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {t("Here's what's happening with your properties today")}

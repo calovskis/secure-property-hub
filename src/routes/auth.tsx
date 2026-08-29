@@ -153,8 +153,11 @@ function AuthPage() {
     }
     setBusy(false);
     complete({
-      firstName: email.split("@")[0]?.replace(/[^a-zA-Z]/g, "") || "Loqal",
-      lastName: "Member",
+      firstName: (() => {
+        const raw = email.split("@")[0]?.replace(/[^a-zA-Z]/g, "") || "Loqal";
+        return raw.charAt(0).toUpperCase() + raw.slice(1);
+      })(),
+      lastName: "",
       email,
       phone: "",
       usPerson: false,

@@ -21,6 +21,7 @@ import { GoogleCalendarCard } from "@/components/google/GoogleCalendarCard";
 import { RealtorAnalytics } from "@/components/realtor/RealtorAnalytics";
 import { RealtorAccounting } from "@/components/realtor/RealtorAccounting";
 import { RealtorFinancialAnalytics } from "@/components/realtor/RealtorFinancialAnalytics";
+import { useGreeting } from "@/lib/greeting";
 
 const money = (n: number) => `$${Math.round(n).toLocaleString()}`;
 const inputClass =
@@ -771,6 +772,7 @@ export function RealtorPortal({
   const { realtors, ensureSeat } = useRealtors();
   const { leads, ready: leadsReady } = useLeads();
   const { photos } = useBuyerProcess();
+  const greeting = useGreeting(user.firstName, user.email);
 
   const me = realtors.find((r) => r.email.toLowerCase() === user.email.toLowerCase());
 
@@ -798,7 +800,7 @@ export function RealtorPortal({
           Realtor partner
         </span>
         <h1 className="mt-3 text-2xl font-bold text-foreground md:text-[32px]">
-          Welcome back, {fullName(user)}
+          {greeting}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Buyers assigned to you, your calendar, licenses and availability.
