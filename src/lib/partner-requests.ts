@@ -48,6 +48,27 @@ export type KycInfo = {
   submittedAt: string;
 };
 
+/**
+ * Something Loqal asked the partner for while the registration is open:
+ * either written information (optionally with documents) or a video call.
+ */
+export type PartnerAdminRequest = {
+  id: string;
+  kind: "info" | "call";
+  message: string;
+  /** Info requests only — the partner must attach a document. */
+  requiresDocument?: boolean;
+  requestedAt: string;
+  requestedBy: string;
+  /** Info requests — the partner's written reply. */
+  answer?: string;
+  answerDocs?: string[];
+  answeredAt?: string;
+  /** Call requests — the slot the partner booked. */
+  scheduledAt?: string;
+  meetUrl?: string | null;
+};
+
 export type PartnerRequest = {
   id: string;
   kind: "partner" | "corporate";
