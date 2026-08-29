@@ -13,6 +13,8 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider } from "@/lib/auth";
 import { SupportChat } from "@/components/support/SupportChat";
+import { PresenceTracker } from "@/components/presence/PresenceTracker";
+
 import { I18nProvider } from "@/lib/i18n";
 import { LeadsProvider } from "@/lib/leads";
 import { MortgageDraftProvider } from "@/lib/mortgage-draft";
