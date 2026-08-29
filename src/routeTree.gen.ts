@@ -22,6 +22,7 @@ import { Route as MyServicesRouteImport } from './routes/my-services'
 import { Route as PartnerRouteImport } from './routes/partner'
 import { Route as PartnerAccessRouteImport } from './routes/partner-access'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SsnTermsRouteImport } from './routes/ssn-terms'
 import { Route as ApplicationLeadIdRouteImport } from './routes/application.$leadId'
 import { Route as PropertyPropertyIdRouteImport } from './routes/property.$propertyId'
@@ -93,6 +94,11 @@ const ProfileRoute = ProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SsnTermsRoute = SsnTermsRouteImport.update({
   id: '/ssn-terms',
   path: '/ssn-terms',
@@ -133,6 +139,7 @@ export interface FileRoutesByFullPath {
   '/partner': typeof PartnerRoute
   '/partner-access': typeof PartnerAccessRoute
   '/profile': typeof ProfileRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/ssn-terms': typeof SsnTermsRoute
   '/application/$leadId': typeof ApplicationLeadIdRoute
   '/property/$propertyId': typeof PropertyPropertyIdRoute
@@ -153,6 +160,7 @@ export interface FileRoutesByTo {
   '/partner': typeof PartnerRoute
   '/partner-access': typeof PartnerAccessRoute
   '/profile': typeof ProfileRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/ssn-terms': typeof SsnTermsRoute
   '/application/$leadId': typeof ApplicationLeadIdRoute
   '/property/$propertyId': typeof PropertyPropertyIdRoute
@@ -174,6 +182,7 @@ export interface FileRoutesById {
   '/partner': typeof PartnerRoute
   '/partner-access': typeof PartnerAccessRoute
   '/profile': typeof ProfileRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/ssn-terms': typeof SsnTermsRoute
   '/application/$leadId': typeof ApplicationLeadIdRoute
   '/property/$propertyId': typeof PropertyPropertyIdRoute
@@ -196,6 +205,7 @@ export interface FileRouteTypes {
     | '/partner'
     | '/partner-access'
     | '/profile'
+    | '/reset-password'
     | '/ssn-terms'
     | '/application/$leadId'
     | '/property/$propertyId'
@@ -216,6 +226,7 @@ export interface FileRouteTypes {
     | '/partner'
     | '/partner-access'
     | '/profile'
+    | '/reset-password'
     | '/ssn-terms'
     | '/application/$leadId'
     | '/property/$propertyId'
@@ -236,6 +247,7 @@ export interface FileRouteTypes {
     | '/partner'
     | '/partner-access'
     | '/profile'
+    | '/reset-password'
     | '/ssn-terms'
     | '/application/$leadId'
     | '/property/$propertyId'
@@ -257,6 +269,7 @@ export interface RootRouteChildren {
   PartnerRoute: typeof PartnerRoute
   PartnerAccessRoute: typeof PartnerAccessRoute
   ProfileRoute: typeof ProfileRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   SsnTermsRoute: typeof SsnTermsRoute
   ApplicationLeadIdRoute: typeof ApplicationLeadIdRoute
   PropertyPropertyIdRoute: typeof PropertyPropertyIdRoute
@@ -357,6 +370,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/ssn-terms': {
       id: '/ssn-terms'
       path: '/ssn-terms'
@@ -409,6 +429,7 @@ const rootRouteChildren: RootRouteChildren = {
   PartnerRoute: PartnerRoute,
   PartnerAccessRoute: PartnerAccessRoute,
   ProfileRoute: ProfileRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   SsnTermsRoute: SsnTermsRoute,
   ApplicationLeadIdRoute: ApplicationLeadIdRoute,
   PropertyPropertyIdRoute: PropertyPropertyIdRoute,
