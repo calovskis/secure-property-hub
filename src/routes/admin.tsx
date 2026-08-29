@@ -521,6 +521,7 @@ function AdminPage() {
                     </tbody>
                   </table>
                 </div>
+                </div>
               </div>
 
               <div className="rounded-lg border border-border bg-card p-6">
