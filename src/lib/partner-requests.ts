@@ -85,6 +85,18 @@ export type RealtorLicenseDoc = {
   uploadedAt?: string;
   /** Set when the number/validity changed and a new copy is required. */
   recopyRequestedAt?: string;
+  /** Set once a Loqal admin confirmed the copy matches the declared details. */
+  verifiedAt?: string;
+};
+
+/** An extra company contact person a partner adds to their profile. */
+export type AdditionalContact = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  position: string;
 };
 
 /** One tracked change to the realtor's licence list. */
