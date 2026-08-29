@@ -17,6 +17,8 @@ import {
 import { PartnerProfile } from "@/components/profile/PartnerProfile";
 import { AgreementCard } from "@/components/profile/AgreementCard";
 import { KybCard } from "@/components/profile/KybCard";
+import { RealtorVerificationCard } from "@/components/profile/RealtorVerificationCard";
+import { PartnerAccountCard } from "@/components/profile/PartnerAccountCard";
 import { AdminRequestsCard } from "@/components/profile/AdminRequestsCard";
 import { PARTNER_LABEL, ROLE_LABEL, fullName, useAuth, type MortgageProfile } from "@/lib/auth";
 import { formatDate, formatDateTime } from "@/lib/dates";
