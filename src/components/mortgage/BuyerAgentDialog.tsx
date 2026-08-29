@@ -447,10 +447,12 @@ export function BuyerAgentDialog({
                   📞 Intro call: {formatDateTime(callSlot)} (1 hour)
                 </p>
               ) : null}
-              <p>
-                Your lender is now running the hard credit check and preparing the formal mortgage
-                proposal.
-              </p>
+              {saved?.kickoff !== "video_showcase" ? (
+                <p>
+                  Your lender is now running the hard credit check and preparing the formal mortgage
+                  proposal.
+                </p>
+              ) : null}
             </div>
             <DialogFooter>
               <button type="button" onClick={close} className={btnPrimary}>
