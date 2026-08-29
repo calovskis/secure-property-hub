@@ -363,7 +363,10 @@ function ClientPersonalData({ lead }: { lead: MortgageLead }) {
       <SubList
         title="Income sources"
         items={(p.incomes ?? []).map(
-          (i) => `${i.kind ?? "income"} · ${i.employer ?? ""} · ${JSON.stringify(i.monthly ?? "")}`,
+          (i) =>
+            `${i.type} · ${i.employer || "—"} · ${i.title || ""} · ${
+              i.current ? "current" : "past"
+            }${i.currency && i.currency !== "USD" ? ` · ${i.currency}` : ""}`,
         )}
       />
     </Card>
@@ -629,7 +632,7 @@ function PropertiesTab({ person }: { person: AdminPerson }) {
             <SubList
               title="Client questions"
               items={l.clientQuestions.map(
-                (q) => `${formatDate(q.askedAt ?? l.submittedAt)} · ${q.text}`,
+                (q) => `${formatDate(q.askedAt)} · ${q.text}`,
               )}
             />
           ) : null}
