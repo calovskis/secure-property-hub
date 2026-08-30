@@ -139,8 +139,8 @@ function useDerivedNotifications() {
               b.kind === "video_tour"
                 ? "Your live video tour is confirmed"
                 : "Your in-person visit is confirmed",
-            body: `${lead.propertyLabel} — ${formatDateTime(b.startAt)}`,
-            href,
+            body: `${lead.propertyLabel} — ${formatDateTime(b.startAt)}. Tap to see the meeting link.`,
+            href: `${href}?open=call&focus=${b.id}`,
             severity: "info",
             createdAt: b.confirmedAt,
           });
@@ -511,8 +511,8 @@ function useDerivedNotifications() {
             title: isInfo ? "Information request answered" : "Video call booked",
             body: isInfo
               ? "Thank you — Loqal received your answer."
-              : `Booked for ${formatDateTime(req.scheduledAt!)}.`,
-            href: "/profile",
+              : `Booked for ${formatDateTime(req.scheduledAt!)}. Tap for the meeting link.`,
+            href: isInfo ? "/profile" : `/profile?open=call-details&focus=${req.id}`,
             severity: "info",
             completed: true,
             createdAt: (isInfo ? req.answeredAt : req.scheduledAt) ?? undefined,

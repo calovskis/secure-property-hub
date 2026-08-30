@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { MortgageQuestionnaire } from "@/components/mortgage/MortgageQuestionnaire";
+import { VideoCallDialog } from "@/components/calls/VideoCallDialog";
 import { FeedbackDialog } from "@/components/mortgage/FeedbackDialog";
 import {
   AddressTopic,
@@ -307,7 +308,8 @@ function ProfilePage() {
   const { t } = useI18n();
   const { requests: partnerRequests } = usePartnerRequests();
   const [wizardOpen, setWizardOpen] = useState(false);
-  const { doc: docParam, open: openParam } = Route.useSearch();
+  const { doc: docParam, open: openParam, focus: focusParam } = Route.useSearch();
+  const [callDetailsOpen, setCallDetailsOpen] = useState(false);
 
   // A notification can deep-link straight into the form that needs filling.
   useEffect(() => {
@@ -375,6 +377,17 @@ function ProfilePage() {
     (r) => r.email.toLowerCase() === user.email.toLowerCase(),
   );
   const isRealtor = user.partnerType === "realtor" || myRegistration?.partnerType === "realtor";
+
+  // A "video call booked" notification opens the call details pop-up directly.
+  const bookedCall = (myRegistration?.adminRequests ?? []).find(
+    (r) =>
+      r.kind === "call" &&
+      r.scheduledAt &&
+      (!focusParam || r.id === focusParam),
+  );
+  useEffect(() => {
+    if (openParam === "call-details" && bookedCall) setCallDetailsOpen(true);
+  }, [openParam, bookedCall?.id]);
   // Realtors keep their workspace header everywhere, including My Profile.
   const realtorNav = [
     { label: "Home", icon: "🏠", to: "/partner" },
@@ -584,6 +597,17 @@ function ProfilePage() {
       </main>
 
       <MortgageQuestionnaire open={wizardOpen} onOpenChange={setWizardOpen} />
+      {bookedCall?.scheduledAt ? (
+        <VideoCallDialog
+          open={callDetailsOpen}
+          onOpenChange={setCallDetailsOpen}
+          title="Video call with Loqal"
+          startAt={bookedCall.scheduledAt}
+          meetUrl={bookedCall.meetUrl}
+          withLabel="Your Loqal verification manager"
+          contextLabel={myRegistration?.companyName}
+        />
+      ) : null}
     </div>
   );
 }
