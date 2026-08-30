@@ -183,7 +183,15 @@ function CallItem({
   user: LoqalUser;
   onBooked: (id: string, changes: Partial<PartnerAdminRequest>) => void;
 }) {
+  const ref = useRef<HTMLDivElement>(null);
+  // "Loqal asked for a call" notifications scroll the booking form into view.
+  useDeepLinkAction("call", (focus) => {
+    if (!item.scheduledAt && (!focus || focus === item.id))
+      ref.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  });
+
   return (
+    <div ref={ref}>
     <ItemShell item={item} badge="Video call requested">
       {item.scheduledAt ? (
         <div className="mt-3 rounded-md border border-success/40 bg-success/5 p-3 text-sm">
