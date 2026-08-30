@@ -13,7 +13,6 @@ import {
   isRealtorOnVacation,
   useRealtors,
   type Realtor,
-  type RealtorLicense,
 } from "@/lib/realtors";
 import { usePartnerRequests } from "@/lib/partner-requests";
 import { formatDate, formatDateTime } from "@/lib/dates";
