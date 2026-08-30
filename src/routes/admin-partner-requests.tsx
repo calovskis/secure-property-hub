@@ -340,7 +340,30 @@ function AdminPartnerRequestsPage() {
           </div>
         ) : (
           <ul className="space-y-4">
-            {pending.map((r) => (
+            {pending.map((r) =>
+              !canSeeAll && r.reviewerId !== me?.id ? (
+                <li key={r.id} className="rounded-lg border border-border bg-card p-5">
+                  <div className="text-sm font-semibold text-foreground">
+                    {r.companyName}{" "}
+                    <span className="ml-1 rounded-full bg-brand-tint px-2.5 py-0.5 text-[11px] font-semibold text-brand">
+                      {r.kind === "partner" ? PARTNER_LABEL[r.partnerType ?? "other"] : "Corporate"}
+                    </span>
+                  </div>
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    {r.firstName} {r.lastName}
+                  </div>
+                  {r.allStates || r.realtorLicenses?.length ? <CoverageBubbles r={r} /> : null}
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-[11px] text-muted-foreground">
+                      {r.reviewerName ? `Reviewed by ${r.reviewerName}` : "No reviewer assigned"} ·{" "}
+                      {REVIEW_STAGE_LABEL[r.reviewStage ?? "unassigned"]}
+                    </span>
+                  </div>
+                  <div className="mt-2">
+                    <ReviewProgressBar stage={r.reviewStage ?? "unassigned"} />
+                  </div>
+                </li>
+              ) : (
               <li key={r.id} className="rounded-lg border border-border bg-card p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
