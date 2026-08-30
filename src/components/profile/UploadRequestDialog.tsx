@@ -33,6 +33,8 @@ export function UploadRequestDialog({
   description,
   requireDocument = false,
   askNote = true,
+  choices,
+  choiceLabel = "Document type",
   onSubmit,
 }: {
   open: boolean;
@@ -44,14 +46,19 @@ export function UploadRequestDialog({
   description: string;
   requireDocument?: boolean;
   askNote?: boolean;
-  onSubmit: (result: { note: string; files: string[] }) => void;
+  /** Optional document-type picker shown inside the pop-up. */
+  choices?: { value: string; label: string }[];
+  choiceLabel?: string;
+  onSubmit: (result: { note: string; files: string[]; choice?: string | undefined }) => void;
 }) {
   const [note, setNote] = useState("");
   const [files, setFiles] = useState<string[]>([]);
+  const [choice, setChoice] = useState<string>(choices?.[0]?.value ?? "");
   const [step, setStep] = useState<"upload" | "confirm">("upload");
   const [confirmed, setConfirmed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [restored, setRestored] = useState(false);
+
 
   // Re-open from the "Unfinished uploads" panel.
   useEffect(() => onOpenUpload(draftId, () => onOpenChange(true)), [draftId, onOpenChange]);
@@ -94,7 +101,7 @@ export function UploadRequestDialog({
 
   function submit() {
     if (!confirmed) return setError("Please reconfirm that everything is correct.");
-    onSubmit({ note: note.trim(), files });
+    onSubmit({ note: note.trim(), files, choice: choices ? choice : undefined });
     clearUploadDraft(draftId);
     onOpenChange(false);
   }
@@ -114,6 +121,27 @@ export function UploadRequestDialog({
                 Pre-saved progress restored — nothing has been submitted yet.
               </p>
             ) : null}
+
+            {choices?.length ? (
+              <label className="block">
+                <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  {choiceLabel}
+                </span>
+                <select
+                  value={choice}
+                  onChange={(e) => setChoice(e.target.value)}
+                  className={inputClass}
+                >
+                  {choices.map((c) => (
+                    <option key={c.value} value={c.value}>
+                      {c.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
+
+
 
             {askNote ? (
               <label className="block">
@@ -209,9 +237,15 @@ export function UploadRequestDialog({
         ) : (
           <div className="mt-2 space-y-4">
             <div className="rounded-md border border-border bg-background p-3">
+              {choices?.length ? (
+                <p className="text-sm font-semibold text-foreground">
+                  {choices.find((c) => c.value === choice)?.label}
+                </p>
+              ) : null}
               {note ? (
                 <p className="whitespace-pre-wrap text-sm text-foreground">{note}</p>
               ) : null}
+
               <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
                 {files.length ? (
                   files.map((f) => <li key={f}>📎 {f}</li>)
