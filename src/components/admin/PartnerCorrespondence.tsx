@@ -128,7 +128,7 @@ export function PartnerCorrespondence({
                       {detail.answerDocs?.length ? (
                         <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
                           {detail.answerDocs.map((d) => (
-                            <li key={d}>📎 {d}</li>
+                            <li key={d}><UploadedDocLink path={d} /></li>
                           ))}
                         </ul>
                       ) : (
