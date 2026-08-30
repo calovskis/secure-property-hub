@@ -5,8 +5,10 @@ import { MortgageQuestionnaire } from "@/components/mortgage/MortgageQuestionnai
 import { MortgageCaseCard } from "@/components/mortgage/MortgageCaseCard";
 import { BuyerProcessCard } from "@/components/buyer/BuyerProcessCard";
 import { FeedbackDialog } from "@/components/mortgage/FeedbackDialog";
+import { VideoCallDialog } from "@/components/calls/VideoCallDialog";
 
 import { useLeads, hasPricedOffer, toLoanTerms } from "@/lib/leads";
+import { useBuyerProcess } from "@/lib/buyer-process";
 import { useAuth } from "@/lib/auth";
 import {
   buildInvestmentModel,
