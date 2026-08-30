@@ -3,7 +3,7 @@
  * written information requests (with optional document uploads) and video
  * call requests, which the partner books straight into the Loqal calendar.
  */
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { fullName, type LoqalUser } from "@/lib/auth";
 import { usePartnerRequests, type PartnerAdminRequest } from "@/lib/partner-requests";
