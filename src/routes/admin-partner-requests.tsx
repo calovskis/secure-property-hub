@@ -15,6 +15,7 @@ import {
   ReviewerMark,
 } from "@/components/admin/PartnerReviewBar";
 import { PartnerRequestDialog } from "@/components/admin/PartnerRequestDialog";
+import { PartnerCorrespondence } from "@/components/admin/PartnerCorrespondence";
 import { PersonDetail } from "@/components/admin/PersonDetail";
 import { useAdminPeople } from "@/components/admin/people-model";
 import { US_STATES, US_STATE_CODES } from "@/data/us-states";
@@ -144,7 +145,7 @@ function AdminPartnerRequestsPage() {
   const canSeeAll = !me || me.superadmin || accessOf(me, "partners") !== "view";
   const [profileKey, setProfileKey] = useState<string | null>(null);
   const profilePerson = profileKey ? people.find((p) => p.key === profileKey) : undefined;
-  const { focus: focusParam, open: openParam } = Route.useSearch();
+  const { focus: focusParam, open: openParam, item: itemParam } = Route.useSearch();
 
   // A notification about one registration scrolls to it and can open its file.
   useEffect(() => {
