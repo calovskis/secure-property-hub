@@ -395,6 +395,16 @@ export function usePartnerRequests() {
     () => requests,
     () => SERVER_SNAPSHOT,
   );
+  // True once the initial database fetch finished — lets pages wait for data
+  // instead of rendering "not found" against a still-empty store.
+  const ready = useSyncExternalStore(
+    (cb) => {
+      listeners.add(cb);
+      return () => listeners.delete(cb);
+    },
+    () => loaded,
+    () => false,
+  );
 
   useEffect(() => {
     ensureLoaded();
@@ -446,5 +456,5 @@ export function usePartnerRequests() {
     if (error) console.error("partner_requests update failed", error.message);
   }, []);
 
-  return { requests: snapshot, submit, setStatus, updateRequest, refresh: refreshPartnerRequests };
+  return { requests: snapshot, ready, submit, setStatus, updateRequest, refresh: refreshPartnerRequests };
 }
