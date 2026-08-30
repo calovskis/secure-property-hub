@@ -685,11 +685,21 @@ function VacationMode({ me }: { me: Realtor }) {
 }
 
 /** Licenses & languages summary shown on the realtor Home dashboard. */
-function LicensesCard({ me }: { me: Realtor }) {
+function LicensesCard({
+  me,
+  licenses,
+  languages,
+}: {
+  me: Realtor;
+  licenses?: RealtorLicense[];
+  languages?: string[];
+}) {
+  const shownLicenses = licenses?.length ? licenses : me.licenses;
+  const shownLanguages = languages?.length ? languages : me.languages;
   return (
     <section className="rounded-lg border border-border bg-card p-6">
       <h2 className="text-base font-semibold text-foreground">My licenses & languages</h2>
-      {me.licenses.length ? (
+      {shownLicenses.length ? (
         <div className="mt-3 overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
