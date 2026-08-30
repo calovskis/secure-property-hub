@@ -8,6 +8,13 @@ import { PARTNER_LABEL, fullName, useAuth, type LoqalUser, type PartnerType } fr
 
 export const Route = createFileRoute("/partner")({
   component: PartnerPage,
+  /** Notifications deep-link here with ?tab=… (and ?focus=… for one record). */
+  validateSearch: (search: Record<string, unknown>): { tab?: string; focus?: string } => {
+    const out: { tab?: string; focus?: string } = {};
+    if (typeof search["tab"] === "string") out.tab = search["tab"];
+    if (typeof search["focus"] === "string") out.focus = search["focus"];
+    return out;
+  },
   head: () => ({
     meta: [
       { title: "Partner Workspace — Loqal" },
