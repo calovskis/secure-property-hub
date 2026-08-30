@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { PARTNER_LABEL, type PartnerType } from "@/lib/auth";
+import { PARTNER_LABEL, rememberName, type PartnerType } from "@/lib/auth";
+import { joinName, normalizeName } from "@/lib/names";
 import { StateMultiSelect } from "@/components/form/StateCombobox";
 import { AddressFields } from "@/components/form/AddressFields";
 
@@ -192,8 +193,9 @@ function PartnerAccessPage() {
       state: addressState,
       zip: zip.trim(),
       country,
-      firstName: firstName.trim(),
-      lastName: lastName.trim(),
+      firstName: normalizeName(firstName),
+      lastName: normalizeName(lastName),
+
       position: position.trim(),
       email: email.trim(),
       phone: phone.trim(),
@@ -217,7 +219,8 @@ function PartnerAccessPage() {
       );
     }
     logActivity(
-      `${firstName.trim()} ${lastName.trim()}`,
+      joinName({ firstName, lastName }),
+
       kind === "partner" ? "requested partner registration" : "requested corporate access",
       companyName.trim(),
     );
@@ -231,7 +234,14 @@ function PartnerAccessPage() {
       severity: "info",
       emailCopy: true,
     });
+    rememberName({
+      email: email.trim(),
+      firstName,
+      lastName,
+      phone: phone.trim(),
+    });
     setSent(true);
+
   }
 
   return (
