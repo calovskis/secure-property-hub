@@ -429,13 +429,9 @@ function ProfilePage() {
         <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="space-y-6">
             {isPartner ? (
-              <>
-                
-                <AdminRequestsCard user={user} />
-                {isRealtor ? <RealtorVerificationCard user={user} /> : <KybCard user={user} />}
-                <PartnerProfile user={user} />
-              </>
+              <PartnerProfile user={user} />
             ) : (
+
               <>
                 <section className="rounded-lg border border-border bg-card p-6">
                   <h2 className="text-base font-semibold text-foreground">Account details</h2>
