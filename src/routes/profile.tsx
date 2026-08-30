@@ -55,6 +55,7 @@ import { useRealtorLicences } from "@/components/profile/realtor-licences";
 import { UploadRequestDialog } from "@/components/profile/UploadRequestDialog";
 import { LicenceUploadDialog } from "@/components/profile/LicenceUploadDialog";
 import { toast } from "sonner";
+import { useDeepLinkAction } from "@/lib/deep-link";
 
 const DOC_KINDS = ["idDocuments", "visaDocuments", "bankruptcyDocuments"] as const;
 
