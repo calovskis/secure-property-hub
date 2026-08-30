@@ -76,6 +76,7 @@ export function RealtorProfileCard({ user }: { user: LoqalUser }) {
   const personName = `${registration?.firstName || user.firstName} ${
     registration?.lastName || user.lastName
   }`.trim();
+  const languages = registration?.languages?.length ? registration.languages : me.languages;
 
   function startEdit() {
     if (!me) return;
