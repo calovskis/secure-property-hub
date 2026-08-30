@@ -307,7 +307,8 @@ function ProfilePage() {
   const { t } = useI18n();
   const { requests: partnerRequests } = usePartnerRequests();
   const [wizardOpen, setWizardOpen] = useState(false);
-  const { doc: docParam, open: openParam } = Route.useSearch();
+  const { doc: docParam, open: openParam, focus: focusParam } = Route.useSearch();
+  const [callDetailsOpen, setCallDetailsOpen] = useState(false);
 
   // A notification can deep-link straight into the form that needs filling.
   useEffect(() => {
