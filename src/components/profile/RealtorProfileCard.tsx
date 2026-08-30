@@ -111,9 +111,29 @@ export function RealtorProfileCard({ user }: { user: LoqalUser }) {
 
   return (
     <div className="space-y-3">
+      {registration ? (
+        <TopicCard
+          title="Company information"
+          summary={
+            [registration.companyName, registration.companyType].filter(Boolean).join(" · ") ||
+            "On file"
+          }
+        >
+          <Row label="Company name" value={registration.companyName} />
+          <Row label="Company type" value={registration.companyType} />
+          <Row label="Registration №" value={registration.registrationNumber} />
+          <Row label="Company licence №" value={registration.companyLicence} />
+          <Row label="Business address" value={businessAddress} />
+          <Row label="Company phone" value={registration.companyPhone} />
+        </TopicCard>
+      ) : null}
+
       <TopicCard
         title="Contact details"
-        summary={[me.phone, address].filter(Boolean).join(" · ") || "Add your contact details"}
+        summary={
+          [personName, registration?.position, me.phone].filter(Boolean).join(" · ") ||
+          "Add your contact details"
+        }
         onEdit={info ? undefined : startEdit}
         defaultOpen={Boolean(info)}
       >
@@ -121,46 +141,22 @@ export function RealtorProfileCard({ user }: { user: LoqalUser }) {
           <div className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block">
-                <span className={labelClass}>Phone</span>
+                <span className={labelClass}>Position</span>
+                <input
+                  value={info.position}
+                  onChange={(e) => setInfo({ ...info, position: e.target.value })}
+                  placeholder="e.g. Broker"
+                  className={inputClass}
+                />
+              </label>
+              <label className="block">
+                <span className={labelClass}>Personal phone</span>
                 <input
                   value={info.phone}
                   onChange={(e) => setInfo({ ...info, phone: e.target.value })}
                   className={inputClass}
                 />
               </label>
-              <label className="block">
-                <span className={labelClass}>Street</span>
-                <input
-                  value={info.street}
-                  onChange={(e) => setInfo({ ...info, street: e.target.value })}
-                  className={inputClass}
-                />
-              </label>
-              <label className="block">
-                <span className={labelClass}>City</span>
-                <input
-                  value={info.city}
-                  onChange={(e) => setInfo({ ...info, city: e.target.value })}
-                  className={inputClass}
-                />
-              </label>
-              <div className="grid grid-cols-2 gap-3">
-                <label className="block">
-                  <span className={labelClass}>State</span>
-                  <StateCombobox
-                    value={info.state}
-                    onChange={(code) => setInfo({ ...info, state: code })}
-                  />
-                </label>
-                <label className="block">
-                  <span className={labelClass}>ZIP</span>
-                  <input
-                    value={info.zip}
-                    onChange={(e) => setInfo({ ...info, zip: e.target.value })}
-                    className={inputClass}
-                  />
-                </label>
-              </div>
             </div>
             <div className="flex justify-end gap-2">
               <button type="button" onClick={() => setInfo(null)} className={btnGhost}>
@@ -173,10 +169,19 @@ export function RealtorProfileCard({ user }: { user: LoqalUser }) {
           </div>
         ) : (
           <div>
-            <Row label="Phone" value={me.phone} />
-            <Row label="Address" value={address} />
+            <Row label="Name" value={registration?.firstName || user.firstName} />
+            <Row label="Surname" value={registration?.lastName || user.lastName} />
+            <Row label="Position" value={registration?.position} />
+            <Row label="Personal phone" value={me.phone} />
           </div>
         )}
+
+        {registration ? (
+          <AdditionalContacts
+            contacts={registration.additionalContacts ?? []}
+            onChange={(next) => updateRequest(registration.id, { additionalContacts: next })}
+          />
+        ) : null}
       </TopicCard>
 
       <TopicCard
@@ -188,33 +193,6 @@ export function RealtorProfileCard({ user }: { user: LoqalUser }) {
 
       {registration ? (
         <>
-          <TopicCard
-            title="Company information"
-            summary={
-              [registration.companyName, registration.companyType].filter(Boolean).join(" · ") ||
-              "On file"
-            }
-          >
-            <Row label="Company name" value={registration.companyName} />
-            <Row label="Company type" value={registration.companyType} />
-            <Row label="Registration №" value={registration.registrationNumber} />
-            <Row
-              label="Realtor licence №"
-              value={(registration.realtorLicenses ?? [])
-                .map((l) => `${l.state} · ${l.number}`)
-                .join(" | ")}
-            />
-            <Row label="Company licence №" value={registration.companyLicence} />
-            <Row label="Business address" value={businessAddress} />
-            <Row label="Company phone" value={registration.companyPhone} />
-            <Row label="My position" value={registration.position} />
-
-            <AdditionalContacts
-              contacts={registration.additionalContacts ?? []}
-              onChange={(next) => updateRequest(registration.id, { additionalContacts: next })}
-            />
-          </TopicCard>
-
           <TopicCard
             title="Coverage & licences"
             summary={
@@ -233,6 +211,7 @@ export function RealtorProfileCard({ user }: { user: LoqalUser }) {
               <LicenceCoverageTable user={user} />
             </div>
           </TopicCard>
+
 
           <TopicCard
             title="Agreements & status"
