@@ -202,11 +202,12 @@ function AdminPartnerRequestsPage() {
   }
 
   function sendAdminRequest(r: PartnerRequest, kind: "info" | "call", message: string, requiresDocument: boolean) {
+    const itemId = uid();
     updateRequest(r.id, {
       adminRequests: [
         ...(r.adminRequests ?? []),
         {
-          id: uid(),
+          id: itemId,
           kind,
           message,
           ...(kind === "info" ? { requiresDocument } : {}),
@@ -223,7 +224,8 @@ function AdminPartnerRequestsPage() {
       to: r.email.toLowerCase(),
       title: kind === "info" ? "Loqal requested more information" : "Loqal requested a video call",
       body: message,
-      href: "/profile",
+      // Deep-link straight into the answer pop-up / booking form.
+      href: `/profile?open=${kind === "info" ? "request" : "call"}&focus=${itemId}`,
       severity: "warning",
     });
     logActivity(
