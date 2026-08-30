@@ -135,6 +135,50 @@ export type ProfileChangeRequest = {
   decidedAt?: string;
 };
 
+/**
+ * Verification progress of a partner registration. Every Loqal employee sees
+ * the stage in the queue, even if they cannot open the partner's file.
+ */
+export type ReviewStage =
+  | "unassigned"
+  | "assigned"
+  | "documents_review"
+  | "info_requested"
+  | "call_scheduled"
+  | "ready_for_decision"
+  | "on_hold";
+
+export const REVIEW_STAGES: ReviewStage[] = [
+  "unassigned",
+  "assigned",
+  "documents_review",
+  "info_requested",
+  "call_scheduled",
+  "ready_for_decision",
+  "on_hold",
+];
+
+export const REVIEW_STAGE_LABEL: Record<ReviewStage, string> = {
+  unassigned: "Not assigned",
+  assigned: "Assigned",
+  documents_review: "Documents under review",
+  info_requested: "Information requested",
+  call_scheduled: "Video call scheduled",
+  ready_for_decision: "Ready for decision",
+  on_hold: "On hold",
+};
+
+/** Rough completion of the verification, for the progress bars. */
+export const REVIEW_STAGE_PROGRESS: Record<ReviewStage, number> = {
+  unassigned: 0,
+  assigned: 20,
+  documents_review: 45,
+  info_requested: 60,
+  call_scheduled: 75,
+  ready_for_decision: 90,
+  on_hold: 35,
+};
+
 export type PartnerRequest = {
   id: string;
   kind: "partner" | "corporate";
