@@ -386,6 +386,25 @@ function useDerivedNotifications() {
             createdAt: r.kyc.submittedAt,
           });
         }
+        /* The partner answered a follow-up Loqal raised — tell the reviewing
+           Loqal manager (and the admin desk) so they can read the answer. */
+        for (const a of r.adminRequests ?? []) {
+          if (a.kind !== "info" || !a.answeredAt) continue;
+          const who = `${r.firstName} ${r.lastName}`.trim();
+          const type = r.kind === "corporate" ? "Corporate" : PARTNER_LABEL[r.partnerType ?? "other"];
+          list.push({
+            id: `areq-answered-${a.id}`,
+            to: "admins",
+            title: "Information request answered",
+            body: `${who} · ${r.companyName} · ${type}${
+              r.reviewerName ? ` — reviewer ${r.reviewerName}` : ""
+            }. Open to read the answer${a.answerDocs?.length ? " and files" : ""}.`,
+            href: `/admin-partner-requests?focus=${r.id}&open=correspondence&item=${a.id}`,
+            severity: "info",
+            createdAt: a.answeredAt,
+          });
+        }
+
       }
     }
 
