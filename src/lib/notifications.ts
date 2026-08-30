@@ -76,6 +76,7 @@ export function notify(n: Omit<AppNotification, "createdAt"> & { createdAt?: str
     existing.title === entry.title &&
     existing.body === entry.body &&
     existing.severity === entry.severity &&
+    existing.completed === entry.completed &&
     existing.href === entry.href
   ) {
     return; // nothing changed — avoid render loops
