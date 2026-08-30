@@ -596,6 +596,17 @@ function ProfilePage() {
       </main>
 
       <MortgageQuestionnaire open={wizardOpen} onOpenChange={setWizardOpen} />
+      {bookedCall?.scheduledAt ? (
+        <VideoCallDialog
+          open={callDetailsOpen}
+          onOpenChange={setCallDetailsOpen}
+          title="Video call with Loqal"
+          startAt={bookedCall.scheduledAt}
+          meetUrl={bookedCall.meetUrl}
+          withLabel="Your Loqal verification manager"
+          contextLabel={myRegistration?.companyName}
+        />
+      ) : null}
     </div>
   );
 }
