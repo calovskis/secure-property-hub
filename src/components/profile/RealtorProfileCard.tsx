@@ -15,7 +15,6 @@ import { activeLicenseStates, useRealtors } from "@/lib/realtors";
 import { usePartnerRequests, type AdditionalContact } from "@/lib/partner-requests";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import { WORLD_LANGUAGES } from "@/lib/languages";
-import { StateCombobox } from "@/components/form/StateCombobox";
 import { TopicCard } from "@/components/profile/TopicCard";
 import { LicenceCoverageTable } from "@/components/profile/realtor-licences";
 import { uid } from "@/lib/mortgage-form";
