@@ -131,7 +131,9 @@ export function RealtorProfileCard({ user }: { user: LoqalUser }) {
       <TopicCard
         title="Contact details"
         summary={
-          [personName, registration?.position, me.phone].filter(Boolean).join(" · ") ||
+          [personName, registration?.position, registration?.phone || me.phone]
+            .filter(Boolean)
+            .join(" · ") ||
           "Add your contact details"
         }
         onEdit={info ? undefined : startEdit}
@@ -172,7 +174,7 @@ export function RealtorProfileCard({ user }: { user: LoqalUser }) {
             <Row label="Name" value={registration?.firstName || user.firstName} />
             <Row label="Surname" value={registration?.lastName || user.lastName} />
             <Row label="Position" value={registration?.position} />
-            <Row label="Personal phone" value={me.phone} />
+            <Row label="Personal phone" value={registration?.phone || me.phone} />
           </div>
         )}
 
