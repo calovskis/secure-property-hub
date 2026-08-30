@@ -152,14 +152,15 @@ function AuthPage() {
       );
     }
     setBusy(false);
+    const remembered = knownName(email);
+    const derived = namesFromEmail(email);
     complete({
-      firstName: (() => {
-        const raw = email.split("@")[0]?.replace(/[^a-zA-Z]/g, "") || "Loqal";
-        return raw.charAt(0).toUpperCase() + raw.slice(1);
-      })(),
-      lastName: "",
+      firstName: remembered?.firstName || derived.firstName,
+      lastName: remembered?.lastName || derived.lastName,
+      ...(remembered?.middleName ? { middleName: remembered.middleName } : {}),
       email,
-      phone: "",
+      phone: remembered?.phone ?? "",
+
       usPerson: false,
       role: loginRole,
       ...(loginRole === "partner"
