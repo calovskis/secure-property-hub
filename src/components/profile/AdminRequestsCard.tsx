@@ -247,10 +247,12 @@ function ItemShell({
 
 function InfoItem({
   item,
+  requestId,
   user,
   onAnswer,
 }: {
   item: PartnerAdminRequest;
+  requestId: string;
   user: LoqalUser;
   onAnswer: (id: string, changes: Partial<PartnerAdminRequest>) => void;
 }) {
@@ -274,9 +276,9 @@ function InfoItem({
           </p>
           <p className="mt-1 whitespace-pre-wrap text-sm text-foreground">{item.answer}</p>
           {item.answerDocs?.length ? (
-            <ul className="mt-1 text-xs text-muted-foreground">
+            <ul className="mt-1 space-y-1 text-xs text-muted-foreground">
               {item.answerDocs.map((d) => (
-                <li key={d}>📎 {d}</li>
+                <li key={d}><UploadedDocLink path={d} /></li>
               ))}
             </ul>
           ) : null}
@@ -303,6 +305,7 @@ function InfoItem({
             title="Respond to Loqal"
             description={item.message}
             requireDocument={Boolean(item.requiresDocument)}
+            folder={`requests/${requestId}/${item.id}`}
             onSubmit={({ note, files }) => {
               onAnswer(item.id, {
                 answer: note,
