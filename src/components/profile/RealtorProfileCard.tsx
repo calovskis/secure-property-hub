@@ -51,11 +51,9 @@ function Stat({ label, value }: { label: string; value: string | number }) {
 
 type InfoForm = {
   phone: string;
-  street: string;
-  city: string;
-  state: string;
-  zip: string;
+  position: string;
 };
+
 
 export function RealtorProfileCard({ user }: { user: LoqalUser }) {
   const { realtors, ensureSeat, updateRealtor } = useRealtors();
