@@ -76,6 +76,7 @@ export function RealtorProfileCard({ user }: { user: LoqalUser }) {
   const personName = `${registration?.firstName || user.firstName} ${
     registration?.lastName || user.lastName
   }`.trim();
+  const languages = registration?.languages?.length ? registration.languages : me.languages;
 
   function startEdit() {
     if (!me) return;
@@ -188,9 +189,9 @@ export function RealtorProfileCard({ user }: { user: LoqalUser }) {
 
       <TopicCard
         title="Languages"
-        summary={me.languages.length ? me.languages.join(", ") : "No languages added yet"}
+        summary={languages.length ? languages.join(", ") : "No languages added yet"}
       >
-        <LanguagesEditor values={me.languages} onChange={saveLanguages} />
+        <LanguagesEditor values={languages} onChange={saveLanguages} />
       </TopicCard>
 
       {registration ? (
