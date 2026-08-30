@@ -144,3 +144,82 @@ export function stagedCounts(email: string | undefined): Partial<Record<Document
   }
   return out;
 }
+
+/* --------------------------- reminder ladder ---------------------------- */
+
+/**
+ * While a requested document is still missing we remind on this ladder
+ * (hours after the request first appeared): 3h, 24h, 3d, 7d, 14d, 28d, 56d.
+ * From day 3 onwards the reminder is also e-mailed, matching the other
+ * reminder ladders on the platform.
+ */
+export const DOCUMENT_REMINDER_HOURS = [3, 24, 72, 168, 336, 672, 1344] as const;
+
+export type DocumentReminder = {
+  hours: number;
+  /** Human label, e.g. "3 hours" or "7 days". */
+  label: string;
+  dueAt: string;
+  due: boolean;
+  /** true → this reminder is also sent by e-mail. */
+  email: boolean;
+};
+
+const HOUR = 60 * 60 * 1000;
+
+export function documentReminders(sinceIso: string, now: Date = new Date()): DocumentReminder[] {
+  const since = new Date(sinceIso).getTime();
+  if (!Number.isFinite(since)) return [];
+  return DOCUMENT_REMINDER_HOURS.map((hours) => {
+    const at = new Date(since + hours * HOUR);
+    return {
+      hours,
+      label: hours < 24 ? `${hours} hours` : `${hours / 24} days`,
+      dueAt: at.toISOString(),
+      due: at.getTime() <= now.getTime(),
+      email: hours >= 72,
+    };
+  });
+}
+
+/* ---------------------- when a request first appeared -------------------- */
+
+const FIRST_SEEN_KEY = "loqal.document.requests.firstseen.v1";
+
+function readFirstSeen(): Record<string, string> {
+  try {
+    const raw = window.localStorage.getItem(FIRST_SEEN_KEY);
+    return raw ? (JSON.parse(raw) as Record<string, string>) : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeFirstSeen(state: Record<string, string>) {
+  try {
+    window.localStorage.setItem(FIRST_SEEN_KEY, JSON.stringify(state));
+  } catch {
+    /* storage unavailable */
+  }
+}
+
+/** Timestamp the request was first shown to this user (recorded on first call). */
+export function requestOpenedAt(id: string): string {
+  if (typeof window === "undefined") return new Date().toISOString();
+  const state = readFirstSeen();
+  const existing = state[id];
+  if (existing) return existing;
+  const now = new Date().toISOString();
+  state[id] = now;
+  writeFirstSeen(state);
+  return now;
+}
+
+/** Forget a request once it has been satisfied, so a future one restarts the ladder. */
+export function clearRequestOpenedAt(id: string) {
+  if (typeof window === "undefined") return;
+  const state = readFirstSeen();
+  if (!state[id]) return;
+  delete state[id];
+  writeFirstSeen(state);
+}
