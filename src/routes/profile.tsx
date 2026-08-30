@@ -17,7 +17,6 @@ import {
 import { PartnerProfile } from "@/components/profile/PartnerProfile";
 import { AgreementCard } from "@/components/profile/AgreementCard";
 import { KybCard } from "@/components/profile/KybCard";
-import { RealtorVerificationCard } from "@/components/profile/RealtorVerificationCard";
 import { AdminRequestsCard } from "@/components/profile/AdminRequestsCard";
 import { useUploadDrafts, requestOpenUpload } from "@/lib/upload-drafts";
 import {
@@ -51,7 +50,10 @@ import {
   type DocumentRequest,
 } from "@/lib/document-requests";
 import { usePartnerRequests } from "@/lib/partner-requests";
-import { licenseDocsOf } from "@/components/profile/realtor-licences";
+import { useRealtorLicences } from "@/components/profile/realtor-licences";
+import { UploadRequestDialog } from "@/components/profile/UploadRequestDialog";
+import { LicenceUploadDialog } from "@/components/profile/LicenceUploadDialog";
+import { toast } from "sonner";
 
 const DOC_KINDS = ["idDocuments", "visaDocuments", "bankruptcyDocuments"] as const;
 
