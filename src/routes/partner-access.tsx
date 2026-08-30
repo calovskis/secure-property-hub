@@ -192,8 +192,9 @@ function PartnerAccessPage() {
       state: addressState,
       zip: zip.trim(),
       country,
-      firstName: firstName.trim(),
-      lastName: lastName.trim(),
+      firstName: normalizeName(firstName),
+      lastName: normalizeName(lastName),
+
       position: position.trim(),
       email: email.trim(),
       phone: phone.trim(),
