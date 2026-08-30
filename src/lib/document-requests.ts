@@ -204,16 +204,17 @@ function writeFirstSeen(state: Record<string, string>) {
 }
 
 /** Timestamp the request was first shown to this user (recorded on first call). */
-export function requestOpenedAt(id: string): string {
-  if (typeof window === "undefined") return new Date().toISOString();
+export function requestOpenedAt(id: string, fallback?: string): string {
+  if (typeof window === "undefined") return fallback ?? new Date().toISOString();
   const state = readFirstSeen();
   const existing = state[id];
   if (existing) return existing;
-  const now = new Date().toISOString();
+  const now = fallback ?? new Date().toISOString();
   state[id] = now;
   writeFirstSeen(state);
   return now;
 }
+
 
 /** Forget a request once it has been satisfied, so a future one restarts the ladder. */
 export function clearRequestOpenedAt(id: string) {
