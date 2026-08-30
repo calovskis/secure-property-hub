@@ -4,11 +4,12 @@
  * confirmation step); Loqal then countersigns in the admin console and the
  * partnership becomes fully active.
  */
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { fullName, type LoqalUser } from "@/lib/auth";
 import { usePartnerRequests } from "@/lib/partner-requests";
 import { logActivity } from "@/lib/activity";
 import { formatDateTime } from "@/lib/dates";
+import { useDeepLink } from "@/lib/deep-link";
 
 const inputClass =
   "w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-brand";
@@ -28,7 +29,17 @@ export function AgreementCard({ user }: { user: LoqalUser }) {
   const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const ref = useRef<HTMLElement>(null);
+  const { open: openParam } = useDeepLink();
   const request = requests.find((r) => r.email.toLowerCase() === user.email.toLowerCase());
+
+  // "Your agreement is ready to sign" notifications land on the signing form.
+  useEffect(() => {
+    if (openParam !== "agreement" || !request) return;
+    ref.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    if (request.status === "approved" && !request.agreementSignedAt) setSigning(true);
+  }, [openParam, request]);
+
   if (!request) return null;
 
   const stepIndex = request.agreementCountersignedAt
@@ -53,7 +64,7 @@ export function AgreementCard({ user }: { user: LoqalUser }) {
   }
 
   return (
-    <section className="rounded-lg border border-border bg-card p-6">
+    <section ref={ref} className="rounded-lg border border-border bg-card p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-base font-semibold text-foreground">Loqal partnership agreement</h2>
         {request.agreementCountersignedAt ? (
