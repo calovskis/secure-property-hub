@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { PARTNER_LABEL, type PartnerType } from "@/lib/auth";
+import { joinName, normalizeName } from "@/lib/names";
 import { StateMultiSelect } from "@/components/form/StateCombobox";
 import { AddressFields } from "@/components/form/AddressFields";
 
