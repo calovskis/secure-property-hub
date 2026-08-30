@@ -8,6 +8,13 @@ import { PARTNER_LABEL, fullName, useAuth, type LoqalUser, type PartnerType } fr
 
 export const Route = createFileRoute("/partner")({
   component: PartnerPage,
+  /** Notifications deep-link here with ?tab=… (and ?focus=… for one record). */
+  validateSearch: (search: Record<string, unknown>): { tab?: string; focus?: string } => {
+    const out: { tab?: string; focus?: string } = {};
+    if (typeof search["tab"] === "string") out.tab = search["tab"];
+    if (typeof search["focus"] === "string") out.focus = search["focus"];
+    return out;
+  },
   head: () => ({
     meta: [
       { title: "Partner Workspace — Loqal" },
@@ -229,7 +236,11 @@ function PartnerPage() {
 }
 
 function LenderWorkspace({ lenderName }: { lenderName: string }) {
+  const { tab: tabParam } = Route.useSearch();
   const [tab, setTab] = useState<LenderTabId>("home");
+  useEffect(() => {
+    if (tabParam) setTab(tabParam as LenderTabId);
+  }, [tabParam]);
   const tabs = useLenderTabs();
   const current = tabs.some((t) => t.id === tab) ? tab : "home";
 
@@ -267,7 +278,11 @@ function LenderWorkspace({ lenderName }: { lenderName: string }) {
  * financial), Accounting and My Profile.
  */
 function RealtorWorkspace({ user }: { user: LoqalUser }) {
+  const { tab: tabParam } = Route.useSearch();
   const [tab, setTab] = useState<RealtorTabId>("home");
+  useEffect(() => {
+    if (tabParam) setTab(tabParam as RealtorTabId);
+  }, [tabParam]);
   const [menu, setMenu] = useState<"files" | "analytics" | null>(null);
 
   useEffect(() => {

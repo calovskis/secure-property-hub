@@ -3,7 +3,7 @@
  * written information requests (with optional document uploads) and video
  * call requests, which the partner books straight into the Loqal calendar.
  */
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { fullName, type LoqalUser } from "@/lib/auth";
 import { usePartnerRequests, type PartnerAdminRequest } from "@/lib/partner-requests";
@@ -12,6 +12,7 @@ import { logActivity } from "@/lib/activity";
 import { formatDateTime } from "@/lib/dates";
 import { UploadRequestDialog } from "@/components/profile/UploadRequestDialog";
 import { useUploadDrafts } from "@/lib/upload-drafts";
+import { useDeepLinkAction } from "@/lib/deep-link";
 
 const LOQAL_ADMIN_EMAIL = "it@loqal.global";
 
@@ -113,6 +114,12 @@ function InfoItem({
   const draftId = `partner-request:${item.id}`;
   const draft = drafts.find((d) => d.id === draftId);
 
+  // A notification about this request opens its answer pop-up directly.
+  useDeepLinkAction("request", (focus) => {
+    if (!item.answeredAt && (!focus || focus === item.id)) setOpen(true);
+  });
+
+
   return (
     <ItemShell item={item} badge="Information requested">
       {item.answeredAt ? (
@@ -176,7 +183,15 @@ function CallItem({
   user: LoqalUser;
   onBooked: (id: string, changes: Partial<PartnerAdminRequest>) => void;
 }) {
+  const ref = useRef<HTMLDivElement>(null);
+  // "Loqal asked for a call" notifications scroll the booking form into view.
+  useDeepLinkAction("call", (focus) => {
+    if (!item.scheduledAt && (!focus || focus === item.id))
+      ref.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  });
+
   return (
+    <div ref={ref}>
     <ItemShell item={item} badge="Video call requested">
       {item.scheduledAt ? (
         <div className="mt-3 rounded-md border border-success/40 bg-success/5 p-3 text-sm">
@@ -210,5 +225,6 @@ function CallItem({
         </div>
       )}
     </ItemShell>
+    </div>
   );
 }

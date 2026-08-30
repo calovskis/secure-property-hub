@@ -284,7 +284,7 @@ function useDerivedNotifications() {
             to: email,
             title: `Your ${lic.state} real estate licence has expired`,
             body: "Renew it and update the details — expired licences are excluded from assignments.",
-            href: "/partner",
+            href: "/profile?open=licences",
             severity: "critical",
             emailCopy: true,
           });
@@ -294,7 +294,7 @@ function useDerivedNotifications() {
             to: email,
             title: `Your ${lic.state} licence expires in ${left} days`,
             body: "Renew now and update the licence details in your portal.",
-            href: "/partner",
+            href: "/profile?open=licences",
             severity: "critical",
             emailCopy: true,
           });
@@ -304,7 +304,7 @@ function useDerivedNotifications() {
             to: email,
             title: `Your ${lic.state} licence expires in ${left} days`,
             body: "Please plan the renewal — you can update the licence details in your portal.",
-            href: "/partner",
+            href: "/profile?open=licences",
             severity: "warning",
           });
         }
@@ -318,7 +318,7 @@ function useDerivedNotifications() {
             to: email,
             title: "Photo request — deliver within 3 days",
             body: lead.propertyLabel,
-            href: "/partner",
+            href: `/partner?tab=buyers&focus=${lead.id}`,
             severity: photo.status === "delayed" ? "info" : "warning",
             createdAt: photo.requestedAt,
           });
@@ -329,7 +329,7 @@ function useDerivedNotifications() {
             id: `decision-${lastAction.id}`,
             to: email,
             title: `Buyer decision on ${lead.propertyLabel}`,
-            href: "/partner",
+            href: `/partner?tab=buyers&focus=${lead.id}`,
             severity: "info",
             createdAt: lastAction.createdAt,
           });
@@ -342,7 +342,7 @@ function useDerivedNotifications() {
             to: email,
             title: b.kind === "video_tour" ? "Video tour times proposed" : "In-person visit times proposed",
             body: `${b.clientName} — ${b.propertyLabel}. Confirm one of the proposed slots.`,
-            href: "/partner",
+            href: `/partner?tab=calendar&focus=${b.id}`,
             severity: "warning",
             createdAt: b.createdAt,
           });
@@ -359,7 +359,7 @@ function useDerivedNotifications() {
             to: "admins",
             title: `New ${r.kind === "partner" ? "partner" : "corporate"} registration request`,
             body: `${r.companyName} — awaiting approval.`,
-            href: "/admin",
+            href: `/admin-partner-requests?focus=${r.id}`,
             severity: "warning",
             createdAt: r.submittedAt,
           });
@@ -370,7 +370,7 @@ function useDerivedNotifications() {
             to: "admins",
             title: "Partnership agreement awaiting Loqal countersignature",
             body: `${r.companyName} signed on ${formatDateTime(r.agreementSignedAt)}.`,
-            href: "/admin",
+            href: `/admin-partner-requests?focus=${r.id}&open=profile`,
             severity: "warning",
             createdAt: r.agreementSignedAt,
           });
@@ -381,7 +381,7 @@ function useDerivedNotifications() {
             to: "admins",
             title: "KYB questionnaire submitted",
             body: `${r.companyName} — director & shareholder information is ready for review.`,
-            href: "/admin",
+            href: `/admin-partner-requests?focus=${r.id}&open=profile`,
             severity: "info",
             createdAt: r.kyc.submittedAt,
           });
@@ -405,7 +405,7 @@ function useDerivedNotifications() {
           to: email,
           title: "Your Loqal partnership agreement is ready to sign",
           body: "Sign it in your portal — Loqal countersigns right after.",
-          href: "/profile",
+          href: "/profile?open=agreement",
           severity: "warning",
           createdAt: r.decidedAt ?? r.submittedAt,
         });
@@ -422,7 +422,7 @@ function useDerivedNotifications() {
             to: email,
             title: "Identity verification document needed",
             body: "Upload your driver's licence or passport in My profile.",
-            href: "/profile",
+            href: "/profile?open=identity",
             severity: "warning",
             createdAt: since,
           });
@@ -433,7 +433,7 @@ function useDerivedNotifications() {
               to: email,
               title: `Reminder: identity document still needed (${rem.label})`,
               body: "Upload your driver's licence or passport in My profile.",
-              href: "/profile",
+              href: "/profile?open=identity",
               severity: rem.hours >= 168 ? "critical" : "warning",
               emailCopy: rem.email,
               createdAt: rem.dueAt,
@@ -463,7 +463,7 @@ function useDerivedNotifications() {
             to: email,
             title: "State licence copies needed",
             body: `${missing.length} of ${licences.length} state(s) still need a copy.`,
-            href: "/profile",
+            href: "/profile?open=licences",
             severity: "warning",
             createdAt: since,
           });
@@ -474,7 +474,7 @@ function useDerivedNotifications() {
               to: email,
               title: `Reminder: state licence copies still needed (${rem.label})`,
               body: `${missing.length} of ${licences.length} state(s) still need a copy.`,
-              href: "/profile",
+              href: "/profile?open=licences",
               severity: rem.hours >= 168 ? "critical" : "warning",
               emailCopy: rem.email,
               createdAt: rem.dueAt,
@@ -500,7 +500,7 @@ function useDerivedNotifications() {
           to: email,
           title: "Your partnership is fully active 🎉",
           body: `${r.companyName} — the agreement is signed by both parties.`,
-          href: "/partner",
+          href: "/partner?tab=home",
           severity: "info",
           createdAt: r.agreementCountersignedAt,
         });

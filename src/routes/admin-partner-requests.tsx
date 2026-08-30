@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { AdminNav } from "@/components/admin/AdminNav";
 import { PARTNER_LABEL, fullName, useAuth, type PartnerType } from "@/lib/auth";
@@ -32,6 +32,13 @@ import { toast } from "sonner";
  */
 export const Route = createFileRoute("/admin-partner-requests")({
   component: AdminPartnerRequestsPage,
+  /** `?focus=<requestId>` highlights one registration, `?open=profile` opens its full file. */
+  validateSearch: (search: Record<string, unknown>): { focus?: string; open?: string } => {
+    const out: { focus?: string; open?: string } = {};
+    if (typeof search["focus"] === "string") out.focus = search["focus"];
+    if (typeof search["open"] === "string") out.open = search["open"];
+    return out;
+  },
   head: () => ({
     meta: [
       { title: "Open Partner Requests — Loqal Admin" },
@@ -132,6 +139,18 @@ function AdminPartnerRequestsPage() {
   const canSeeAll = !me || me.superadmin || accessOf(me, "partners") !== "view";
   const [profileKey, setProfileKey] = useState<string | null>(null);
   const profilePerson = profileKey ? people.find((p) => p.key === profileKey) : undefined;
+  const { focus: focusParam, open: openParam } = Route.useSearch();
+
+  // A notification about one registration scrolls to it and can open its file.
+  useEffect(() => {
+    if (!focusParam) return;
+    const target = requests.find((r) => r.id === focusParam);
+    if (!target) return;
+    if (openParam === "profile") setProfileKey(`${target.kind}-${target.id}`);
+    const node = document.getElementById(`preq-${target.id}`);
+    node?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [focusParam, openParam, requests]);
+
 
   const pending = useMemo(
     () =>
@@ -183,11 +202,12 @@ function AdminPartnerRequestsPage() {
   }
 
   function sendAdminRequest(r: PartnerRequest, kind: "info" | "call", message: string, requiresDocument: boolean) {
+    const itemId = uid();
     updateRequest(r.id, {
       adminRequests: [
         ...(r.adminRequests ?? []),
         {
-          id: uid(),
+          id: itemId,
           kind,
           message,
           ...(kind === "info" ? { requiresDocument } : {}),
@@ -204,7 +224,8 @@ function AdminPartnerRequestsPage() {
       to: r.email.toLowerCase(),
       title: kind === "info" ? "Loqal requested more information" : "Loqal requested a video call",
       body: message,
-      href: "/profile",
+      // Deep-link straight into the answer pop-up / booking form.
+      href: `/profile?open=${kind === "info" ? "request" : "call"}&focus=${itemId}`,
       severity: "warning",
     });
     logActivity(
@@ -348,7 +369,7 @@ function AdminPartnerRequestsPage() {
           <ul className="space-y-4">
             {pending.map((r) =>
               !canSeeAll && r.reviewerId !== me?.id ? (
-                <li key={r.id} className="rounded-lg border border-border bg-card p-5">
+                <li key={r.id} id={`preq-${r.id}`} className="rounded-lg border border-border bg-card p-5">
                   <div className="text-sm font-semibold text-foreground">
                     {r.companyName}{" "}
                     <span className="ml-1 rounded-full bg-brand-tint px-2.5 py-0.5 text-[11px] font-semibold text-brand">
@@ -370,7 +391,7 @@ function AdminPartnerRequestsPage() {
                   </div>
                 </li>
               ) : (
-              <li key={r.id} className="rounded-lg border border-border bg-card p-5">
+              <li key={r.id} id={`preq-${r.id}`} className="rounded-lg border border-border bg-card p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="text-sm font-semibold text-foreground">

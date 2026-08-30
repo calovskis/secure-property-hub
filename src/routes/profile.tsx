@@ -55,19 +55,25 @@ import { useRealtorLicences } from "@/components/profile/realtor-licences";
 import { UploadRequestDialog } from "@/components/profile/UploadRequestDialog";
 import { LicenceUploadDialog } from "@/components/profile/LicenceUploadDialog";
 import { toast } from "sonner";
+import { useDeepLinkAction } from "@/lib/deep-link";
 
 const DOC_KINDS = ["idDocuments", "visaDocuments", "bankruptcyDocuments"] as const;
 
 export const Route = createFileRoute("/profile")({
-  /** `?doc=<kind>` opens that upload pop-up, `?open=questionnaire` the wizard. */
+  /**
+   * `?doc=<kind>` opens that upload pop-up, `?open=<action>` the matching
+   * pop-up (questionnaire, identity, licences, a Loqal request) and
+   * `?focus=<id>` points at one specific request.
+   */
   validateSearch: (
     search: Record<string, unknown>,
-  ): { doc?: DocumentRequest["kind"]; open?: "questionnaire" } => {
-    const out: { doc?: DocumentRequest["kind"]; open?: "questionnaire" } = {};
+  ): { doc?: DocumentRequest["kind"]; open?: string; focus?: string } => {
+    const out: { doc?: DocumentRequest["kind"]; open?: string; focus?: string } = {};
     const doc = search["doc"];
     if (DOC_KINDS.includes(doc as (typeof DOC_KINDS)[number]))
       out.doc = doc as DocumentRequest["kind"];
-    if (search["open"] === "questionnaire") out.open = "questionnaire";
+    if (typeof search["open"] === "string") out.open = search["open"];
+    if (typeof search["focus"] === "string") out.focus = search["focus"];
     return out;
   },
   head: () => ({
@@ -597,6 +603,14 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
   const registration = requests.find(
     (r) => r.email.toLowerCase() === user.email.toLowerCase(),
   );
+
+  // Notifications deep-link straight into the pop-up they are about.
+  useDeepLinkAction("identity", () => setIdDialog(true));
+  useDeepLinkAction("licences", () => setLicDialog(true));
+  useDeepLinkAction("upload", (focus) => {
+    if (focus) requestOpenUpload(focus);
+  });
+
 
   const realtor =
     isRealtor || user.partnerType === "realtor" || registration?.partnerType === "realtor";
