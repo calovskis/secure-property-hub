@@ -494,6 +494,57 @@ function useDerivedNotifications() {
         }
       }
 
+      /* Follow-ups Loqal raised on this partner's registration. */
+      for (const req of r.adminRequests ?? []) {
+        const isInfo = req.kind === "info";
+        const done = isInfo ? Boolean(req.answeredAt) : Boolean(req.scheduledAt);
+        const href = `/profile?open=${isInfo ? "request" : "call"}&focus=${req.id}`;
+        const title = isInfo
+          ? "Loqal requested more information"
+          : "Loqal requested a video call";
+        const body = req.message.slice(0, 140) || "Open your profile to respond.";
+        if (done) {
+          clearRequestOpenedAt(`preq-${req.id}`);
+          list.push({
+            id: `preq-${req.id}-done`,
+            to: email,
+            title: isInfo ? "Information request answered" : "Video call booked",
+            body: isInfo
+              ? "Thank you — Loqal received your answer."
+              : `Booked for ${formatDateTime(req.scheduledAt!)}.`,
+            href: "/profile",
+            severity: "info",
+            completed: true,
+            createdAt: (isInfo ? req.answeredAt : req.scheduledAt) ?? undefined,
+          });
+          continue;
+        }
+        const since = requestOpenedAt(`preq-${req.id}`, req.requestedAt);
+        list.push({
+          id: `preq-${req.id}`,
+          to: email,
+          title,
+          body,
+          href,
+          severity: "warning",
+          createdAt: since,
+        });
+        for (const rem of documentReminders(since)) {
+          if (!rem.due) continue;
+          list.push({
+            id: `preq-${req.id}-rem-${rem.hours}`,
+            to: email,
+            title: `Reminder: ${title.toLowerCase()} (${rem.label})`,
+            body,
+            href,
+            severity: rem.hours >= 168 ? "critical" : "warning",
+            emailCopy: rem.email,
+            createdAt: rem.dueAt,
+          });
+        }
+      }
+
+
       if (r.status === "approved" && r.agreementCountersignedAt) {
         list.push({
           id: `active-${r.id}`,
