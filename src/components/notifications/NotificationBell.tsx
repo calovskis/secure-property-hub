@@ -15,7 +15,12 @@ import { useBuyerProcess } from "@/lib/buyer-process";
 import { usePartnerRequests } from "@/lib/partner-requests";
 import { useRealtors } from "@/lib/realtors";
 import { useMortgageDrafts } from "@/lib/mortgage-draft";
-import { outstandingDocumentRequests } from "@/lib/document-requests";
+import {
+  clearRequestOpenedAt,
+  documentReminders,
+  outstandingDocumentRequests,
+  requestOpenedAt,
+} from "@/lib/document-requests";
 import {
   syncNotifications,
   useNotifications,
@@ -204,16 +209,37 @@ function useDerivedNotifications() {
 
       /* One notification per outstanding document request — each is its own
        * upload form waiting under "Unfinished forms" in My Profile. */
-      for (const request of outstandingDocumentRequests(user, p)) {
+      const outstanding = outstandingDocumentRequests(user, p);
+      for (const request of outstanding) {
+        const key = `doc-${request.kind}-${email}`;
+        const since = requestOpenedAt(key);
         list.push({
-          id: `doc-${request.kind}-${email}`,
+          id: key,
           to: email,
           title: `${request.title} still missing`,
           body: `${request.description} ${request.reason}`,
           href: `/profile?doc=${request.kind}`,
           severity: "warning",
-          emailCopy: true,
+          createdAt: since,
         });
+        for (const r of documentReminders(since, new Date(now))) {
+          if (!r.due) continue;
+          list.push({
+            id: `${key}-rem-${r.hours}`,
+            to: email,
+            title: `Reminder: ${request.title.toLowerCase()} still needed (${r.label})`,
+            body: request.description,
+            href: `/profile?doc=${request.kind}`,
+            severity: r.hours >= 168 ? "critical" : "warning",
+            emailCopy: r.email,
+            createdAt: r.dueAt,
+          });
+        }
+      }
+      for (const kind of ["idDocuments", "visaDocuments", "bankruptcyDocuments"] as const) {
+        if (outstanding.some((r) => r.kind === kind)) continue;
+        const key = `doc-${kind}-${email}`;
+        clearRequestOpenedAt(key);
       }
     }
 
