@@ -397,6 +397,13 @@ function AdminPartnerRequestsPage() {
                   <div className="flex shrink-0 flex-wrap justify-end gap-2">
                     <button
                       type="button"
+                      onClick={() => setProfileKey(`${r.kind}-${r.id}`)}
+                      className="rounded-md border border-border px-4 py-2 text-xs font-semibold text-foreground hover:bg-muted"
+                    >
+                      Full profile
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => setAsk({ request: r, kind: "info" })}
                       className="rounded-md border border-brand/50 bg-brand-tint px-4 py-2 text-xs font-semibold text-brand hover:bg-brand-tint/70"
                     >
