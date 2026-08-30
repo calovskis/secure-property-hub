@@ -278,7 +278,11 @@ function LenderWorkspace({ lenderName }: { lenderName: string }) {
  * financial), Accounting and My Profile.
  */
 function RealtorWorkspace({ user }: { user: LoqalUser }) {
+  const { tab: tabParam } = Route.useSearch();
   const [tab, setTab] = useState<RealtorTabId>("home");
+  useEffect(() => {
+    if (tabParam) setTab(tabParam as RealtorTabId);
+  }, [tabParam]);
   const [menu, setMenu] = useState<"files" | "analytics" | null>(null);
 
   useEffect(() => {
