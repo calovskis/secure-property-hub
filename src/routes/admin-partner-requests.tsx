@@ -350,18 +350,7 @@ function AdminPartnerRequestsPage() {
                       Submitted {formatDateTime(r.submittedAt)} · waiting since{" "}
                       {formatDate(r.submittedAt)}
                     </div>
-                    {r.realtorLicenses?.length ? (
-                      <div className="mt-2 flex flex-wrap gap-1.5">
-                        {r.realtorLicenses.map((l) => (
-                          <span
-                            key={l.state}
-                            className="rounded bg-brand-tint px-2 py-1 text-[11px] font-semibold text-brand"
-                          >
-                            {l.state} · {l.number} · valid till {formatDate(l.validUntil)}
-                          </span>
-                        ))}
-                      </div>
-                    ) : null}
+                    {r.allStates || r.realtorLicenses?.length ? <CoverageBubbles r={r} /> : null}
                     {r.languages?.length ? (
                       <div className="mt-1 text-xs text-muted-foreground">
                         Languages: {r.languages.join(", ")}
