@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { AdminNav } from "@/components/admin/AdminNav";
 import { PARTNER_LABEL, fullName, useAuth, type PartnerType } from "@/lib/auth";
@@ -367,7 +367,7 @@ function AdminPartnerRequestsPage() {
           <ul className="space-y-4">
             {pending.map((r) =>
               !canSeeAll && r.reviewerId !== me?.id ? (
-                <li key={r.id} className="rounded-lg border border-border bg-card p-5">
+                <li key={r.id} id={`preq-${r.id}`} className="rounded-lg border border-border bg-card p-5">
                   <div className="text-sm font-semibold text-foreground">
                     {r.companyName}{" "}
                     <span className="ml-1 rounded-full bg-brand-tint px-2.5 py-0.5 text-[11px] font-semibold text-brand">
@@ -389,7 +389,7 @@ function AdminPartnerRequestsPage() {
                   </div>
                 </li>
               ) : (
-              <li key={r.id} className="rounded-lg border border-border bg-card p-5">
+              <li key={r.id} id={`preq-${r.id}`} className="rounded-lg border border-border bg-card p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="text-sm font-semibold text-foreground">
