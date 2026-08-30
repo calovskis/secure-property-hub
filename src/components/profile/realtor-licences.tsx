@@ -362,3 +362,97 @@ export function LicenceCoverageTable({ user }: { user: LoqalUser }) {
     </div>
   );
 }
+
+const HISTORY_LABEL: Record<RealtorLicenseEvent["action"], string> = {
+  added: "Licence added",
+  updated: "Details updated",
+  removed: "Licence removed",
+  copy_uploaded: "Copy uploaded",
+};
+
+const HISTORY_TONE: Record<RealtorLicenseEvent["action"], string> = {
+  added: "bg-success/10 text-success",
+  updated: "bg-brand-tint text-brand",
+  removed: "bg-destructive/10 text-destructive",
+  copy_uploaded: "bg-gold-tint text-gold",
+};
+
+/**
+ * Audit trail of the coverage list — every addition, edit, removal and licence
+ * copy upload, newest first, with the document attached to that step if one
+ * was uploaded.
+ */
+export function LicenceHistoryDialog({
+  open,
+  onOpenChange,
+  history,
+  licenses,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  history: RealtorLicenseEvent[];
+  licenses: RealtorLicenseDoc[];
+}) {
+  function docFor(event: RealtorLicenseEvent) {
+    if (event.action === "copy_uploaded") return event.after;
+    if (event.action === "removed") return undefined;
+    return licenses.find((l) => l.state === event.state)?.doc;
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Coverage &amp; licences history</DialogTitle>
+          <DialogDescription>
+            Every change to your licensed states — additions, edits, removals and the licence
+            copies uploaded for verification.
+          </DialogDescription>
+        </DialogHeader>
+        {history.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            No changes recorded yet. Adding, editing or removing a licence — or uploading a copy —
+            will show up here.
+          </p>
+        ) : (
+          <ol className="space-y-3">
+            {history.map((e) => {
+              const doc = docFor(e);
+              return (
+                <li key={e.id} className="rounded-md border border-border bg-card p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                      {e.state}
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${HISTORY_TONE[e.action]}`}
+                      >
+                        {HISTORY_LABEL[e.action]}
+                      </span>
+                    </span>
+                    <span className="text-[11px] text-muted-foreground">
+                      {formatDateTime(e.at)}
+                    </span>
+                  </div>
+                  {e.before ? (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Before: <span className="line-through">{e.before}</span>
+                    </p>
+                  ) : null}
+                  {e.after && e.action !== "copy_uploaded" ? (
+                    <p className="mt-0.5 text-xs text-foreground">{e.after}</p>
+                  ) : null}
+                  <p className="mt-1 text-[11px] text-muted-foreground">By {e.by}</p>
+                  {doc ? (
+                    <p className="mt-2 rounded-md bg-muted/40 px-2 py-1 text-[11px] text-foreground">
+                      Document: {doc}
+                    </p>
+                  ) : null}
+                </li>
+              );
+            })}
+          </ol>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
