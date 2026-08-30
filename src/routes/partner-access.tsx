@@ -218,7 +218,8 @@ function PartnerAccessPage() {
       );
     }
     logActivity(
-      `${firstName.trim()} ${lastName.trim()}`,
+      joinName({ firstName, lastName }),
+
       kind === "partner" ? "requested partner registration" : "requested corporate access",
       companyName.trim(),
     );
