@@ -59,15 +59,20 @@ import { toast } from "sonner";
 const DOC_KINDS = ["idDocuments", "visaDocuments", "bankruptcyDocuments"] as const;
 
 export const Route = createFileRoute("/profile")({
-  /** `?doc=<kind>` opens that upload pop-up, `?open=questionnaire` the wizard. */
+  /**
+   * `?doc=<kind>` opens that upload pop-up, `?open=<action>` the matching
+   * pop-up (questionnaire, identity, licences, a Loqal request) and
+   * `?focus=<id>` points at one specific request.
+   */
   validateSearch: (
     search: Record<string, unknown>,
-  ): { doc?: DocumentRequest["kind"]; open?: "questionnaire" } => {
-    const out: { doc?: DocumentRequest["kind"]; open?: "questionnaire" } = {};
+  ): { doc?: DocumentRequest["kind"]; open?: string; focus?: string } => {
+    const out: { doc?: DocumentRequest["kind"]; open?: string; focus?: string } = {};
     const doc = search["doc"];
     if (DOC_KINDS.includes(doc as (typeof DOC_KINDS)[number]))
       out.doc = doc as DocumentRequest["kind"];
-    if (search["open"] === "questionnaire") out.open = "questionnaire";
+    if (typeof search["open"] === "string") out.open = search["open"];
+    if (typeof search["focus"] === "string") out.focus = search["focus"];
     return out;
   },
   head: () => ({
