@@ -79,13 +79,14 @@ export function RealtorProfileCard({ user }: { user: LoqalUser }) {
 
   function startEdit() {
     if (!me) return;
-    setInfo({ phone: me.phone, position: registration?.position ?? "" });
+    setInfo({ phone: registration?.phone || me.phone, position: registration?.position ?? "" });
   }
 
   function save() {
     if (!me || !info) return;
     updateRealtor(me.id, { phone: info.phone.trim() });
-    if (registration) updateRequest(registration.id, { position: info.position.trim() });
+    if (registration)
+      updateRequest(registration.id, { position: info.position.trim(), phone: info.phone.trim() });
     setInfo(null);
     toast.success("Contact details updated.");
   }

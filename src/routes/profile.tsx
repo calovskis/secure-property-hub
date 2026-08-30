@@ -385,14 +385,30 @@ function ProfilePage() {
       <main className="mx-auto max-w-[1100px] px-4 py-8 md:px-7">
         <header className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">
-              {isPartner ? fullName(user) : "My profile"}
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {isPartner
-                ? "Your partner details, licenses and performance with Loqal."
-                : "Everything you have shared with Loqal, and the status of what you submitted."}
-            </p>
+            {isRealtor ? (
+              <>
+                <h1 className="text-2xl font-bold text-foreground">
+                  {`${myRegistration?.firstName || user.firstName} ${
+                    myRegistration?.lastName || user.lastName
+                  }`.trim() || fullName(user)}
+                </h1>
+                <p className="mt-1 text-sm font-semibold text-brand">Realtor</p>
+                {myRegistration?.position ? (
+                  <p className="text-sm text-muted-foreground">{myRegistration.position}</p>
+                ) : null}
+              </>
+            ) : (
+              <>
+                <h1 className="text-2xl font-bold text-foreground">
+                  {isPartner ? fullName(user) : "My profile"}
+                </h1>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {isPartner
+                    ? "Your partner details, licenses and performance with Loqal."
+                    : "Everything you have shared with Loqal, and the status of what you submitted."}
+                </p>
+              </>
+            )}
           </div>
 
           {!isPartner ? (
