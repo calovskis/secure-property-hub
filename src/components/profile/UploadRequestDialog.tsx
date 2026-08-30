@@ -237,9 +237,15 @@ export function UploadRequestDialog({
         ) : (
           <div className="mt-2 space-y-4">
             <div className="rounded-md border border-border bg-background p-3">
+              {choices?.length ? (
+                <p className="text-sm font-semibold text-foreground">
+                  {choices.find((c) => c.value === choice)?.label}
+                </p>
+              ) : null}
               {note ? (
                 <p className="whitespace-pre-wrap text-sm text-foreground">{note}</p>
               ) : null}
+
               <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
                 {files.length ? (
                   files.map((f) => <li key={f}>📎 {f}</li>)
