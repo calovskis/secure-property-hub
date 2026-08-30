@@ -410,6 +410,90 @@ function useDerivedNotifications() {
           createdAt: r.decidedAt ?? r.submittedAt,
         });
       }
+      /* Documents Loqal is waiting for from a realtor partner. */
+      const rv = r.realtorVerification;
+      const isRealtor = r.partnerType === "realtor";
+      if (isRealtor) {
+        const idKey = `pdoc-identity-${r.id}`;
+        if (!rv?.identityDoc) {
+          const since = requestOpenedAt(idKey);
+          list.push({
+            id: idKey,
+            to: email,
+            title: "Identity verification document needed",
+            body: "Upload your driver's licence or passport in My profile.",
+            href: "/profile",
+            severity: "warning",
+            createdAt: since,
+          });
+          for (const rem of documentReminders(since)) {
+            if (!rem.due) continue;
+            list.push({
+              id: `${idKey}-rem-${rem.hours}`,
+              to: email,
+              title: `Reminder: identity document still needed (${rem.label})`,
+              body: "Upload your driver's licence or passport in My profile.",
+              href: "/profile",
+              severity: rem.hours >= 168 ? "critical" : "warning",
+              emailCopy: rem.email,
+              createdAt: rem.dueAt,
+            });
+          }
+        } else {
+          clearRequestOpenedAt(idKey);
+          list.push({
+            id: `${idKey}-done`,
+            to: email,
+            title: "Identity verification document received",
+            body: "Thank you — Loqal is verifying it.",
+            href: "/profile",
+            severity: "info",
+            completed: true,
+            createdAt: rv.identityUploadedAt,
+          });
+        }
+
+        const licKey = `pdoc-licences-${r.id}`;
+        const licences = rv?.licenseDocs ?? [];
+        const missing = licences.filter((l) => !l.doc);
+        if (licences.length && missing.length) {
+          const since = requestOpenedAt(licKey);
+          list.push({
+            id: licKey,
+            to: email,
+            title: "State licence copies needed",
+            body: `${missing.length} of ${licences.length} state(s) still need a copy.`,
+            href: "/profile",
+            severity: "warning",
+            createdAt: since,
+          });
+          for (const rem of documentReminders(since)) {
+            if (!rem.due) continue;
+            list.push({
+              id: `${licKey}-rem-${rem.hours}`,
+              to: email,
+              title: `Reminder: state licence copies still needed (${rem.label})`,
+              body: `${missing.length} of ${licences.length} state(s) still need a copy.`,
+              href: "/profile",
+              severity: rem.hours >= 168 ? "critical" : "warning",
+              emailCopy: rem.email,
+              createdAt: rem.dueAt,
+            });
+          }
+        } else if (licences.length) {
+          clearRequestOpenedAt(licKey);
+          list.push({
+            id: `${licKey}-done`,
+            to: email,
+            title: "All state licence copies received",
+            body: `${licences.length} state(s) are on file.`,
+            href: "/profile",
+            severity: "info",
+            completed: true,
+          });
+        }
+      }
+
       if (r.status === "approved" && r.agreementCountersignedAt) {
         list.push({
           id: `active-${r.id}`,
@@ -517,8 +601,14 @@ export function NotificationBell() {
                       className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${SEVERITY_DOT[n.severity]}`}
                     />
                     <span className="min-w-0 flex-1">
-                      <span className="block text-sm font-semibold text-foreground">
-                        {n.title}
+                      <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                        <span className="min-w-0 flex-1">{n.title}</span>
+                        {n.completed ? (
+                          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[11px] font-semibold text-success">
+                            <span className="h-1.5 w-1.5 rounded-full bg-success" />
+                            Completed
+                          </span>
+                        ) : null}
                       </span>
                       {n.body ? (
                         <span className="mt-0.5 block truncate text-xs text-muted-foreground">
