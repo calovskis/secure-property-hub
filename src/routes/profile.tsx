@@ -388,9 +388,13 @@ function ProfilePage() {
             {isRealtor ? (
               <>
                 <h1 className="text-2xl font-bold text-foreground">
-                  {`${myRegistration?.firstName || user.firstName} ${
-                    myRegistration?.lastName || user.lastName
-                  }`.trim() || fullName(user)}
+                  {[
+                    myRegistration?.firstName || user.firstName,
+                    myRegistration?.lastName || user.lastName,
+                  ]
+                    .filter(Boolean)
+                    .map((p) => p!.charAt(0).toUpperCase() + p!.slice(1))
+                    .join(" ") || fullName(user)}
                 </h1>
                 <p className="mt-1 text-sm font-semibold text-brand">Realtor</p>
                 {myRegistration?.position ? (
