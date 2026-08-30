@@ -603,6 +603,14 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
     (r) => r.email.toLowerCase() === user.email.toLowerCase(),
   );
 
+  // Notifications deep-link straight into the pop-up they are about.
+  useDeepLinkAction("identity", () => setIdDialog(true));
+  useDeepLinkAction("licences", () => setLicDialog(true));
+  useDeepLinkAction("upload", (focus) => {
+    if (focus) requestOpenUpload(focus);
+  });
+
+
   const realtor =
     isRealtor || user.partnerType === "realtor" || registration?.partnerType === "realtor";
   const missingLicences = realtor ? licenses.filter((l) => !l.doc) : [];
