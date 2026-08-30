@@ -411,7 +411,7 @@ function ProfilePage() {
           <div className="space-y-6">
             {isPartner ? (
               <>
-                <PartnerAccountCard user={user} />
+                
                 <AdminRequestsCard user={user} />
                 {isRealtor ? <RealtorVerificationCard user={user} /> : <KybCard user={user} />}
                 <PartnerProfile user={user} />
