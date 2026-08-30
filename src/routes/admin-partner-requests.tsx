@@ -4,7 +4,16 @@ import { AppHeader } from "@/components/layout/AppHeader";
 import { AdminNav } from "@/components/admin/AdminNav";
 import { PARTNER_LABEL, fullName, useAuth, type PartnerType } from "@/lib/auth";
 import { formatDate, formatDateTime } from "@/lib/dates";
-import { usePartnerRequests, type PartnerRequest } from "@/lib/partner-requests";
+import {
+  usePartnerRequests,
+  REVIEW_STAGE_LABEL,
+  type PartnerRequest,
+} from "@/lib/partner-requests";
+import {
+  PartnerReviewBar,
+  ReviewProgressBar,
+  ReviewerMark,
+} from "@/components/admin/PartnerReviewBar";
 import { PartnerRequestDialog } from "@/components/admin/PartnerRequestDialog";
 import { PersonDetail } from "@/components/admin/PersonDetail";
 import { useAdminPeople } from "@/components/admin/people-model";
