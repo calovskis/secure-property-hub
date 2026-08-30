@@ -11,6 +11,7 @@ import { CallScheduler } from "@/components/buyer/CallScheduler";
 import { logActivity } from "@/lib/activity";
 import { formatDateTime } from "@/lib/dates";
 import { UploadRequestDialog } from "@/components/profile/UploadRequestDialog";
+import { UploadedDocLink } from "@/components/profile/UploadedDocLink";
 import { useUploadDrafts } from "@/lib/upload-drafts";
 import { useDeepLinkAction } from "@/lib/deep-link";
 import {
@@ -99,7 +100,7 @@ export function AdminRequestsCard({ user }: { user: LoqalUser }) {
         <div className="mt-4 space-y-4">
           {open.map((item) =>
             item.kind === "info" ? (
-              <InfoItem key={item.id} item={item} user={user} onAnswer={patch} />
+              <InfoItem key={item.id} item={item} requestId={request.id} user={user} onAnswer={patch} />
             ) : (
               <CallItem key={item.id} item={item} user={user} onBooked={patch} />
             ),
@@ -177,7 +178,7 @@ function HistoryDetailDialog({
                   {item.answerDocs?.length ? (
                     <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
                       {item.answerDocs.map((d) => (
-                        <li key={d}>📎 {d}</li>
+                        <li key={d}><UploadedDocLink path={d} /></li>
                       ))}
                     </ul>
                   ) : (
@@ -247,10 +248,12 @@ function ItemShell({
 
 function InfoItem({
   item,
+  requestId,
   user,
   onAnswer,
 }: {
   item: PartnerAdminRequest;
+  requestId: string;
   user: LoqalUser;
   onAnswer: (id: string, changes: Partial<PartnerAdminRequest>) => void;
 }) {
@@ -274,9 +277,9 @@ function InfoItem({
           </p>
           <p className="mt-1 whitespace-pre-wrap text-sm text-foreground">{item.answer}</p>
           {item.answerDocs?.length ? (
-            <ul className="mt-1 text-xs text-muted-foreground">
+            <ul className="mt-1 space-y-1 text-xs text-muted-foreground">
               {item.answerDocs.map((d) => (
-                <li key={d}>📎 {d}</li>
+                <li key={d}><UploadedDocLink path={d} /></li>
               ))}
             </ul>
           ) : null}
@@ -303,6 +306,7 @@ function InfoItem({
             title="Respond to Loqal"
             description={item.message}
             requireDocument={Boolean(item.requiresDocument)}
+            folder={`requests/${requestId}/${item.id}`}
             onSubmit={({ note, files }) => {
               onAnswer(item.id, {
                 answer: note,

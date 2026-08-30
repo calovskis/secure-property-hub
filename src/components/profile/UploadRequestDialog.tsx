@@ -7,6 +7,7 @@
  * "Unfinished uploads" on My Profile.
  */
 import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
   DialogContent,
@@ -21,8 +22,18 @@ import {
   saveUploadDraft,
 } from "@/lib/upload-drafts";
 
+const BUCKET = "partner-documents";
+
 const inputClass =
   "w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-brand";
+
+function displayName(path: string) {
+  const base = path.split("/").pop() ?? path;
+  if (base.length > 37 && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(base.slice(0, 36)) && base[36] === "-") {
+    return base.slice(37);
+  }
+  return base;
+}
 
 export function UploadRequestDialog({
   open,
@@ -35,6 +46,7 @@ export function UploadRequestDialog({
   askNote = true,
   choices,
   choiceLabel = "Document type",
+  folder,
   onSubmit,
 }: {
   open: boolean;
@@ -49,6 +61,8 @@ export function UploadRequestDialog({
   /** Optional document-type picker shown inside the pop-up. */
   choices?: { value: string; label: string }[];
   choiceLabel?: string;
+  /** When provided, files are uploaded to this storage folder immediately. */
+  folder?: string;
   onSubmit: (result: { note: string; files: string[]; choice?: string | undefined }) => void;
 }) {
   const [note, setNote] = useState("");
@@ -58,7 +72,7 @@ export function UploadRequestDialog({
   const [confirmed, setConfirmed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [restored, setRestored] = useState(false);
-
+  const [uploading, setUploading] = useState(false);
 
   // Re-open from the "Unfinished uploads" panel.
   useEffect(() => onOpenUpload(draftId, () => onOpenChange(true)), [draftId, onOpenChange]);
@@ -78,16 +92,67 @@ export function UploadRequestDialog({
     saveUploadDraft({ id: draftId, label, note: nextNote, files: nextFiles, expected: 1 });
   }
 
-  function addFiles(names: string[]) {
-    const next = [...files, ...names.filter((n) => !files.includes(n))];
-    setFiles(next);
-    persist(note, next);
+  async function addFiles(selected: FileList | null) {
+    if (!selected?.length) return;
+    if (!folder) {
+      const names = Array.from(selected).map((f) => f.name);
+      const next = [...files, ...names.filter((n) => !files.includes(n))];
+      setFiles(next);
+      persist(note, next);
+      return;
+    }
+
+    setUploading(true);
+    setError(null);
+    const uploaded: string[] = [];
+    for (const file of Array.from(selected)) {
+      const path = `${folder}/${crypto.randomUUID()}-${file.name}`;
+      const { error: upError } = await supabase.storage.from(BUCKET).upload(path, file);
+      if (upError) {
+        setError(`Upload failed: ${upError.message}`);
+        setUploading(false);
+        return;
+      }
+      uploaded.push(path);
+    }
+    setFiles((prev) => {
+      const next = [...prev, ...uploaded];
+      persist(note, next);
+      return next;
+    });
+    setUploading(false);
   }
 
-  function removeFile(name: string) {
-    const next = files.filter((f) => f !== name);
-    setFiles(next);
-    persist(note, next);
+  async function replaceFile(oldPath: string, file: File) {
+    if (!folder) {
+      const next = files.map((f) => (f === oldPath ? file.name : f));
+      setFiles(next);
+      persist(note, next);
+      return;
+    }
+    const path = `${folder}/${crypto.randomUUID()}-${file.name}`;
+    const { error: upError } = await supabase.storage.from(BUCKET).upload(path, file);
+    if (upError) {
+      setError(`Upload failed: ${upError.message}`);
+      return;
+    }
+    await supabase.storage.from(BUCKET).remove([oldPath]);
+    setFiles((prev) => {
+      const next = prev.map((f) => (f === oldPath ? path : f));
+      persist(note, next);
+      return next;
+    });
+  }
+
+  async function removeFile(path: string) {
+    setFiles((prev) => {
+      const next = prev.filter((f) => f !== path);
+      persist(note, next);
+      return next;
+    });
+    if (folder) {
+      await supabase.storage.from(BUCKET).remove([path]);
+    }
   }
 
   function toConfirm() {
@@ -141,8 +206,6 @@ export function UploadRequestDialog({
               </label>
             ) : null}
 
-
-
             {askNote ? (
               <label className="block">
                 <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -162,14 +225,14 @@ export function UploadRequestDialog({
             ) : null}
 
             <div>
-              <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-dashed border-border bg-background px-4 py-2 text-sm font-semibold text-foreground hover:border-brand">
+              <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-dashed border-border bg-background px-4 py-2 text-sm font-semibold text-foreground hover:border-brand disabled:opacity-50">
                 <input
                   type="file"
                   multiple
+                  disabled={uploading}
                   className="hidden"
                   onChange={(e) => {
-                    const names = Array.from(e.target.files ?? []).map((f) => f.name);
-                    if (names.length) addFiles(names);
+                    addFiles(e.target.files);
                     e.target.value = "";
                   }}
                 />
@@ -183,19 +246,16 @@ export function UploadRequestDialog({
                       key={f}
                       className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2 text-xs text-foreground"
                     >
-                      <span className="truncate">📎 {f}</span>
+                      <span className="truncate">📎 {displayName(f)}</span>
                       <span className="flex shrink-0 gap-2">
-                        <label className="cursor-pointer font-semibold text-brand hover:underline">
+                        <label className="cursor-pointer font-semibold text-brand hover:underline disabled:opacity-50">
                           <input
                             type="file"
+                            disabled={uploading}
                             className="hidden"
                             onChange={(e) => {
-                              const name = e.target.files?.[0]?.name;
-                              if (name) {
-                                const next = files.map((x) => (x === f ? name : x));
-                                setFiles(next);
-                                persist(note, next);
-                              }
+                              const file = e.target.files?.[0];
+                              if (file) replaceFile(f, file);
                               e.target.value = "";
                             }}
                           />
@@ -203,8 +263,9 @@ export function UploadRequestDialog({
                         </label>
                         <button
                           type="button"
+                          disabled={uploading}
                           onClick={() => removeFile(f)}
-                          className="font-semibold text-destructive hover:underline"
+                          className="font-semibold text-destructive hover:underline disabled:opacity-50"
                         >
                           Delete
                         </button>
@@ -215,20 +276,25 @@ export function UploadRequestDialog({
               ) : null}
             </div>
 
+            {uploading ? (
+              <p className="text-xs text-muted-foreground">Uploading…</p>
+            ) : null}
             {error ? <p className="text-xs font-semibold text-destructive">{error}</p> : null}
 
             <div className="flex justify-end gap-2">
               <button
                 type="button"
+                disabled={uploading}
                 onClick={() => onOpenChange(false)}
-                className="rounded-md border border-border px-4 py-2 text-sm font-semibold text-muted-foreground hover:bg-muted"
+                className="rounded-md border border-border px-4 py-2 text-sm font-semibold text-muted-foreground hover:bg-muted disabled:opacity-50"
               >
                 Save &amp; close
               </button>
               <button
                 type="button"
+                disabled={uploading}
                 onClick={toConfirm}
-                className="rounded-md bg-brand px-4 py-2 text-sm font-semibold text-background hover:bg-brand-soft"
+                className="rounded-md bg-brand px-4 py-2 text-sm font-semibold text-background hover:bg-brand-soft disabled:opacity-50"
               >
                 Review &amp; submit
               </button>
@@ -248,7 +314,7 @@ export function UploadRequestDialog({
 
               <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
                 {files.length ? (
-                  files.map((f) => <li key={f}>📎 {f}</li>)
+                  files.map((f) => <li key={f}>📎 {displayName(f)}</li>)
                 ) : (
                   <li>No documents attached.</li>
                 )}
