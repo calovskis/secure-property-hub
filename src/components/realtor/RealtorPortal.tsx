@@ -13,7 +13,9 @@ import {
   isRealtorOnVacation,
   useRealtors,
   type Realtor,
+  type RealtorLicense,
 } from "@/lib/realtors";
+import { usePartnerRequests } from "@/lib/partner-requests";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import { DateInput } from "@/components/form/DateInput";
 import { CallScheduler } from "@/components/buyer/CallScheduler";
@@ -685,11 +687,21 @@ function VacationMode({ me }: { me: Realtor }) {
 }
 
 /** Licenses & languages summary shown on the realtor Home dashboard. */
-function LicensesCard({ me }: { me: Realtor }) {
+function LicensesCard({
+  me,
+  licenses,
+  languages,
+}: {
+  me: Realtor;
+  licenses?: RealtorLicense[];
+  languages?: string[];
+}) {
+  const shownLicenses = licenses?.length ? licenses : me.licenses;
+  const shownLanguages = languages?.length ? languages : me.languages;
   return (
     <section className="rounded-lg border border-border bg-card p-6">
       <h2 className="text-base font-semibold text-foreground">My licenses & languages</h2>
-      {me.licenses.length ? (
+      {shownLicenses.length ? (
         <div className="mt-3 overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
@@ -701,7 +713,7 @@ function LicensesCard({ me }: { me: Realtor }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {me.licenses.map((l) => (
+              {shownLicenses.map((l) => (
                 <tr key={`${l.state}-${l.number}`}>
                   <td className="py-2.5 pr-4 font-semibold text-foreground">{l.state}</td>
                   <td className="py-2.5 pr-4 text-muted-foreground">{l.number}</td>
@@ -722,7 +734,7 @@ function LicensesCard({ me }: { me: Realtor }) {
           Languages
         </span>
         <div className="mt-2 flex flex-wrap gap-1.5">
-          {me.languages.map((l) => (
+          {shownLanguages.map((l) => (
             <span
               key={l}
               className="rounded-full bg-brand-tint px-3 py-1 text-[11px] font-semibold text-brand"
@@ -772,7 +784,12 @@ export function RealtorPortal({
   const { realtors, ensureSeat } = useRealtors();
   const { leads, ready: leadsReady } = useLeads();
   const { photos } = useBuyerProcess();
-  const greeting = useGreeting(user.firstName, user.email);
+  const { requests } = usePartnerRequests();
+
+  const registration = requests.find(
+    (r) => r.email.toLowerCase() === user.email.toLowerCase(),
+  );
+  const greeting = useGreeting(registration?.firstName || user.firstName, user.email);
 
   const me = realtors.find((r) => r.email.toLowerCase() === user.email.toLowerCase());
 
@@ -854,7 +871,13 @@ export function RealtorPortal({
 
           <div className="grid gap-6 lg:grid-cols-2">
             <VacationMode me={me} />
-            <LicensesCard me={me} />
+            <LicensesCard
+              me={me}
+              {...(registration?.realtorLicenses?.length
+                ? { licenses: registration.realtorLicenses }
+                : {})}
+              {...(registration?.languages?.length ? { languages: registration.languages } : {})}
+            />
           </div>
 
         </>

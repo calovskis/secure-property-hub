@@ -102,7 +102,8 @@ export function greetingFor(
   now: Date = new Date(),
   timeZone?: string,
 ): string {
-  const name = (firstName || "").trim().split(" ")[0] ?? "";
+  const raw = (firstName || "").trim().split(" ")[0] ?? "";
+  const name = raw ? raw.charAt(0).toUpperCase() + raw.slice(1) : "";
   const seed = Math.floor(now.getTime() / 3_600_000) + name.length;
   const hour = now.getHours();
   const gap = previousVisit ? now.getTime() - previousVisit : undefined;
