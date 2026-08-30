@@ -33,6 +33,8 @@ export function UploadRequestDialog({
   description,
   requireDocument = false,
   askNote = true,
+  choices,
+  choiceLabel = "Document type",
   onSubmit,
 }: {
   open: boolean;
@@ -44,14 +46,19 @@ export function UploadRequestDialog({
   description: string;
   requireDocument?: boolean;
   askNote?: boolean;
-  onSubmit: (result: { note: string; files: string[] }) => void;
+  /** Optional document-type picker shown inside the pop-up. */
+  choices?: { value: string; label: string }[];
+  choiceLabel?: string;
+  onSubmit: (result: { note: string; files: string[]; choice?: string }) => void;
 }) {
   const [note, setNote] = useState("");
   const [files, setFiles] = useState<string[]>([]);
+  const [choice, setChoice] = useState<string>(choices?.[0]?.value ?? "");
   const [step, setStep] = useState<"upload" | "confirm">("upload");
   const [confirmed, setConfirmed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [restored, setRestored] = useState(false);
+
 
   // Re-open from the "Unfinished uploads" panel.
   useEffect(() => onOpenUpload(draftId, () => onOpenChange(true)), [draftId, onOpenChange]);
