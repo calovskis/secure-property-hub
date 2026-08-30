@@ -18,11 +18,11 @@ type Props = {
   /** ISO start time. */
   startAt: string;
   /** Google Meet link, when one was created. */
-  meetUrl?: string | null;
+  meetUrl?: string | null | undefined;
   /** Who the call is with (loan officer, Loqal manager, realtor…). */
-  withLabel?: string;
+  withLabel?: string | undefined;
   /** Extra context (property, company, reference). */
-  contextLabel?: string;
+  contextLabel?: string | undefined;
   durationMinutes?: number;
 };
 
@@ -31,7 +31,7 @@ function googleCalendarUrl(opts: {
   title: string;
   startAt: string;
   durationMinutes: number;
-  meetUrl?: string | null;
+  meetUrl?: string | null | undefined;
   details: string;
 }) {
   const start = new Date(opts.startAt);
