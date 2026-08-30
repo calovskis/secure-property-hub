@@ -53,12 +53,70 @@ function typeOf(r: PartnerRequest): TypeFilter {
   return r.kind === "corporate" ? "corporate" : (r.partnerType ?? "other");
 }
 
+/** Two-letter USPS code for a state stored either as a name or a code. */
+function stateAbbr(s: string): string {
+  if (s.length === 2) return s.toUpperCase();
+  const i = US_STATES.findIndex((n) => n.toLowerCase() === s.trim().toLowerCase());
+  return i >= 0 ? (US_STATE_CODES[i] as string) : s;
+}
+
+/**
+ * Compact coverage summary: state-code bubbles instead of full licence rows.
+ * "All states" covers everything; more than 40 states reads as
+ * "All states, except …" listing only where the partner has no presence.
+ */
+function CoverageBubbles({ r }: { r: PartnerRequest }) {
+  if (r.allStates) {
+    return (
+      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+        <span className="text-[11px] font-semibold text-muted-foreground">Licences:</span>
+        <span className="rounded bg-success/10 px-2 py-1 text-[11px] font-semibold text-success">
+          All states
+        </span>
+      </div>
+    );
+  }
+  const codes = [
+    ...new Set((r.realtorLicenses ?? []).map((l) => stateAbbr(l.state)).filter(Boolean)),
+  ];
+  if (!codes.length) return null;
+
+  if (codes.length > 40) {
+    const missing = US_STATE_CODES.filter((c) => !codes.includes(c));
+    return (
+      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+        <span className="text-[11px] font-semibold text-muted-foreground">Licences:</span>
+        <span className="rounded bg-success/10 px-2 py-1 text-[11px] font-semibold text-success">
+          All states{missing.length ? `, except ${missing.join(", ")}` : ""}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+      <span className="text-[11px] font-semibold text-muted-foreground">Licences:</span>
+      {codes.map((c) => (
+        <span
+          key={c}
+          className="rounded bg-brand-tint px-2 py-1 text-[11px] font-semibold text-brand"
+        >
+          {c}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function AdminPartnerRequestsPage() {
   const { user, ready } = useAuth();
   const { requests, setStatus, updateRequest } = usePartnerRequests();
   const [ask, setAsk] = useState<{ request: PartnerRequest; kind: "info" | "call" } | null>(null);
   const { addRealtor } = useRealtors();
   const [filter, setFilter] = useState<TypeFilter>("all");
+  const people = useAdminPeople();
+  const [profileKey, setProfileKey] = useState<string | null>(null);
+  const profilePerson = profileKey ? people.find((p) => p.key === profileKey) : undefined;
 
   const pending = useMemo(
     () =>
