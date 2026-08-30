@@ -2,7 +2,7 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { AdminNav } from "@/components/admin/AdminNav";
 import { PersonDetailContent } from "@/components/admin/PersonDetail";
-import { useAdminPeople } from "@/components/admin/people-model";
+import { useAdminPeopleReady } from "@/components/admin/people-model";
 import { fullName, useAuth } from "@/lib/auth";
 
 /**
@@ -33,7 +33,7 @@ export const Route = createFileRoute("/admin-people/$personId")({
 function AdminPeopleDetailPage() {
   const { user, ready } = useAuth();
   const { personId } = Route.useParams();
-  const people = useAdminPeople();
+  const { people, ready: peopleReady } = useAdminPeopleReady();
 
   if (!ready) return <div className="min-h-screen bg-background" />;
 
@@ -52,6 +52,19 @@ function AdminPeopleDetailPage() {
           >
             Go to sign in
           </Link>
+        </main>
+      </div>
+    );
+  }
+
+  if (!peopleReady) {
+    // Registrations load from the database after mount; hold the page until
+    // they arrive so the profile isn't mistaken for missing.
+    return (
+      <div className="min-h-screen bg-background">
+        <AppHeader navSlot={<AdminNav tab={"people"} />} />
+        <main className="mx-auto max-w-[1100px] px-4 py-24 text-center text-sm text-muted-foreground">
+          Loading profile…
         </main>
       </div>
     );

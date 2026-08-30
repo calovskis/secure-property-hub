@@ -121,6 +121,14 @@ export function useAdminPeople(): AdminPerson[] {
   }, [leads, requests, overrides, presence]);
 }
 
+/** People list plus a ready flag — false until partner registrations have
+ *  loaded from the database, so pages don't judge "not found" too early. */
+export function useAdminPeopleReady(): { people: AdminPerson[]; ready: boolean } {
+  const people = useAdminPeople();
+  const { ready } = usePartnerRequests();
+  return { people, ready };
+}
+
 /** States a partner covers, used by the coverage filter. */
 export function coverageStates(p: AdminPerson): string[] {
   const r = p.request;
