@@ -76,12 +76,19 @@ function ItemShell({
   badge: string;
   children: React.ReactNode;
 }) {
+  const done = item.kind === "info" ? Boolean(item.answeredAt) : Boolean(item.scheduledAt);
   return (
     <div className="rounded-lg border border-border bg-background p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="rounded-full bg-brand-tint px-2.5 py-0.5 text-[11px] font-semibold text-brand">
           {badge}
         </span>
+        {done ? (
+          <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[11px] font-semibold text-success">
+            <span className="h-1.5 w-1.5 rounded-full bg-success" />
+            Completed
+          </span>
+        ) : null}
         <span className="text-[11px] text-muted-foreground">
           Sent {formatDateTime(item.requestedAt)}
         </span>
