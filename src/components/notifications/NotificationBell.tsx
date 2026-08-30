@@ -505,20 +505,35 @@ function useDerivedNotifications() {
         const body = req.message.slice(0, 140) || "Open your profile to respond.";
         if (done) {
           clearRequestOpenedAt(`preq-${req.id}`);
+          if (isInfo) {
+            /* Keep the original request notification in place (same id, same
+               date, same position) and simply mark it completed — the partner
+               knows they answered, so no new notification is created. */
+            list.push({
+              id: `preq-${req.id}`,
+              to: email,
+              title,
+              body,
+              href: `/profile?open=history&focus=${req.id}`,
+              severity: "info",
+              completed: true,
+              createdAt: req.requestedAt,
+            });
+            continue;
+          }
           list.push({
             id: `preq-${req.id}-done`,
             to: email,
-            title: isInfo ? "Information request answered" : "Video call booked",
-            body: isInfo
-              ? "Thank you — Loqal received your answer."
-              : `Booked for ${formatDateTime(req.scheduledAt!)}. Tap for the meeting link.`,
-            href: isInfo ? "/profile" : `/profile?open=call-details&focus=${req.id}`,
+            title: "Video call booked",
+            body: `Booked for ${formatDateTime(req.scheduledAt!)}. Tap for the meeting link.`,
+            href: `/profile?open=call-details&focus=${req.id}`,
             severity: "info",
             completed: true,
-            createdAt: (isInfo ? req.answeredAt : req.scheduledAt) ?? undefined,
+            createdAt: req.scheduledAt ?? undefined,
           });
           continue;
         }
+
         const since = requestOpenedAt(`preq-${req.id}`, req.requestedAt);
         list.push({
           id: `preq-${req.id}`,
