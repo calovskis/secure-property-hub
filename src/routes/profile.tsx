@@ -376,6 +376,17 @@ function ProfilePage() {
     (r) => r.email.toLowerCase() === user.email.toLowerCase(),
   );
   const isRealtor = user.partnerType === "realtor" || myRegistration?.partnerType === "realtor";
+
+  // A "video call booked" notification opens the call details pop-up directly.
+  const bookedCall = (myRegistration?.adminRequests ?? []).find(
+    (r) =>
+      r.kind === "call" &&
+      r.scheduledAt &&
+      (!focusParam || r.id === focusParam),
+  );
+  useEffect(() => {
+    if (openParam === "call-details" && bookedCall) setCallDetailsOpen(true);
+  }, [openParam, bookedCall?.id]);
   // Realtors keep their workspace header everywhere, including My Profile.
   const realtorNav = [
     { label: "Home", icon: "🏠", to: "/partner" },
