@@ -711,7 +711,7 @@ function LicensesCard({
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {me.licenses.map((l) => (
+              {shownLicenses.map((l) => (
                 <tr key={`${l.state}-${l.number}`}>
                   <td className="py-2.5 pr-4 font-semibold text-foreground">{l.state}</td>
                   <td className="py-2.5 pr-4 text-muted-foreground">{l.number}</td>
@@ -732,7 +732,7 @@ function LicensesCard({
           Languages
         </span>
         <div className="mt-2 flex flex-wrap gap-1.5">
-          {me.languages.map((l) => (
+          {shownLanguages.map((l) => (
             <span
               key={l}
               className="rounded-full bg-brand-tint px-3 py-1 text-[11px] font-semibold text-brand"
