@@ -18,7 +18,13 @@ export function openDeepLink(navigate: ReturnType<typeof useNavigate>, href: str
   navigate({ to: path, ...(search ? { search } : {}) } as never);
 }
 
-type DeepLinkSearch = { tab?: string; open?: string; focus?: string; doc?: string; request?: string };
+type DeepLinkSearch = {
+  tab?: string | undefined;
+  open?: string | undefined;
+  focus?: string | undefined;
+  doc?: string | undefined;
+  request?: string | undefined;
+};
 
 /** Current deep-link parameters, whatever route we are on. */
 export function useDeepLink(): DeepLinkSearch {
