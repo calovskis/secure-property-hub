@@ -313,6 +313,32 @@ function AdminPartnerRequestsPage() {
           </section>
         ) : null}
 
+        {pending.length ? (
+          <section className="mb-6 rounded-lg border border-border bg-card p-5">
+            <h2 className="text-sm font-semibold text-foreground">Verification progress</h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Who owns each case and how far it has moved — visible to every Loqal employee, even
+              without access to the partner file.
+            </p>
+            <ul className="mt-3 space-y-2">
+              {pending.map((r) => (
+                <li key={r.id} className="rounded-md border border-border bg-background p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-xs font-semibold text-foreground">{r.companyName}</span>
+                    <span className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                      {r.reviewerName ? `Reviewed by ${r.reviewerName}` : "No reviewer assigned"} ·{" "}
+                      {REVIEW_STAGE_LABEL[r.reviewStage ?? "unassigned"]}
+                    </span>
+                  </div>
+                  <div className="mt-2">
+                    <ReviewProgressBar stage={r.reviewStage ?? "unassigned"} />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
+
         <div className="mb-6 flex flex-wrap gap-2">
           {TYPE_FILTERS.map((f) => {
             const n = f.id === "all" ? [...counts.values()].reduce((s, v) => s + v, 0) : (counts.get(f.id) ?? 0);
