@@ -188,9 +188,9 @@ export function RealtorProfileCard({ user }: { user: LoqalUser }) {
 
       <TopicCard
         title="Languages"
-        summary={me.languages.length ? me.languages.join(", ") : "No languages added yet"}
+        summary={languages.length ? languages.join(", ") : "No languages added yet"}
       >
-        <LanguagesEditor values={me.languages} onChange={saveLanguages} />
+        <LanguagesEditor values={languages} onChange={saveLanguages} />
       </TopicCard>
 
       {registration ? (
