@@ -57,6 +57,19 @@ function AdminPeopleDetailPage() {
     );
   }
 
+  if (!peopleReady) {
+    // Registrations load from the database after mount; hold the page until
+    // they arrive so the profile isn't mistaken for missing.
+    return (
+      <div className="min-h-screen bg-background">
+        <AppHeader navSlot={<AdminNav tab={"people"} />} />
+        <main className="mx-auto max-w-[1100px] px-4 py-24 text-center text-sm text-muted-foreground">
+          Loading profile…
+        </main>
+      </div>
+    );
+  }
+
   const person = people.find((p) => p.key === personId);
   if (!person) throw notFound();
 
