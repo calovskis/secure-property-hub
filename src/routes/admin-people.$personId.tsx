@@ -33,7 +33,7 @@ export const Route = createFileRoute("/admin-people/$personId")({
 function AdminPeopleDetailPage() {
   const { user, ready } = useAuth();
   const { personId } = Route.useParams();
-  const people = useAdminPeople();
+  const { people, ready: peopleReady } = useAdminPeopleReady();
 
   if (!ready) return <div className="min-h-screen bg-background" />;
 
