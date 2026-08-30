@@ -624,7 +624,7 @@ function PropertyDetailPage() {
           title={callBooking.kind === "video_tour" ? "Live video tour" : callBooking.kind === "intro_call" ? "Intro call" : "Property visit call"}
           startAt={callBooking.startAt}
           meetUrl={callBooking.meetUrl}
-          withLabel={callBooking.clientName ? `Your Loqal realtor partner` : undefined}
+          withLabel="Your Loqal realtor partner"
           contextLabel={callBooking.propertyLabel}
         />
       ) : null}
