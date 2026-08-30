@@ -204,19 +204,35 @@ export function LicenceCoverageTable({ user }: { user: LoqalUser }) {
         <p className="text-xs text-muted-foreground">
           Licence copies are uploaded from the identity &amp; licence verification card.
         </p>
-        {edit === null ? (
+        <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => {
-              setEdit({ state: "", number: "", validUntil: "" });
-              setEditState(null);
-            }}
+            onClick={() => setHistoryOpen(true)}
             className="rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-brand-tint"
           >
-            + Add licence
+            View history{history.length ? ` (${history.length})` : ""}
           </button>
-        ) : null}
+          {edit === null ? (
+            <button
+              type="button"
+              onClick={() => {
+                setEdit({ state: "", number: "", validUntil: "" });
+                setEditState(null);
+              }}
+              className="rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-brand-tint"
+            >
+              + Add licence
+            </button>
+          ) : null}
+        </div>
       </div>
+
+      <LicenceHistoryDialog
+        open={historyOpen}
+        onOpenChange={setHistoryOpen}
+        history={history}
+        licenses={licenses}
+      />
 
       {licenses.length === 0 ? (
         <p className="mt-3 text-xs text-muted-foreground">
