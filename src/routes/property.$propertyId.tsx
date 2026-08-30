@@ -19,12 +19,15 @@ import {
 
 export const Route = createFileRoute("/property/$propertyId")({
   component: PropertyDetailPage,
-  /** `?open=feedback|questionnaire` lets a notification jump straight into the pop-up. */
+  /** `?open=feedback|questionnaire|call` lets a notification jump straight into the pop-up. */
   validateSearch: (
     search: Record<string, unknown>,
-  ): { open?: "feedback" | "questionnaire" } => {
+  ): { open?: "feedback" | "questionnaire" | "call"; focus?: string } => {
     const value = search["open"];
-    return value === "feedback" || value === "questionnaire" ? { open: value } : {};
+    const out: { open?: "feedback" | "questionnaire" | "call"; focus?: string } = {};
+    if (value === "feedback" || value === "questionnaire" || value === "call") out.open = value;
+    if (typeof search["focus"] === "string") out.focus = search["focus"];
+    return out;
   },
   loader: ({ params }) => {
     const property = getProperty(Number(params.propertyId));
@@ -145,13 +148,24 @@ function PropertyDetailPage() {
   const lead = user ? leadForProperty(user.email, property.id) : undefined;
   const [questionnaireOpen, setQuestionnaireOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
-  const { open: openParam } = Route.useSearch();
+  const [callOpen, setCallOpen] = useState(false);
+  const { open: openParam, focus: focusParam } = Route.useSearch();
+  const { bookings } = useBuyerProcess();
+
+  // A "call confirmed" notification opens the video-call details pop-up.
+  const callBooking = bookings.find(
+    (b) =>
+      b.status === "confirmed" &&
+      b.propertyLabel.startsWith(property.address) &&
+      (!focusParam || b.id === focusParam),
+  ) ?? (focusParam ? bookings.find((b) => b.id === focusParam && b.status === "confirmed") : undefined);
 
   // Arriving from a notification opens the exact pop-up that needs attention.
   useEffect(() => {
     if (openParam === "feedback") setFeedbackOpen(true);
     if (openParam === "questionnaire") setQuestionnaireOpen(true);
-  }, [openParam]);
+    if (openParam === "call" && callBooking) setCallOpen(true);
+  }, [openParam, callBooking?.id]);
 
 
   const privileged = user?.role === "admin" || user?.role === "partner";
