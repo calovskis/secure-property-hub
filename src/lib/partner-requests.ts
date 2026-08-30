@@ -135,6 +135,50 @@ export type ProfileChangeRequest = {
   decidedAt?: string;
 };
 
+/**
+ * Verification progress of a partner registration. Every Loqal employee sees
+ * the stage in the queue, even if they cannot open the partner's file.
+ */
+export type ReviewStage =
+  | "unassigned"
+  | "assigned"
+  | "documents_review"
+  | "info_requested"
+  | "call_scheduled"
+  | "ready_for_decision"
+  | "on_hold";
+
+export const REVIEW_STAGES: ReviewStage[] = [
+  "unassigned",
+  "assigned",
+  "documents_review",
+  "info_requested",
+  "call_scheduled",
+  "ready_for_decision",
+  "on_hold",
+];
+
+export const REVIEW_STAGE_LABEL: Record<ReviewStage, string> = {
+  unassigned: "Not assigned",
+  assigned: "Assigned",
+  documents_review: "Documents under review",
+  info_requested: "Information requested",
+  call_scheduled: "Video call scheduled",
+  ready_for_decision: "Ready for decision",
+  on_hold: "On hold",
+};
+
+/** Rough completion of the verification, for the progress bars. */
+export const REVIEW_STAGE_PROGRESS: Record<ReviewStage, number> = {
+  unassigned: 0,
+  assigned: 20,
+  documents_review: 45,
+  info_requested: 60,
+  call_scheduled: 75,
+  ready_for_decision: 90,
+  on_hold: 35,
+};
+
 export type PartnerRequest = {
   id: string;
   kind: "partner" | "corporate";
@@ -177,6 +221,14 @@ export type PartnerRequest = {
   realtorVerification?: RealtorVerification;
   /** Name / surname / company name edits awaiting a Loqal admin decision. */
   profileChangeRequests: ProfileChangeRequest[];
+  /** Loqal employee responsible for verifying this partner. */
+  reviewerId?: string;
+  reviewerName?: string;
+  /** Verification progress, visible to every admin even without file access. */
+  reviewStage: ReviewStage;
+  /** Short internal status note shown next to the progress. */
+  reviewNote?: string;
+  reviewUpdatedAt?: string;
   /** Loqal partnership agreement, signed by the partner after approval. */
   agreementSignedAt?: string;
   agreementSignedBy?: string;
@@ -229,6 +281,11 @@ function fromRow(r: Row): PartnerRequest {
     agreementSignedAt: s(r["agreement_signed_at"]),
     agreementSignedBy: s(r["agreement_signed_by"]),
     agreementCountersignedAt: s(r["agreement_countersigned_at"]),
+    reviewerId: s(r["reviewer_id"]),
+    reviewerName: s(r["reviewer_name"]),
+    reviewStage: (s(r["review_stage"]) as ReviewStage) ?? "unassigned",
+    reviewNote: s(r["review_note"]),
+    reviewUpdatedAt: s(r["review_updated_at"]),
     submittedAt: s(r["submitted_at"]) ?? new Date().toISOString(),
     status: (s(r["status"]) as PartnerRequestStatus) ?? "pending",
     decidedAt: s(r["decided_at"]),
@@ -269,6 +326,11 @@ const COLUMN: Record<string, string> = {
   agreementSignedAt: "agreement_signed_at",
   agreementSignedBy: "agreement_signed_by",
   agreementCountersignedAt: "agreement_countersigned_at",
+  reviewerId: "reviewer_id",
+  reviewerName: "reviewer_name",
+  reviewStage: "review_stage",
+  reviewNote: "review_note",
+  reviewUpdatedAt: "review_updated_at",
   status: "status",
   decidedAt: "decided_at",
   submittedAt: "submitted_at",
@@ -342,7 +404,13 @@ export function usePartnerRequests() {
     async (
       input: Omit<
         PartnerRequest,
-        "id" | "submittedAt" | "status" | "verificationDocs" | "adminRequests" | "profileChangeRequests"
+        | "id"
+        | "submittedAt"
+        | "status"
+        | "verificationDocs"
+        | "adminRequests"
+        | "profileChangeRequests"
+        | "reviewStage"
       >,
     ) => {
       const { data: userData } = await supabase.auth.getUser();

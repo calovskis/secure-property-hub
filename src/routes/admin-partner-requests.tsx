@@ -4,7 +4,16 @@ import { AppHeader } from "@/components/layout/AppHeader";
 import { AdminNav } from "@/components/admin/AdminNav";
 import { PARTNER_LABEL, fullName, useAuth, type PartnerType } from "@/lib/auth";
 import { formatDate, formatDateTime } from "@/lib/dates";
-import { usePartnerRequests, type PartnerRequest } from "@/lib/partner-requests";
+import {
+  usePartnerRequests,
+  REVIEW_STAGE_LABEL,
+  type PartnerRequest,
+} from "@/lib/partner-requests";
+import {
+  PartnerReviewBar,
+  ReviewProgressBar,
+  ReviewerMark,
+} from "@/components/admin/PartnerReviewBar";
 import { PartnerRequestDialog } from "@/components/admin/PartnerRequestDialog";
 import { PersonDetail } from "@/components/admin/PersonDetail";
 import { useAdminPeople } from "@/components/admin/people-model";
@@ -180,6 +189,9 @@ function AdminPartnerRequestsPage() {
           requestedBy: fullName(user!),
         },
       ],
+      reviewStage: kind === "info" ? "info_requested" : "call_scheduled",
+      reviewUpdatedAt: new Date().toISOString(),
+      ...(r.reviewerId ? {} : { reviewerId: user!.email, reviewerName: fullName(user!) }),
     });
     notify({
       id: `partner-admin-request-${r.id}-${Date.now()}`,
@@ -301,6 +313,32 @@ function AdminPartnerRequestsPage() {
           </section>
         ) : null}
 
+        {pending.length ? (
+          <section className="mb-6 rounded-lg border border-border bg-card p-5">
+            <h2 className="text-sm font-semibold text-foreground">Verification progress</h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Who owns each case and how far it has moved — visible to every Loqal employee, even
+              without access to the partner file.
+            </p>
+            <ul className="mt-3 space-y-2">
+              {pending.map((r) => (
+                <li key={r.id} className="rounded-md border border-border bg-background p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-xs font-semibold text-foreground">{r.companyName}</span>
+                    <span className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                      {r.reviewerName ? `Reviewed by ${r.reviewerName}` : "No reviewer assigned"} ·{" "}
+                      {REVIEW_STAGE_LABEL[r.reviewStage ?? "unassigned"]}
+                    </span>
+                  </div>
+                  <div className="mt-2">
+                    <ReviewProgressBar stage={r.reviewStage ?? "unassigned"} />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
+
         <div className="mb-6 flex flex-wrap gap-2">
           {TYPE_FILTERS.map((f) => {
             const n = f.id === "all" ? [...counts.values()].reduce((s, v) => s + v, 0) : (counts.get(f.id) ?? 0);
@@ -336,7 +374,8 @@ function AdminPartnerRequestsPage() {
                       {r.companyName}{" "}
                       <span className="ml-1 rounded-full bg-brand-tint px-2.5 py-0.5 text-[11px] font-semibold text-brand">
                         {r.kind === "partner" ? PARTNER_LABEL[r.partnerType ?? "other"] : "Corporate"}
-                      </span>
+                      </span>{" "}
+                      <ReviewerMark r={r} />
                     </div>
                     <div className="mt-1 text-xs text-muted-foreground">
                       {r.firstName} {r.lastName} · {r.position} · {r.email} · {r.phone}
@@ -368,24 +407,52 @@ function AdminPartnerRequestsPage() {
                       </div>
                     ) : null}
                     {r.adminRequests?.length ? (
-                      <div className="mt-2 space-y-1">
-                        {r.adminRequests.map((a) => (
-                          <div key={a.id} className="text-xs text-muted-foreground">
-                            <span className="font-semibold text-brand">
-                              {a.kind === "info" ? "Info requested" : "Video call requested"}
-                            </span>{" "}
-                            {formatDateTime(a.requestedAt)} —{" "}
-                            {a.kind === "info"
-                              ? a.answeredAt
-                                ? `answered ${formatDateTime(a.answeredAt)}: ${a.answer}${
-                                    a.answerDocs?.length ? ` (${a.answerDocs.join(", ")})` : ""
-                                  }`
-                                : "awaiting the partner's answer"
-                              : a.scheduledAt
-                                ? `booked ${formatDateTime(a.scheduledAt)}`
+                      <div className="mt-2 space-y-1.5">
+                        {r.adminRequests.map((a) =>
+                          a.kind === "call" && a.scheduledAt ? (
+                            <div
+                              key={a.id}
+                              className="rounded-md border border-success/40 bg-success/10 px-3 py-2 text-xs"
+                            >
+                              <span className="font-semibold text-success">
+                                ● Video call confirmed by the partner
+                              </span>
+                              <div className="mt-0.5 text-foreground">
+                                {formatDateTime(a.scheduledAt)}
+                                {a.meetUrl ? (
+                                  <>
+                                    {" · "}
+                                    <a
+                                      href={a.meetUrl}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="font-semibold text-brand underline"
+                                    >
+                                      Join Google Meet
+                                    </a>
+                                  </>
+                                ) : null}
+                              </div>
+                              <div className="mt-0.5 text-muted-foreground">
+                                Requested {formatDateTime(a.requestedAt)} by {a.requestedBy}
+                              </div>
+                            </div>
+                          ) : (
+                            <div key={a.id} className="text-xs text-muted-foreground">
+                              <span className="font-semibold text-brand">
+                                {a.kind === "info" ? "Info requested" : "Video call requested"}
+                              </span>{" "}
+                              {formatDateTime(a.requestedAt)} —{" "}
+                              {a.kind === "info"
+                                ? a.answeredAt
+                                  ? `answered ${formatDateTime(a.answeredAt)}: ${a.answer}${
+                                      a.answerDocs?.length ? ` (${a.answerDocs.join(", ")})` : ""
+                                    }`
+                                  : "awaiting the partner's answer"
                                 : "awaiting the partner to book a slot"}
-                          </div>
-                        ))}
+                            </div>
+                          ),
+                        )}
                       </div>
                     ) : null}
                     {r.verificationDocs.length ? (
@@ -432,6 +499,7 @@ function AdminPartnerRequestsPage() {
                     </button>
                   </div>
                 </div>
+                <PartnerReviewBar r={r} onChange={(patch) => updateRequest(r.id, patch)} />
               </li>
             ))}
           </ul>

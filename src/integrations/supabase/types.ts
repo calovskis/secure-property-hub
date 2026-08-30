@@ -96,6 +96,11 @@ export type Database = {
           realtor_licenses: Json
           realtor_verification: Json | null
           registration_number: string
+          review_note: string | null
+          review_stage: string
+          review_updated_at: string | null
+          reviewer_id: string | null
+          reviewer_name: string | null
           state: string
           states: string[]
           status: string
@@ -137,6 +142,11 @@ export type Database = {
           realtor_licenses?: Json
           realtor_verification?: Json | null
           registration_number?: string
+          review_note?: string | null
+          review_stage?: string
+          review_updated_at?: string | null
+          reviewer_id?: string | null
+          reviewer_name?: string | null
           state?: string
           states?: string[]
           status?: string
@@ -178,6 +188,11 @@ export type Database = {
           realtor_licenses?: Json
           realtor_verification?: Json | null
           registration_number?: string
+          review_note?: string | null
+          review_stage?: string
+          review_updated_at?: string | null
+          reviewer_id?: string | null
+          reviewer_name?: string | null
           state?: string
           states?: string[]
           status?: string
