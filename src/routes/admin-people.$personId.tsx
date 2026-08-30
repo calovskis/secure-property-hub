@@ -2,7 +2,7 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { AdminNav } from "@/components/admin/AdminNav";
 import { PersonDetailContent } from "@/components/admin/PersonDetail";
-import { useAdminPeople } from "@/components/admin/people-model";
+import { useAdminPeopleReady } from "@/components/admin/people-model";
 import { fullName, useAuth } from "@/lib/auth";
 
 /**
