@@ -261,7 +261,9 @@ export function UploadRequestDialog({
                 onChange={(e) => setConfirmed(e.target.checked)}
                 className="mt-0.5"
               />
-              I confirm these documents are correct, current and mine to share with Loqal.
+              {files.length === 1
+                ? "I confirm this document is correct and authentic and I have legal rights to share it with Loqal."
+                : "I confirm these documents are correct and authentic and I have legal rights to share them with Loqal."}
             </label>
             {error ? <p className="text-xs font-semibold text-destructive">{error}</p> : null}
             <div className="flex justify-end gap-2">
