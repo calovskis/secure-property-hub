@@ -336,7 +336,8 @@ function AdminPartnerRequestsPage() {
                       {r.companyName}{" "}
                       <span className="ml-1 rounded-full bg-brand-tint px-2.5 py-0.5 text-[11px] font-semibold text-brand">
                         {r.kind === "partner" ? PARTNER_LABEL[r.partnerType ?? "other"] : "Corporate"}
-                      </span>
+                      </span>{" "}
+                      <ReviewerMark r={r} />
                     </div>
                     <div className="mt-1 text-xs text-muted-foreground">
                       {r.firstName} {r.lastName} · {r.position} · {r.email} · {r.phone}
