@@ -438,6 +438,18 @@ function AdminPartnerRequestsPage() {
         )}
       </main>
 
+      {profilePerson ? (
+        <PersonDetail
+          person={profilePerson}
+          onClose={() => setProfileKey(null)}
+          onMessage={() =>
+            toast("Messaging lives in People", {
+              description: "Open this partner from the People section to send a message.",
+            })
+          }
+        />
+      ) : null}
+
       {ask ? (
         <PartnerRequestDialog
           request={ask.request}
