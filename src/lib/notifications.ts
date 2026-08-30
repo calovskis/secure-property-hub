@@ -25,6 +25,8 @@ export type AppNotification = {
   severity: NotificationSeverity;
   /** An e-mail copy was also sent to the recipient. */
   emailCopy?: boolean;
+  /** The action this notification asked for has been completed. */
+  completed?: boolean;
   createdAt: string;
   readAt?: string;
 };
@@ -74,6 +76,7 @@ export function notify(n: Omit<AppNotification, "createdAt"> & { createdAt?: str
     existing.title === entry.title &&
     existing.body === entry.body &&
     existing.severity === entry.severity &&
+    existing.completed === entry.completed &&
     existing.href === entry.href
   ) {
     return; // nothing changed — avoid render loops

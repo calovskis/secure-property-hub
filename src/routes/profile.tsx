@@ -604,8 +604,7 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
   const identityDone = Boolean(realtor && registration?.realtorVerification?.identityDoc);
   const needsIdentity = Boolean(realtor && registration && !identityDone);
 
-  const items: { id: string; title: string; detail: string; done?: boolean; open: () => void }[] =
-    [];
+  const items: { id: string; title: string; detail: string; open: () => void }[] = [];
 
   if (needsIdentity)
     items.push({
@@ -614,14 +613,6 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
       detail: "Upload your driver's licence or passport.",
       open: () => setIdDialog(true),
     });
-  else if (identityDone)
-    items.push({
-      id: "realtor-identity-done",
-      title: "Identity verification",
-      detail: registration?.realtorVerification?.identityDoc ?? "",
-      done: true,
-      open: () => {},
-    });
 
   if (missingLicences.length)
     items.push({
@@ -629,14 +620,6 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
       title: "State licence copies",
       detail: `${missingLicences.length} of ${licenses.length} state(s) still need a copy.`,
       open: () => setLicDialog(true),
-    });
-  else if (realtor && licenses.length)
-    items.push({
-      id: "realtor-licences-done",
-      title: "State licence copies",
-      detail: `All ${licenses.length} state(s) have a copy on file.`,
-      done: true,
-      open: () => {},
     });
 
   for (const d of drafts)
@@ -707,21 +690,8 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
                 : draft.files.length
               : 0;
             return (
-              <li
-                key={item.id}
-                className={`rounded-md border p-3 ${
-                  item.done ? "border-success/40 bg-success/5" : "border-border"
-                }`}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <div className="text-sm font-semibold text-foreground">{item.title}</div>
-                  {item.done ? (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[11px] font-semibold text-success">
-                      <span className="h-1.5 w-1.5 rounded-full bg-success" />
-                      Completed
-                    </span>
-                  ) : null}
-                </div>
+              <li key={item.id} className="rounded-md border border-border p-3">
+                <div className="text-sm font-semibold text-foreground">{item.title}</div>
                 <div className="mt-0.5 text-xs text-muted-foreground">{item.detail}</div>
                 {draft ? (
                   <div className="mt-1 text-[11px] font-semibold text-gold">
@@ -729,15 +699,13 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
                     {formatDateTime(draft.updatedAt)}
                   </div>
                 ) : null}
-                {!item.done ? (
-                  <button
-                    type="button"
-                    onClick={item.open}
-                    className="mt-2 rounded-md bg-brand px-3 py-1.5 text-xs font-semibold text-background hover:bg-brand-soft"
-                  >
-                    {draft ? "Continue" : "Upload"}
-                  </button>
-                ) : null}
+                <button
+                  type="button"
+                  onClick={item.open}
+                  className="mt-2 rounded-md bg-brand px-3 py-1.5 text-xs font-semibold text-background hover:bg-brand-soft"
+                >
+                  {draft ? "Continue" : "Upload"}
+                </button>
               </li>
             );
           })}
