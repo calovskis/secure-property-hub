@@ -13,7 +13,6 @@ import {
   isRealtorOnVacation,
   useRealtors,
   type Realtor,
-  type RealtorLicense,
 } from "@/lib/realtors";
 import { usePartnerRequests } from "@/lib/partner-requests";
 import { formatDate, formatDateTime } from "@/lib/dates";
@@ -686,74 +685,6 @@ function VacationMode({ me }: { me: Realtor }) {
   );
 }
 
-/** Licenses & languages summary shown on the realtor Home dashboard. */
-function LicensesCard({
-  me,
-  licenses,
-  languages,
-}: {
-  me: Realtor;
-  licenses?: RealtorLicense[];
-  languages?: string[];
-}) {
-  const shownLicenses = licenses?.length ? licenses : me.licenses;
-  const shownLanguages = languages?.length ? languages : me.languages;
-  return (
-    <section className="rounded-lg border border-border bg-card p-6">
-      <h2 className="text-base font-semibold text-foreground">My licenses & languages</h2>
-      {shownLicenses.length ? (
-        <div className="mt-3 overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-border text-[11px] uppercase tracking-wide text-muted-foreground">
-                <th className="py-2 pr-4 font-semibold">State</th>
-                <th className="py-2 pr-4 font-semibold">License №</th>
-                <th className="py-2 pr-4 font-semibold">Issued</th>
-                <th className="py-2 font-semibold">Valid until</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {shownLicenses.map((l) => (
-                <tr key={`${l.state}-${l.number}`}>
-                  <td className="py-2.5 pr-4 font-semibold text-foreground">{l.state}</td>
-                  <td className="py-2.5 pr-4 text-muted-foreground">{l.number}</td>
-                  <td className="py-2.5 pr-4 text-muted-foreground">{formatDate(l.issuedAt)}</td>
-                  <td className="py-2.5 text-muted-foreground">{formatDate(l.validUntil)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <p className="mt-3 text-sm text-muted-foreground">
-          No licenses on file yet — add them from My Profile to start receiving assignments.
-        </p>
-      )}
-      <div className="mt-4">
-        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Languages
-        </span>
-        <div className="mt-2 flex flex-wrap gap-1.5">
-          {shownLanguages.map((l) => (
-            <span
-              key={l}
-              className="rounded-full bg-brand-tint px-3 py-1 text-[11px] font-semibold text-brand"
-            >
-              {l}
-            </span>
-          ))}
-        </div>
-      </div>
-      <p className="mt-4 text-xs text-muted-foreground">
-        Add, remove or adjust your details and licenses any time from{" "}
-        <Link to="/profile" className="font-semibold text-brand hover:underline">
-          My Profile
-        </Link>
-        .
-      </p>
-    </section>
-  );
-}
 
 export type RealtorTabId =
   | "home"
@@ -869,15 +800,8 @@ export function RealtorPortal({
             <GoogleCalendarCard agentRef={me.id} agentEmail={me.email} />
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-2">
+          <div className="mb-6">
             <VacationMode me={me} />
-            <LicensesCard
-              me={me}
-              {...(registration?.realtorLicenses?.length
-                ? { licenses: registration.realtorLicenses }
-                : {})}
-              {...(registration?.languages?.length ? { languages: registration.languages } : {})}
-            />
           </div>
 
         </>
