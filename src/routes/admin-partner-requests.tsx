@@ -139,6 +139,18 @@ function AdminPartnerRequestsPage() {
   const canSeeAll = !me || me.superadmin || accessOf(me, "partners") !== "view";
   const [profileKey, setProfileKey] = useState<string | null>(null);
   const profilePerson = profileKey ? people.find((p) => p.key === profileKey) : undefined;
+  const { focus: focusParam, open: openParam } = Route.useSearch();
+
+  // A notification about one registration scrolls to it and can open its file.
+  useEffect(() => {
+    if (!focusParam) return;
+    const target = requests.find((r) => r.id === focusParam);
+    if (!target) return;
+    if (openParam === "profile") setProfileKey(`${target.kind}-${target.id}`);
+    const node = document.getElementById(`preq-${target.id}`);
+    node?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [focusParam, openParam, requests]);
+
 
   const pending = useMemo(
     () =>
