@@ -582,51 +582,102 @@ function ProfilePage() {
 }
 
 /**
- * Everything Loqal is still waiting for from a partner: document upload
- * requests, missing verification documents and uploads left half-finished.
+ * Everything Loqal is still waiting for from a partner: missing verification
+ * documents (identity, state licences) and uploads left half-finished. The
+ * pop-ups are opened straight from here — this is the only place on the
+ * profile where documents are requested.
  */
-function OpenRequests({ user }: { user: LoqalUser }) {
+function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean }) {
   const drafts = useUploadDrafts();
-  const { requests } = usePartnerRequests();
+  const { requests, updateRequest } = usePartnerRequests();
+  const { licenses, persist } = useRealtorLicences(user);
+  const [idDialog, setIdDialog] = useState(false);
+  const [licDialog, setLicDialog] = useState(false);
   const registration = requests.find(
     (r) => r.email.toLowerCase() === user.email.toLowerCase(),
   );
 
-  const items: { id: string; title: string; detail: string }[] = [];
+  const realtor =
+    isRealtor || user.partnerType === "realtor" || registration?.partnerType === "realtor";
+  const missingLicences = realtor ? licenses.filter((l) => !l.doc) : [];
+  const needsIdentity = Boolean(realtor && registration && !registration.realtorVerification?.identityDoc);
 
-  for (const item of registration?.adminRequests ?? []) {
-    if (item.kind === "info" && !item.answeredAt)
-      items.push({
-        id: `partner-request:${item.id}`,
-        title: item.requiresDocument ? "Document requested by Loqal" : "Information requested",
-        detail: item.message,
-      });
-  }
+  const items: { id: string; title: string; detail: string; open: () => void }[] = [];
 
-  if (registration && (user.partnerType === "realtor" || registration.partnerType === "realtor")) {
-    if (!registration.realtorVerification?.identityDoc)
-      items.push({
-        id: "realtor-identity",
-        title: "Identity document",
-        detail: "Upload your driver's licence or passport.",
-      });
-    const licences = licenseDocsOf(registration);
-    const missing = licences.filter((l) => !l.doc).length;
-    if (missing)
-      items.push({
-        id: "realtor-licences",
-        title: "State licence copies",
-        detail: `${missing} of ${licences.length} state(s) still need a copy.`,
-      });
-  }
+  if (needsIdentity)
+    items.push({
+      id: "realtor-identity",
+      title: "Identity verification",
+      detail: "Upload your driver's licence or passport.",
+      open: () => setIdDialog(true),
+    });
+
+  if (missingLicences.length)
+    items.push({
+      id: "realtor-licences",
+      title: "State licence copies",
+      detail: `${missingLicences.length} of ${licenses.length} state(s) still need a copy.`,
+      open: () => setLicDialog(true),
+    });
 
   for (const d of drafts)
     if (!items.some((i) => i.id === d.id))
-      items.push({ id: d.id, title: d.label, detail: "Pre-saved upload — not submitted yet." });
+      items.push({
+        id: d.id,
+        title: d.label,
+        detail: "Pre-saved upload — not submitted yet.",
+        open: () => requestOpenUpload(d.id),
+      });
+
+  const outstanding = missingLicences.length + (needsIdentity ? 1 : 0);
+
+  function saveIdentity(type: string, doc: string) {
+    if (!registration || !doc) return;
+    updateRequest(registration.id, {
+      realtorVerification: {
+        licenseDocs: registration.realtorVerification?.licenseDocs ?? [],
+        ...(registration.realtorVerification ?? {}),
+        identityType: type as "drivers_license" | "passport",
+        identityDoc: doc,
+        identityUploadedAt: new Date().toISOString(),
+      },
+    });
+    toast("Identity document uploaded", { description: "Loqal will verify it shortly." });
+  }
+
+  function uploadCopies(copies: Record<string, string>) {
+    const at = new Date().toISOString();
+    const next = licenses.map((l) =>
+      copies[l.state]
+        ? { state: l.state, number: l.number, validUntil: l.validUntil, doc: copies[l.state]!, uploadedAt: at }
+        : l,
+    );
+    persist(
+      next,
+      `uploaded ${Object.keys(copies).length} licence copy(ies)`,
+      Object.entries(copies).map(([state, doc]) => ({
+        state,
+        action: "copy_uploaded" as const,
+        after: doc,
+      })),
+    );
+    toast("Licence copies submitted", {
+      description: `${Object.keys(copies).length} state(s) sent for verification.`,
+    });
+  }
 
   return (
     <section className="rounded-lg border border-border bg-card p-6">
-      <h2 className="text-base font-semibold text-foreground">Open requests</h2>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-base font-semibold text-foreground">Open requests</h2>
+        <span
+          className={`rounded-full px-3 py-1 text-[11px] font-semibold ${
+            outstanding ? "bg-gold-tint text-gold" : "bg-success/10 text-success"
+          }`}
+        >
+          {outstanding ? `${outstanding} document(s) missing` : "All documents on file"}
+        </span>
+      </div>
       {items.length ? (
         <ul className="mt-4 space-y-3">
           {items.map((item) => {
@@ -648,7 +699,7 @@ function OpenRequests({ user }: { user: LoqalUser }) {
                 ) : null}
                 <button
                   type="button"
-                  onClick={() => requestOpenUpload(item.id)}
+                  onClick={item.open}
                   className="mt-2 rounded-md bg-brand px-3 py-1.5 text-xs font-semibold text-background hover:bg-brand-soft"
                 >
                   {draft ? "Continue" : "Upload"}
@@ -663,6 +714,38 @@ function OpenRequests({ user }: { user: LoqalUser }) {
           saved automatically.
         </p>
       )}
+
+      {realtor ? (
+        <>
+          <UploadRequestDialog
+            open={idDialog}
+            onOpenChange={setIdDialog}
+            draftId="realtor-identity"
+            label="Identity document"
+            title="Upload your identity document"
+            description="Choose which document you are sending — driver's licence or passport — then attach a clear photo or scan."
+            requireDocument
+            askNote={false}
+            choices={[
+              { value: "drivers_license", label: "Driver's licence" },
+              { value: "passport", label: "Passport" },
+            ]}
+            choiceLabel="Document type"
+            onSubmit={({ files, choice }) => {
+              const doc = files[0];
+              if (doc) saveIdentity(choice ?? "drivers_license", doc);
+            }}
+          />
+          <LicenceUploadDialog
+            open={licDialog}
+            onOpenChange={setLicDialog}
+            draftId="realtor-licences"
+            licenses={licenses}
+            onSubmit={uploadCopies}
+          />
+        </>
+      ) : null}
     </section>
   );
 }
+
