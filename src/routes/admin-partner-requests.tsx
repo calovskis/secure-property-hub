@@ -191,7 +191,7 @@ function AdminPartnerRequestsPage() {
       ],
       reviewStage: kind === "info" ? "info_requested" : "call_scheduled",
       reviewUpdatedAt: new Date().toISOString(),
-      ...(r.reviewerId ? {} : { reviewerId: user!.id, reviewerName: fullName(user!) }),
+      ...(r.reviewerId ? {} : { reviewerId: user!.email, reviewerName: fullName(user!) }),
     });
     notify({
       id: `partner-admin-request-${r.id}-${Date.now()}`,
