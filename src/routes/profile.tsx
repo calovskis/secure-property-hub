@@ -601,9 +601,11 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
   const realtor =
     isRealtor || user.partnerType === "realtor" || registration?.partnerType === "realtor";
   const missingLicences = realtor ? licenses.filter((l) => !l.doc) : [];
-  const needsIdentity = Boolean(realtor && registration && !registration.realtorVerification?.identityDoc);
+  const identityDone = Boolean(realtor && registration?.realtorVerification?.identityDoc);
+  const needsIdentity = Boolean(realtor && registration && !identityDone);
 
-  const items: { id: string; title: string; detail: string; open: () => void }[] = [];
+  const items: { id: string; title: string; detail: string; done?: boolean; open: () => void }[] =
+    [];
 
   if (needsIdentity)
     items.push({
@@ -612,6 +614,14 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
       detail: "Upload your driver's licence or passport.",
       open: () => setIdDialog(true),
     });
+  else if (identityDone)
+    items.push({
+      id: "realtor-identity-done",
+      title: "Identity verification",
+      detail: registration?.realtorVerification?.identityDoc ?? "",
+      done: true,
+      open: () => {},
+    });
 
   if (missingLicences.length)
     items.push({
@@ -619,6 +629,14 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
       title: "State licence copies",
       detail: `${missingLicences.length} of ${licenses.length} state(s) still need a copy.`,
       open: () => setLicDialog(true),
+    });
+  else if (realtor && licenses.length)
+    items.push({
+      id: "realtor-licences-done",
+      title: "State licence copies",
+      detail: `All ${licenses.length} state(s) have a copy on file.`,
+      done: true,
+      open: () => {},
     });
 
   for (const d of drafts)
