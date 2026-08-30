@@ -32,13 +32,18 @@ import { toast } from "sonner";
  */
 export const Route = createFileRoute("/admin-partner-requests")({
   component: AdminPartnerRequestsPage,
-  /** `?focus=<requestId>` highlights one registration, `?open=profile` opens its full file. */
-  validateSearch: (search: Record<string, unknown>): { focus?: string; open?: string } => {
-    const out: { focus?: string; open?: string } = {};
+  /** `?focus=<requestId>` highlights one registration, `?open=profile` opens its full file,
+   *  `?open=correspondence&item=<requestItemId>` opens one answered request. */
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { focus?: string; open?: string; item?: string } => {
+    const out: { focus?: string; open?: string; item?: string } = {};
     if (typeof search["focus"] === "string") out.focus = search["focus"];
     if (typeof search["open"] === "string") out.open = search["open"];
+    if (typeof search["item"] === "string") out.item = search["item"];
     return out;
   },
+
   head: () => ({
     meta: [
       { title: "Open Partner Requests — Loqal Admin" },
