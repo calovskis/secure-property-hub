@@ -404,7 +404,13 @@ export function usePartnerRequests() {
     async (
       input: Omit<
         PartnerRequest,
-        "id" | "submittedAt" | "status" | "verificationDocs" | "adminRequests" | "profileChangeRequests"
+        | "id"
+        | "submittedAt"
+        | "status"
+        | "verificationDocs"
+        | "adminRequests"
+        | "profileChangeRequests"
+        | "reviewStage"
       >,
     ) => {
       const { data: userData } = await supabase.auth.getUser();
