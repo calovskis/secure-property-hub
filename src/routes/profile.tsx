@@ -390,14 +390,12 @@ function ProfilePage() {
             {isRealtor ? (
               <>
                 <h1 className="text-2xl font-bold text-foreground">
-                  {[
-                    myRegistration?.firstName || user.firstName,
-                    myRegistration?.lastName || user.lastName,
-                  ]
-                    .filter(Boolean)
-                    .map((p) => p!.charAt(0).toUpperCase() + p!.slice(1))
-                    .join(" ") || fullName(user)}
+                  {joinName({
+                    firstName: myRegistration?.firstName || user.firstName,
+                    lastName: myRegistration?.lastName || user.lastName,
+                  }) || fullName(user)}
                 </h1>
+
                 <p className="mt-1 text-sm font-semibold text-brand">Realtor</p>
                 {myRegistration?.position ? (
                   <p className="text-sm text-muted-foreground">{myRegistration.position}</p>
