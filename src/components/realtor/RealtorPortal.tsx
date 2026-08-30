@@ -13,7 +13,9 @@ import {
   isRealtorOnVacation,
   useRealtors,
   type Realtor,
+  type RealtorLicense,
 } from "@/lib/realtors";
+import { usePartnerRequests } from "@/lib/partner-requests";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import { DateInput } from "@/components/form/DateInput";
 import { CallScheduler } from "@/components/buyer/CallScheduler";
@@ -782,7 +784,12 @@ export function RealtorPortal({
   const { realtors, ensureSeat } = useRealtors();
   const { leads, ready: leadsReady } = useLeads();
   const { photos } = useBuyerProcess();
-  const greeting = useGreeting(user.firstName, user.email);
+  const { requests } = usePartnerRequests();
+
+  const registration = requests.find(
+    (r) => r.email.toLowerCase() === user.email.toLowerCase(),
+  );
+  const greeting = useGreeting(registration?.firstName || user.firstName, user.email);
 
   const me = realtors.find((r) => r.email.toLowerCase() === user.email.toLowerCase());
 
@@ -864,7 +871,13 @@ export function RealtorPortal({
 
           <div className="grid gap-6 lg:grid-cols-2">
             <VacationMode me={me} />
-            <LicensesCard me={me} />
+            <LicensesCard
+              me={me}
+              {...(registration?.realtorLicenses?.length
+                ? { licenses: registration.realtorLicenses }
+                : {})}
+              {...(registration?.languages?.length ? { languages: registration.languages } : {})}
+            />
           </div>
 
         </>
