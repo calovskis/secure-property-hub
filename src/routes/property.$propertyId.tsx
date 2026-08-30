@@ -617,6 +617,17 @@ function PropertyDetailPage() {
       {lead ? (
         <FeedbackDialog lead={lead} open={feedbackOpen} onOpenChange={setFeedbackOpen} />
       ) : null}
+      {callBooking ? (
+        <VideoCallDialog
+          open={callOpen}
+          onOpenChange={setCallOpen}
+          title={callBooking.kind === "video_tour" ? "Live video tour" : callBooking.kind === "intro_call" ? "Intro call" : "Property visit call"}
+          startAt={callBooking.startAt}
+          meetUrl={callBooking.meetUrl}
+          withLabel={callBooking.clientName ? `Your Loqal realtor partner` : undefined}
+          contextLabel={callBooking.propertyLabel}
+        />
+      ) : null}
 
     </div>
   );
