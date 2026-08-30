@@ -99,7 +99,7 @@ export function AdminRequestsCard({ user }: { user: LoqalUser }) {
         <div className="mt-4 space-y-4">
           {open.map((item) =>
             item.kind === "info" ? (
-              <InfoItem key={item.id} item={item} user={user} onAnswer={patch} />
+              <InfoItem key={item.id} item={item} requestId={request.id} user={user} onAnswer={patch} />
             ) : (
               <CallItem key={item.id} item={item} user={user} onBooked={patch} />
             ),
