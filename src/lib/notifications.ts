@@ -25,6 +25,8 @@ export type AppNotification = {
   severity: NotificationSeverity;
   /** An e-mail copy was also sent to the recipient. */
   emailCopy?: boolean;
+  /** The action this notification asked for has been completed. */
+  completed?: boolean;
   createdAt: string;
   readAt?: string;
 };
