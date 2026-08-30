@@ -317,13 +317,14 @@ export function AppHeader({
             ) : null}
           </div>
 
-          <button
-            type="button"
+          <Link
+            to="/settings"
             aria-label={t("Settings")}
             className="hidden size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-brand-tint sm:flex"
           >
             ⚙️
-          </button>
+          </Link>
+
 
           <NotificationBell />
 

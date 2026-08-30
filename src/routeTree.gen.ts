@@ -24,6 +24,7 @@ import { Route as PartnerRouteImport } from './routes/partner'
 import { Route as PartnerAccessRouteImport } from './routes/partner-access'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SsnTermsRouteImport } from './routes/ssn-terms'
 import { Route as AdminPeoplePersonIdRouteImport } from './routes/admin-people.$personId'
 import { Route as ApplicationLeadIdRouteImport } from './routes/application.$leadId'
@@ -106,6 +107,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SsnTermsRoute = SsnTermsRouteImport.update({
   id: '/ssn-terms',
   path: '/ssn-terms',
@@ -153,6 +159,7 @@ export interface FileRoutesByFullPath {
   '/partner-access': typeof PartnerAccessRoute
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/settings': typeof SettingsRoute
   '/ssn-terms': typeof SsnTermsRoute
   '/admin-people/$personId': typeof AdminPeoplePersonIdRoute
   '/application/$leadId': typeof ApplicationLeadIdRoute
@@ -176,6 +183,7 @@ export interface FileRoutesByTo {
   '/partner-access': typeof PartnerAccessRoute
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/settings': typeof SettingsRoute
   '/ssn-terms': typeof SsnTermsRoute
   '/admin-people/$personId': typeof AdminPeoplePersonIdRoute
   '/application/$leadId': typeof ApplicationLeadIdRoute
@@ -200,6 +208,7 @@ export interface FileRoutesById {
   '/partner-access': typeof PartnerAccessRoute
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/settings': typeof SettingsRoute
   '/ssn-terms': typeof SsnTermsRoute
   '/admin-people/$personId': typeof AdminPeoplePersonIdRoute
   '/application/$leadId': typeof ApplicationLeadIdRoute
@@ -225,6 +234,7 @@ export interface FileRouteTypes {
     | '/partner-access'
     | '/profile'
     | '/reset-password'
+    | '/settings'
     | '/ssn-terms'
     | '/admin-people/$personId'
     | '/application/$leadId'
@@ -248,6 +258,7 @@ export interface FileRouteTypes {
     | '/partner-access'
     | '/profile'
     | '/reset-password'
+    | '/settings'
     | '/ssn-terms'
     | '/admin-people/$personId'
     | '/application/$leadId'
@@ -271,6 +282,7 @@ export interface FileRouteTypes {
     | '/partner-access'
     | '/profile'
     | '/reset-password'
+    | '/settings'
     | '/ssn-terms'
     | '/admin-people/$personId'
     | '/application/$leadId'
@@ -295,6 +307,7 @@ export interface RootRouteChildren {
   PartnerAccessRoute: typeof PartnerAccessRoute
   ProfileRoute: typeof ProfileRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  SettingsRoute: typeof SettingsRoute
   SsnTermsRoute: typeof SsnTermsRoute
   AdminPeoplePersonIdRoute: typeof AdminPeoplePersonIdRoute
   ApplicationLeadIdRoute: typeof ApplicationLeadIdRoute
@@ -410,6 +423,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/ssn-terms': {
       id: '/ssn-terms'
       path: '/ssn-terms'
@@ -471,6 +491,7 @@ const rootRouteChildren: RootRouteChildren = {
   PartnerAccessRoute: PartnerAccessRoute,
   ProfileRoute: ProfileRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  SettingsRoute: SettingsRoute,
   SsnTermsRoute: SsnTermsRoute,
   AdminPeoplePersonIdRoute: AdminPeoplePersonIdRoute,
   ApplicationLeadIdRoute: ApplicationLeadIdRoute,

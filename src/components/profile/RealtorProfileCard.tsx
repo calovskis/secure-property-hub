@@ -15,7 +15,6 @@ import { activeLicenseStates, useRealtors } from "@/lib/realtors";
 import { usePartnerRequests, type AdditionalContact } from "@/lib/partner-requests";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import { WORLD_LANGUAGES } from "@/lib/languages";
-import { StateCombobox } from "@/components/form/StateCombobox";
 import { TopicCard } from "@/components/profile/TopicCard";
 import { LicenceCoverageTable } from "@/components/profile/realtor-licences";
 import { uid } from "@/lib/mortgage-form";
@@ -51,11 +50,9 @@ function Stat({ label, value }: { label: string; value: string | number }) {
 
 type InfoForm = {
   phone: string;
-  street: string;
-  city: string;
-  state: string;
-  zip: string;
+  position: string;
 };
+
 
 export function RealtorProfileCard({ user }: { user: LoqalUser }) {
   const { realtors, ensureSeat, updateRealtor } = useRealtors();
@@ -76,36 +73,23 @@ export function RealtorProfileCard({ user }: { user: LoqalUser }) {
   const mine = leads.filter((l) => l.buyerAgent?.agentId === me.id);
   const delivered = mine.filter((l) => photos[l.id]?.status === "delivered").length;
   const advocated = mine.filter((l) => l.buyerAgent?.representation === "loqal_rep").length;
-  const address = [me.address.street, me.address.city, `${me.address.state} ${me.address.zip}`.trim()]
-    .filter(Boolean)
-    .join(", ");
+  const personName = `${registration?.firstName || user.firstName} ${
+    registration?.lastName || user.lastName
+  }`.trim();
 
   function startEdit() {
     if (!me) return;
-    setInfo({
-      phone: me.phone,
-      street: me.address.street,
-      city: me.address.city,
-      state: me.address.state,
-      zip: me.address.zip,
-    });
+    setInfo({ phone: me.phone, position: registration?.position ?? "" });
   }
 
   function save() {
     if (!me || !info) return;
-    updateRealtor(me.id, {
-      phone: info.phone.trim(),
-      address: {
-        street: info.street.trim(),
-        city: info.city.trim(),
-        state: info.state,
-        zip: info.zip.trim(),
-        country: me.address.country || "US",
-      },
-    });
+    updateRealtor(me.id, { phone: info.phone.trim() });
+    if (registration) updateRequest(registration.id, { position: info.position.trim() });
     setInfo(null);
     toast.success("Contact details updated.");
   }
+
 
   function saveLanguages(next: string[]) {
     if (!me) return;
@@ -126,9 +110,29 @@ export function RealtorProfileCard({ user }: { user: LoqalUser }) {
 
   return (
     <div className="space-y-3">
+      {registration ? (
+        <TopicCard
+          title="Company information"
+          summary={
+            [registration.companyName, registration.companyType].filter(Boolean).join(" · ") ||
+            "On file"
+          }
+        >
+          <Row label="Company name" value={registration.companyName} />
+          <Row label="Company type" value={registration.companyType} />
+          <Row label="Registration №" value={registration.registrationNumber} />
+          <Row label="Company licence №" value={registration.companyLicence} />
+          <Row label="Business address" value={businessAddress} />
+          <Row label="Company phone" value={registration.companyPhone} />
+        </TopicCard>
+      ) : null}
+
       <TopicCard
         title="Contact details"
-        summary={[me.phone, address].filter(Boolean).join(" · ") || "Add your contact details"}
+        summary={
+          [personName, registration?.position, me.phone].filter(Boolean).join(" · ") ||
+          "Add your contact details"
+        }
         onEdit={info ? undefined : startEdit}
         defaultOpen={Boolean(info)}
       >
@@ -136,46 +140,22 @@ export function RealtorProfileCard({ user }: { user: LoqalUser }) {
           <div className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block">
-                <span className={labelClass}>Phone</span>
+                <span className={labelClass}>Position</span>
+                <input
+                  value={info.position}
+                  onChange={(e) => setInfo({ ...info, position: e.target.value })}
+                  placeholder="e.g. Broker"
+                  className={inputClass}
+                />
+              </label>
+              <label className="block">
+                <span className={labelClass}>Personal phone</span>
                 <input
                   value={info.phone}
                   onChange={(e) => setInfo({ ...info, phone: e.target.value })}
                   className={inputClass}
                 />
               </label>
-              <label className="block">
-                <span className={labelClass}>Street</span>
-                <input
-                  value={info.street}
-                  onChange={(e) => setInfo({ ...info, street: e.target.value })}
-                  className={inputClass}
-                />
-              </label>
-              <label className="block">
-                <span className={labelClass}>City</span>
-                <input
-                  value={info.city}
-                  onChange={(e) => setInfo({ ...info, city: e.target.value })}
-                  className={inputClass}
-                />
-              </label>
-              <div className="grid grid-cols-2 gap-3">
-                <label className="block">
-                  <span className={labelClass}>State</span>
-                  <StateCombobox
-                    value={info.state}
-                    onChange={(code) => setInfo({ ...info, state: code })}
-                  />
-                </label>
-                <label className="block">
-                  <span className={labelClass}>ZIP</span>
-                  <input
-                    value={info.zip}
-                    onChange={(e) => setInfo({ ...info, zip: e.target.value })}
-                    className={inputClass}
-                  />
-                </label>
-              </div>
             </div>
             <div className="flex justify-end gap-2">
               <button type="button" onClick={() => setInfo(null)} className={btnGhost}>
@@ -188,10 +168,19 @@ export function RealtorProfileCard({ user }: { user: LoqalUser }) {
           </div>
         ) : (
           <div>
-            <Row label="Phone" value={me.phone} />
-            <Row label="Address" value={address} />
+            <Row label="Name" value={registration?.firstName || user.firstName} />
+            <Row label="Surname" value={registration?.lastName || user.lastName} />
+            <Row label="Position" value={registration?.position} />
+            <Row label="Personal phone" value={me.phone} />
           </div>
         )}
+
+        {registration ? (
+          <AdditionalContacts
+            contacts={registration.additionalContacts ?? []}
+            onChange={(next) => updateRequest(registration.id, { additionalContacts: next })}
+          />
+        ) : null}
       </TopicCard>
 
       <TopicCard
@@ -203,33 +192,6 @@ export function RealtorProfileCard({ user }: { user: LoqalUser }) {
 
       {registration ? (
         <>
-          <TopicCard
-            title="Company information"
-            summary={
-              [registration.companyName, registration.companyType].filter(Boolean).join(" · ") ||
-              "On file"
-            }
-          >
-            <Row label="Company name" value={registration.companyName} />
-            <Row label="Company type" value={registration.companyType} />
-            <Row label="Registration №" value={registration.registrationNumber} />
-            <Row
-              label="Realtor licence №"
-              value={(registration.realtorLicenses ?? [])
-                .map((l) => `${l.state} · ${l.number}`)
-                .join(" | ")}
-            />
-            <Row label="Company licence №" value={registration.companyLicence} />
-            <Row label="Business address" value={businessAddress} />
-            <Row label="Company phone" value={registration.companyPhone} />
-            <Row label="My position" value={registration.position} />
-
-            <AdditionalContacts
-              contacts={registration.additionalContacts ?? []}
-              onChange={(next) => updateRequest(registration.id, { additionalContacts: next })}
-            />
-          </TopicCard>
-
           <TopicCard
             title="Coverage & licences"
             summary={
@@ -248,6 +210,7 @@ export function RealtorProfileCard({ user }: { user: LoqalUser }) {
               <LicenceCoverageTable user={user} />
             </div>
           </TopicCard>
+
 
           <TopicCard
             title="Agreements & status"

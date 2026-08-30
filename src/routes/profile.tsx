@@ -18,7 +18,6 @@ import { PartnerProfile } from "@/components/profile/PartnerProfile";
 import { AgreementCard } from "@/components/profile/AgreementCard";
 import { KybCard } from "@/components/profile/KybCard";
 import { RealtorVerificationCard } from "@/components/profile/RealtorVerificationCard";
-import { PartnerAccountCard } from "@/components/profile/PartnerAccountCard";
 import { AdminRequestsCard } from "@/components/profile/AdminRequestsCard";
 import { useUploadDrafts, requestOpenUpload } from "@/lib/upload-drafts";
 import {
@@ -386,13 +385,16 @@ function ProfilePage() {
       <main className="mx-auto max-w-[1100px] px-4 py-8 md:px-7">
         <header className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">My profile</h1>
+            <h1 className="text-2xl font-bold text-foreground">
+              {isPartner ? fullName(user) : "My profile"}
+            </h1>
             <p className="mt-1 text-sm text-muted-foreground">
               {isPartner
                 ? "Your partner details, licenses and performance with Loqal."
                 : "Everything you have shared with Loqal, and the status of what you submitted."}
             </p>
           </div>
+
           {!isPartner ? (
             <button
               type="button"
@@ -408,7 +410,7 @@ function ProfilePage() {
           <div className="space-y-6">
             {isPartner ? (
               <>
-                <PartnerAccountCard user={user} />
+                
                 <AdminRequestsCard user={user} />
                 {isRealtor ? <RealtorVerificationCard user={user} /> : <KybCard user={user} />}
                 <PartnerProfile user={user} />
