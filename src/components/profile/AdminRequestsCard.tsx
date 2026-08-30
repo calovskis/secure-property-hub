@@ -12,6 +12,7 @@ import { logActivity } from "@/lib/activity";
 import { formatDateTime } from "@/lib/dates";
 import { UploadRequestDialog } from "@/components/profile/UploadRequestDialog";
 import { useUploadDrafts } from "@/lib/upload-drafts";
+import { useDeepLinkAction } from "@/lib/deep-link";
 
 const LOQAL_ADMIN_EMAIL = "it@loqal.global";
 
