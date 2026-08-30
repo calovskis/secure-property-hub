@@ -234,7 +234,14 @@ function PartnerAccessPage() {
       severity: "info",
       emailCopy: true,
     });
+    rememberName({
+      email: email.trim(),
+      firstName,
+      lastName,
+      phone: phone.trim(),
+    });
     setSent(true);
+
   }
 
   return (
