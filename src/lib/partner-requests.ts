@@ -177,6 +177,14 @@ export type PartnerRequest = {
   realtorVerification?: RealtorVerification;
   /** Name / surname / company name edits awaiting a Loqal admin decision. */
   profileChangeRequests: ProfileChangeRequest[];
+  /** Loqal employee responsible for verifying this partner. */
+  reviewerId?: string;
+  reviewerName?: string;
+  /** Verification progress, visible to every admin even without file access. */
+  reviewStage: ReviewStage;
+  /** Short internal status note shown next to the progress. */
+  reviewNote?: string;
+  reviewUpdatedAt?: string;
   /** Loqal partnership agreement, signed by the partner after approval. */
   agreementSignedAt?: string;
   agreementSignedBy?: string;
