@@ -580,42 +580,46 @@ function CalendarSection({ me, myLeads }: { me: Realtor; myLeads: MortgageLead[]
     .sort((a, b) => a.startAt.localeCompare(b.startAt));
 
   return (
-    <section className="rounded-lg border border-border bg-card p-6">
-      <h2 className="text-base font-semibold text-foreground">My calendar</h2>
-      <p className="mt-1 text-xs text-muted-foreground">
-        Intro calls and video tours booked with your buyers — 1 hour per booking. Buyers only see
-        your free slots, so there are no conflicts.
-      </p>
-      {upcoming.length ? (
-        <ul className="mt-4 space-y-3">
-          {upcoming.map((b) => (
-            <li
-              key={b.id}
-              className="flex flex-wrap items-center gap-4 rounded-lg border border-border bg-background p-4"
-            >
-              <span className="text-xl">{b.kind === "video_tour" ? "🎥" : "📞"}</span>
-              <div className="min-w-[200px] flex-1">
-                <div className="text-sm font-semibold text-foreground">
-                  {b.kind === "video_tour" ? "Video property tour" : "Intro call"} — {b.clientName}
-                </div>
-                <div className="text-xs text-muted-foreground">{b.propertyLabel}</div>
-              </div>
-              <span className="rounded-full bg-brand-tint px-3 py-1 text-[11px] font-semibold text-brand">
-                {formatDateTime(b.startAt)} –{" "}
-                {new Date(b.endAt).toLocaleTimeString("en-US", {
-                  hour: "numeric",
-                  minute: "2-digit",
-                })}
-              </span>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="mt-4 rounded-lg border border-border bg-background p-6 text-center text-sm text-muted-foreground">
-          No calls or video tours scheduled. When a buyer books a slot it appears here instantly.
+    <div className="space-y-6">
+      <GoogleCalendarCard agentRef={me.id} agentEmail={me.email} />
+
+      <section className="rounded-lg border border-border bg-card p-6">
+        <h2 className="text-base font-semibold text-foreground">My calendar</h2>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Intro calls and video tours booked with your buyers — 1 hour per booking. Buyers only see
+          your free slots, so there are no conflicts.
         </p>
-      )}
-    </section>
+        {upcoming.length ? (
+          <ul className="mt-4 space-y-3">
+            {upcoming.map((b) => (
+              <li
+                key={b.id}
+                className="flex flex-wrap items-center gap-4 rounded-lg border border-border bg-background p-4"
+              >
+                <span className="text-xl">{b.kind === "video_tour" ? "🎥" : "📞"}</span>
+                <div className="min-w-[200px] flex-1">
+                  <div className="text-sm font-semibold text-foreground">
+                    {b.kind === "video_tour" ? "Video property tour" : "Intro call"} — {b.clientName}
+                  </div>
+                  <div className="text-xs text-muted-foreground">{b.propertyLabel}</div>
+                </div>
+                <span className="rounded-full bg-brand-tint px-3 py-1 text-[11px] font-semibold text-brand">
+                  {formatDateTime(b.startAt)} –{" "}
+                  {new Date(b.endAt).toLocaleTimeString("en-US", {
+                    hour: "numeric",
+                    minute: "2-digit",
+                  })}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-4 rounded-lg border border-border bg-background p-6 text-center text-sm text-muted-foreground">
+            No calls or video tours scheduled. When a buyer books a slot it appears here instantly.
+          </p>
+        )}
+      </section>
+    </div>
   );
 }
 
