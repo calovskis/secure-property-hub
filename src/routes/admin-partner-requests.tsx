@@ -20,6 +20,7 @@ import { useAdminPeople } from "@/components/admin/people-model";
 import { US_STATES, US_STATE_CODES } from "@/data/us-states";
 import { uid } from "@/lib/mortgage-form";
 import { useRealtors } from "@/lib/realtors";
+import { accessOf, useStaff } from "@/lib/staff";
 import { logActivity } from "@/lib/activity";
 import { notify } from "@/lib/notifications";
 import { toast } from "sonner";
@@ -124,6 +125,11 @@ function AdminPartnerRequestsPage() {
   const { addRealtor } = useRealtors();
   const [filter, setFilter] = useState<TypeFilter>("all");
   const people = useAdminPeople();
+  const { members } = useStaff();
+  // Employees only granted "view" on Partners work their own cases: for every
+  // other registration they see just the summary line and who owns the case.
+  const me = members.find((m) => m.email.toLowerCase() === (user?.email ?? "").toLowerCase());
+  const canSeeAll = !me || me.superadmin || accessOf(me, "partners") !== "view";
   const [profileKey, setProfileKey] = useState<string | null>(null);
   const profilePerson = profileKey ? people.find((p) => p.key === profileKey) : undefined;
 
@@ -313,32 +319,6 @@ function AdminPartnerRequestsPage() {
           </section>
         ) : null}
 
-        {pending.length ? (
-          <section className="mb-6 rounded-lg border border-border bg-card p-5">
-            <h2 className="text-sm font-semibold text-foreground">Verification progress</h2>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Who owns each case and how far it has moved — visible to every Loqal employee, even
-              without access to the partner file.
-            </p>
-            <ul className="mt-3 space-y-2">
-              {pending.map((r) => (
-                <li key={r.id} className="rounded-md border border-border bg-background p-3">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="text-xs font-semibold text-foreground">{r.companyName}</span>
-                    <span className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                      {r.reviewerName ? `Reviewed by ${r.reviewerName}` : "No reviewer assigned"} ·{" "}
-                      {REVIEW_STAGE_LABEL[r.reviewStage ?? "unassigned"]}
-                    </span>
-                  </div>
-                  <div className="mt-2">
-                    <ReviewProgressBar stage={r.reviewStage ?? "unassigned"} />
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
-
         <div className="mb-6 flex flex-wrap gap-2">
           {TYPE_FILTERS.map((f) => {
             const n = f.id === "all" ? [...counts.values()].reduce((s, v) => s + v, 0) : (counts.get(f.id) ?? 0);
@@ -366,7 +346,30 @@ function AdminPartnerRequestsPage() {
           </div>
         ) : (
           <ul className="space-y-4">
-            {pending.map((r) => (
+            {pending.map((r) =>
+              !canSeeAll && r.reviewerId !== me?.id ? (
+                <li key={r.id} className="rounded-lg border border-border bg-card p-5">
+                  <div className="text-sm font-semibold text-foreground">
+                    {r.companyName}{" "}
+                    <span className="ml-1 rounded-full bg-brand-tint px-2.5 py-0.5 text-[11px] font-semibold text-brand">
+                      {r.kind === "partner" ? PARTNER_LABEL[r.partnerType ?? "other"] : "Corporate"}
+                    </span>
+                  </div>
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    {r.firstName} {r.lastName}
+                  </div>
+                  {r.allStates || r.realtorLicenses?.length ? <CoverageBubbles r={r} /> : null}
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-[11px] text-muted-foreground">
+                      {r.reviewerName ? `Reviewed by ${r.reviewerName}` : "No reviewer assigned"} ·{" "}
+                      {REVIEW_STAGE_LABEL[r.reviewStage ?? "unassigned"]}
+                    </span>
+                  </div>
+                  <div className="mt-2">
+                    <ReviewProgressBar stage={r.reviewStage ?? "unassigned"} />
+                  </div>
+                </li>
+              ) : (
               <li key={r.id} className="rounded-lg border border-border bg-card p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -501,7 +504,8 @@ function AdminPartnerRequestsPage() {
                 </div>
                 <PartnerReviewBar r={r} onChange={(patch) => updateRequest(r.id, patch)} />
               </li>
-            ))}
+              ),
+            )}
           </ul>
         )}
       </main>
