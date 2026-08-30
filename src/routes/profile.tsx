@@ -27,6 +27,7 @@ import {
   type LoqalUser,
   type MortgageProfile,
 } from "@/lib/auth";
+import { joinName } from "@/lib/names";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import {
   Dialog,
