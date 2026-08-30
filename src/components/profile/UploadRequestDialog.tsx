@@ -101,7 +101,7 @@ export function UploadRequestDialog({
 
   function submit() {
     if (!confirmed) return setError("Please reconfirm that everything is correct.");
-    onSubmit({ note: note.trim(), files });
+    onSubmit({ note: note.trim(), files, choice: choices ? choice : undefined });
     clearUploadDraft(draftId);
     onOpenChange(false);
   }
@@ -121,6 +121,27 @@ export function UploadRequestDialog({
                 Pre-saved progress restored — nothing has been submitted yet.
               </p>
             ) : null}
+
+            {choices?.length ? (
+              <label className="block">
+                <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  {choiceLabel}
+                </span>
+                <select
+                  value={choice}
+                  onChange={(e) => setChoice(e.target.value)}
+                  className={inputClass}
+                >
+                  {choices.map((c) => (
+                    <option key={c.value} value={c.value}>
+                      {c.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
+
+
 
             {askNote ? (
               <label className="block">
