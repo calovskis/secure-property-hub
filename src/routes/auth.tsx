@@ -9,6 +9,7 @@ import {
   type PartnerType,
   type Role,
 } from "@/lib/auth";
+import { namesFromEmail } from "@/lib/names";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/auth")({
