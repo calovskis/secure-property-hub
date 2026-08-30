@@ -18,7 +18,6 @@ import { PartnerProfile } from "@/components/profile/PartnerProfile";
 import { AgreementCard } from "@/components/profile/AgreementCard";
 import { KybCard } from "@/components/profile/KybCard";
 import { RealtorVerificationCard } from "@/components/profile/RealtorVerificationCard";
-import { PartnerAccountCard } from "@/components/profile/PartnerAccountCard";
 import { AdminRequestsCard } from "@/components/profile/AdminRequestsCard";
 import { useUploadDrafts, requestOpenUpload } from "@/lib/upload-drafts";
 import {
