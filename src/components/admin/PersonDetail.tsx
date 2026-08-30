@@ -24,12 +24,14 @@ import {
   type AdminAccountInfo,
 } from "@/lib/admin-users.functions";
 import type { AdminPerson } from "@/components/admin/people-model";
+import { PartnerCorrespondence } from "@/components/admin/PartnerCorrespondence";
 
-type Tab = "profile" | "documents" | "properties" | "activity" | "metrics";
+type Tab = "profile" | "documents" | "correspondence" | "properties" | "activity" | "metrics";
 
 const TABS: [Tab, string, string][] = [
   ["profile", "👤", "Profile & registration"],
   ["documents", "📎", "Uploaded documents"],
+  ["correspondence", "✉️", "Requests & correspondence"],
   ["properties", "🏠", "Properties & files"],
   ["activity", "🕘", "Activity history"],
   ["metrics", "📊", "Engagement metrics"],
@@ -159,6 +161,15 @@ export function PersonDetailContent({
       <div className="flex-1 overflow-y-auto px-6 py-5">
         {tab === "profile" ? <ProfileTab person={person} /> : null}
         {tab === "documents" ? <DocumentsTab person={person} /> : null}
+        {tab === "correspondence" ? (
+          person.request ? (
+            <PartnerCorrespondence request={person.request} />
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              No Loqal correspondence on file for this person.
+            </p>
+          )
+        ) : null}
         {tab === "properties" ? <PropertiesTab person={person} /> : null}
         {tab === "activity" ? <ActivityTab person={person} /> : null}
         {tab === "metrics" ? <MetricsTab person={person} /> : null}

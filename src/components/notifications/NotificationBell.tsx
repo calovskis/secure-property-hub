@@ -9,7 +9,7 @@
  */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { useAuth } from "@/lib/auth";
+import { useAuth, PARTNER_LABEL } from "@/lib/auth";
 import { offerReminders, pendingOfferDecision, useLeads } from "@/lib/leads";
 import { useBuyerProcess } from "@/lib/buyer-process";
 import { usePartnerRequests } from "@/lib/partner-requests";
@@ -386,6 +386,25 @@ function useDerivedNotifications() {
             createdAt: r.kyc.submittedAt,
           });
         }
+        /* The partner answered a follow-up Loqal raised — tell the reviewing
+           Loqal manager (and the admin desk) so they can read the answer. */
+        for (const a of r.adminRequests ?? []) {
+          if (a.kind !== "info" || !a.answeredAt) continue;
+          const who = `${r.firstName} ${r.lastName}`.trim();
+          const type = r.kind === "corporate" ? "Corporate" : PARTNER_LABEL[r.partnerType ?? "other"];
+          list.push({
+            id: `areq-answered-${a.id}`,
+            to: "admins",
+            title: "Information request answered",
+            body: `${who} · ${r.companyName} · ${type}${
+              r.reviewerName ? ` — reviewer ${r.reviewerName}` : ""
+            }. Open to read the answer${a.answerDocs?.length ? " and files" : ""}.`,
+            href: `/admin-partner-requests?focus=${r.id}&open=correspondence&item=${a.id}`,
+            severity: "info",
+            createdAt: a.answeredAt,
+          });
+        }
+
       }
     }
 
@@ -505,20 +524,35 @@ function useDerivedNotifications() {
         const body = req.message.slice(0, 140) || "Open your profile to respond.";
         if (done) {
           clearRequestOpenedAt(`preq-${req.id}`);
+          if (isInfo) {
+            /* Keep the original request notification in place (same id, same
+               date, same position) and simply mark it completed — the partner
+               knows they answered, so no new notification is created. */
+            list.push({
+              id: `preq-${req.id}`,
+              to: email,
+              title,
+              body,
+              href: `/profile?open=history&focus=${req.id}`,
+              severity: "info",
+              completed: true,
+              createdAt: req.requestedAt,
+            });
+            continue;
+          }
           list.push({
             id: `preq-${req.id}-done`,
             to: email,
-            title: isInfo ? "Information request answered" : "Video call booked",
-            body: isInfo
-              ? "Thank you — Loqal received your answer."
-              : `Booked for ${formatDateTime(req.scheduledAt!)}. Tap for the meeting link.`,
-            href: isInfo ? "/profile" : `/profile?open=call-details&focus=${req.id}`,
+            title: "Video call booked",
+            body: `Booked for ${formatDateTime(req.scheduledAt!)}. Tap for the meeting link.`,
+            href: `/profile?open=call-details&focus=${req.id}`,
             severity: "info",
             completed: true,
-            createdAt: (isInfo ? req.answeredAt : req.scheduledAt) ?? undefined,
+            createdAt: req.scheduledAt ?? undefined,
           });
           continue;
         }
+
         const since = requestOpenedAt(`preq-${req.id}`, req.requestedAt);
         list.push({
           id: `preq-${req.id}`,

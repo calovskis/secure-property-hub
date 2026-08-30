@@ -51,6 +51,12 @@ export function AdminRequestsCard({ user }: { user: LoqalUser }) {
       setHistoryItem(done);
     }
   });
+  useDeepLinkAction("history", (focus) => {
+    setShowHistory(true);
+    const done = items.find((i) => i.id === focus);
+    if (done) setHistoryItem(done);
+  });
+
 
   if (!request) return null;
 

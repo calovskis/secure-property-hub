@@ -15,6 +15,7 @@ import {
   ReviewerMark,
 } from "@/components/admin/PartnerReviewBar";
 import { PartnerRequestDialog } from "@/components/admin/PartnerRequestDialog";
+import { PartnerCorrespondence } from "@/components/admin/PartnerCorrespondence";
 import { PersonDetail } from "@/components/admin/PersonDetail";
 import { useAdminPeople } from "@/components/admin/people-model";
 import { US_STATES, US_STATE_CODES } from "@/data/us-states";
@@ -32,13 +33,18 @@ import { toast } from "sonner";
  */
 export const Route = createFileRoute("/admin-partner-requests")({
   component: AdminPartnerRequestsPage,
-  /** `?focus=<requestId>` highlights one registration, `?open=profile` opens its full file. */
-  validateSearch: (search: Record<string, unknown>): { focus?: string; open?: string } => {
-    const out: { focus?: string; open?: string } = {};
+  /** `?focus=<requestId>` highlights one registration, `?open=profile` opens its full file,
+   *  `?open=correspondence&item=<requestItemId>` opens one answered request. */
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { focus?: string; open?: string; item?: string } => {
+    const out: { focus?: string; open?: string; item?: string } = {};
     if (typeof search["focus"] === "string") out.focus = search["focus"];
     if (typeof search["open"] === "string") out.open = search["open"];
+    if (typeof search["item"] === "string") out.item = search["item"];
     return out;
   },
+
   head: () => ({
     meta: [
       { title: "Open Partner Requests — Loqal Admin" },
@@ -139,7 +145,7 @@ function AdminPartnerRequestsPage() {
   const canSeeAll = !me || me.superadmin || accessOf(me, "partners") !== "view";
   const [profileKey, setProfileKey] = useState<string | null>(null);
   const profilePerson = profileKey ? people.find((p) => p.key === profileKey) : undefined;
-  const { focus: focusParam, open: openParam } = Route.useSearch();
+  const { focus: focusParam, open: openParam, item: itemParam } = Route.useSearch();
 
   // A notification about one registration scrolls to it and can open its file.
   useEffect(() => {
@@ -431,53 +437,21 @@ function AdminPartnerRequestsPage() {
                       </div>
                     ) : null}
                     {r.adminRequests?.length ? (
-                      <div className="mt-2 space-y-1.5">
-                        {r.adminRequests.map((a) =>
-                          a.kind === "call" && a.scheduledAt ? (
-                            <div
-                              key={a.id}
-                              className="rounded-md border border-success/40 bg-success/10 px-3 py-2 text-xs"
-                            >
-                              <span className="font-semibold text-success">
-                                ● Video call confirmed by the partner
-                              </span>
-                              <div className="mt-0.5 text-foreground">
-                                {formatDateTime(a.scheduledAt)}
-                                {a.meetUrl ? (
-                                  <>
-                                    {" · "}
-                                    <a
-                                      href={a.meetUrl}
-                                      target="_blank"
-                                      rel="noreferrer"
-                                      className="font-semibold text-brand underline"
-                                    >
-                                      Join Google Meet
-                                    </a>
-                                  </>
-                                ) : null}
-                              </div>
-                              <div className="mt-0.5 text-muted-foreground">
-                                Requested {formatDateTime(a.requestedAt)} by {a.requestedBy}
-                              </div>
-                            </div>
-                          ) : (
-                            <div key={a.id} className="text-xs text-muted-foreground">
-                              <span className="font-semibold text-brand">
-                                {a.kind === "info" ? "Info requested" : "Video call requested"}
-                              </span>{" "}
-                              {formatDateTime(a.requestedAt)} —{" "}
-                              {a.kind === "info"
-                                ? a.answeredAt
-                                  ? `answered ${formatDateTime(a.answeredAt)}: ${a.answer}${
-                                      a.answerDocs?.length ? ` (${a.answerDocs.join(", ")})` : ""
-                                    }`
-                                  : "awaiting the partner's answer"
-                                : "awaiting the partner to book a slot"}
-                            </div>
-                          ),
-                        )}
+                      <div className="mt-2">
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                          Requests &amp; correspondence
+                        </p>
+                        <PartnerCorrespondence
+                          request={r}
+                          compact
+                          focusItem={
+                            focusParam === r.id && openParam === "correspondence"
+                              ? itemParam
+                              : undefined
+                          }
+                        />
                       </div>
+
                     ) : null}
                     {r.verificationDocs.length ? (
                       <div className="mt-1 text-xs text-muted-foreground">
