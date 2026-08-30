@@ -6,6 +6,9 @@ import { PARTNER_LABEL, fullName, useAuth, type PartnerType } from "@/lib/auth";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import { usePartnerRequests, type PartnerRequest } from "@/lib/partner-requests";
 import { PartnerRequestDialog } from "@/components/admin/PartnerRequestDialog";
+import { PersonDetail } from "@/components/admin/PersonDetail";
+import { useAdminPeople } from "@/components/admin/people-model";
+import { US_STATES, US_STATE_CODES } from "@/data/us-states";
 import { uid } from "@/lib/mortgage-form";
 import { useRealtors } from "@/lib/realtors";
 import { logActivity } from "@/lib/activity";
@@ -50,12 +53,70 @@ function typeOf(r: PartnerRequest): TypeFilter {
   return r.kind === "corporate" ? "corporate" : (r.partnerType ?? "other");
 }
 
+/** Two-letter USPS code for a state stored either as a name or a code. */
+function stateAbbr(s: string): string {
+  if (s.length === 2) return s.toUpperCase();
+  const i = US_STATES.findIndex((n) => n.toLowerCase() === s.trim().toLowerCase());
+  return i >= 0 ? (US_STATE_CODES[i] as string) : s;
+}
+
+/**
+ * Compact coverage summary: state-code bubbles instead of full licence rows.
+ * "All states" covers everything; more than 40 states reads as
+ * "All states, except …" listing only where the partner has no presence.
+ */
+function CoverageBubbles({ r }: { r: PartnerRequest }) {
+  if (r.allStates) {
+    return (
+      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+        <span className="text-[11px] font-semibold text-muted-foreground">Licences:</span>
+        <span className="rounded bg-success/10 px-2 py-1 text-[11px] font-semibold text-success">
+          All states
+        </span>
+      </div>
+    );
+  }
+  const codes = [
+    ...new Set((r.realtorLicenses ?? []).map((l) => stateAbbr(l.state)).filter(Boolean)),
+  ];
+  if (!codes.length) return null;
+
+  if (codes.length > 40) {
+    const missing = US_STATE_CODES.filter((c) => !codes.includes(c));
+    return (
+      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+        <span className="text-[11px] font-semibold text-muted-foreground">Licences:</span>
+        <span className="rounded bg-success/10 px-2 py-1 text-[11px] font-semibold text-success">
+          All states{missing.length ? `, except ${missing.join(", ")}` : ""}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+      <span className="text-[11px] font-semibold text-muted-foreground">Licences:</span>
+      {codes.map((c) => (
+        <span
+          key={c}
+          className="rounded bg-brand-tint px-2 py-1 text-[11px] font-semibold text-brand"
+        >
+          {c}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function AdminPartnerRequestsPage() {
   const { user, ready } = useAuth();
   const { requests, setStatus, updateRequest } = usePartnerRequests();
   const [ask, setAsk] = useState<{ request: PartnerRequest; kind: "info" | "call" } | null>(null);
   const { addRealtor } = useRealtors();
   const [filter, setFilter] = useState<TypeFilter>("all");
+  const people = useAdminPeople();
+  const [profileKey, setProfileKey] = useState<string | null>(null);
+  const profilePerson = profileKey ? people.find((p) => p.key === profileKey) : undefined;
 
   const pending = useMemo(
     () =>
@@ -289,18 +350,7 @@ function AdminPartnerRequestsPage() {
                       Submitted {formatDateTime(r.submittedAt)} · waiting since{" "}
                       {formatDate(r.submittedAt)}
                     </div>
-                    {r.realtorLicenses?.length ? (
-                      <div className="mt-2 flex flex-wrap gap-1.5">
-                        {r.realtorLicenses.map((l) => (
-                          <span
-                            key={l.state}
-                            className="rounded bg-brand-tint px-2 py-1 text-[11px] font-semibold text-brand"
-                          >
-                            {l.state} · {l.number} · valid till {formatDate(l.validUntil)}
-                          </span>
-                        ))}
-                      </div>
-                    ) : null}
+                    {r.allStates || r.realtorLicenses?.length ? <CoverageBubbles r={r} /> : null}
                     {r.languages?.length ? (
                       <div className="mt-1 text-xs text-muted-foreground">
                         Languages: {r.languages.join(", ")}
@@ -347,6 +397,13 @@ function AdminPartnerRequestsPage() {
                   <div className="flex shrink-0 flex-wrap justify-end gap-2">
                     <button
                       type="button"
+                      onClick={() => setProfileKey(`${r.kind}-${r.id}`)}
+                      className="rounded-md border border-border px-4 py-2 text-xs font-semibold text-foreground hover:bg-muted"
+                    >
+                      Full profile
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => setAsk({ request: r, kind: "info" })}
                       className="rounded-md border border-brand/50 bg-brand-tint px-4 py-2 text-xs font-semibold text-brand hover:bg-brand-tint/70"
                     >
@@ -380,6 +437,18 @@ function AdminPartnerRequestsPage() {
           </ul>
         )}
       </main>
+
+      {profilePerson ? (
+        <PersonDetail
+          person={profilePerson}
+          onClose={() => setProfileKey(null)}
+          onMessage={() =>
+            toast("Messaging lives in People", {
+              description: "Open this partner from the People section to send a message.",
+            })
+          }
+        />
+      ) : null}
 
       {ask ? (
         <PartnerRequestDialog
