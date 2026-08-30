@@ -77,9 +77,9 @@ export function PartnerReviewBar({
           onChange={(e) => {
             const member = members.find((m) => m.id === e.target.value);
             onChange({
-              reviewerId: member?.id ?? undefined,
-              reviewerName: member?.name ?? undefined,
-              reviewStage: member && stage === "unassigned" ? "assigned" : stage,
+              reviewerId: member?.id ?? "",
+              reviewerName: member?.name ?? "",
+              reviewStage: member ? (stage === "unassigned" ? "assigned" : stage) : "unassigned",
               reviewUpdatedAt: new Date().toISOString(),
             });
           }}
