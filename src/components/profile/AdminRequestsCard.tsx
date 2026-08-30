@@ -113,6 +113,12 @@ function InfoItem({
   const draftId = `partner-request:${item.id}`;
   const draft = drafts.find((d) => d.id === draftId);
 
+  // A notification about this request opens its answer pop-up directly.
+  useDeepLinkAction("request", (focus) => {
+    if (!item.answeredAt && (!focus || focus === item.id)) setOpen(true);
+  });
+
+
   return (
     <ItemShell item={item} badge="Information requested">
       {item.answeredAt ? (
