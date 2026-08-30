@@ -460,6 +460,7 @@ function AdminPartnerRequestsPage() {
                     </button>
                   </div>
                 </div>
+                <PartnerReviewBar r={r} onChange={(patch) => updateRequest(r.id, patch)} />
               </li>
             ))}
           </ul>
