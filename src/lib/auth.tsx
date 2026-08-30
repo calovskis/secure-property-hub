@@ -8,6 +8,8 @@ import {
   type ReactNode,
 } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { joinName, nameInitials, namesFromEmail, normalizeName } from "@/lib/names";
+
 
 
 export type Role = "client" | "corporate" | "partner" | "admin";
