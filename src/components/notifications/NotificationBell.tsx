@@ -9,7 +9,7 @@
  */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { useAuth } from "@/lib/auth";
+import { useAuth, PARTNER_LABEL } from "@/lib/auth";
 import { offerReminders, pendingOfferDecision, useLeads } from "@/lib/leads";
 import { useBuyerProcess } from "@/lib/buyer-process";
 import { usePartnerRequests } from "@/lib/partner-requests";
