@@ -225,5 +225,6 @@ function CallItem({
         </div>
       )}
     </ItemShell>
+    </div>
   );
 }
