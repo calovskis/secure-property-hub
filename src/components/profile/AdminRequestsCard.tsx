@@ -11,6 +11,7 @@ import { CallScheduler } from "@/components/buyer/CallScheduler";
 import { logActivity } from "@/lib/activity";
 import { formatDateTime } from "@/lib/dates";
 import { UploadRequestDialog } from "@/components/profile/UploadRequestDialog";
+import { UploadedDocLink } from "@/components/profile/UploadedDocLink";
 import { useUploadDrafts } from "@/lib/upload-drafts";
 import { useDeepLinkAction } from "@/lib/deep-link";
 import {
