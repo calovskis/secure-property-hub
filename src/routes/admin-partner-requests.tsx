@@ -436,53 +436,21 @@ function AdminPartnerRequestsPage() {
                       </div>
                     ) : null}
                     {r.adminRequests?.length ? (
-                      <div className="mt-2 space-y-1.5">
-                        {r.adminRequests.map((a) =>
-                          a.kind === "call" && a.scheduledAt ? (
-                            <div
-                              key={a.id}
-                              className="rounded-md border border-success/40 bg-success/10 px-3 py-2 text-xs"
-                            >
-                              <span className="font-semibold text-success">
-                                ● Video call confirmed by the partner
-                              </span>
-                              <div className="mt-0.5 text-foreground">
-                                {formatDateTime(a.scheduledAt)}
-                                {a.meetUrl ? (
-                                  <>
-                                    {" · "}
-                                    <a
-                                      href={a.meetUrl}
-                                      target="_blank"
-                                      rel="noreferrer"
-                                      className="font-semibold text-brand underline"
-                                    >
-                                      Join Google Meet
-                                    </a>
-                                  </>
-                                ) : null}
-                              </div>
-                              <div className="mt-0.5 text-muted-foreground">
-                                Requested {formatDateTime(a.requestedAt)} by {a.requestedBy}
-                              </div>
-                            </div>
-                          ) : (
-                            <div key={a.id} className="text-xs text-muted-foreground">
-                              <span className="font-semibold text-brand">
-                                {a.kind === "info" ? "Info requested" : "Video call requested"}
-                              </span>{" "}
-                              {formatDateTime(a.requestedAt)} —{" "}
-                              {a.kind === "info"
-                                ? a.answeredAt
-                                  ? `answered ${formatDateTime(a.answeredAt)}: ${a.answer}${
-                                      a.answerDocs?.length ? ` (${a.answerDocs.join(", ")})` : ""
-                                    }`
-                                  : "awaiting the partner's answer"
-                                : "awaiting the partner to book a slot"}
-                            </div>
-                          ),
-                        )}
+                      <div className="mt-2">
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                          Requests &amp; correspondence
+                        </p>
+                        <PartnerCorrespondence
+                          request={r}
+                          compact
+                          focusItem={
+                            focusParam === r.id && openParam === "correspondence"
+                              ? itemParam
+                              : undefined
+                          }
+                        />
                       </div>
+
                     ) : null}
                     {r.verificationDocs.length ? (
                       <div className="mt-1 text-xs text-muted-foreground">
