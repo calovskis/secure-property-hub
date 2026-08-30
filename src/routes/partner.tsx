@@ -236,7 +236,11 @@ function PartnerPage() {
 }
 
 function LenderWorkspace({ lenderName }: { lenderName: string }) {
+  const { tab: tabParam } = Route.useSearch();
   const [tab, setTab] = useState<LenderTabId>("home");
+  useEffect(() => {
+    if (tabParam) setTab(tabParam as LenderTabId);
+  }, [tabParam]);
   const tabs = useLenderTabs();
   const current = tabs.some((t) => t.id === tab) ? tab : "home";
 
