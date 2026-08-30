@@ -74,36 +74,23 @@ export function RealtorProfileCard({ user }: { user: LoqalUser }) {
   const mine = leads.filter((l) => l.buyerAgent?.agentId === me.id);
   const delivered = mine.filter((l) => photos[l.id]?.status === "delivered").length;
   const advocated = mine.filter((l) => l.buyerAgent?.representation === "loqal_rep").length;
-  const address = [me.address.street, me.address.city, `${me.address.state} ${me.address.zip}`.trim()]
-    .filter(Boolean)
-    .join(", ");
+  const personName = `${registration?.firstName || user.firstName} ${
+    registration?.lastName || user.lastName
+  }`.trim();
 
   function startEdit() {
     if (!me) return;
-    setInfo({
-      phone: me.phone,
-      street: me.address.street,
-      city: me.address.city,
-      state: me.address.state,
-      zip: me.address.zip,
-    });
+    setInfo({ phone: me.phone, position: registration?.position ?? "" });
   }
 
   function save() {
     if (!me || !info) return;
-    updateRealtor(me.id, {
-      phone: info.phone.trim(),
-      address: {
-        street: info.street.trim(),
-        city: info.city.trim(),
-        state: info.state,
-        zip: info.zip.trim(),
-        country: me.address.country || "US",
-      },
-    });
+    updateRealtor(me.id, { phone: info.phone.trim() });
+    if (registration) updateRequest(registration.id, { position: info.position.trim() });
     setInfo(null);
     toast.success("Contact details updated.");
   }
+
 
   function saveLanguages(next: string[]) {
     if (!me) return;
