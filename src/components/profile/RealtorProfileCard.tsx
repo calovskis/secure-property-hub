@@ -191,6 +191,11 @@ export function RealtorProfileCard({ user }: { user: LoqalUser }) {
         title="Languages"
         summary={languages.length ? languages.join(", ") : "No languages added yet"}
       >
+        <p className="mb-3 rounded-md bg-brand-tint/40 p-3 text-xs leading-relaxed text-muted-foreground">
+          Loqal asks clients for their preferred languages so we can match them with the best
+          realtor for their needs. Please list only the languages you can communicate in fluently,
+          both verbally and in writing.
+        </p>
         <LanguagesEditor values={languages} onChange={saveLanguages} />
       </TopicCard>
 
