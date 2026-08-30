@@ -5,6 +5,7 @@
  * partner's full profile.
  */
 import { useEffect, useState } from "react";
+import { UploadedDocLink } from "@/components/profile/UploadedDocLink";
 import { formatDateTime } from "@/lib/dates";
 import type { PartnerAdminRequest, PartnerRequest } from "@/lib/partner-requests";
 import {
