@@ -49,7 +49,7 @@ export function UploadRequestDialog({
   /** Optional document-type picker shown inside the pop-up. */
   choices?: { value: string; label: string }[];
   choiceLabel?: string;
-  onSubmit: (result: { note: string; files: string[]; choice?: string }) => void;
+  onSubmit: (result: { note: string; files: string[]; choice?: string | undefined }) => void;
 }) {
   const [note, setNote] = useState("");
   const [files, setFiles] = useState<string[]>([]);
