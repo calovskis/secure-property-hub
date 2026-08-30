@@ -134,10 +134,12 @@ type EditForm = { state: string; number: string; validUntil: string };
  * validity date and whether Loqal verified the copy on file.
  */
 export function LicenceCoverageTable({ user }: { user: LoqalUser }) {
-  const { licenses, persist } = useRealtorLicences(user);
+  const { request, licenses, persist } = useRealtorLicences(user);
   const [edit, setEdit] = useState<EditForm | null>(null);
   const [editState, setEditState] = useState<string | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const history = request?.realtorVerification?.licenseHistory ?? [];
 
   function save() {
     if (!edit) return;
