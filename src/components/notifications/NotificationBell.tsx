@@ -351,9 +351,19 @@ function useDerivedNotifications() {
       }
     }
 
-    /* -------------------------------- admin side ------------------------------ */
-    if (isAdmin) {
+    if (list.length) syncNotifications(list);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.email, leadsReady, leads, proc, realtors, email]);
+
+  /* -------------------------------- admin side ------------------------------
+     Kept in its own effect: partner registrations and their correspondence are
+     independent of client lead data, so admins must not wait for it to load. */
+  useEffect(() => {
+    if (!user || !isAdmin) return;
+    const list: Draft[] = [];
+    {
       for (const r of requests) {
+        if (r.status === "pending") {
         if (r.status === "pending") {
           list.push({
             id: `preq-${r.id}`,
