@@ -303,6 +303,13 @@ function AdminPartnerRequestsPage() {
     counts.set(typeOf(r), (counts.get(typeOf(r)) ?? 0) + 1);
   }
 
+  const statusBase = requests.filter((r) => r.status === "pending" && (filter === "all" || typeOf(r) === filter));
+  const statusCounts = {
+    unassigned: statusBase.filter((r) => isUnassigned(r)).length,
+    in_process: statusBase.filter((r) => !isUnassigned(r)).length,
+  };
+
+
   return (
     <div className="min-h-screen bg-background">
       <AppHeader navSlot={<AdminNav tab={"partners"} />} />
