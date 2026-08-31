@@ -46,6 +46,7 @@ export function useDeepLink(): DeepLinkSearch {
     ...(pick("focus") ? { focus: pick("focus") } : {}),
     ...(pick("doc") ? { doc: pick("doc") } : {}),
     ...(pick("request") ? { request: pick("request") } : {}),
+    ...(pick("k") ? { k: pick("k") } : {}),
   };
 }
 
