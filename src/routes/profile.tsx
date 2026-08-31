@@ -508,7 +508,7 @@ function ProfilePage() {
           {isPartner ? (
             <aside className="space-y-6">
               <OpenRequests user={user} isRealtor={isRealtor} />
-              <AdminRequestsCard user={user} />
+              <CorrespondenceCard user={user} />
               {isRealtor ? null : <KybCard user={user} />}
               <AgreementCard user={user} />
             </aside>
