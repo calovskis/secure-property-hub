@@ -6,14 +6,10 @@ import { PARTNER_LABEL, fullName, useAuth, type PartnerType } from "@/lib/auth";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import {
   usePartnerRequests,
-  REVIEW_STAGE_LABEL,
   type PartnerRequest,
 } from "@/lib/partner-requests";
-import {
-  PartnerReviewBar,
-  ReviewProgressBar,
-  ReviewerMark,
-} from "@/components/admin/PartnerReviewBar";
+import { PartnerReviewBar, ReviewerMark } from "@/components/admin/PartnerReviewBar";
+
 import { PartnerRequestDialog } from "@/components/admin/PartnerRequestDialog";
 import { PartnerCorrespondence } from "@/components/admin/PartnerCorrespondence";
 import { PersonDetail } from "@/components/admin/PersonDetail";
@@ -21,8 +17,8 @@ import { useAdminPeople } from "@/components/admin/people-model";
 import { US_STATES, US_STATE_CODES } from "@/data/us-states";
 import { uid } from "@/lib/mortgage-form";
 import { useRealtors } from "@/lib/realtors";
-import { accessOf, useStaff } from "@/lib/staff";
 import { logActivity } from "@/lib/activity";
+
 import { notify } from "@/lib/notifications";
 import { toast } from "sonner";
 
@@ -152,12 +148,8 @@ function AdminPartnerRequestsPage() {
   const [filter, setFilter] = useState<TypeFilter>("all");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("unassigned");
   const people = useAdminPeople();
-  const { members } = useStaff();
-  // Employees only granted "view" on Partners work their own cases: for every
-  // other registration they see just the summary line and who owns the case.
-  const me = members.find((m) => m.email.toLowerCase() === (user?.email ?? "").toLowerCase());
-  const canSeeAll = !me || me.superadmin || accessOf(me, "partners") !== "view";
   const [profileKey, setProfileKey] = useState<string | null>(null);
+
   const profilePerson = profileKey ? people.find((p) => p.key === profileKey) : undefined;
   const { focus: focusParam, open: openParam, item: itemParam } = Route.useSearch();
 
@@ -422,30 +414,7 @@ function AdminPartnerRequestsPage() {
 
         ) : (
           <ul className="space-y-4">
-            {pending.map((r) =>
-              !canSeeAll && r.reviewerId !== me?.id ? (
-                <li key={r.id} id={`preq-${r.id}`} className="rounded-lg border border-border bg-card p-5">
-                  <div className="text-sm font-semibold text-foreground">
-                    {r.companyName}{" "}
-                    <span className="ml-1 rounded-full bg-brand-tint px-2.5 py-0.5 text-[11px] font-semibold text-brand">
-                      {r.kind === "partner" ? PARTNER_LABEL[r.partnerType ?? "other"] : "Corporate"}
-                    </span>
-                  </div>
-                  <div className="mt-1 text-xs text-muted-foreground">
-                    {r.firstName} {r.lastName}
-                  </div>
-                  {r.allStates || r.realtorLicenses?.length ? <CoverageBubbles r={r} /> : null}
-                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-                    <span className="text-[11px] text-muted-foreground">
-                      {r.reviewerName ? `Reviewed by ${r.reviewerName}` : "No reviewer assigned"} ·{" "}
-                      {REVIEW_STAGE_LABEL[r.reviewStage ?? "unassigned"]}
-                    </span>
-                  </div>
-                  <div className="mt-2">
-                    <ReviewProgressBar stage={r.reviewStage ?? "unassigned"} />
-                  </div>
-                </li>
-              ) : (
+            {pending.map((r) => (
               <li key={r.id} id={`preq-${r.id}`} className="rounded-lg border border-border bg-card p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -500,7 +469,6 @@ function AdminPartnerRequestsPage() {
                           }
                         />
                       </div>
-
                     ) : null}
                     {r.verificationDocs.length ? (
                       <div className="mt-1 text-xs text-muted-foreground">
@@ -508,7 +476,7 @@ function AdminPartnerRequestsPage() {
                       </div>
                     ) : null}
                   </div>
-                  <div className="flex shrink-0 flex-wrap justify-end gap-2">
+                  <div className="flex shrink-0">
                     <button
                       type="button"
                       onClick={() => setProfileKey(`${r.kind}-${r.id}`)}
@@ -516,6 +484,11 @@ function AdminPartnerRequestsPage() {
                     >
                       Full profile
                     </button>
+                  </div>
+                </div>
+
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+                  <div className="flex flex-wrap gap-2">
                     <button
                       type="button"
                       onClick={() => setAsk({ request: r, kind: "info" })}
@@ -530,6 +503,8 @@ function AdminPartnerRequestsPage() {
                     >
                       Request video call
                     </button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
                     <button
                       type="button"
                       onClick={() => approve(r)}
@@ -546,11 +521,12 @@ function AdminPartnerRequestsPage() {
                     </button>
                   </div>
                 </div>
+
                 <PartnerReviewBar r={r} onChange={(patch) => updateRequest(r.id, patch)} />
               </li>
-              ),
-            )}
+            ))}
           </ul>
+
         )}
       </main>
 
