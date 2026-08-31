@@ -756,6 +756,9 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
         </p>
       )}
 
+      {/* Written information / document requests Loqal raised, plus their history. */}
+      <InfoRequestsList user={user} />
+
       {realtor ? (
         <>
           <UploadRequestDialog
