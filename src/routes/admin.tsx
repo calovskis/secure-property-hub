@@ -424,6 +424,8 @@ function AdminPage() {
                 </div>
               </div>
             </section>
+
+            <TeamAvailabilityCard onOpenEmployees={() => setTab("employees")} />
           </>
         ) : null}
       </main>
