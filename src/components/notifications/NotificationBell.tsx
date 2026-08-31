@@ -541,32 +541,24 @@ function useDerivedNotifications() {
           : "Loqal requested a video call";
         const body = req.message.slice(0, 140) || "Open your profile to respond.";
         if (done) {
+          /* Keep the original request notification in place (same id, same
+             date, same position) and simply mark it completed — the partner
+             answered or picked a slot themselves, and the booking confirms on
+             both sides automatically, so no new notification is created. */
           clearRequestOpenedAt(`preq-${req.id}`);
-          if (isInfo) {
-            /* Keep the original request notification in place (same id, same
-               date, same position) and simply mark it completed — the partner
-               knows they answered, so no new notification is created. */
-            list.push({
-              id: `preq-${req.id}`,
-              to: email,
-              title,
-              body,
-              href: `/profile?open=history&focus=${req.id}`,
-              severity: "info",
-              completed: true,
-              createdAt: req.requestedAt,
-            });
-            continue;
-          }
           list.push({
-            id: `preq-${req.id}-done`,
+            id: `preq-${req.id}`,
             to: email,
-            title: "Video call booked",
-            body: `Booked for ${formatDateTime(req.scheduledAt!)}. Tap for the meeting link.`,
-            href: `/profile?open=call-details&focus=${req.id}`,
+            title,
+            body: isInfo
+              ? body
+              : `Booked for ${formatDateTime(req.scheduledAt!)}. Tap for the meeting link.`,
+            href: isInfo
+              ? `/profile?open=history&focus=${req.id}`
+              : `/profile?open=call-details&focus=${req.id}`,
             severity: "info",
             completed: true,
-            createdAt: req.scheduledAt ?? undefined,
+            createdAt: req.requestedAt,
           });
           continue;
         }
