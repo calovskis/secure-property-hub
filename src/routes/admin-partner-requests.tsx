@@ -370,26 +370,48 @@ function AdminPartnerRequestsPage() {
           </section>
         ) : null}
 
-        <div className="mb-6 flex flex-wrap gap-2">
-          {TYPE_FILTERS.map((f) => {
-            const n = f.id === "all" ? [...counts.values()].reduce((s, v) => s + v, 0) : (counts.get(f.id) ?? 0);
-            return (
+        <div className="mb-6 space-y-2">
+          <div className="flex flex-wrap gap-2">
+            {TYPE_FILTERS.map((f) => {
+              const n = f.id === "all" ? [...counts.values()].reduce((s, v) => s + v, 0) : (counts.get(f.id) ?? 0);
+              return (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => setFilter(f.id)}
+                  className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+                    filter === f.id
+                      ? "bg-brand text-background"
+                      : "border border-border bg-card text-muted-foreground hover:bg-brand-tint hover:text-brand"
+                  }`}
+                >
+                  {f.label}
+                  <span className={filter === f.id ? "opacity-80" : "text-muted-foreground/70"}>{n}</span>
+                </button>
+              );
+            })}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {STATUS_FILTERS.map((f) => (
               <button
                 key={f.id}
                 type="button"
-                onClick={() => setFilter(f.id)}
-                className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
-                  filter === f.id
-                    ? "bg-brand text-background"
-                    : "border border-border bg-card text-muted-foreground hover:bg-brand-tint hover:text-brand"
+                onClick={() => setStatusFilter(f.id)}
+                className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${
+                  statusFilter === f.id
+                    ? "bg-gold-tint text-gold border border-gold/30"
+                    : "border border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
               >
                 {f.label}
-                <span className={filter === f.id ? "opacity-80" : "text-muted-foreground/70"}>{n}</span>
+                <span className={statusFilter === f.id ? "opacity-80" : "text-muted-foreground/70"}>
+                  {statusCounts[f.id]}
+                </span>
               </button>
-            );
-          })}
+            ))}
+          </div>
         </div>
+
 
         {pending.length === 0 ? (
           <div className="rounded-lg border border-border bg-card p-10 text-center text-sm text-muted-foreground">
