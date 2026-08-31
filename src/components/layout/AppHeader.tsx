@@ -176,6 +176,10 @@ export function AppHeader({
   navSlot?: React.ReactNode;
 }) {
   const { t } = useI18n();
+  const { user } = useAuth();
+  // The logo always returns the person to the dashboard of the portal they are
+  // signed into (admin, partner, or client) — never to another role's home.
+  const homeTo = user ? homeRouteFor(user.role) : "/";
   const nav = navItems ?? NAV;
   const [open, setOpen] = useState<string | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
@@ -200,7 +204,7 @@ export function AppHeader({
       className="sticky top-0 z-50 border-b border-border bg-card shadow-[0_1px_3px_rgba(0,0,0,0.05)]"
     >
       <div className="mx-auto flex h-[72px] max-w-[1400px] items-center justify-between gap-3 px-4 md:px-7">
-        <Link to="/" className="flex shrink-0 items-center gap-1.5">
+        <Link to={homeTo} className="flex shrink-0 items-center gap-1.5">
           <span className="flex size-7 items-center justify-center rounded-md bg-gradient-to-br from-gold to-gold/70 text-[13px] font-bold text-primary-foreground">
             LQ
           </span>
