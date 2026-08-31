@@ -488,13 +488,18 @@ export function MortgageQuestionnaire({
               />
             ) : null}
 
-            {(usPerson || data.hasItin) && !submittedProfile?.idDocuments?.length ? (
+            {!submittedProfile?.idDocuments?.length ? (
               <DocumentUploadBox
                 title="Identification document"
-                description="To verify the information for an accurate pre-approval, please upload your driver's license (front and back), green card, or passport."
+                description={
+                  usPerson || data.hasItin
+                    ? "To verify the information for an accurate pre-approval, please upload your driver's license (front and back), green card, or passport."
+                    : "To verify your identity for an accurate pre-approval, please upload your identity document — national ID card (front and back) or passport."
+                }
                 onConfirm={(docs) => attachDocuments("idDocuments", docs)}
               />
             ) : null}
+
 
             <button
               type="button"
