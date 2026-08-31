@@ -148,12 +148,8 @@ function AdminPartnerRequestsPage() {
   const [filter, setFilter] = useState<TypeFilter>("all");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("unassigned");
   const people = useAdminPeople();
-  const { members } = useStaff();
-  // Employees only granted "view" on Partners work their own cases: for every
-  // other registration they see just the summary line and who owns the case.
-  const me = members.find((m) => m.email.toLowerCase() === (user?.email ?? "").toLowerCase());
-  const canSeeAll = !me || me.superadmin || accessOf(me, "partners") !== "view";
   const [profileKey, setProfileKey] = useState<string | null>(null);
+
   const profilePerson = profileKey ? people.find((p) => p.key === profileKey) : undefined;
   const { focus: focusParam, open: openParam, item: itemParam } = Route.useSearch();
 
