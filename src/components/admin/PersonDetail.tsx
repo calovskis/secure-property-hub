@@ -632,7 +632,11 @@ function DocumentsTab({ person }: { person: AdminPerson }) {
           <ul className="space-y-1.5 text-sm">
             {g.items.map((d, i) => (
               <li key={`${d.name}-${i}`} className="flex items-center justify-between gap-3">
-                <span className="truncate text-foreground">📄 {d.name}</span>
+                {d.path ? (
+                  <UploadedDocLink path={d.path} />
+                ) : (
+                  <span className="truncate text-foreground">📄 {d.name}</span>
+                )}
                 <span className="flex shrink-0 items-center gap-3 text-xs text-muted-foreground">
                   {d.at ? formatDate(d.at) : null}
                   {d.url ? (
