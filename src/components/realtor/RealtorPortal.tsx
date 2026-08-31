@@ -802,6 +802,10 @@ export function RealtorPortal({
           </section>
 
           <div className="mb-6">
+            <PointOfContactCard />
+          </div>
+
+          <div className="mb-6">
             <GoogleCalendarCard agentRef={me.id} agentEmail={me.email} />
           </div>
 
