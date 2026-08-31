@@ -415,8 +415,11 @@ function AdminPartnerRequestsPage() {
 
         {pending.length === 0 ? (
           <div className="rounded-lg border border-border bg-card p-10 text-center text-sm text-muted-foreground">
-            No open partner requests{filter === "all" ? "" : ` in “${TYPE_FILTERS.find((f) => f.id === filter)?.label}”`}.
+            No open partner requests
+            {filter === "all" ? "" : ` in “${TYPE_FILTERS.find((f) => f.id === filter)?.label}”`}
+            {statusFilter === "unassigned" ? " that are unassigned" : " that are in process"}.
           </div>
+
         ) : (
           <ul className="space-y-4">
             {pending.map((r) =>
