@@ -150,6 +150,7 @@ function AdminPartnerRequestsPage() {
   const [ask, setAsk] = useState<{ request: PartnerRequest; kind: "info" | "call" } | null>(null);
   const { addRealtor } = useRealtors();
   const [filter, setFilter] = useState<TypeFilter>("all");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("unassigned");
   const people = useAdminPeople();
   const { members } = useStaff();
   // Employees only granted "view" on Partners work their own cases: for every
@@ -176,9 +177,11 @@ function AdminPartnerRequestsPage() {
       requests
         .filter((r) => r.status === "pending")
         .filter((r) => filter === "all" || typeOf(r) === filter)
-        .sort((a, b) => a.submittedAt.localeCompare(b.submittedAt)), // oldest first
-    [requests, filter],
+        .filter((r) => (statusFilter === "unassigned" ? isUnassigned(r) : !isUnassigned(r)))
+        .sort((a, b) => b.submittedAt.localeCompare(a.submittedAt)), // newest first
+    [requests, filter, statusFilter],
   );
+
 
   if (!ready) return <div className="min-h-screen bg-background" />;
 
