@@ -10,6 +10,7 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { UploadedDocLink } from "@/components/profile/UploadedDocLink";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import { PARTNER_LABEL } from "@/lib/auth";
 import { useLeads, LEAD_STATUS_LABEL, KICKOFF_LABEL, type MortgageLead } from "@/lib/leads";
