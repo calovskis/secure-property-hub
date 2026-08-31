@@ -558,7 +558,10 @@ function AccessCard({ person }: { person: AdminPerson }) {
 
 function DocumentsTab({ person }: { person: AdminPerson }) {
   const req = person.request;
-  const groups: { title: string; items: { name: string; at?: string; url?: string }[] }[] = [];
+  const groups: {
+    title: string;
+    items: { name: string; at?: string; url?: string; path?: string }[];
+  }[] = [];
 
   if (req) {
     groups.push({
@@ -574,7 +577,21 @@ function DocumentsTab({ person }: { person: AdminPerson }) {
     if (req.kyc?.director.idDoc)
       kycDocs.push({ name: `Director ID · ${req.kyc.director.idDoc}` });
     groups.push({ title: "KYB documents", items: kycDocs });
+
+    /* Files the partner attached when answering a Loqal information request —
+       surfaced here as well, not only inside the correspondence thread. */
+    groups.push({
+      title: "Documents provided on Loqal requests",
+      items: (req.adminRequests ?? []).flatMap((a) =>
+        (a.answerDocs ?? []).map((path) => ({
+          name: path,
+          path,
+          ...(a.answeredAt ? { at: a.answeredAt } : {}),
+        })),
+      ),
+    });
   }
+
 
   for (const lead of person.leads) {
     const p = lead.profile;
