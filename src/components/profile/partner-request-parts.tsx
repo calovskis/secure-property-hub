@@ -277,10 +277,14 @@ export function CallItem({
   onBooked: (id: string, changes: Partial<PartnerAdminRequest>) => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  // "Loqal asked for a call" notifications scroll the booking form into view.
+  const [open, setOpen] = useState(false);
+  // "Loqal asked for a call" notifications open the booking pop-up directly,
+  // exactly like information requests do.
   useDeepLinkAction("call", (focus) => {
-    if (!item.scheduledAt && (!focus || focus === item.id))
+    if (!item.scheduledAt && (!focus || focus === item.id)) {
+      setOpen(true);
       ref.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
   });
 
   return (
@@ -302,17 +306,35 @@ export function CallItem({
           </div>
         ) : (
           <div className="mt-3">
-            <CallScheduler
-              agentEmail={LOQAL_ADMIN_EMAIL}
-              summary="Loqal — partner registration call"
-              description={item.message}
-              attendeeEmails={[user.email]}
-              onBook={(startAt, meeting) => {
-                onBooked(item.id, { scheduledAt: startAt, meetUrl: meeting?.meetUrl ?? null });
-                logActivity(fullName(user), "booked a video call with Loqal", startAt);
-                toast("Call booked", { description: "Loqal received your slot." });
-              }}
-            />
+            <button
+              type="button"
+              onClick={() => setOpen(true)}
+              className="rounded-md bg-brand px-4 py-2 text-sm font-semibold text-background hover:bg-brand-soft"
+            >
+              Choose a time
+            </button>
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Book your video call with Loqal</DialogTitle>
+                  <DialogDescription className="whitespace-pre-wrap">
+                    {item.message || "Pick a slot that suits you."}
+                  </DialogDescription>
+                </DialogHeader>
+                <CallScheduler
+                  agentEmail={LOQAL_ADMIN_EMAIL}
+                  summary="Loqal — partner registration call"
+                  description={item.message}
+                  attendeeEmails={[user.email]}
+                  onBook={(startAt, meeting) => {
+                    onBooked(item.id, { scheduledAt: startAt, meetUrl: meeting?.meetUrl ?? null });
+                    logActivity(fullName(user), "booked a video call with Loqal", startAt);
+                    toast("Call booked", { description: "Loqal received your slot." });
+                    setOpen(false);
+                  }}
+                />
+              </DialogContent>
+            </Dialog>
           </div>
         )}
       </ItemShell>
