@@ -14,10 +14,14 @@ import {
   isOpenItem,
 } from "@/components/profile/partner-request-parts";
 import { useDeepLinkAction } from "@/lib/deep-link";
+import { useStaff } from "@/lib/staff";
 
 export function CorrespondenceCard({ user }: { user: LoqalUser }) {
   const { requests, updateRequest } = usePartnerRequests();
+  const { members } = useStaff();
   const request = requests.find((r) => r.email.toLowerCase() === user.email.toLowerCase());
+  // The slot books into the calendar of the Loqal manager assigned to the file.
+  const reviewerEmail = members.find((m) => m.id === request?.reviewerId)?.email;
   const items = (request?.adminRequests ?? []).filter((i) => i.kind !== "info");
   const [historyItem, setHistoryItem] = useState<PartnerAdminRequest | null>(null);
   const [showHistory, setShowHistory] = useState(false);
@@ -70,7 +74,13 @@ export function CorrespondenceCard({ user }: { user: LoqalUser }) {
       ) : (
         <div className="mt-4 space-y-4">
           {open.map((item) => (
-            <CallItem key={item.id} item={item} user={user} onBooked={patch} />
+            <CallItem
+              key={item.id}
+              item={item}
+              user={user}
+              onBooked={patch}
+              {...(reviewerEmail ? { agentEmail: reviewerEmail } : {})}
+            />
           ))}
         </div>
       )}

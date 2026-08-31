@@ -351,8 +351,17 @@ function useDerivedNotifications() {
       }
     }
 
-    /* -------------------------------- admin side ------------------------------ */
-    if (isAdmin) {
+    if (list.length) syncNotifications(list);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.email, leadsReady, leads, proc, realtors, email]);
+
+  /* -------------------------------- admin side ------------------------------
+     Kept in its own effect: partner registrations and their correspondence are
+     independent of client lead data, so admins must not wait for it to load. */
+  useEffect(() => {
+    if (!user || !isAdmin) return;
+    const list: Draft[] = [];
+    {
       for (const r of requests) {
         if (r.status === "pending") {
           list.push({
@@ -412,12 +421,12 @@ function useDerivedNotifications() {
             list.push({
               id: `areq-booked-${a.id}`,
               to: "admins",
-              title: "Video call slot selected",
-              body: `${who} · ${r.companyName} · ${type}${reviewer}. Booked for ${formatDateTime(
-                a.scheduledAt,
-              )}.`,
+              title: `Video call booked — ${formatDateTime(a.scheduledAt)}`,
+              body: `${who} · ${r.companyName} · ${type}${reviewer} picked this slot. It is in your calendar${
+                a.meetUrl ? " with the Meet link" : ""
+              } — open to see the details.`,
               href: `/admin-partner-requests?focus=${r.id}&open=correspondence&item=${a.id}`,
-              severity: "info",
+              severity: "warning",
               createdAt: a.scheduledAt,
             });
           }
@@ -428,7 +437,7 @@ function useDerivedNotifications() {
 
     if (list.length) syncNotifications(list);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.email, leadsReady, leads, proc, requests, realtors, email, isAdmin]);
+  }, [user?.email, requests, isAdmin]);
 
   /* Partner-side "agreement ready to sign" notices (addressed to the partner). */
   useEffect(() => {

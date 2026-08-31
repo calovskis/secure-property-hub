@@ -271,10 +271,13 @@ export function CallItem({
   item,
   user,
   onBooked,
+  agentEmail,
 }: {
   item: PartnerAdminRequest;
   user: LoqalUser;
   onBooked: (id: string, changes: Partial<PartnerAdminRequest>) => void;
+  /** Calendar the slot is booked into — the assigned Loqal manager when known. */
+  agentEmail?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
@@ -322,7 +325,7 @@ export function CallItem({
                   </DialogDescription>
                 </DialogHeader>
                 <CallScheduler
-                  agentEmail={LOQAL_ADMIN_EMAIL}
+                  agentEmail={agentEmail || LOQAL_ADMIN_EMAIL}
                   summary="Loqal — partner registration call"
                   description={item.message}
                   attendeeEmails={[user.email]}
