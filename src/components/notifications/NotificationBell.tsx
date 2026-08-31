@@ -716,12 +716,13 @@ export function NotificationBell() {
   );
 }
 
-/** Notifications deep-link with a query string so the target pop-up opens itself. */
+/**
+ * Notifications deep-link with a query string so the target pop-up opens
+ * itself. Shared with the rest of the app so repeat clicks always re-fire.
+ */
 function openNotification(
   navigate: ReturnType<typeof useNavigate>,
   href: string,
 ) {
-  const [path, query] = href.split("?");
-  const search = query ? Object.fromEntries(new URLSearchParams(query)) : undefined;
-  navigate({ to: path, ...(search ? { search } : {}) } as never);
+  openDeepLink(navigate, href);
 }
