@@ -272,10 +272,7 @@ export function Step3Liabilities({ data, patch, usPerson }: StepProps) {
           </div>
         </Section>
       ) : (
-        <p className="rounded-md bg-brand-tint/60 p-3 text-xs text-muted-foreground">
-          Liability questions are not required for applicants without US citizenship, a green card,
-          or an ITIN.
-        </p>
+        null
       )}
     </div>
   );
