@@ -390,20 +390,37 @@ function useDerivedNotifications() {
         /* The partner answered a follow-up Loqal raised — tell the reviewing
            Loqal manager (and the admin desk) so they can read the answer. */
         for (const a of r.adminRequests ?? []) {
-          if (a.kind !== "info" || !a.answeredAt) continue;
           const who = `${r.firstName} ${r.lastName}`.trim();
           const type = r.kind === "corporate" ? "Corporate" : PARTNER_LABEL[r.partnerType ?? "other"];
-          list.push({
-            id: `areq-answered-${a.id}`,
-            to: "admins",
-            title: "Information request answered",
-            body: `${who} · ${r.companyName} · ${type}${
-              r.reviewerName ? ` — reviewer ${r.reviewerName}` : ""
-            }. Open to read the answer${a.answerDocs?.length ? " and files" : ""}.`,
-            href: `/admin-partner-requests?focus=${r.id}&open=correspondence&item=${a.id}`,
-            severity: "info",
-            createdAt: a.answeredAt,
-          });
+          const reviewer = r.reviewerName ? ` — reviewer ${r.reviewerName}` : "";
+          if (a.kind === "info" && a.answeredAt) {
+            list.push({
+              id: `areq-answered-${a.id}`,
+              to: "admins",
+              title: "Information request answered",
+              body: `${who} · ${r.companyName} · ${type}${reviewer}. Open to read the answer${
+                a.answerDocs?.length ? " and files" : ""
+              }.`,
+              href: `/admin-partner-requests?focus=${r.id}&open=correspondence&item=${a.id}`,
+              severity: "info",
+              createdAt: a.answeredAt,
+            });
+          }
+          /* The partner picked a slot — the booking is automatic on both
+             sides, so only Loqal needs to be told about it. */
+          if (a.kind !== "info" && a.scheduledAt) {
+            list.push({
+              id: `areq-booked-${a.id}`,
+              to: "admins",
+              title: "Video call slot selected",
+              body: `${who} · ${r.companyName} · ${type}${reviewer}. Booked for ${formatDateTime(
+                a.scheduledAt,
+              )}.`,
+              href: `/admin-partner-requests?focus=${r.id}&open=correspondence&item=${a.id}`,
+              severity: "info",
+              createdAt: a.scheduledAt,
+            });
+          }
         }
 
       }
@@ -524,32 +541,24 @@ function useDerivedNotifications() {
           : "Loqal requested a video call";
         const body = req.message.slice(0, 140) || "Open your profile to respond.";
         if (done) {
+          /* Keep the original request notification in place (same id, same
+             date, same position) and simply mark it completed — the partner
+             answered or picked a slot themselves, and the booking confirms on
+             both sides automatically, so no new notification is created. */
           clearRequestOpenedAt(`preq-${req.id}`);
-          if (isInfo) {
-            /* Keep the original request notification in place (same id, same
-               date, same position) and simply mark it completed — the partner
-               knows they answered, so no new notification is created. */
-            list.push({
-              id: `preq-${req.id}`,
-              to: email,
-              title,
-              body,
-              href: `/profile?open=history&focus=${req.id}`,
-              severity: "info",
-              completed: true,
-              createdAt: req.requestedAt,
-            });
-            continue;
-          }
           list.push({
-            id: `preq-${req.id}-done`,
+            id: `preq-${req.id}`,
             to: email,
-            title: "Video call booked",
-            body: `Booked for ${formatDateTime(req.scheduledAt!)}. Tap for the meeting link.`,
-            href: `/profile?open=call-details&focus=${req.id}`,
+            title,
+            body: isInfo
+              ? body
+              : `Booked for ${formatDateTime(req.scheduledAt!)}. Tap for the meeting link.`,
+            href: isInfo
+              ? `/profile?open=history&focus=${req.id}`
+              : `/profile?open=call-details&focus=${req.id}`,
             severity: "info",
             completed: true,
-            createdAt: req.scheduledAt ?? undefined,
+            createdAt: req.requestedAt,
           });
           continue;
         }
