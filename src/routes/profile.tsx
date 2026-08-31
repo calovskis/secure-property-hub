@@ -670,7 +670,12 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
         open: () => requestOpenUpload(d.id),
       });
 
-  const outstanding = missingLicences.length + (needsIdentity ? 1 : 0);
+  // Written information requests are rendered by <InfoRequestsList /> below,
+  // so the empty state must account for them too.
+  const openInfoRequests = (registration?.adminRequests ?? []).filter(
+    (i) => i.kind === "info" && !i.answeredAt,
+  ).length;
+  const outstanding = missingLicences.length + (needsIdentity ? 1 : 0) + openInfoRequests;
 
   function saveIdentity(type: string, doc: string) {
     if (!registration || !doc) return;
