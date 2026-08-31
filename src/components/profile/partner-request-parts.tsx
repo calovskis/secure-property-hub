@@ -325,7 +325,7 @@ export function CallItem({
                   </DialogDescription>
                 </DialogHeader>
                 <CallScheduler
-                  agentEmail={LOQAL_ADMIN_EMAIL}
+                  agentEmail={agentEmail || LOQAL_ADMIN_EMAIL}
                   summary="Loqal — partner registration call"
                   description={item.message}
                   attendeeEmails={[user.email]}
