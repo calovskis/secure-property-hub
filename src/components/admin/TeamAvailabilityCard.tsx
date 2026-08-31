@@ -30,7 +30,7 @@ export function TeamAvailabilityCard({ onOpenEmployees }: { onOpenEmployees?: ()
   const [editing, setEditing] = useState(false);
   const [memberId, setMemberId] = useState("");
   const [until, setUntil] = useState("");
-  const [reason, setReason] = useState(REASONS[0]);
+  const [reason, setReason] = useState<string>(REASONS[0] ?? "Out of office");
 
   const away = useMemo(() => members.filter(isAwayToday), [members]);
   const present = members.length - away.length;
