@@ -228,6 +228,15 @@ function AdminPartnerRequestsPage() {
     }
   }
 
+  /** Loqal's side of the partnership agreement — completes the signing flow. */
+  function countersign(r: PartnerRequest) {
+    updateRequest(r.id, { agreementCountersignedAt: new Date().toISOString() });
+    logActivity("Loqal admin", "countersigned a partnership agreement", r.companyName);
+    toast("Agreement countersigned", { description: `${r.companyName} is now fully active.` });
+  }
+
+
+
   function sendAdminRequest(r: PartnerRequest, kind: "info" | "call", message: string, requiresDocument: boolean) {
     const itemId = uid();
     updateRequest(r.id, {
