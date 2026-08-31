@@ -11,6 +11,8 @@ import {
 } from "@/lib/auth";
 import { namesFromEmail } from "@/lib/names";
 import { supabase } from "@/integrations/supabase/client";
+import { PhoneField } from "@/components/form/PhoneField";
+import { isValidPhone } from "@/lib/phone";
 
 export const Route = createFileRoute("/auth")({
   component: AuthPage,
@@ -64,6 +66,7 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
+  const [phoneTouched, setPhoneTouched] = useState(false);
   const [usPerson, setUsPerson] = useState<boolean | null>(null);
   const [showInternal, setShowInternal] = useState(false);
   const [loginRole, setLoginRole] = useState<Role>("client");
@@ -183,7 +186,14 @@ function AuthPage() {
     const pwIssues = passwordIssues(password);
     if (pwIssues.length > 0)
       return setError(`Your password needs: ${pwIssues.join(", ").toLowerCase()}.`);
-    if (!phone) return setError("Phone number is required.");
+    if (!phone) {
+      setPhoneTouched(true);
+      return setError("Phone number is required.");
+    }
+    if (!isValidPhone(phone)) {
+      setPhoneTouched(true);
+      return setError("Please enter a valid phone number for the selected country.");
+    }
     if (usPerson === null)
       return setError("Please tell us whether you are a US citizen or green card holder.");
     setError(null);
@@ -292,12 +302,10 @@ function AuthPage() {
               {mode === "register" ? (
                 <label>
                   <Label required>Phone number</Label>
-                  <input
-                    type="tel"
-                    placeholder="+1 555 010 0000"
+                  <PhoneField
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className={inputClass}
+                    onChange={(v) => setPhone(v)}
+                    showError={phoneTouched}
                   />
                 </label>
               ) : null}

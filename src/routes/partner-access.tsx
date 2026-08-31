@@ -12,6 +12,8 @@ import { usePartnerRequests } from "@/lib/partner-requests";
 import { notify } from "@/lib/notifications";
 import { logActivity } from "@/lib/activity";
 import { supabase } from "@/integrations/supabase/client";
+import { PhoneField } from "@/components/form/PhoneField";
+import { isValidPhone } from "@/lib/phone";
 
 export const Route = createFileRoute("/partner-access")({
   component: PartnerAccessPage,
@@ -82,6 +84,7 @@ function PartnerAccessPage() {
   const [position, setPosition] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [phoneTouched, setPhoneTouched] = useState(false);
   const [password, setPassword] = useState("");
 
   /** Secure password rules — same standard as client registration. */
@@ -127,13 +130,27 @@ function PartnerAccessPage() {
     if (isRealtor) {
       if (!companyLicence.trim())
         return setError("The company (brokerage) realtor licence number is required.");
-      if (!companyPhone.trim()) return setError("The company phone number is required.");
+      if (!companyPhone.trim()) {
+        setPhoneTouched(true);
+        return setError("The company phone number is required.");
+      }
+      if (!isValidPhone(companyPhone)) {
+        setPhoneTouched(true);
+        return setError("The company phone number is not valid for the selected country.");
+      }
     }
     if (!firstName.trim() || !lastName.trim())
       return setError("First name and last name are required.");
     if (!position.trim()) return setError("Position is required.");
     if (!email.trim()) return setError("Personal e-mail is required.");
-    if (!phone.trim()) return setError("Personal phone number is required.");
+    if (!phone.trim()) {
+      setPhoneTouched(true);
+      return setError("Personal phone number is required.");
+    }
+    if (!isValidPhone(phone)) {
+      setPhoneTouched(true);
+      return setError("The personal phone number is not valid for the selected country.");
+    }
     const pwIssues = passwordIssues(password);
     if (pwIssues.length > 0)
       return setError(`Your password needs: ${pwIssues.join(", ").toLowerCase()}.`);
@@ -394,12 +411,10 @@ function PartnerAccessPage() {
                   </label>
                   <label>
                     <Label required>Company phone number</Label>
-                    <input
-                      type="tel"
-                      placeholder="+1 555 010 0000"
+                    <PhoneField
                       value={companyPhone}
-                      onChange={(e) => setCompanyPhone(e.target.value)}
-                      className={inputClass}
+                      onChange={(v) => setCompanyPhone(v)}
+                      showError={phoneTouched}
                     />
                   </label>
                 </div>
@@ -444,12 +459,10 @@ function PartnerAccessPage() {
                 </label>
                 <label>
                   <Label required>Personal phone number</Label>
-                  <input
-                    type="tel"
-                    placeholder="+1 555 010 0000"
+                  <PhoneField
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className={inputClass}
+                    onChange={(v) => setPhone(v)}
+                    showError={phoneTouched}
                   />
                 </label>
               </div>
