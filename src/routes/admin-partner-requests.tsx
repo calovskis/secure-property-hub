@@ -28,9 +28,10 @@ import { toast } from "sonner";
 
 /**
  * Open partner registration requests, opened from the admin dashboard in a
- * new tab. Pending requests are listed oldest → newest so nothing sits in
- * the queue too long, and can be filtered by partner type.
+ * new tab. Pending requests are listed newest → oldest, and can be filtered
+ * by partner type plus an assignment/status sub-filter.
  */
+
 export const Route = createFileRoute("/admin-partner-requests")({
   component: AdminPartnerRequestsPage,
   /** `?focus=<requestId>` highlights one registration, `?open=profile` opens its full file,
