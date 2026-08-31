@@ -18,7 +18,8 @@ import {
 import { PartnerProfile } from "@/components/profile/PartnerProfile";
 import { AgreementCard } from "@/components/profile/AgreementCard";
 import { KybCard } from "@/components/profile/KybCard";
-import { AdminRequestsCard } from "@/components/profile/AdminRequestsCard";
+import { CorrespondenceCard } from "@/components/profile/CorrespondenceCard";
+import { InfoRequestsList } from "@/components/profile/InfoRequestsList";
 import { useUploadDrafts, requestOpenUpload } from "@/lib/upload-drafts";
 import {
   PARTNER_LABEL,
