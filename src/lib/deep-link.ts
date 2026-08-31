@@ -55,10 +55,10 @@ export function useDeepLink(): DeepLinkSearch {
  * also matching `?focus=<id>`), so a notification lands on the pop-up itself.
  */
 export function useDeepLinkAction(action: string, handler: (focus?: string) => void) {
-  const { open, focus } = useDeepLink();
+  const { open, focus, k } = useDeepLink();
   useEffect(() => {
     if (open !== action) return;
     handler(focus);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, focus, action]);
+  }, [open, focus, action, k]);
 }
