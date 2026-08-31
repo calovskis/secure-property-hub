@@ -75,58 +75,15 @@ export function activeLicenseStates(r: Realtor, today = todayIso()) {
 
 type RealtorState = { realtors: Realtor[] };
 
-const STORAGE_KEY = "loqal.realtors.v1";
+const STORAGE_KEY = "loqal.realtors.v2";
 const uid = () => Math.random().toString(36).slice(2, 10);
 
-const DEFAULT_STATE = (): RealtorState => {
-  const now = new Date().toISOString();
-  return {
-    realtors: [
-      {
-        id: "seed-realtor-sofia",
-        firstName: "Sofia",
-        lastName: "Marino",
-        email: "sofia.marino@loqal-partners.example",
-        phone: "+1 305 555 0110",
-        address: { street: "1100 Biscayne Blvd", city: "Miami", state: "FL", zip: "33132", country: "US" },
-        licenses: [
-          { state: "FL", number: "FL-SL-3488210", issuedAt: "2019-03-15", validUntil: "2027-03-31" },
-          { state: "NY", number: "NY-10491207755", issuedAt: "2021-06-01", validUntil: "2027-05-31" },
-        ],
-        languages: ["English", "Spanish", "Russian"],
-        approvedAt: now,
-      },
-      {
-        id: "seed-realtor-james",
-        firstName: "James",
-        lastName: "O'Connell",
-        email: "james.oconnell@loqal-partners.example",
-        phone: "+1 512 555 0184",
-        address: { street: "600 Congress Ave", city: "Austin", state: "TX", zip: "78701", country: "US" },
-        licenses: [
-          { state: "TX", number: "TX-0719923", issuedAt: "2017-09-01", validUntil: "2027-08-31" },
-          { state: "FL", number: "FL-SL-3521177", issuedAt: "2022-01-10", validUntil: "2028-01-31" },
-        ],
-        languages: ["English"],
-        approvedAt: now,
-      },
-      {
-        id: "seed-realtor-elena",
-        firstName: "Elena",
-        lastName: "Volkova",
-        email: "elena.volkova@loqal-partners.example",
-        phone: "+1 212 555 0147",
-        address: { street: "450 Lexington Ave", city: "New York", state: "NY", zip: "10017", country: "US" },
-        licenses: [
-          { state: "NY", number: "NY-10351208821", issuedAt: "2018-04-01", validUntil: "2028-03-31" },
-          { state: "NJ", number: "NJ-1884412", issuedAt: "2020-11-15", validUntil: "2026-11-30" },
-        ],
-        languages: ["Russian", "English", "Ukrainian"],
-        approvedAt: now,
-      },
-    ],
-  };
-};
+/**
+ * No demo agents: the assignable pool is built exclusively from realtor
+ * partners a Loqal admin has approved (their registration is synced into this
+ * store on approval). Seed rows would otherwise win real assignments.
+ */
+const DEFAULT_STATE = (): RealtorState => ({ realtors: [] });
 
 let state: RealtorState | null = null;
 const listeners = new Set<() => void>();
