@@ -9,6 +9,7 @@
  */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { openDeepLink } from "@/lib/deep-link";
 import { useAuth, PARTNER_LABEL } from "@/lib/auth";
 import { offerReminders, pendingOfferDecision, useLeads } from "@/lib/leads";
 import { useBuyerProcess } from "@/lib/buyer-process";
