@@ -28,9 +28,10 @@ import { toast } from "sonner";
 
 /**
  * Open partner registration requests, opened from the admin dashboard in a
- * new tab. Pending requests are listed oldest → newest so nothing sits in
- * the queue too long, and can be filtered by partner type.
+ * new tab. Pending requests are listed newest → oldest, and can be filtered
+ * by partner type plus an assignment/status sub-filter.
  */
+
 export const Route = createFileRoute("/admin-partner-requests")({
   component: AdminPartnerRequestsPage,
   /** `?focus=<requestId>` highlights one registration, `?open=profile` opens its full file,
@@ -63,6 +64,8 @@ export const Route = createFileRoute("/admin-partner-requests")({
 
 type TypeFilter = "all" | PartnerType | "corporate";
 
+type StatusFilter = "unassigned" | "in_process";
+
 const TYPE_FILTERS: { id: TypeFilter; label: string }[] = [
   { id: "all", label: "All types" },
   { id: "realtor", label: PARTNER_LABEL.realtor },
@@ -72,9 +75,19 @@ const TYPE_FILTERS: { id: TypeFilter; label: string }[] = [
   { id: "corporate", label: "Corporate" },
 ];
 
+const STATUS_FILTERS: { id: StatusFilter; label: string }[] = [
+  { id: "unassigned", label: "Unassigned" },
+  { id: "in_process", label: "In process" },
+];
+
 function typeOf(r: PartnerRequest): TypeFilter {
   return r.kind === "corporate" ? "corporate" : (r.partnerType ?? "other");
 }
+
+function isUnassigned(r: PartnerRequest) {
+  return !r.reviewerId && (!r.reviewStage || r.reviewStage === "unassigned");
+}
+
 
 /** Two-letter USPS code for a state stored either as a name or a code. */
 function stateAbbr(s: string): string {
@@ -137,6 +150,7 @@ function AdminPartnerRequestsPage() {
   const [ask, setAsk] = useState<{ request: PartnerRequest; kind: "info" | "call" } | null>(null);
   const { addRealtor } = useRealtors();
   const [filter, setFilter] = useState<TypeFilter>("all");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("unassigned");
   const people = useAdminPeople();
   const { members } = useStaff();
   // Employees only granted "view" on Partners work their own cases: for every
@@ -163,9 +177,11 @@ function AdminPartnerRequestsPage() {
       requests
         .filter((r) => r.status === "pending")
         .filter((r) => filter === "all" || typeOf(r) === filter)
-        .sort((a, b) => a.submittedAt.localeCompare(b.submittedAt)), // oldest first
-    [requests, filter],
+        .filter((r) => (statusFilter === "unassigned" ? isUnassigned(r) : !isUnassigned(r)))
+        .sort((a, b) => b.submittedAt.localeCompare(a.submittedAt)), // newest first
+    [requests, filter, statusFilter],
   );
+
 
   if (!ready) return <div className="min-h-screen bg-background" />;
 
@@ -287,6 +303,13 @@ function AdminPartnerRequestsPage() {
     counts.set(typeOf(r), (counts.get(typeOf(r)) ?? 0) + 1);
   }
 
+  const statusBase = requests.filter((r) => r.status === "pending" && (filter === "all" || typeOf(r) === filter));
+  const statusCounts = {
+    unassigned: statusBase.filter((r) => isUnassigned(r)).length,
+    in_process: statusBase.filter((r) => !isUnassigned(r)).length,
+  };
+
+
   return (
     <div className="min-h-screen bg-background">
       <AppHeader navSlot={<AdminNav tab={"partners"} />} />
@@ -299,8 +322,9 @@ function AdminPartnerRequestsPage() {
             Open partner requests
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Pending registrations, oldest first — {fullName(user)}, approve or decline each request.
+            Pending registrations, newest first — {fullName(user)}, approve or decline each request.
           </p>
+
         </div>
 
         {pendingChanges.length ? (
@@ -346,31 +370,56 @@ function AdminPartnerRequestsPage() {
           </section>
         ) : null}
 
-        <div className="mb-6 flex flex-wrap gap-2">
-          {TYPE_FILTERS.map((f) => {
-            const n = f.id === "all" ? [...counts.values()].reduce((s, v) => s + v, 0) : (counts.get(f.id) ?? 0);
-            return (
+        <div className="mb-6 space-y-2">
+          <div className="flex flex-wrap gap-2">
+            {TYPE_FILTERS.map((f) => {
+              const n = f.id === "all" ? [...counts.values()].reduce((s, v) => s + v, 0) : (counts.get(f.id) ?? 0);
+              return (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => setFilter(f.id)}
+                  className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+                    filter === f.id
+                      ? "bg-brand text-background"
+                      : "border border-border bg-card text-muted-foreground hover:bg-brand-tint hover:text-brand"
+                  }`}
+                >
+                  {f.label}
+                  <span className={filter === f.id ? "opacity-80" : "text-muted-foreground/70"}>{n}</span>
+                </button>
+              );
+            })}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {STATUS_FILTERS.map((f) => (
               <button
                 key={f.id}
                 type="button"
-                onClick={() => setFilter(f.id)}
-                className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
-                  filter === f.id
-                    ? "bg-brand text-background"
-                    : "border border-border bg-card text-muted-foreground hover:bg-brand-tint hover:text-brand"
+                onClick={() => setStatusFilter(f.id)}
+                className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${
+                  statusFilter === f.id
+                    ? "bg-gold-tint text-gold border border-gold/30"
+                    : "border border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
               >
                 {f.label}
-                <span className={filter === f.id ? "opacity-80" : "text-muted-foreground/70"}>{n}</span>
+                <span className={statusFilter === f.id ? "opacity-80" : "text-muted-foreground/70"}>
+                  {statusCounts[f.id]}
+                </span>
               </button>
-            );
-          })}
+            ))}
+          </div>
         </div>
+
 
         {pending.length === 0 ? (
           <div className="rounded-lg border border-border bg-card p-10 text-center text-sm text-muted-foreground">
-            No open partner requests{filter === "all" ? "" : ` in “${TYPE_FILTERS.find((f) => f.id === filter)?.label}”`}.
+            No open partner requests
+            {filter === "all" ? "" : ` in “${TYPE_FILTERS.find((f) => f.id === filter)?.label}”`}
+            {statusFilter === "unassigned" ? " that are unassigned" : " that are in process"}.
           </div>
+
         ) : (
           <ul className="space-y-4">
             {pending.map((r) =>
