@@ -9,6 +9,7 @@
  */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { openDeepLink } from "@/lib/deep-link";
 import { useAuth, PARTNER_LABEL } from "@/lib/auth";
 import { offerReminders, pendingOfferDecision, useLeads } from "@/lib/leads";
 import { useBuyerProcess } from "@/lib/buyer-process";
@@ -716,12 +717,13 @@ export function NotificationBell() {
   );
 }
 
-/** Notifications deep-link with a query string so the target pop-up opens itself. */
+/**
+ * Notifications deep-link with a query string so the target pop-up opens
+ * itself. Shared with the rest of the app so repeat clicks always re-fire.
+ */
 function openNotification(
   navigate: ReturnType<typeof useNavigate>,
   href: string,
 ) {
-  const [path, query] = href.split("?");
-  const search = query ? Object.fromEntries(new URLSearchParams(query)) : undefined;
-  navigate({ to: path, ...(search ? { search } : {}) } as never);
+  openDeepLink(navigate, href);
 }

@@ -12,10 +12,17 @@
 import { useEffect } from "react";
 import { useSearch, type useNavigate } from "@tanstack/react-router";
 
+/**
+ * Navigates to a deep link. Every navigation carries a fresh `k` nonce so that
+ * clicking the same notification twice re-fires the target action — without it
+ * the URL would be identical the second time and nothing would re-open.
+ */
 export function openDeepLink(navigate: ReturnType<typeof useNavigate>, href: string) {
   const [path, query] = href.split("?");
-  const search = query ? Object.fromEntries(new URLSearchParams(query)) : undefined;
-  navigate({ to: path, ...(search ? { search } : {}) } as never);
+  const params = new URLSearchParams(query ?? "");
+  params.set("k", String(Date.now()));
+  const search = Object.fromEntries(params);
+  navigate({ to: path, search } as never);
 }
 
 type DeepLinkSearch = {
@@ -24,6 +31,8 @@ type DeepLinkSearch = {
   focus?: string | undefined;
   doc?: string | undefined;
   request?: string | undefined;
+  /** Nonce that makes repeated clicks on the same link re-trigger actions. */
+  k?: string | undefined;
 };
 
 /** Current deep-link parameters, whatever route we are on. */
@@ -37,6 +46,7 @@ export function useDeepLink(): DeepLinkSearch {
     ...(pick("focus") ? { focus: pick("focus") } : {}),
     ...(pick("doc") ? { doc: pick("doc") } : {}),
     ...(pick("request") ? { request: pick("request") } : {}),
+    ...(pick("k") ? { k: pick("k") } : {}),
   };
 }
 
@@ -45,10 +55,10 @@ export function useDeepLink(): DeepLinkSearch {
  * also matching `?focus=<id>`), so a notification lands on the pop-up itself.
  */
 export function useDeepLinkAction(action: string, handler: (focus?: string) => void) {
-  const { open, focus } = useDeepLink();
+  const { open, focus, k } = useDeepLink();
   useEffect(() => {
     if (open !== action) return;
     handler(focus);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, focus, action]);
+  }, [open, focus, action, k]);
 }
