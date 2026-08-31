@@ -53,8 +53,6 @@ export function phoneError(country: CountryCode, national: string): string {
     return `Too few digits for a ${countryName} phone number.`;
   if (result === "TOO_LONG") return `Too many digits for a ${countryName} phone number.`;
   if (result) return `Invalid phone number for ${countryName}.`;
-  const parsed = parsePhoneNumberFromString(digits, country);
-  if (!parsed?.isValid()) return `Invalid phone number for ${countryName}.`;
   return "";
 }
 
