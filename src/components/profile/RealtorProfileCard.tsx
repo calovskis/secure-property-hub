@@ -18,6 +18,8 @@ import { WORLD_LANGUAGES } from "@/lib/languages";
 import { TopicCard } from "@/components/profile/TopicCard";
 import { LicenceCoverageTable } from "@/components/profile/realtor-licences";
 import { uid } from "@/lib/mortgage-form";
+import { PhoneField } from "@/components/form/PhoneField";
+import { isValidPhone } from "@/lib/phone";
 
 const inputClass =
   "w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-brand";
@@ -85,6 +87,10 @@ export function RealtorProfileCard({ user }: { user: LoqalUser }) {
 
   function save() {
     if (!me || !info) return;
+    if (!isValidPhone(info.phone)) {
+      toast.error("Please enter a valid phone number for the selected country.");
+      return;
+    }
     updateRealtor(me.id, { phone: info.phone.trim() });
     if (registration)
       updateRequest(registration.id, { position: info.position.trim(), phone: info.phone.trim() });
@@ -154,10 +160,9 @@ export function RealtorProfileCard({ user }: { user: LoqalUser }) {
               </label>
               <label className="block">
                 <span className={labelClass}>Personal phone</span>
-                <input
+                <PhoneField
                   value={info.phone}
-                  onChange={(e) => setInfo({ ...info, phone: e.target.value })}
-                  className={inputClass}
+                  onChange={(v) => setInfo({ ...info, phone: v })}
                 />
               </label>
             </div>
@@ -537,11 +542,9 @@ function AdditionalContacts({
             </label>
             <label className="block">
               <span className={labelClass}>Phone</span>
-              <input
+              <PhoneField
                 value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                placeholder="+1 (555) 123-4567"
-                className={inputClass}
+                onChange={(v) => setForm({ ...form, phone: v })}
               />
             </label>
             <label className="block sm:col-span-2">
