@@ -15,6 +15,7 @@ import {
   PartnerComparison,
   PartnerMetrics,
 } from "@/components/admin/AdminSections";
+import { TaskTracker } from "@/components/tasks/TaskTracker";
 import { AdminCases } from "@/components/admin/AdminCases";
 import { AdminAccounting } from "@/components/admin/AdminAccounting";
 import { AdminSupport } from "@/components/admin/AdminSupport";
@@ -147,6 +148,10 @@ function AdminPage() {
           <p className="mt-1 text-sm text-muted-foreground">
             Cases, partners, people, accounting, support and platform settings in one place.
           </p>
+        </div>
+
+        <div className="mb-6">
+          <TaskTracker />
         </div>
 
         {tab === "cases" ? <AdminCases /> : null}

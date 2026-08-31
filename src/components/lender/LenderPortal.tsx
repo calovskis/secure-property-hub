@@ -22,6 +22,7 @@ import { LENDER_ROLE_LABEL, useLenderTeam } from "@/lib/lender-team";
 import { usStatusOf, US_STATUS_LABEL, isMajorityForeignIncome } from "@/lib/mortgage-form";
 import { LenderHome } from "@/components/lender/LenderHome";
 import { PointOfContactCard } from "@/components/partner/PointOfContactCard";
+import { TaskTracker } from "@/components/tasks/TaskTracker";
 import { LenderAnalytics } from "@/components/lender/LenderAnalytics";
 import { LenderAccounting } from "@/components/lender/LenderAccounting";
 import { LenderMortgages } from "@/components/lender/LenderMortgages";
@@ -797,6 +798,11 @@ export function LenderPortal({
         </div>
       ) : null}
 
+      {current === "home" ? (
+        <div className="mb-6">
+          <TaskTracker />
+        </div>
+      ) : null}
       {current === "home" ? (
         <div className="mb-6">
           <PointOfContactCard />

@@ -6,6 +6,7 @@ import { useT } from "@/lib/i18n";
 import { offerReminders, pendingOfferDecision, useLeads } from "@/lib/leads";
 import { formatDateTime } from "@/lib/dates";
 import { useGreeting } from "@/lib/greeting";
+import { TaskTracker } from "@/components/tasks/TaskTracker";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -476,6 +477,10 @@ function Dashboard() {
           <span className="text-xs text-muted-foreground">
             {t("Start typing or")} <span className="cursor-pointer font-semibold text-brand">{t("open full search")}</span>
           </span>
+        </div>
+
+        <div className="mb-8">
+          <TaskTracker />
         </div>
 
         {pendingOffers.length ? (

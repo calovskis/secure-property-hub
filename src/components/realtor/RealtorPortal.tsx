@@ -24,6 +24,7 @@ import { RealtorAccounting } from "@/components/realtor/RealtorAccounting";
 import { RealtorFinancialAnalytics } from "@/components/realtor/RealtorFinancialAnalytics";
 import { useGreeting } from "@/lib/greeting";
 import { PointOfContactCard } from "@/components/partner/PointOfContactCard";
+import { TaskTracker } from "@/components/tasks/TaskTracker";
 
 const money = (n: number) => `$${Math.round(n).toLocaleString()}`;
 const inputClass =
@@ -800,6 +801,10 @@ export function RealtorPortal({
               note={activeLicenseStates(me).join(", ") || "Add licenses to receive assignments"}
             />
           </section>
+
+          <div className="mb-6">
+            <TaskTracker />
+          </div>
 
           <div className="mb-6">
             <PointOfContactCard />
