@@ -25,6 +25,8 @@ import {
 } from "@/lib/admin-users.functions";
 import type { AdminPerson } from "@/components/admin/people-model";
 import { PartnerCorrespondence } from "@/components/admin/PartnerCorrespondence";
+import { PhoneField } from "@/components/form/PhoneField";
+import { isValidPhone } from "@/lib/phone";
 
 type Tab = "profile" | "documents" | "correspondence" | "properties" | "activity" | "metrics";
 
@@ -197,6 +199,10 @@ function ProfileTab({ person }: { person: AdminPerson }) {
     (reg[key] ?? req?.[key]) as PartnerRequest[K] | undefined;
 
   function save() {
+    if (phone.trim() && !isValidPhone(phone)) {
+      toast.error("Please enter a valid phone number for the selected country.");
+      return;
+    }
     setOverride(person.email, {
       displayName: name.trim(),
       phone: phone.trim() || undefined,
@@ -222,7 +228,10 @@ function ProfileTab({ person }: { person: AdminPerson }) {
       <Card title="Contact & display data">
         <div className="grid gap-3 sm:grid-cols-2">
           <Text label="Full name" value={name} onChange={setName} />
-          <Text label="Phone" value={phone} onChange={setPhone} />
+          <label className="block">
+            <span className="mb-1 block text-xs font-medium text-muted-foreground">Phone</span>
+            <PhoneField value={phone} onChange={setPhone} />
+          </label>
           <Text label="Company" value={company} onChange={setCompany} />
           <Text label="Internal note (Loqal only)" value={note} onChange={setNote} />
         </div>
@@ -286,11 +295,15 @@ function ProfileTab({ person }: { person: AdminPerson }) {
               value={regValue("companyLicence") ?? ""}
               onChange={(v) => setReg({ ...reg, companyLicence: v })}
             />
-            <Text
-              label="Company phone"
-              value={regValue("companyPhone") ?? ""}
-              onChange={(v) => setReg({ ...reg, companyPhone: v })}
-            />
+            <label className="block">
+              <span className="mb-1 block text-xs font-medium text-muted-foreground">
+                Company phone
+              </span>
+              <PhoneField
+                value={regValue("companyPhone") ?? ""}
+                onChange={(v) => setReg({ ...reg, companyPhone: v })}
+              />
+            </label>
           </div>
           <dl className="mt-4 grid gap-2 text-xs sm:grid-cols-2">
             <Row label="Kind" value={req.kind === "corporate" ? "Corporate client" : "Partner"} />
