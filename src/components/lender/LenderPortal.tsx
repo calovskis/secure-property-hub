@@ -797,6 +797,11 @@ export function LenderPortal({
       ) : null}
 
       {current === "home" ? (
+        <div className="mb-6">
+          <PointOfContactCard />
+        </div>
+      ) : null}
+      {current === "home" ? (
         <LenderHome
           lenderName={lenderName}
           onOpenRequests={(leadId) => {
