@@ -300,7 +300,7 @@ function AuthPage() {
                 />
               </label>
               {mode === "register" ? (
-                <label>
+                <label className="sm:col-span-2">
                   <Label required>Phone number</Label>
                   <PhoneField
                     value={phone}

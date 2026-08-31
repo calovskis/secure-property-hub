@@ -66,11 +66,11 @@ export function PhoneField({
 
   return (
     <div>
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <select
           aria-label="Phone country"
           disabled={disabled}
-          className={`${base} w-[45%] shrink-0`}
+          className={`${base} w-full min-w-[8rem] sm:w-[11rem] sm:shrink-0`}
           value={country}
           onChange={(e) => update(e.target.value as CountryCode, national)}
         >
@@ -80,7 +80,7 @@ export function PhoneField({
             </option>
           ))}
         </select>
-        <div className="relative flex-1">
+        <div className="relative min-w-[8rem] flex-1">
           <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
             +{dial}
           </span>
