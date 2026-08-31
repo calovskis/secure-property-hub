@@ -23,6 +23,7 @@ import { RealtorAnalytics } from "@/components/realtor/RealtorAnalytics";
 import { RealtorAccounting } from "@/components/realtor/RealtorAccounting";
 import { RealtorFinancialAnalytics } from "@/components/realtor/RealtorFinancialAnalytics";
 import { useGreeting } from "@/lib/greeting";
+import { PointOfContactCard } from "@/components/partner/PointOfContactCard";
 
 const money = (n: number) => `$${Math.round(n).toLocaleString()}`;
 const inputClass =
