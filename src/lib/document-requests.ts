@@ -55,7 +55,7 @@ export function outstandingDocumentRequests(
   if (!user || !profile) return [];
   const kinds: DocumentRequestKind[] = [];
 
-  if ((user.usPerson || profile.hasItin) && !has(profile.idDocuments)) kinds.push("idDocuments");
+  if (!has(profile.idDocuments)) kinds.push("idDocuments");
   if (!user.usPerson && profile.usVisaActive && !has(profile.visaDocuments))
     kinds.push("visaDocuments");
   if (profile.declarations?.bankruptcy && !has(profile.bankruptcyDocuments))
