@@ -375,8 +375,6 @@ function AdminPartnerRequestsPage() {
                     >
                       Decline
                     </button>
-                    </>
-                    )}
                   </div>
                 </li>
               ))}
