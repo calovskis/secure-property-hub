@@ -450,7 +450,7 @@ function AdditionalContacts({
   return (
     <div className="mt-4 border-t border-border pt-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h4 className="text-sm font-semibold text-foreground">Additional contact people</h4>
+        <h4 className="text-sm font-semibold text-foreground">Additional contact</h4>
         {form === null ? (
           <button
             type="button"
