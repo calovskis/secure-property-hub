@@ -46,6 +46,10 @@ export type StaffMember = {
   /** Superadmins always have full access and cannot be edited down. */
   superadmin: boolean;
   access: Partial<Record<AdminSectionId, AccessLevel>>;
+  /** Time off: ISO yyyy-mm-dd the member is away until (inclusive). */
+  awayUntil?: string;
+  /** Kind of absence shown on the dashboard ("Out of office", "Sick leave"…). */
+  awayReason?: string;
 };
 
 type StaffState = { members: StaffMember[] };
@@ -174,5 +178,18 @@ export function useStaff() {
     });
   }, []);
 
-  return { members: snapshot.members, setAccess, addMember };
+  const setAway = useCallback((id: string, awayUntil: string, awayReason: string) => {
+    const cur = load();
+    commit({
+      members: cur.members.map((m) =>
+        m.id === id
+          ? awayUntil
+            ? { ...m, awayUntil, awayReason: awayReason || "Out of office" }
+            : (({ awayUntil: _u, awayReason: _r, ...rest }) => rest)(m)
+          : m,
+      ),
+    });
+  }, []);
+
+  return { members: snapshot.members, setAccess, addMember, setAway };
 }

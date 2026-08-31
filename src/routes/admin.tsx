@@ -16,6 +16,7 @@ import {
   PartnerMetrics,
 } from "@/components/admin/AdminSections";
 import { TaskTracker } from "@/components/tasks/TaskTracker";
+import { TeamAvailabilityCard } from "@/components/admin/TeamAvailabilityCard";
 import { AdminCases } from "@/components/admin/AdminCases";
 import { AdminAccounting } from "@/components/admin/AdminAccounting";
 import { AdminSupport } from "@/components/admin/AdminSupport";
@@ -424,6 +425,8 @@ function AdminPage() {
                 </div>
               </div>
             </section>
+
+            <TeamAvailabilityCard onOpenEmployees={() => setTab("employees")} />
           </>
         ) : null}
       </main>
