@@ -804,11 +804,6 @@ export function LenderPortal({
         </div>
       ) : null}
       {current === "home" ? (
-        <div className="mb-6">
-          <PointOfContactCard />
-        </div>
-      ) : null}
-      {current === "home" ? (
         <LenderHome
           lenderName={lenderName}
           onOpenRequests={(leadId) => {
@@ -816,6 +811,11 @@ export function LenderPortal({
             setTab("requests");
           }}
         />
+      ) : null}
+      {current === "home" ? (
+        <div className="mb-6 md:w-1/2">
+          <PointOfContactCard compact />
+        </div>
       ) : null}
       {current === "requests" ? (
         <RequestsInbox canDecide={can("requests.decide")} focusLeadId={focusLeadId} />

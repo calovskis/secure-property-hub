@@ -807,10 +807,6 @@ export function RealtorPortal({
           </div>
 
           <div className="mb-6">
-            <PointOfContactCard />
-          </div>
-
-          <div className="mb-6">
             <GoogleCalendarCard agentRef={me.id} agentEmail={me.email} />
           </div>
 
@@ -818,6 +814,9 @@ export function RealtorPortal({
             <VacationMode me={me} />
           </div>
 
+          <div className="mb-6 md:w-1/2">
+            <PointOfContactCard compact />
+          </div>
         </>
       ) : tab === "buyers" ? (
         <section>

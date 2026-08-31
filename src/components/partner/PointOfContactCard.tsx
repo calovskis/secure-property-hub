@@ -17,7 +17,7 @@ function initials(name: string) {
     .join("");
 }
 
-export function PointOfContactCard() {
+export function PointOfContactCard({ compact = false }: { compact?: boolean }) {
   const { user } = useAuth();
   const { requests } = usePartnerRequests();
   const { members } = useStaff();
@@ -29,6 +29,59 @@ export function PointOfContactCard() {
   const name = member?.name ?? registration?.reviewerName ?? null;
   const title = member?.title ?? "Loqal partner manager";
   const email = member?.email;
+
+  if (compact) {
+    return (
+      <section className="rounded-xl border border-border bg-card p-4">
+        <div className="flex items-center gap-2">
+          <span
+            aria-hidden
+            className="flex h-7 w-7 items-center justify-center rounded-lg border border-border text-sm"
+          >
+            🎧
+          </span>
+          <h2 className="text-sm font-semibold text-foreground">Your point of contact</h2>
+        </div>
+
+        <div className="mt-3 rounded-lg border border-border px-3 py-2.5">
+          {name ? (
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-tint text-xs font-bold text-brand">
+                {initials(name)}
+              </span>
+              <div className="min-w-0">
+                <div className="truncate text-sm font-semibold text-foreground">{name}</div>
+                <div className="truncate text-xs text-muted-foreground">{title}</div>
+              </div>
+            </div>
+          ) : (
+            <div className="text-xs text-muted-foreground">
+              A Loqal manager is being assigned to your account. Until then, our team answers every
+              request from the communication center.
+            </div>
+          )}
+        </div>
+
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <Link
+            to="/profile"
+            search={{ focus: "correspondence" }}
+            className="rounded-md bg-muted px-3 py-2 text-center text-xs font-medium text-foreground hover:bg-brand-tint"
+          >
+            Communication center
+          </Link>
+          <a
+            href={`mailto:${email ?? "it@loqal.global"}?subject=${encodeURIComponent(
+              `Loqal partner — ${registration?.companyName || user.email}`,
+            )}`}
+            className="rounded-md bg-muted px-3 py-2 text-center text-xs font-medium text-foreground hover:bg-brand-tint"
+          >
+            Get in touch
+          </a>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="rounded-xl border border-border bg-card p-5">

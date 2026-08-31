@@ -192,10 +192,6 @@ function PartnerPage() {
           <TaskTracker />
         </div>
 
-        <div className="mb-6">
-          <PointOfContactCard />
-        </div>
-
         <section className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-3">
           {board.metrics.map(([label, value, note]) => (
             <div key={label} className="rounded-lg border border-border bg-card p-6">
@@ -240,6 +236,10 @@ function PartnerPage() {
             </div>
           </div>
         </section>
+
+        <div className="mb-6 md:w-1/2">
+          <PointOfContactCard compact />
+        </div>
       </main>
     </div>
   );
