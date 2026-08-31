@@ -90,9 +90,7 @@ export function PhoneField({
             inputMode="numeric"
             autoComplete="tel-national"
             disabled={disabled}
-            className={`${base} pl-${dial.length > 2 ? "16" : "12"} ${
-              visible ? "border-destructive focus:border-destructive" : ""
-            }`}
+            className={`${base} ${visible ? "border-destructive focus:border-destructive" : ""}`}
             style={{ paddingLeft: `${2.2 + dial.length * 0.55}rem` }}
             placeholder={placeholder}
             value={national}
