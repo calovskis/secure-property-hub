@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { LenderPortal, useLenderTabs, type LenderTabId } from "@/components/lender/LenderPortal";
 import { RealtorPortal, type RealtorTabId } from "@/components/realtor/RealtorPortal";
+import { PointOfContactCard } from "@/components/partner/PointOfContactCard";
 
 import { PARTNER_LABEL, fullName, useAuth, type LoqalUser, type PartnerType } from "@/lib/auth";
 
