@@ -64,6 +64,8 @@ export const Route = createFileRoute("/admin-partner-requests")({
 
 type TypeFilter = "all" | PartnerType | "corporate";
 
+type StatusFilter = "unassigned" | "in_process";
+
 const TYPE_FILTERS: { id: TypeFilter; label: string }[] = [
   { id: "all", label: "All types" },
   { id: "realtor", label: PARTNER_LABEL.realtor },
@@ -73,9 +75,19 @@ const TYPE_FILTERS: { id: TypeFilter; label: string }[] = [
   { id: "corporate", label: "Corporate" },
 ];
 
+const STATUS_FILTERS: { id: StatusFilter; label: string }[] = [
+  { id: "unassigned", label: "Unassigned" },
+  { id: "in_process", label: "In process" },
+];
+
 function typeOf(r: PartnerRequest): TypeFilter {
   return r.kind === "corporate" ? "corporate" : (r.partnerType ?? "other");
 }
+
+function isUnassigned(r: PartnerRequest) {
+  return !r.reviewerId && (!r.reviewStage || r.reviewStage === "unassigned");
+}
+
 
 /** Two-letter USPS code for a state stored either as a name or a code. */
 function stateAbbr(s: string): string {
