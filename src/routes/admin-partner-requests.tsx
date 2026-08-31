@@ -6,14 +6,10 @@ import { PARTNER_LABEL, fullName, useAuth, type PartnerType } from "@/lib/auth";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import {
   usePartnerRequests,
-  REVIEW_STAGE_LABEL,
   type PartnerRequest,
 } from "@/lib/partner-requests";
-import {
-  PartnerReviewBar,
-  ReviewProgressBar,
-  ReviewerMark,
-} from "@/components/admin/PartnerReviewBar";
+import { PartnerReviewBar, ReviewerMark } from "@/components/admin/PartnerReviewBar";
+
 import { PartnerRequestDialog } from "@/components/admin/PartnerRequestDialog";
 import { PartnerCorrespondence } from "@/components/admin/PartnerCorrespondence";
 import { PersonDetail } from "@/components/admin/PersonDetail";
