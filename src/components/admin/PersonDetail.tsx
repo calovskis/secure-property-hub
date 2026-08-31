@@ -10,6 +10,7 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { UploadedDocLink } from "@/components/profile/UploadedDocLink";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import { PARTNER_LABEL } from "@/lib/auth";
 import { useLeads, LEAD_STATUS_LABEL, KICKOFF_LABEL, type MortgageLead } from "@/lib/leads";
@@ -558,7 +559,10 @@ function AccessCard({ person }: { person: AdminPerson }) {
 
 function DocumentsTab({ person }: { person: AdminPerson }) {
   const req = person.request;
-  const groups: { title: string; items: { name: string; at?: string; url?: string }[] }[] = [];
+  const groups: {
+    title: string;
+    items: { name: string; at?: string; url?: string; path?: string }[];
+  }[] = [];
 
   if (req) {
     groups.push({
@@ -574,7 +578,21 @@ function DocumentsTab({ person }: { person: AdminPerson }) {
     if (req.kyc?.director.idDoc)
       kycDocs.push({ name: `Director ID · ${req.kyc.director.idDoc}` });
     groups.push({ title: "KYB documents", items: kycDocs });
+
+    /* Files the partner attached when answering a Loqal information request —
+       surfaced here as well, not only inside the correspondence thread. */
+    groups.push({
+      title: "Documents provided on Loqal requests",
+      items: (req.adminRequests ?? []).flatMap((a) =>
+        (a.answerDocs ?? []).map((path) => ({
+          name: path,
+          path,
+          ...(a.answeredAt ? { at: a.answeredAt } : {}),
+        })),
+      ),
+    });
   }
+
 
   for (const lead of person.leads) {
     const p = lead.profile;
@@ -615,7 +633,11 @@ function DocumentsTab({ person }: { person: AdminPerson }) {
           <ul className="space-y-1.5 text-sm">
             {g.items.map((d, i) => (
               <li key={`${d.name}-${i}`} className="flex items-center justify-between gap-3">
-                <span className="truncate text-foreground">📄 {d.name}</span>
+                {d.path ? (
+                  <UploadedDocLink path={d.path} />
+                ) : (
+                  <span className="truncate text-foreground">📄 {d.name}</span>
+                )}
                 <span className="flex shrink-0 items-center gap-3 text-xs text-muted-foreground">
                   {d.at ? formatDate(d.at) : null}
                   {d.url ? (
