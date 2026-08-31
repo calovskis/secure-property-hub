@@ -721,7 +721,7 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
             outstanding ? "bg-gold-tint text-gold" : "bg-success/10 text-success"
           }`}
         >
-          {outstanding ? `${outstanding} document(s) missing` : "All documents on file"}
+          {outstanding ? `${outstanding} item(s) to provide` : "Everything provided"}
         </span>
       </div>
       {items.length ? (
