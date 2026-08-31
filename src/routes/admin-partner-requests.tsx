@@ -322,8 +322,9 @@ function AdminPartnerRequestsPage() {
             Open partner requests
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Pending registrations, oldest first — {fullName(user)}, approve or decline each request.
+            Pending registrations, newest first — {fullName(user)}, approve or decline each request.
           </p>
+
         </div>
 
         {pendingChanges.length ? (
