@@ -60,7 +60,12 @@ export const Route = createFileRoute("/admin-partner-requests")({
 
 type TypeFilter = "all" | PartnerType | "corporate";
 
-type StatusFilter = "unassigned" | "in_process";
+type StatusFilter = "unassigned" | "in_process" | "agreements";
+
+/** Partner signed the Loqal agreement and it still needs a countersignature. */
+function awaitsCountersign(r: PartnerRequest) {
+  return r.status === "approved" && !!r.agreementSignedAt && !r.agreementCountersignedAt;
+}
 
 const TYPE_FILTERS: { id: TypeFilter; label: string }[] = [
   { id: "all", label: "All types" },
@@ -74,6 +79,7 @@ const TYPE_FILTERS: { id: TypeFilter; label: string }[] = [
 const STATUS_FILTERS: { id: StatusFilter; label: string }[] = [
   { id: "unassigned", label: "Unassigned" },
   { id: "in_process", label: "In process" },
+  { id: "agreements", label: "Signed agreements" },
 ];
 
 function typeOf(r: PartnerRequest): TypeFilter {
@@ -158,21 +164,28 @@ function AdminPartnerRequestsPage() {
     if (!focusParam) return;
     const target = requests.find((r) => r.id === focusParam);
     if (!target) return;
+    // Signed agreements live outside the pending queue — switch to that view
+    // so a notification about a signature actually lands on the card.
+    if (target.status !== "pending") setStatusFilter("agreements");
     if (openParam === "profile") setProfileKey(`${target.kind}-${target.id}`);
     const node = document.getElementById(`preq-${target.id}`);
     node?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [focusParam, openParam, requests]);
 
 
-  const pending = useMemo(
-    () =>
-      requests
-        .filter((r) => r.status === "pending")
+  const pending = useMemo(() => {
+    if (statusFilter === "agreements") {
+      return requests
+        .filter(awaitsCountersign)
         .filter((r) => filter === "all" || typeOf(r) === filter)
-        .filter((r) => (statusFilter === "unassigned" ? isUnassigned(r) : !isUnassigned(r)))
-        .sort((a, b) => b.submittedAt.localeCompare(a.submittedAt)), // newest first
-    [requests, filter, statusFilter],
-  );
+        .sort((a, b) => (b.agreementSignedAt ?? "").localeCompare(a.agreementSignedAt ?? ""));
+    }
+    return requests
+      .filter((r) => r.status === "pending")
+      .filter((r) => filter === "all" || typeOf(r) === filter)
+      .filter((r) => (statusFilter === "unassigned" ? isUnassigned(r) : !isUnassigned(r)))
+      .sort((a, b) => b.submittedAt.localeCompare(a.submittedAt)); // newest first
+  }, [requests, filter, statusFilter]);
 
 
   if (!ready) return <div className="min-h-screen bg-background" />;
@@ -214,6 +227,15 @@ function AdminPartnerRequestsPage() {
       });
     }
   }
+
+  /** Loqal's side of the partnership agreement — completes the signing flow. */
+  function countersign(r: PartnerRequest) {
+    updateRequest(r.id, { agreementCountersignedAt: new Date().toISOString() });
+    logActivity("Loqal admin", "countersigned a partnership agreement", r.companyName);
+    toast("Agreement countersigned", { description: `${r.companyName} is now fully active.` });
+  }
+
+
 
   function sendAdminRequest(r: PartnerRequest, kind: "info" | "call", message: string, requiresDocument: boolean) {
     const itemId = uid();
@@ -294,6 +316,9 @@ function AdminPartnerRequestsPage() {
   const statusCounts = {
     unassigned: statusBase.filter((r) => isUnassigned(r)).length,
     in_process: statusBase.filter((r) => !isUnassigned(r)).length,
+    agreements: requests
+      .filter(awaitsCountersign)
+      .filter((r) => filter === "all" || typeOf(r) === filter).length,
   };
 
 
@@ -303,7 +328,7 @@ function AdminPartnerRequestsPage() {
       <main className="mx-auto max-w-[1100px] px-4 py-8 md:px-7">
         <div className="mb-6">
           <span className="rounded-full bg-gold-tint px-3 py-1 text-xs font-semibold text-gold">
-            {pending.length} open
+            {pending.length} {statusFilter === "agreements" ? "signed" : "open"}
           </span>
           <h1 className="mt-3 text-2xl font-bold text-foreground md:text-[32px]">
             Open partner requests
@@ -402,9 +427,13 @@ function AdminPartnerRequestsPage() {
 
         {pending.length === 0 ? (
           <div className="rounded-lg border border-border bg-card p-10 text-center text-sm text-muted-foreground">
-            No open partner requests
+            {statusFilter === "agreements" ? "No signed agreements awaiting countersignature" : "No open partner requests"}
             {filter === "all" ? "" : ` in “${TYPE_FILTERS.find((f) => f.id === filter)?.label}”`}
-            {statusFilter === "unassigned" ? " that are unassigned" : " that are in process"}.
+            {statusFilter === "unassigned"
+              ? " that are unassigned"
+              : statusFilter === "in_process"
+                ? " that are in process"
+                : ""}.
           </div>
 
         ) : (
@@ -428,10 +457,22 @@ function AdminPartnerRequestsPage() {
                       {r.state ? `, ${r.state}` : ""} {r.zip}, {r.country} · Reg №{" "}
                       {r.registrationNumber}
                     </div>
-                    <div className="mt-1 text-xs font-semibold text-gold">
-                      Submitted {formatDateTime(r.submittedAt)} · waiting since{" "}
-                      {formatDate(r.submittedAt)}
-                    </div>
+                    {awaitsCountersign(r) ? (
+                      <div className="mt-2 rounded-md border border-success/40 bg-success/5 p-2.5 text-xs">
+                        <p className="font-semibold text-success">
+                          Partnership agreement signed{" "}
+                          {formatDateTime(r.agreementSignedAt as string)}
+                        </p>
+                        <p className="mt-0.5 text-muted-foreground">
+                          Signed by {r.agreementSignedBy || "—"} · awaiting Loqal countersignature
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="mt-1 text-xs font-semibold text-gold">
+                        Submitted {formatDateTime(r.submittedAt)} · waiting since{" "}
+                        {formatDate(r.submittedAt)}
+                      </div>
+                    )}
                     {r.allStates || r.realtorLicenses?.length ? <CoverageBubbles r={r} /> : null}
                     {r.languages?.length ? (
                       <div className="mt-1 text-xs text-muted-foreground">
@@ -500,6 +541,16 @@ function AdminPartnerRequestsPage() {
                     </button>
                   </div>
                   <div className="flex flex-wrap gap-2">
+                    {awaitsCountersign(r) ? (
+                      <button
+                        type="button"
+                        onClick={() => countersign(r)}
+                        className="rounded-md bg-success px-4 py-2 text-xs font-semibold text-background hover:opacity-90"
+                      >
+                        Countersign agreement
+                      </button>
+                    ) : (
+                    <>
                     <button
                       type="button"
                       onClick={() => approve(r)}
@@ -514,6 +565,8 @@ function AdminPartnerRequestsPage() {
                     >
                       Decline
                     </button>
+                    </>
+                    )}
                   </div>
                 </div>
 
