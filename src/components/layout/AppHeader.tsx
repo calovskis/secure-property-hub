@@ -176,6 +176,10 @@ export function AppHeader({
   navSlot?: React.ReactNode;
 }) {
   const { t } = useI18n();
+  const { user } = useAuth();
+  // The logo always returns the person to the dashboard of the portal they are
+  // signed into (admin, partner, or client) — never to another role's home.
+  const homeTo = user ? homeRouteFor(user.role) : "/";
   const nav = navItems ?? NAV;
   const [open, setOpen] = useState<string | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
