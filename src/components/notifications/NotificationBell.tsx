@@ -364,7 +364,6 @@ function useDerivedNotifications() {
     {
       for (const r of requests) {
         if (r.status === "pending") {
-        if (r.status === "pending") {
           list.push({
             id: `preq-${r.id}`,
             to: "admins",
