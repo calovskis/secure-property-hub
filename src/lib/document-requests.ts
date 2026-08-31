@@ -24,11 +24,12 @@ export type DocumentRequest = {
 const DEFINITIONS: Record<DocumentRequestKind, Omit<DocumentRequest, "kind">> = {
   idDocuments: {
     title: "Identity document",
-    label: "Driver's licence / green card / passport",
+    label: "ID card / driver's licence / green card / passport",
     description:
-      "Upload a copy or scan of your driver's licence (front and back), your green card, or your passport.",
-    reason: "Required for US citizens, green card and ITIN holders.",
+      "Upload a copy or scan of your identity document — national ID card or driver's licence (front and back), green card, or passport.",
+    reason: "Required from every applicant to verify identity.",
   },
+
   visaDocuments: {
     title: "US visa / status document",
     label: "Visa copy or scan",
