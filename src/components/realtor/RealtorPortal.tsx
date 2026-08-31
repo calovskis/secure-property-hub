@@ -23,6 +23,7 @@ import { RealtorAnalytics } from "@/components/realtor/RealtorAnalytics";
 import { RealtorAccounting } from "@/components/realtor/RealtorAccounting";
 import { RealtorFinancialAnalytics } from "@/components/realtor/RealtorFinancialAnalytics";
 import { useGreeting } from "@/lib/greeting";
+import { PointOfContactCard } from "@/components/partner/PointOfContactCard";
 
 const money = (n: number) => `$${Math.round(n).toLocaleString()}`;
 const inputClass =
@@ -799,6 +800,10 @@ export function RealtorPortal({
               note={activeLicenseStates(me).join(", ") || "Add licenses to receive assignments"}
             />
           </section>
+
+          <div className="mb-6">
+            <PointOfContactCard />
+          </div>
 
           <div className="mb-6">
             <GoogleCalendarCard agentRef={me.id} agentEmail={me.email} />
