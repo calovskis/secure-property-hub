@@ -18,7 +18,8 @@ import {
 import { PartnerProfile } from "@/components/profile/PartnerProfile";
 import { AgreementCard } from "@/components/profile/AgreementCard";
 import { KybCard } from "@/components/profile/KybCard";
-import { AdminRequestsCard } from "@/components/profile/AdminRequestsCard";
+import { CorrespondenceCard } from "@/components/profile/CorrespondenceCard";
+import { InfoRequestsList } from "@/components/profile/InfoRequestsList";
 import { useUploadDrafts, requestOpenUpload } from "@/lib/upload-drafts";
 import {
   PARTNER_LABEL,
@@ -507,7 +508,7 @@ function ProfilePage() {
           {isPartner ? (
             <aside className="space-y-6">
               <OpenRequests user={user} isRealtor={isRealtor} />
-              <AdminRequestsCard user={user} />
+              <CorrespondenceCard user={user} />
               {isRealtor ? null : <KybCard user={user} />}
               <AgreementCard user={user} />
             </aside>
@@ -669,7 +670,12 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
         open: () => requestOpenUpload(d.id),
       });
 
-  const outstanding = missingLicences.length + (needsIdentity ? 1 : 0);
+  // Written information requests are rendered by <InfoRequestsList /> below,
+  // so the empty state must account for them too.
+  const openInfoRequests = (registration?.adminRequests ?? []).filter(
+    (i) => i.kind === "info" && !i.answeredAt,
+  ).length;
+  const outstanding = missingLicences.length + (needsIdentity ? 1 : 0) + openInfoRequests;
 
   function saveIdentity(type: string, doc: string) {
     if (!registration || !doc) return;
@@ -715,7 +721,7 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
             outstanding ? "bg-gold-tint text-gold" : "bg-success/10 text-success"
           }`}
         >
-          {outstanding ? `${outstanding} document(s) missing` : "All documents on file"}
+          {outstanding ? `${outstanding} item(s) to provide` : "Everything provided"}
         </span>
       </div>
       {items.length ? (
@@ -748,12 +754,15 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
             );
           })}
         </ul>
-      ) : (
+      ) : openInfoRequests ? null : (
         <p className="mt-3 text-sm text-muted-foreground">
-          Nothing pending. Anything Loqal asks you for shows up here, and unfinished uploads are
-          saved automatically.
+          Nothing pending. Every document and information request from Loqal shows up here, and
+          unfinished uploads are saved automatically.
         </p>
       )}
+
+      {/* Written information / document requests Loqal raised, plus their history. */}
+      <InfoRequestsList user={user} />
 
       {realtor ? (
         <>

@@ -1,12 +1,14 @@
 /**
- * Partner-side inbox for follow-ups Loqal raised on an open registration:
- * written information requests (with optional document uploads) and video
- * call requests, which the partner books straight into the Loqal calendar.
+ * Shared building blocks for the two partner-side inboxes on My Profile:
+ *  - "Open requests" — everything Loqal asks the partner to provide in writing
+ *    and/or with documents (plus its request history).
+ *  - "Correspondence with Loqal" — video calls, live/e-mail chats and support
+ *    tickets, which are not document-specific.
  */
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { fullName, type LoqalUser } from "@/lib/auth";
-import { usePartnerRequests, type PartnerAdminRequest } from "@/lib/partner-requests";
+import type { PartnerAdminRequest } from "@/lib/partner-requests";
 import { CallScheduler } from "@/components/buyer/CallScheduler";
 import { logActivity } from "@/lib/activity";
 import { formatDateTime } from "@/lib/dates";
@@ -22,129 +24,69 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-const LOQAL_ADMIN_EMAIL = "it@loqal.global";
+export const LOQAL_ADMIN_EMAIL = "it@loqal.global";
 
 /** Open = still needs the partner, or is a call that has not happened yet. */
-function isOpenItem(i: PartnerAdminRequest) {
+export function isOpenItem(i: PartnerAdminRequest) {
   if (i.kind === "info") return !i.answeredAt;
   if (!i.scheduledAt) return true;
   return new Date(i.scheduledAt).getTime() > Date.now();
 }
 
-function titleOf(item: PartnerAdminRequest) {
+export function titleOf(item: PartnerAdminRequest) {
   const first = (item.message || "").split("\n")[0]?.trim() ?? "";
   const label = first.length > 70 ? `${first.slice(0, 70)}…` : first;
   return label || (item.kind === "info" ? "Information request" : "Video call request");
 }
 
-export function AdminRequestsCard({ user }: { user: LoqalUser }) {
-  const { requests, updateRequest } = usePartnerRequests();
-  const request = requests.find((r) => r.email.toLowerCase() === user.email.toLowerCase());
-  const items = request?.adminRequests ?? [];
-  const [historyItem, setHistoryItem] = useState<PartnerAdminRequest | null>(null);
-  const [showHistory, setShowHistory] = useState(false);
-
-  // A notification pointing at an already-closed request opens its history detail.
-  useDeepLinkAction("request", (focus) => {
-    const done = items.find((i) => i.id === focus && !isOpenItem(i));
-    if (done) {
-      setShowHistory(true);
-      setHistoryItem(done);
-    }
-  });
-  useDeepLinkAction("history", (focus) => {
-    setShowHistory(true);
-    const done = items.find((i) => i.id === focus);
-    if (done) setHistoryItem(done);
-  });
-
-
-  if (!request) return null;
-
-  function patch(id: string, changes: Partial<PartnerAdminRequest>) {
-    if (!request) return;
-    updateRequest(request.id, {
-      adminRequests: request.adminRequests.map((i) => (i.id === id ? { ...i, ...changes } : i)),
-    });
-  }
-
-  const open = items.filter(isOpenItem);
-  const past = items
-    .filter((i) => !isOpenItem(i))
-    .slice()
-    .sort((a, b) => (b.requestedAt > a.requestedAt ? 1 : -1));
-
+/** Collapsible list of finished items with a detail pop-up per entry. */
+export function HistorySection({
+  past,
+  label,
+  open,
+  onToggle,
+  onPick,
+}: {
+  past: PartnerAdminRequest[];
+  label: string;
+  open: boolean;
+  onToggle: () => void;
+  onPick: (item: PartnerAdminRequest) => void;
+}) {
+  if (!past.length) return null;
   return (
-    <section className="rounded-lg border border-border bg-card p-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-base font-semibold text-foreground">Requests &amp; correspondence with Loqal</h2>
-        <span
-          className={`rounded-full px-3 py-1 text-[11px] font-semibold ${
-            open.length ? "bg-gold-tint text-gold" : "bg-success/10 text-success"
-          }`}
-        >
-          {open.length ? `${open.length} open` : items.length ? "All handled" : "Nothing open"}
-        </span>
-      </div>
-      <p className="mt-1 text-xs text-muted-foreground">
-        Only what is still open is shown here — information requests waiting for your answer and
-        upcoming video calls. Everything finished moves to the history below.
-      </p>
-
-      {open.length === 0 ? (
-        <p className="mt-4 rounded-md border border-dashed border-border p-4 text-sm text-muted-foreground">
-          No open requests. When a Loqal admin or manager needs something from you, it will show up
-          here and in your notifications.
-        </p>
-      ) : (
-        <div className="mt-4 space-y-4">
-          {open.map((item) =>
-            item.kind === "info" ? (
-              <InfoItem key={item.id} item={item} requestId={request.id} user={user} onAnswer={patch} />
-            ) : (
-              <CallItem key={item.id} item={item} user={user} onBooked={patch} />
-            ),
-          )}
-        </div>
-      )}
-
-      {past.length ? (
-        <div className="mt-6 border-t border-border pt-4">
-          <button
-            type="button"
-            onClick={() => setShowHistory((v) => !v)}
-            className="text-xs font-semibold text-brand hover:underline"
-          >
-            {showHistory ? "Hide history" : `View history (${past.length})`}
-          </button>
-          {showHistory ? (
-            <ul className="mt-3 divide-y divide-border rounded-md border border-border">
-              {past.map((item) => (
-                <li key={item.id}>
-                  <button
-                    type="button"
-                    onClick={() => setHistoryItem(item)}
-                    className="flex w-full flex-wrap items-center justify-between gap-2 px-3 py-2.5 text-left hover:bg-muted/40"
-                  >
-                    <span className="text-sm text-foreground">{titleOf(item)}</span>
-                    <span className="text-[11px] text-muted-foreground">
-                      {item.kind === "info" ? "Information request" : "Video call"} ·{" "}
-                      {formatDateTime(item.requestedAt)}
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : null}
-        </div>
+    <div className="mt-6 border-t border-border pt-4">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="text-xs font-semibold text-brand hover:underline"
+      >
+        {open ? `Hide ${label.toLowerCase()}` : `${label} (${past.length})`}
+      </button>
+      {open ? (
+        <ul className="mt-3 divide-y divide-border rounded-md border border-border">
+          {past.map((item) => (
+            <li key={item.id}>
+              <button
+                type="button"
+                onClick={() => onPick(item)}
+                className="flex w-full flex-wrap items-center justify-between gap-2 px-3 py-2.5 text-left hover:bg-muted/40"
+              >
+                <span className="text-sm text-foreground">{titleOf(item)}</span>
+                <span className="text-[11px] text-muted-foreground">
+                  {item.kind === "info" ? "Information request" : "Video call"} ·{" "}
+                  {formatDateTime(item.requestedAt)}
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
       ) : null}
-
-      <HistoryDetailDialog item={historyItem} onClose={() => setHistoryItem(null)} />
-    </section>
+    </div>
   );
 }
 
-function HistoryDetailDialog({
+export function HistoryDetailDialog({
   item,
   onClose,
 }: {
@@ -178,7 +120,9 @@ function HistoryDetailDialog({
                   {item.answerDocs?.length ? (
                     <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
                       {item.answerDocs.map((d) => (
-                        <li key={d}><UploadedDocLink path={d} /></li>
+                        <li key={d}>
+                          <UploadedDocLink path={d} />
+                        </li>
                       ))}
                     </ul>
                   ) : (
@@ -213,8 +157,7 @@ function HistoryDetailDialog({
   );
 }
 
-
-function ItemShell({
+export function ItemShell({
   item,
   badge,
   children,
@@ -246,7 +189,7 @@ function ItemShell({
   );
 }
 
-function InfoItem({
+export function InfoItem({
   item,
   requestId,
   user,
@@ -267,7 +210,6 @@ function InfoItem({
     if (!item.answeredAt && (!focus || focus === item.id)) setOpen(true);
   });
 
-
   return (
     <ItemShell item={item} badge="Information requested">
       {item.answeredAt ? (
@@ -279,7 +221,9 @@ function InfoItem({
           {item.answerDocs?.length ? (
             <ul className="mt-1 space-y-1 text-xs text-muted-foreground">
               {item.answerDocs.map((d) => (
-                <li key={d}><UploadedDocLink path={d} /></li>
+                <li key={d}>
+                  <UploadedDocLink path={d} />
+                </li>
               ))}
             </ul>
           ) : null}
@@ -288,7 +232,7 @@ function InfoItem({
         <div className="mt-3">
           {draft ? (
             <p className="mb-2 text-[11px] font-semibold text-gold">
-              {(draft.files.length || 0)} file(s) and your answer are pre-saved — not submitted yet.
+              {draft.files.length || 0} file(s) and your answer are pre-saved — not submitted yet.
             </p>
           ) : null}
           <button
@@ -323,7 +267,7 @@ function InfoItem({
   );
 }
 
-function CallItem({
+export function CallItem({
   item,
   user,
   onBooked,
@@ -341,39 +285,37 @@ function CallItem({
 
   return (
     <div ref={ref}>
-    <ItemShell item={item} badge="Video call requested">
-      {item.scheduledAt ? (
-        <div className="mt-3 rounded-md border border-success/40 bg-success/5 p-3 text-sm">
-          <p className="font-semibold text-success">
-            Booked for {formatDateTime(item.scheduledAt)}
-          </p>
-          {item.meetUrl ? (
-            <a
-              href={item.meetUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-1 inline-block text-xs font-semibold text-brand underline"
-            >
-              Join the Google Meet
-            </a>
-          ) : null}
-        </div>
-      ) : (
-        <div className="mt-3">
-          <CallScheduler
-            agentEmail={LOQAL_ADMIN_EMAIL}
-            summary="Loqal — partner registration call"
-            description={item.message}
-            attendeeEmails={[user.email]}
-            onBook={(startAt, meeting) => {
-              onBooked(item.id, { scheduledAt: startAt, meetUrl: meeting?.meetUrl ?? null });
-              logActivity(fullName(user), "booked a video call with Loqal", startAt);
-              toast("Call booked", { description: "Loqal received your slot." });
-            }}
-          />
-        </div>
-      )}
-    </ItemShell>
+      <ItemShell item={item} badge="Video call requested">
+        {item.scheduledAt ? (
+          <div className="mt-3 rounded-md border border-success/40 bg-success/5 p-3 text-sm">
+            <p className="font-semibold text-success">Booked for {formatDateTime(item.scheduledAt)}</p>
+            {item.meetUrl ? (
+              <a
+                href={item.meetUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-1 inline-block text-xs font-semibold text-brand underline"
+              >
+                Join the Google Meet
+              </a>
+            ) : null}
+          </div>
+        ) : (
+          <div className="mt-3">
+            <CallScheduler
+              agentEmail={LOQAL_ADMIN_EMAIL}
+              summary="Loqal — partner registration call"
+              description={item.message}
+              attendeeEmails={[user.email]}
+              onBook={(startAt, meeting) => {
+                onBooked(item.id, { scheduledAt: startAt, meetUrl: meeting?.meetUrl ?? null });
+                logActivity(fullName(user), "booked a video call with Loqal", startAt);
+                toast("Call booked", { description: "Loqal received your slot." });
+              }}
+            />
+          </div>
+        )}
+      </ItemShell>
     </div>
   );
 }
