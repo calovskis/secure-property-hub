@@ -233,15 +233,10 @@ function AdminPartnerRequestsPage() {
       reviewUpdatedAt: new Date().toISOString(),
       ...(r.reviewerId ? {} : { reviewerId: user!.email, reviewerName: fullName(user!) }),
     });
-    notify({
-      id: `partner-admin-request-${r.id}-${Date.now()}`,
-      to: r.email.toLowerCase(),
-      title: kind === "info" ? "Loqal requested more information" : "Loqal requested a video call",
-      body: message,
-      // Deep-link straight into the answer pop-up / booking form.
-      href: `/profile?open=${kind === "info" ? "request" : "call"}&focus=${itemId}`,
-      severity: "warning",
-    });
+    /* No manual notify here: the notification bell derives one stable
+       notification per admin request (id `preq-<itemId>`) together with its
+       reminder ladder and completed state. Pushing a second one here made the
+       partner see the same request twice. */
     logActivity(
       "Loqal admin",
       kind === "info" ? "requested more information from a partner" : "requested a video call with a partner",
