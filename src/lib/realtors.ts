@@ -90,12 +90,15 @@ const listeners = new Set<() => void>();
 
 function normalise(next: Partial<RealtorState>): RealtorState {
   return {
-    realtors: (next.realtors ?? []).map((r) => ({
-      ...r,
-      licenses: r.licenses ?? [],
-      languages: r.languages ?? [],
-      approvedAt: r.approvedAt ?? "",
-    })),
+    realtors: (next.realtors ?? [])
+      // Legacy demo agents must never compete with real approved partners.
+      .filter((r) => !String(r.id).startsWith("seed-realtor-"))
+      .map((r) => ({
+        ...r,
+        licenses: r.licenses ?? [],
+        languages: r.languages ?? [],
+        approvedAt: r.approvedAt ?? "",
+      })),
   };
 }
 
@@ -103,7 +106,8 @@ function load(): RealtorState {
   if (state) return state;
   let next = DEFAULT_STATE();
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
+    const raw =
+      window.localStorage.getItem(STORAGE_KEY) ?? window.localStorage.getItem("loqal.realtors.v1");
     if (raw) next = normalise(JSON.parse(raw) as Partial<RealtorState>);
   } catch {
     /* ignore */
