@@ -14,6 +14,7 @@ import {
   isOpenItem,
 } from "@/components/profile/partner-request-parts";
 import { useDeepLinkAction } from "@/lib/deep-link";
+import { useStaff } from "@/lib/staff";
 
 export function CorrespondenceCard({ user }: { user: LoqalUser }) {
   const { requests, updateRequest } = usePartnerRequests();
@@ -73,7 +74,13 @@ export function CorrespondenceCard({ user }: { user: LoqalUser }) {
       ) : (
         <div className="mt-4 space-y-4">
           {open.map((item) => (
-            <CallItem key={item.id} item={item} user={user} onBooked={patch} />
+            <CallItem
+              key={item.id}
+              item={item}
+              user={user}
+              onBooked={patch}
+              {...(reviewerEmail ? { agentEmail: reviewerEmail } : {})}
+            />
           ))}
         </div>
       )}
