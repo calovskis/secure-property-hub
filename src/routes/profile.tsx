@@ -754,10 +754,10 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
             );
           })}
         </ul>
-      ) : (
+      ) : openInfoRequests ? null : (
         <p className="mt-3 text-sm text-muted-foreground">
-          Nothing pending. Anything Loqal asks you for shows up here, and unfinished uploads are
-          saved automatically.
+          Nothing pending. Every document and information request from Loqal shows up here, and
+          unfinished uploads are saved automatically.
         </p>
       )}
 
