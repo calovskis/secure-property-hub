@@ -38,6 +38,13 @@ import { DateInput } from "@/components/form/DateInput";
 import { CountryCombobox } from "@/components/form/CountryCombobox";
 import { DocumentUploadBox } from "@/components/mortgage/DocumentUploadBox";
 import { documentExpiryState } from "@/lib/mortgage-form";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type Save = (patch: Partial<MortgageProfile>) => void;
 
