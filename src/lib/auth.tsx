@@ -350,25 +350,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!active || !identity || !current) return;
       if (!identity.firstName && !identity.lastName) return;
       const middleName = identity.middleName ?? "";
+      // Someone registered as a partner only (no client profile) must stay in
+      // the partner portal — an old session holding a client role is corrected.
+      const partnerOnly =
+        Boolean(identity.partnerType) && identity.usPerson === undefined;
+      const correctedRole: Role = partnerOnly ? "partner" : current.role;
       const unchanged =
         identity.firstName === current.firstName &&
         identity.lastName === current.lastName &&
         middleName === (current.middleName ?? "") &&
         (!identity.phone || identity.phone === current.phone) &&
-        (identity.usPerson === undefined || identity.usPerson === current.usPerson);
+        (identity.usPerson === undefined || identity.usPerson === current.usPerson) &&
+        correctedRole === current.role;
       if (unchanged) return;
       const { middleName: _previousMiddleName, ...rest } = current;
       persist({
         ...rest,
+        role: correctedRole,
+        ...(correctedRole === "partner" && identity.partnerType && !rest.partnerType
+          ? { partnerType: identity.partnerType }
+          : {}),
         firstName: identity.firstName,
         lastName: identity.lastName,
         ...(middleName ? { middleName } : {}),
         ...(identity.phone ? { phone: identity.phone } : {}),
         ...(identity.usPerson !== undefined ? { usPerson: identity.usPerson } : {}),
-        ...(identity.companyName && role === "partner"
+        ...(identity.companyName && correctedRole === "partner"
           ? { companyName: identity.companyName }
           : {}),
-        ...(identity.lenderLicence && role === "partner"
+        ...(identity.lenderLicence && correctedRole === "partner"
           ? { lenderLicence: identity.lenderLicence }
           : {}),
       });

@@ -165,7 +165,18 @@ function AuthPage() {
     const authId = authData.user?.id ?? null;
     // The registration record — never a browser cache — decides the name.
     const identity = await fetchRegisteredIdentity(authId, email);
+    // Role comes from how the account was registered, not from the sign-in
+    // selector: someone registered as a partner only (no client profile) can
+    // never enter the client portal.
+    const partnerOnly = Boolean(identity?.partnerType) && identity?.usPerson === undefined;
+    const effectiveRole: Role = partnerOnly
+      ? "partner"
+      : loginRole === "partner" && !identity?.partnerType && identity?.usPerson !== undefined
+        ? "client"
+        : loginRole;
     setBusy(false);
+    const effectivePartnerType: PartnerType =
+      identity?.partnerType ?? loginPartnerType;
     const derived = namesFromEmail(email);
     complete({
       firstName: identity?.firstName || derived.firstName,
@@ -174,16 +185,16 @@ function AuthPage() {
       email,
       phone: identity?.phone || "",
       usPerson: identity?.usPerson ?? false,
-      role: loginRole,
-      ...(loginRole === "partner"
+      role: effectiveRole,
+      ...(effectiveRole === "partner"
         ? {
-            partnerType: identity?.partnerType ?? loginPartnerType,
+            partnerType: effectivePartnerType,
             companyName:
               identity?.companyName ??
-              (loginPartnerType === "lender" ? "Demo Mortgage Partners" : "Demo Partner Co."),
+              (effectivePartnerType === "lender" ? "Demo Mortgage Partners" : "Demo Partner Co."),
             ...(identity?.lenderLicence
               ? { lenderLicence: identity.lenderLicence }
-              : loginPartnerType === "lender"
+              : effectivePartnerType === "lender"
                 ? { lenderLicence: "NMLS-2481907" }
                 : {}),
           }
