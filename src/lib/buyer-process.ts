@@ -453,6 +453,37 @@ export function useBuyerProcess() {
     });
   }, []);
 
+  /**
+   * The other side cannot make any of the proposed times work and offers
+   * alternatives instead (ranked, first = preferred) with an optional note.
+   */
+  const counterPropose = useCallback(
+    (bookingId: string, slots: string[], by: "buyer" | "agent", note?: string) => {
+      if (!slots.length) return;
+      const cur = load();
+      const end = new Date(new Date(slots[0]!).getTime() + 60 * 60 * 1000);
+      commit({
+        ...cur,
+        bookings: cur.bookings.map((b) =>
+          b.id === bookingId
+            ? {
+                ...b,
+                status: "proposed" as const,
+                proposedSlots: slots,
+                proposedBy: by,
+                startAt: slots[0]!,
+                endAt: end.toISOString(),
+                ...(by === "agent" ? { agentNote: note ?? "" } : { note: note ?? "" }),
+              }
+            : b,
+        ),
+      });
+    },
+    [],
+  );
+
+
+
   /** Call ended — the recording and the AI transcript are saved to the file. */
   const endCall = useCallback((bookingId: string, durationMin: number, transcript: string) => {
     const cur = load();
