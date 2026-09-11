@@ -20,6 +20,8 @@ import { PartnerProfile } from "@/components/profile/PartnerProfile";
 import { AgreementCard } from "@/components/profile/AgreementCard";
 import { KybCard } from "@/components/profile/KybCard";
 import { CorrespondenceCard } from "@/components/profile/CorrespondenceCard";
+import { UpcomingCallsCard } from "@/components/client/UpcomingCallsCard";
+
 import { InfoRequestsList } from "@/components/profile/InfoRequestsList";
 import { useUploadDrafts, requestOpenUpload } from "@/lib/upload-drafts";
 import {
@@ -528,6 +530,10 @@ function ProfilePage() {
 
           ) : (
             <aside className="space-y-6">
+
+              <UpcomingCallsCard compact />
+
+
 
               <section className="rounded-lg border border-border bg-card p-6">
                 <h2 className="text-base font-semibold text-foreground">Submitted applications</h2>
