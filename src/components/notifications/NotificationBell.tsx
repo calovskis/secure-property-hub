@@ -521,25 +521,17 @@ function useDerivedNotifications() {
               createdAt: rem.dueAt,
             });
           }
-        } else {
+        } else if (rv?.identityDoc) {
+          /* The partner uploaded it themselves — no confirmation notification. */
           clearRequestOpenedAt(idKey);
-          list.push({
-            id: `${idKey}-done`,
-            to: email,
-            title: "Identity verification document received",
-            body: "Thank you — Loqal is verifying it.",
-            href: "/profile",
-            severity: "info",
-            completed: true,
-            createdAt: rv.identityUploadedAt,
-          });
         }
 
         const licKey = `pdoc-licences-${r.id}`;
         const licences = rv?.licenseDocs ?? [];
         const missing = licences.filter((l) => !l.doc);
-        if (licences.length && missing.length) {
-          const since = requestOpenedAt(licKey);
+        const licSince = requestOpenedAt(licKey);
+        if (licences.length && missing.length && documentNoticeDue(licSince)) {
+          const since = licSince;
           list.push({
             id: licKey,
             to: email,
