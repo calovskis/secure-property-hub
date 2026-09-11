@@ -156,6 +156,20 @@ export function stagedCounts(email: string | undefined): Partial<Record<Document
  */
 export const DOCUMENT_REMINDER_HOURS = [3, 24, 72, 168, 336, 672, 1344] as const;
 
+/**
+ * A document we ask for automatically is never announced the moment it
+ * becomes due — the client has just finished the form. The first notification
+ * appears 2 hours later, then the reminder ladder above takes over.
+ */
+export const DOCUMENT_NOTICE_DELAY_HOURS = 2;
+
+/** True once the first notification for an auto-raised document request is due. */
+export function documentNoticeDue(sinceIso: string, now: Date = new Date()): boolean {
+  const since = new Date(sinceIso).getTime();
+  if (!Number.isFinite(since)) return true;
+  return now.getTime() >= since + DOCUMENT_NOTICE_DELAY_HOURS * 60 * 60 * 1000;
+}
+
 export type DocumentReminder = {
   hours: number;
   /** Human label, e.g. "3 hours" or "7 days". */

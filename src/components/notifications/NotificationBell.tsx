@@ -18,8 +18,8 @@ import { useRealtors } from "@/lib/realtors";
 import { useMortgageDrafts } from "@/lib/mortgage-draft";
 import {
   clearRequestOpenedAt,
-  documentRequestDefinition,
   documentReminders,
+  documentNoticeDue,
   outstandingDocumentRequests,
   requestOpenedAt,
 } from "@/lib/document-requests";
@@ -242,6 +242,8 @@ function useDerivedNotifications() {
       for (const request of outstanding) {
         const key = `doc-${request.kind}-${email}`;
         const since = requestOpenedAt(key);
+        /* Nothing is announced for the first 2 hours after the form is done. */
+        if (!documentNoticeDue(since, new Date(now))) continue;
         list.push({
           id: key,
           to: email,
@@ -268,22 +270,9 @@ function useDerivedNotifications() {
       for (const kind of ["idDocuments", "visaDocuments", "bankruptcyDocuments"] as const) {
         if (outstanding.some((r) => r.kind === kind)) continue;
         const key = `doc-${kind}-${email}`;
+        /* The client uploaded it themselves — no "received" notification. */
         completedIds.push(key);
         clearRequestOpenedAt(key);
-        const docs = p[kind];
-        if (docs?.length) {
-          const def = documentRequestDefinition(kind);
-          list.push({
-            id: `${key}-done`,
-            to: email,
-            title: `${def.title} received`,
-            body: "Thank you — the document is on file and nothing else is needed.",
-            href: "/profile",
-            severity: "info",
-            completed: true,
-            createdAt: docs[docs.length - 1]?.uploadedAt,
-          });
-        }
       }
     }
 
@@ -507,8 +496,9 @@ function useDerivedNotifications() {
       const isRealtor = r.partnerType === "realtor";
       if (isRealtor) {
         const idKey = `pdoc-identity-${r.id}`;
-        if (!rv?.identityDoc) {
-          const since = requestOpenedAt(idKey);
+        const idSince = requestOpenedAt(idKey);
+        if (!rv?.identityDoc && documentNoticeDue(idSince)) {
+          const since = idSince;
           list.push({
             id: idKey,
             to: email,
@@ -531,25 +521,17 @@ function useDerivedNotifications() {
               createdAt: rem.dueAt,
             });
           }
-        } else {
+        } else if (rv?.identityDoc) {
+          /* The partner uploaded it themselves — no confirmation notification. */
           clearRequestOpenedAt(idKey);
-          list.push({
-            id: `${idKey}-done`,
-            to: email,
-            title: "Identity verification document received",
-            body: "Thank you — Loqal is verifying it.",
-            href: "/profile",
-            severity: "info",
-            completed: true,
-            createdAt: rv.identityUploadedAt,
-          });
         }
 
         const licKey = `pdoc-licences-${r.id}`;
         const licences = rv?.licenseDocs ?? [];
         const missing = licences.filter((l) => !l.doc);
-        if (licences.length && missing.length) {
-          const since = requestOpenedAt(licKey);
+        const licSince = requestOpenedAt(licKey);
+        if (licences.length && missing.length && documentNoticeDue(licSince)) {
+          const since = licSince;
           list.push({
             id: licKey,
             to: email,
@@ -572,17 +554,9 @@ function useDerivedNotifications() {
               createdAt: rem.dueAt,
             });
           }
-        } else if (licences.length) {
+        } else if (licences.length && !missing.length) {
+          /* Uploaded by the partner — no confirmation notification. */
           clearRequestOpenedAt(licKey);
-          list.push({
-            id: `${licKey}-done`,
-            to: email,
-            title: "All state licence copies received",
-            body: `${licences.length} state(s) are on file.`,
-            href: "/profile",
-            severity: "info",
-            completed: true,
-          });
         }
       }
 
