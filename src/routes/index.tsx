@@ -479,10 +479,6 @@ function Dashboard() {
           </span>
         </div>
 
-        <div className="mb-8">
-          <TaskTracker />
-        </div>
-
         {pendingOffers.length ? (
           <div className="mb-8 rounded-xl border border-gold/40 bg-gold-tint/50 p-5">
             <div className="text-sm font-semibold text-foreground">
@@ -617,6 +613,10 @@ function Dashboard() {
               <ActivityRow key={a.title} icon={a.icon} title={a.title} desc={a.desc} time={a.time} service={a.service} />
             ))}
           </div>
+        </div>
+
+        <div className="mt-8">
+          <TaskTracker />
         </div>
       </main>
     </div>
