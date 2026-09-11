@@ -127,21 +127,39 @@ function useDerivedNotifications() {
       }
 
       /* Terms accepted but the buyer's-agent setup was never finished — remind
-       * the client to pick up exactly where they left off. */
+       * the client to pick up exactly where they left off. Nothing is shown the
+       * moment they accept the terms: the first notice appears 2 hours later,
+       * then the standard reminder ladder (3h, 24h, 3d, 7d, …) takes over. */
       if (
         lead.clientDecision === "accepted" &&
         lead.status !== "annulled" &&
         !lead.buyerAgent?.representation
       ) {
-        list.push({
-          id: `agentsetup-${lead.id}`,
-          to: email,
-          title: "Finish setting up your buyer's agent",
-          body: `${lead.propertyLabel} — choose how you want to work with your agent and how to start. Your answers so far are saved.`,
-          href: `/property/${lead.propertyId}?open=agent`,
-          severity: "warning",
-          createdAt: lead.buyerAgent?.agreedAt ?? lead.clientDecisionAt,
-        });
+        const since = lead.buyerAgent?.agreedAt ?? lead.clientDecisionAt;
+        if (since && documentNoticeDue(since, new Date(now))) {
+          list.push({
+            id: `agentsetup-${lead.id}`,
+            to: email,
+            title: "Finish setting up your buyer's agent",
+            body: `${lead.propertyLabel} — choose how you want to work with your agent and how to start. Your answers so far are saved.`,
+            href: `/property/${lead.propertyId}?open=agent`,
+            severity: "warning",
+            createdAt: since,
+          });
+          for (const rem of documentReminders(since, new Date(now))) {
+            if (!rem.due) continue;
+            list.push({
+              id: `agentsetup-rem-${lead.id}-${rem.hours}`,
+              to: email,
+              title: `Reminder: finish setting up your buyer's agent (${rem.label})`,
+              body: `${lead.propertyLabel} — your answers so far are saved; continue where you left off.`,
+              href: `/property/${lead.propertyId}?open=agent`,
+              severity: rem.hours >= 336 ? "critical" : "warning",
+              emailCopy: rem.email,
+              createdAt: rem.dueAt,
+            });
+          }
+        }
       } else if (lead.buyerAgent?.representation) {
         completedIds.push(`agentsetup-${lead.id}`);
       }
