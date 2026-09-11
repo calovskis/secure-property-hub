@@ -614,6 +614,10 @@ function Dashboard() {
             ))}
           </div>
         </div>
+
+        <div className="mt-8">
+          <TaskTracker />
+        </div>
       </main>
     </div>
   );
