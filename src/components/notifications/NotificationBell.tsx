@@ -732,8 +732,14 @@ export function NotificationBell() {
                             <span className="h-1.5 w-1.5 rounded-full bg-success" />
                             Completed
                           </span>
+                        ) : n.badge ? (
+                          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-tint px-2 py-0.5 text-[11px] font-semibold text-brand">
+                            <span className="h-1.5 w-1.5 rounded-full bg-brand" />
+                            {n.badge}
+                          </span>
                         ) : null}
                       </span>
+
                       {n.body ? (
                         <span className="mt-0.5 block truncate text-xs text-muted-foreground">
                           {n.body}
