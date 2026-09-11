@@ -706,6 +706,7 @@ function useDerivedNotifications() {
       }
     }
     if (list.length) syncNotifications(list);
+    pruneDerived(email, ["sign-", "pdoc-", "preq-", "active-"], list.map((n) => n.id));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.email, requests, email]);
 
