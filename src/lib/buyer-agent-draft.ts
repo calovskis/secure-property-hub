@@ -10,7 +10,7 @@
 export type BuyerAgentDraft = {
   step?: "representation" | "kickoff";
   representation?: "loqal_rep" | "buyer_direct";
-  kickoff?: "live_call" | "photo_visit" | "video_showcase";
+  kickoff?: string;
   notes?: string;
   callSlot?: string;
   callMeetUrl?: string;

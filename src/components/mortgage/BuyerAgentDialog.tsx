@@ -70,7 +70,7 @@ export function BuyerAgentDialog({
     if (!open) return;
     const draft = loadBuyerAgentDraft(lead.id);
     setRepresentation(draft.representation ?? null);
-    setKickoff(draft.kickoff ?? null);
+    setKickoff((draft.kickoff as KickoffRequest | undefined) ?? null);
     setNotes(draft.notes ?? "");
     setCallSlot(draft.callSlot ?? null);
     setCallMeetUrl(draft.callMeetUrl ?? null);
