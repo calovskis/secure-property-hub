@@ -280,6 +280,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [authUserId, user, persist]);
 
+  /** Client registration data is authoritative for the signed-in client's identity. */
+  useEffect(() => {
+    if (!authUserId || !user || (user.role !== "client" && user.role !== "corporate")) return;
+    let active = true;
+    void supabase
+      .from("client_profiles")
+      .select("first_name,middle_name,last_name,phone,us_person")
+      .eq("user_id", authUserId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!active || !data) return;
+        const firstName = normalizeName(data.first_name);
+        const middleName = normalizeName(data.middle_name);
+        const lastName = normalizeName(data.last_name);
+        const unchanged =
+          firstName === user.firstName &&
+          middleName === (user.middleName ?? "") &&
+          lastName === user.lastName &&
+          data.phone === user.phone &&
+          data.us_person === user.usPerson;
+        if (unchanged) return;
+        persist({
+          ...user,
+          firstName,
+          lastName,
+          phone: data.phone,
+          usPerson: data.us_person,
+          ...(middleName ? { middleName } : { middleName: undefined }),
+        });
+      });
+    return () => {
+      active = false;
+    };
+  }, [authUserId, user, persist]);
+
   const value = useMemo<AuthContextValue>(() => {
     const privileged = user?.role === "admin" || user?.role === "partner";
     return {
