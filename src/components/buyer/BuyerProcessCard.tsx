@@ -14,7 +14,7 @@ import { CallScheduler } from "@/components/buyer/CallScheduler";
 import { TourProposalPanel } from "@/components/buyer/TourProposalPanel";
 import { BuyerAgentDialog } from "@/components/mortgage/BuyerAgentDialog";
 import { FileChatPanel } from "@/components/messaging/FileChatPanel";
-import { clientDisplayForPartner } from "@/lib/user-id";
+import { clientDisplayForPartner, partnerDisplayForClient } from "@/lib/user-id";
 import { usePartnerRequests } from "@/lib/partner-requests";
 
 const money = (n: number) => `$${Math.round(n).toLocaleString()}`;
@@ -168,7 +168,7 @@ export function BuyerProcessCard({ lead }: { lead: MortgageLead }) {
         <span className="rounded-full bg-brand-tint px-3 py-1 text-[11px] font-semibold text-brand">
           {ba.representation === "loqal_rep"
             ? "Loqal personal manager (+1%)"
-            : `You + ${ba.agentName ?? "your buyer's agent"}`}
+            : `You + ${agentDisplay ?? "your buyer's agent"}`}
         </span>
       </div>
 
@@ -176,7 +176,7 @@ export function BuyerProcessCard({ lead }: { lead: MortgageLead }) {
         <p className="mt-3 text-sm text-muted-foreground">
           Your Loqal personal manager is treating this property as their own investment and will
           come back to you with the best course of action — inspections, negotiations and next
-          steps. {ba.agentName ? `${ba.agentName} remains your licensed buyer's agent of record.` : ""}
+          steps. {agentDisplay ? `${agentDisplay} remains your licensed buyer's agent of record.` : ""}
         </p>
       ) : (
         <>
@@ -243,7 +243,7 @@ export function BuyerProcessCard({ lead }: { lead: MortgageLead }) {
               leadId={lead.id}
               side="client"
               myName={clientDisplayForPartner(lead.clientName, lead.clientEmail)}
-              otherName={ba.agentName ?? "your buyer's agent"}
+              otherName={agentDisplay ?? "your buyer's agent"}
               otherEmail={agentEmail}
               propertyId={lead.propertyId}
               propertyLabel={lead.propertyLabel}
@@ -253,7 +253,7 @@ export function BuyerProcessCard({ lead }: { lead: MortgageLead }) {
           {photo?.status === "delivered" ? (
             <div className="mt-4 rounded-lg border border-border bg-background p-4">
               <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Photos & recommendations from {ba.agentName ?? "your agent"}
+                Photos & recommendations from {agentDisplay ?? "your agent"}
               </div>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {photo.photos.map((p) => (
@@ -403,7 +403,7 @@ export function BuyerProcessCard({ lead }: { lead: MortgageLead }) {
                 {active === "agree_negotiation" ? (
                   <div className="mt-3 space-y-2">
                     <p className="rounded-md border border-gold/40 bg-gold-tint/40 p-3 text-xs text-foreground">
-                      You authorise {ba.agentName ?? "your agent"} to open negotiations
+                      You authorise {agentDisplay ?? "your agent"} to open negotiations
                       {photo.suggestedPrice ? (
                         <>
                           {" "}
