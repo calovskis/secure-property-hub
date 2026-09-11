@@ -291,6 +291,9 @@ function ProfileTopics({ profile }: { profile: MortgageProfile }) {
     <div className="space-y-4">
       <PersonalTopic profile={profile} onSave={save} />
       <CitizenshipTopic profile={profile} usPerson={user?.usPerson ?? false} onSave={save} />
+      {!user?.usPerson && !profile.usVisaActive ? (
+        <VisaSupportTopic profile={profile} onSave={save} />
+      ) : null}
       <AddressTopic profile={profile} onSave={save} />
       <IncomeTopic profile={profile} onSave={save} />
       <AssetsTopic profile={profile} onSave={save} />
