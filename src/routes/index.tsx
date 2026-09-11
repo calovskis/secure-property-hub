@@ -8,6 +8,8 @@ import { formatDateTime } from "@/lib/dates";
 import { useGreeting } from "@/lib/greeting";
 import { TaskTracker } from "@/components/tasks/TaskTracker";
 import { MyPartnersCard } from "@/components/client/MyPartnersCard";
+import { UpcomingCallsCard } from "@/components/client/UpcomingCallsCard";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -515,6 +517,11 @@ function Dashboard() {
             </div>
           </div>
         ) : null}
+
+        <div className="mb-8">
+          <UpcomingCallsCard />
+        </div>
+
 
         <div className="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
           {metrics.map((m) => (
