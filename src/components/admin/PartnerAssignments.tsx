@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import { useAuth } from "@/lib/auth";
 import { useLeads, type MortgageLead } from "@/lib/leads";
-import { usePartnerRequests, type PartnerRequest } from "@/lib/partner-requests";
+import { usePartnerRequests } from "@/lib/partner-requests";
 import { CLIENT_ACTION_LABEL, useBuyerProcess } from "@/lib/buyer-process";
 import { logActivity } from "@/lib/activity";
 import { notify } from "@/lib/notifications";
