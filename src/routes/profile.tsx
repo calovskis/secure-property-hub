@@ -57,6 +57,8 @@ import { usePartnerRequests } from "@/lib/partner-requests";
 import { useRealtorLicences } from "@/components/profile/realtor-licences";
 import { UploadRequestDialog } from "@/components/profile/UploadRequestDialog";
 import { LicenceUploadDialog } from "@/components/profile/LicenceUploadDialog";
+import { LicenceRenewalDialog } from "@/components/profile/LicenceRenewalDialog";
+
 import { toast } from "sonner";
 import { useDeepLinkAction } from "@/lib/deep-link";
 
@@ -631,6 +633,7 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
   const { licenses, persist } = useRealtorLicences(user);
   const [idDialog, setIdDialog] = useState(false);
   const [licDialog, setLicDialog] = useState(false);
+  const [renewState, setRenewState] = useState<string | null>(null);
   const registration = requests.find(
     (r) => r.email.toLowerCase() === user.email.toLowerCase(),
   );
@@ -638,6 +641,9 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
   // Notifications deep-link straight into the pop-up they are about.
   useDeepLinkAction("identity", () => setIdDialog(true));
   useDeepLinkAction("licences", () => setLicDialog(true));
+  useDeepLinkAction("licence-renewal", (focus) => {
+    if (focus) setRenewState(focus);
+  });
   useDeepLinkAction("upload", (focus) => {
     if (focus) requestOpenUpload(focus);
   });
@@ -645,7 +651,13 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
 
   const realtor =
     isRealtor || user.partnerType === "realtor" || registration?.partnerType === "realtor";
-  const missingLicences = realtor ? licenses.filter((l) => !l.doc) : [];
+  const daysTo = (iso: string) =>
+    Math.ceil((new Date(iso).getTime() - Date.now()) / 86_400_000);
+  /** Only the state licences whose validity is running out — nothing else. */
+  const expiringLicences = realtor ? licenses.filter((l) => daysTo(l.validUntil) <= 30) : [];
+  const missingLicences = realtor
+    ? licenses.filter((l) => !l.doc && !expiringLicences.some((e) => e.state === l.state))
+    : [];
   const identityDone = Boolean(realtor && registration?.realtorVerification?.identityDoc);
   const needsIdentity = Boolean(realtor && registration && !identityDone);
 
@@ -659,6 +671,19 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
       open: () => setIdDialog(true),
     });
 
+  for (const l of expiringLicences) {
+    const left = daysTo(l.validUntil);
+    items.push({
+      id: `licence-renewal-${l.state}`,
+      title: `${l.state} licence renewal`,
+      detail:
+        left < 0
+          ? `Expired on ${formatDate(l.validUntil)} — enter the new number, the new validity date and attach the renewed licence.`
+          : `Expires in ${left} day(s) — enter the new number, the new validity date and attach the renewed licence.`,
+      open: () => setRenewState(l.state),
+    });
+  }
+
   if (missingLicences.length)
     items.push({
       id: "realtor-licences",
@@ -666,6 +691,7 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
       detail: `${missingLicences.length} of ${licenses.length} state(s) still need a copy.`,
       open: () => setLicDialog(true),
     });
+
 
   for (const d of drafts)
     if (!items.some((i) => i.id === d.id))
@@ -681,7 +707,42 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
   const openInfoRequests = (registration?.adminRequests ?? []).filter(
     (i) => i.kind === "info" && !i.answeredAt,
   ).length;
-  const outstanding = missingLicences.length + (needsIdentity ? 1 : 0) + openInfoRequests;
+  const outstanding =
+    missingLicences.length + expiringLicences.length + (needsIdentity ? 1 : 0) + openInfoRequests;
+
+  /** Renews exactly one state licence — the others are left untouched. */
+  function renewLicence(state: string, next: { number: string; validUntil: string; doc: string }) {
+    const current = licenses.find((l) => l.state === state);
+    if (!current) return;
+    persist(
+      licenses.map((l) =>
+        l.state === state
+          ? {
+              state,
+              number: next.number,
+              validUntil: next.validUntil,
+              doc: next.doc,
+              uploadedAt: new Date().toISOString(),
+            }
+          : l,
+      ),
+      `renewed the ${state} licence`,
+      [
+        {
+          state,
+          action: "updated" as const,
+          before: `${current.number} · valid till ${formatDate(current.validUntil)}`,
+          after: `${next.number} · valid till ${formatDate(next.validUntil)}`,
+        },
+        { state, action: "copy_uploaded" as const, after: next.doc },
+      ],
+    );
+    setRenewState(null);
+    toast(`${state} licence renewed`, {
+      description: "The renewed licence was sent to Loqal for verification.",
+    });
+  }
+
 
   function saveIdentity(type: string, doc: string) {
     if (!registration || !doc) return;
@@ -798,6 +859,15 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
             licenses={licenses}
             onSubmit={uploadCopies}
           />
+          <LicenceRenewalDialog
+            open={Boolean(renewState)}
+            onOpenChange={(o) => (o ? null : setRenewState(null))}
+            license={licenses.find((l) => l.state === renewState)}
+            onSubmit={(next) => {
+              if (renewState) renewLicence(renewState, next);
+            }}
+          />
+
         </>
       ) : null}
     </section>
