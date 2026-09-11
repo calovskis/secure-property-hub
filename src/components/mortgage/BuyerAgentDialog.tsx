@@ -60,20 +60,31 @@ export function BuyerAgentDialog({
   const [callMeetUrl, setCallMeetUrl] = useState<string | null>(null);
   const [showFeeInfo, setShowFeeInfo] = useState(false);
 
-  /* Reset every time the dialog opens; skip steps that are already done. */
+  /* Resume where the client left off — saved choices are never lost. */
   useEffect(() => {
     if (!open) return;
-    setRepresentation(null);
-    setKickoff(null);
-    setNotes("");
-    setCallSlot(null);
-    setTourSlots([]);
+    const draft = loadBuyerAgentDraft(lead.id);
+    setRepresentation(draft.representation ?? null);
+    setKickoff(draft.kickoff ?? null);
+    setNotes(draft.notes ?? "");
+    setCallSlot(draft.callSlot ?? null);
+    setCallMeetUrl(draft.callMeetUrl ?? null);
+    setTourSlots(draft.tourSlots ?? []);
     setShowFeeInfo(false);
     setStep(
-      lead.buyerAgent?.representation ? "done" : lead.buyerAgent ? "representation" : "agree",
+      lead.buyerAgent?.representation
+        ? "done"
+        : lead.buyerAgent
+          ? (draft.step ?? "representation")
+          : "agree",
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
+
+  /** Remember a choice immediately, so closing the pop-up keeps it. */
+  function keep(patch: Parameters<typeof saveBuyerAgentDraft>[1]) {
+    saveBuyerAgentDraft(lead.id, patch);
+  }
 
   function close() {
     onOpenChange(false);
