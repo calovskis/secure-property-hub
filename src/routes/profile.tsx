@@ -631,6 +631,7 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
   const { licenses, persist } = useRealtorLicences(user);
   const [idDialog, setIdDialog] = useState(false);
   const [licDialog, setLicDialog] = useState(false);
+  const [renewState, setRenewState] = useState<string | null>(null);
   const registration = requests.find(
     (r) => r.email.toLowerCase() === user.email.toLowerCase(),
   );
@@ -638,6 +639,9 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
   // Notifications deep-link straight into the pop-up they are about.
   useDeepLinkAction("identity", () => setIdDialog(true));
   useDeepLinkAction("licences", () => setLicDialog(true));
+  useDeepLinkAction("licence-renewal", (focus) => {
+    if (focus) setRenewState(focus);
+  });
   useDeepLinkAction("upload", (focus) => {
     if (focus) requestOpenUpload(focus);
   });
@@ -645,7 +649,13 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
 
   const realtor =
     isRealtor || user.partnerType === "realtor" || registration?.partnerType === "realtor";
-  const missingLicences = realtor ? licenses.filter((l) => !l.doc) : [];
+  const daysTo = (iso: string) =>
+    Math.ceil((new Date(iso).getTime() - Date.now()) / 86_400_000);
+  /** Only the state licences whose validity is running out — nothing else. */
+  const expiringLicences = realtor ? licenses.filter((l) => daysTo(l.validUntil) <= 30) : [];
+  const missingLicences = realtor
+    ? licenses.filter((l) => !l.doc && !expiringLicences.some((e) => e.state === l.state))
+    : [];
   const identityDone = Boolean(realtor && registration?.realtorVerification?.identityDoc);
   const needsIdentity = Boolean(realtor && registration && !identityDone);
 
@@ -659,6 +669,19 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
       open: () => setIdDialog(true),
     });
 
+  for (const l of expiringLicences) {
+    const left = daysTo(l.validUntil);
+    items.push({
+      id: `licence-renewal-${l.state}`,
+      title: `${l.state} licence renewal`,
+      detail:
+        left < 0
+          ? `Expired on ${formatDate(l.validUntil)} — enter the new number, the new validity date and attach the renewed licence.`
+          : `Expires in ${left} day(s) — enter the new number, the new validity date and attach the renewed licence.`,
+      open: () => setRenewState(l.state),
+    });
+  }
+
   if (missingLicences.length)
     items.push({
       id: "realtor-licences",
@@ -666,6 +689,7 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
       detail: `${missingLicences.length} of ${licenses.length} state(s) still need a copy.`,
       open: () => setLicDialog(true),
     });
+
 
   for (const d of drafts)
     if (!items.some((i) => i.id === d.id))
