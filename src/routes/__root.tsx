@@ -14,6 +14,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider } from "@/lib/auth";
 import { SupportChat } from "@/components/support/SupportChat";
 import { PresenceTracker } from "@/components/presence/PresenceTracker";
+import { RealtorDirectorySync } from "@/components/realtor/RealtorDirectorySync";
 
 import { I18nProvider } from "@/lib/i18n";
 import { LeadsProvider } from "@/lib/leads";
@@ -139,6 +140,7 @@ function RootComponent() {
               {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
               <Outlet />
               <PresenceTracker />
+              <RealtorDirectorySync />
               <SupportChat />
 
               <Toaster />

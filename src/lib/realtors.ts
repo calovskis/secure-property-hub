@@ -121,6 +121,20 @@ export function getRealtorSnapshot(): RealtorState {
   return load();
 }
 
+/**
+ * Replace every approved seat with the authoritative list of realtor partners
+ * a Loqal admin approved (read from the database). Local, not-yet-approved
+ * seats a partner created for themselves are kept.
+ */
+export function replaceApprovedRealtors(rows: Realtor[]) {
+  const cur = load();
+  const emails = new Set(rows.map((r) => r.email.toLowerCase()));
+  const pending = cur.realtors.filter(
+    (r) => !r.approvedAt && !emails.has(r.email.toLowerCase()),
+  );
+  commit({ realtors: [...rows, ...pending] });
+}
+
 function commit(next: RealtorState) {
   state = next;
   try {
