@@ -57,6 +57,8 @@ import { usePartnerRequests } from "@/lib/partner-requests";
 import { useRealtorLicences } from "@/components/profile/realtor-licences";
 import { UploadRequestDialog } from "@/components/profile/UploadRequestDialog";
 import { LicenceUploadDialog } from "@/components/profile/LicenceUploadDialog";
+import { LicenceRenewalDialog } from "@/components/profile/LicenceRenewalDialog";
+
 import { toast } from "sonner";
 import { useDeepLinkAction } from "@/lib/deep-link";
 
