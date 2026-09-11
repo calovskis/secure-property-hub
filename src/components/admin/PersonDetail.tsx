@@ -26,6 +26,10 @@ import {
 } from "@/lib/admin-users.functions";
 import type { AdminPerson } from "@/components/admin/people-model";
 import { PartnerCorrespondence } from "@/components/admin/PartnerCorrespondence";
+import {
+  ClientPartnersTab,
+  PartnerClientsTab,
+} from "@/components/admin/PartnerAssignments";
 import { PhoneField } from "@/components/form/PhoneField";
 import { isValidPhone } from "@/lib/phone";
 
