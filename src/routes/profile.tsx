@@ -297,7 +297,9 @@ function ProfileTopics({ profile }: { profile: MortgageProfile }) {
       <AddressTopic profile={profile} onSave={save} />
       <IncomeTopic profile={profile} onSave={save} />
       <AssetsTopic profile={profile} onSave={save} />
-      <LiabilitiesTopic profile={profile} onSave={save} />
+      {user?.usPerson || profile.hasItin ? (
+        <LiabilitiesTopic profile={profile} onSave={save} />
+      ) : null}
       <DeclarationsTopic profile={profile} onSave={save} />
       <DemographicsTopic profile={profile} onSave={save} />
       <DocumentsTopic profile={profile} onSave={save} />
