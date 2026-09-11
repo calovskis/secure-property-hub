@@ -705,7 +705,42 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
   const openInfoRequests = (registration?.adminRequests ?? []).filter(
     (i) => i.kind === "info" && !i.answeredAt,
   ).length;
-  const outstanding = missingLicences.length + (needsIdentity ? 1 : 0) + openInfoRequests;
+  const outstanding =
+    missingLicences.length + expiringLicences.length + (needsIdentity ? 1 : 0) + openInfoRequests;
+
+  /** Renews exactly one state licence — the others are left untouched. */
+  function renewLicence(state: string, next: { number: string; validUntil: string; doc: string }) {
+    const current = licenses.find((l) => l.state === state);
+    if (!current) return;
+    persist(
+      licenses.map((l) =>
+        l.state === state
+          ? {
+              state,
+              number: next.number,
+              validUntil: next.validUntil,
+              doc: next.doc,
+              uploadedAt: new Date().toISOString(),
+            }
+          : l,
+      ),
+      `renewed the ${state} licence`,
+      [
+        {
+          state,
+          action: "updated" as const,
+          before: `${current.number} · valid till ${formatDate(current.validUntil)}`,
+          after: `${next.number} · valid till ${formatDate(next.validUntil)}`,
+        },
+        { state, action: "copy_uploaded" as const, after: next.doc },
+      ],
+    );
+    setRenewState(null);
+    toast(`${state} licence renewed`, {
+      description: "The renewed licence was sent to Loqal for verification.",
+    });
+  }
+
 
   function saveIdentity(type: string, doc: string) {
     if (!registration || !doc) return;
