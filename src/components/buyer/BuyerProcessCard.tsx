@@ -227,7 +227,17 @@ export function BuyerProcessCard({ lead }: { lead: MortgageLead }) {
             </div>
           ) : null}
 
-
+          <div className="mt-4">
+            <FileChatPanel
+              leadId={lead.id}
+              side="client"
+              myName={clientDisplayForPartner(lead.clientName, lead.clientEmail)}
+              otherName={ba.agentName ?? "your buyer's agent"}
+              otherEmail={agentEmail}
+              propertyId={lead.propertyId}
+              propertyLabel={lead.propertyLabel}
+            />
+          </div>
 
           {photo?.status === "delivered" ? (
             <div className="mt-4 rounded-lg border border-border bg-background p-4">
