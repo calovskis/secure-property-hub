@@ -439,6 +439,29 @@ function useDerivedNotifications() {
 
     completeNotifications(completedIds);
     if (list.length) syncNotifications(list);
+    /* Anything under these prefixes that is no longer derived is stale (a
+       renewed licence, a withdrawn request, an older app version) and must
+       stop counting as an open task. */
+    pruneDerived(
+      email,
+      [
+        "assigned-",
+        "offer-",
+        "inforeq-",
+        "agentsetup-",
+        "photos-",
+        "call-",
+        "altslots-",
+        "visa",
+        "doc-",
+        "draft-",
+        "lic-",
+        "photoreq-",
+        "decision-",
+        "proposal-",
+      ],
+      [...list.map((n) => n.id), ...completedIds],
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.email, leadsReady, leads, proc, realtors, email]);
 
