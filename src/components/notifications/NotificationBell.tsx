@@ -11,10 +11,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { openDeepLink } from "@/lib/deep-link";
 import { useAuth, PARTNER_LABEL } from "@/lib/auth";
-import { offerReminders, pendingOfferDecision, useLeads } from "@/lib/leads";
+import { offerReminders, pendingOfferDecision, leadState, useLeads } from "@/lib/leads";
 import { useBuyerProcess } from "@/lib/buyer-process";
 import { usePartnerRequests } from "@/lib/partner-requests";
 import { useRealtors } from "@/lib/realtors";
+import { useLenderTeam } from "@/lib/lender-team";
 import { useMortgageDrafts } from "@/lib/mortgage-draft";
 import {
   clearRequestOpenedAt,
@@ -50,6 +51,7 @@ function useDerivedNotifications() {
   const { requests } = usePartnerRequests();
   const { realtors } = useRealtors();
   const { drafts, clearDraft } = useMortgageDrafts();
+  const { scopedStates } = useLenderTeam();
 
   const email = user?.email.toLowerCase() ?? "";
   const isAdmin = user?.role === "admin";
