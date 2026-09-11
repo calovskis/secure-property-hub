@@ -8,6 +8,7 @@ import {
   BANK_ACCOUNT_KIND_LABEL,
   MARITAL_LABEL,
   US_STATUS_LABEL,
+  VISA_STATUS_OPTIONS,
   UNMARRIED_RELATIONSHIP_LABEL,
   INCOME_TYPE_LABEL,
   totalAssets,
@@ -37,6 +38,13 @@ import { DateInput } from "@/components/form/DateInput";
 import { CountryCombobox } from "@/components/form/CountryCombobox";
 import { DocumentUploadBox } from "@/components/mortgage/DocumentUploadBox";
 import { documentExpiryState } from "@/lib/mortgage-form";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type Save = (patch: Partial<MortgageProfile>) => void;
 
@@ -1242,6 +1250,218 @@ export function DocumentsTopic({ profile, onSave }: { profile: MortgageProfile; 
           />
         ) : null}
       </div>
+    </TopicCard>
+  );
+}
+
+/* ---------------------------------------------------------------- Visa (no visa yet) */
+
+export function VisaSupportTopic({
+  profile,
+  onSave,
+}: {
+  profile: MortgageProfile;
+  onSave: Save;
+}) {
+  const [editOpen, setEditOpen] = useState(false);
+  const [loqalOpen, setLoqalOpen] = useState(false);
+
+  const initial = {
+    visaType: (profile.visaType ?? "") as UsStatus | "",
+    otherVisaType: profile.otherVisaType ?? "",
+    visaIssued: profile.visaIssued ?? "",
+    visaValidUntil: profile.visaValidUntil ?? "",
+  };
+
+  const choice = profile.visaSupport;
+
+  return (
+    <TopicCard
+      title="US visa"
+      summary={
+        choice === "loqal"
+          ? "Loqal visa support requested"
+          : choice === "self"
+            ? "Handled by the applicant"
+            : "No visa on file — action needed"
+      }
+      onEdit={() => setEditOpen(true)}
+    >
+      <div className="mb-4 rounded-md border border-gold/40 bg-gold-tint/60 p-3 text-sm text-foreground">
+        Under US law, to close a property purchase the buyer must hold a visa valid for at least
+        3 months from the date the purchase agreement is signed.
+      </div>
+
+      <TopicField
+        label="Visa / status type"
+        value={profile.visaType ? US_STATUS_LABEL[profile.visaType] : undefined}
+      />
+      {profile.otherVisaType ? (
+        <TopicField label="Visa detail" value={profile.otherVisaType} />
+      ) : null}
+      <TopicField label="Visa issued" value={isoToUsDate(profile.visaIssued ?? "")} />
+      <TopicField label="Visa valid until" value={isoToUsDate(profile.visaValidUntil ?? "")} />
+
+      <div className="mt-4">
+        <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Visa copy
+        </div>
+        <DocList docs={profile.visaDocuments} />
+        <div className="mt-3">
+          <DocumentUploadBox
+            title="Upload your visa copy"
+            description="Attach a copy or scan of your US visa once you have it."
+            confirmLabel="Confirm and attach document"
+            onConfirm={(docs) => {
+              onSave({
+                visaDocuments: [
+                  ...(profile.visaDocuments ?? []),
+                  ...docs.map((d) => ({
+                    id: d.id,
+                    name: d.name,
+                    uploadedAt: new Date().toISOString(),
+                    url: d.url,
+                  })),
+                ],
+              });
+              toast.success("Visa copy attached");
+            }}
+          />
+        </div>
+      </div>
+
+      <div className="mt-5 flex flex-col gap-2 sm:flex-row">
+        <button
+          type="button"
+          onClick={() => {
+            onSave({ visaSupport: "loqal", visaSupportRequestedAt: new Date().toISOString() });
+            setLoqalOpen(true);
+          }}
+          className={`rounded-md px-4 py-2 text-sm font-semibold ${
+            choice === "loqal"
+              ? "bg-brand text-brand-foreground"
+              : "border border-brand text-brand hover:bg-brand-tint"
+          }`}
+        >
+          Loqal visa support
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            onSave({ visaSupport: "self" });
+            toast.success("Noted — you will handle the visa yourself");
+          }}
+          className={`rounded-md px-4 py-2 text-sm font-semibold ${
+            choice === "self"
+              ? "bg-foreground text-background"
+              : "border border-border text-foreground hover:bg-muted"
+          }`}
+        >
+          I will handle on my own
+        </button>
+      </div>
+      {choice === "loqal" && profile.visaSupportRequestedAt ? (
+        <p className="mt-2 text-xs text-muted-foreground">
+          Requested on {formatDate(profile.visaSupportRequestedAt)}.
+        </p>
+      ) : null}
+
+      <Dialog open={loqalOpen} onOpenChange={setLoqalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Loqal visa support requested</DialogTitle>
+            <DialogDescription>
+              A Loqal visa agent will be assigned to your file and will reach out to you within
+              3 days to walk you through the options and required paperwork.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={() => setLoqalOpen(false)}
+              className="rounded-md bg-brand px-4 py-2 text-sm font-semibold text-brand-foreground"
+            >
+              Got it
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <TopicEditDialog<typeof initial>
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        title="visa information"
+        initial={initial}
+        labels={{
+          visaType: "Visa / status type",
+          otherVisaType: "Visa detail",
+          visaIssued: "Visa issued",
+          visaValidUntil: "Visa valid until",
+        }}
+        onSave={(draft) => {
+          onSave({
+            visaType: (draft.visaType || undefined) as UsStatus | undefined,
+            otherVisaType: draft.otherVisaType || undefined,
+            visaIssued: draft.visaIssued || undefined,
+            visaValidUntil: draft.visaValidUntil || undefined,
+          } as Partial<MortgageProfile>);
+          toast.success("Visa information updated");
+        }}
+      >
+        {(draft, setDraft) => (
+          <>
+            <label className="block">
+              <span className="mb-1.5 block text-xs font-semibold uppercase text-muted-foreground">
+                Visa / status type
+              </span>
+              <select
+                className={inputClass}
+                value={draft.visaType}
+                onChange={(e) => setDraft({ visaType: e.target.value as UsStatus | "" })}
+              >
+                <option value="">Select…</option>
+                {VISA_STATUS_OPTIONS.map((k) => (
+                  <option key={k} value={k}>
+                    {US_STATUS_LABEL[k]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {draft.visaType === "other" ? (
+              <label className="block">
+                <span className="mb-1.5 block text-xs font-semibold uppercase text-muted-foreground">
+                  Visa detail
+                </span>
+                <input
+                  className={inputClass}
+                  value={draft.otherVisaType}
+                  onChange={(e) => setDraft({ otherVisaType: e.target.value })}
+                />
+              </label>
+            ) : null}
+            <label className="block">
+              <span className="mb-1.5 block text-xs font-semibold uppercase text-muted-foreground">
+                Visa issued
+              </span>
+              <DateInput
+                className={inputClass}
+                value={draft.visaIssued}
+                onChange={(v) => setDraft({ visaIssued: v })}
+              />
+            </label>
+            <label className="block">
+              <span className="mb-1.5 block text-xs font-semibold uppercase text-muted-foreground">
+                Visa valid until
+              </span>
+              <DateInput
+                className={inputClass}
+                value={draft.visaValidUntil}
+                onChange={(v) => setDraft({ visaValidUntil: v })}
+              />
+            </label>
+          </>
+        )}
+      </TopicEditDialog>
     </TopicCard>
   );
 }

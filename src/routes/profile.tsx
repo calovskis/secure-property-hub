@@ -14,6 +14,7 @@ import {
   IncomeTopic,
   LiabilitiesTopic,
   PersonalTopic,
+  VisaSupportTopic,
 } from "@/components/profile/ProfileTopicsContent";
 import { PartnerProfile } from "@/components/profile/PartnerProfile";
 import { AgreementCard } from "@/components/profile/AgreementCard";
@@ -290,6 +291,9 @@ function ProfileTopics({ profile }: { profile: MortgageProfile }) {
     <div className="space-y-4">
       <PersonalTopic profile={profile} onSave={save} />
       <CitizenshipTopic profile={profile} usPerson={user?.usPerson ?? false} onSave={save} />
+      {!user?.usPerson && !profile.usVisaActive ? (
+        <VisaSupportTopic profile={profile} onSave={save} />
+      ) : null}
       <AddressTopic profile={profile} onSave={save} />
       <IncomeTopic profile={profile} onSave={save} />
       <AssetsTopic profile={profile} onSave={save} />

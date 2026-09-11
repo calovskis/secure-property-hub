@@ -90,6 +90,9 @@ export type MortgageProfile = {
   visaDocumentName?: string;
   visaDocumentUploadedAt?: string;
   visaDocuments?: StoredDocument[];
+  /** Applicants without a US visa: who handles obtaining one. */
+  visaSupport?: "loqal" | "self";
+  visaSupportRequestedAt?: string;
   /** US citizens / green card / ITIN holders: driver's license (front & back), green card or passport. */
   idDocuments?: StoredDocument[];
   /** Bankruptcy discharge papers — required when a bankruptcy was declared. */
