@@ -14,7 +14,7 @@ import { formatDate, formatDateTime } from "@/lib/dates";
 import { useAuth } from "@/lib/auth";
 import { useLeads, type MortgageLead } from "@/lib/leads";
 import { usePartnerRequests, type PartnerRequest } from "@/lib/partner-requests";
-import { useBuyerProcess } from "@/lib/buyer-process";
+import { CLIENT_ACTION_LABEL, useBuyerProcess } from "@/lib/buyer-process";
 import { logActivity } from "@/lib/activity";
 import { notify } from "@/lib/notifications";
 import {
@@ -104,7 +104,7 @@ function activityFor(
     for (const b of proc.bookings.filter((x) => x.leadId === lead.id))
       out.push({ at: b.createdAt, text: `${b.kind.replace(/_/g, " ")} — ${b.status}` });
     for (const a of proc.actions[lead.id] ?? [])
-      out.push({ at: a.createdAt, text: `Buyer decision: ${a.kind.replace(/_/g, " ")}` });
+      out.push({ at: a.createdAt, text: CLIENT_ACTION_LABEL[a.action] });
   }
   return out.sort((a, b) => b.at.localeCompare(a.at));
 }
