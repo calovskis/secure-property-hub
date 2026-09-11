@@ -203,11 +203,28 @@ export function BuyerProcessCard({ lead }: { lead: MortgageLead }) {
               />
             </div>
           ) : tourBooking ? (
-            <p className="mt-4 rounded-lg border border-border bg-background p-3 text-sm text-muted-foreground">
+            <div className="mt-4 rounded-lg border border-border bg-background p-3 text-sm text-muted-foreground">
               🎥 {tourBooking.kind === "video_tour" ? "Live video tour" : "Property visit"} confirmed
               for <strong className="text-foreground">{formatDateTime(tourBooking.startAt)}</strong>{" "}
               (1 hour).
-            </p>
+              {tourBooking.meetUrl ? (
+                <div className="mt-2">
+                  <a
+                    href={tourBooking.meetUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex rounded-md bg-brand px-3 py-1.5 text-xs font-semibold text-background hover:bg-brand-soft"
+                  >
+                    Join Google Meet
+                  </a>
+                  <div className="mt-1 break-all text-[11px]">{tourBooking.meetUrl}</div>
+                </div>
+              ) : tourBooking.kind === "video_tour" ? (
+                <div className="mt-2 text-[11px]">
+                  The Google Meet link will appear here as soon as your agent's calendar issues it.
+                </div>
+              ) : null}
+            </div>
           ) : null}
 
 
