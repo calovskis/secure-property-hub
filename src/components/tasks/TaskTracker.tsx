@@ -10,7 +10,7 @@
  * viewings, partners see licences, buyer files and Loqal requests, admins see
  * registrations, agreements and correspondence.
  */
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { useNotifications, type AppNotification } from "@/lib/notifications";
@@ -20,6 +20,7 @@ type GroupId =
   | "documents"
   | "preapproval"
   | "viewings"
+  | "buyerAgent"
   | "licences"
   | "buyerFiles"
   | "loqalRequests"
@@ -38,6 +39,7 @@ type GroupDef = {
 const GROUPS: Record<GroupId, GroupDef> = {
   documents: { id: "documents", label: "Documents & data", icon: "📄", tone: "bg-brand-tint text-brand" },
   preapproval: { id: "preapproval", label: "Mortgage pre-approval", icon: "🏦", tone: "bg-brand-tint text-brand" },
+  buyerAgent: { id: "buyerAgent", label: "Your buyer's agent", icon: "🤝", tone: "bg-gold-tint text-gold" },
   viewings: { id: "viewings", label: "Viewings & calls", icon: "🗓", tone: "bg-gold-tint text-gold" },
   licences: { id: "licences", label: "Licences & verification", icon: "🪪", tone: "bg-gold-tint text-gold" },
   buyerFiles: { id: "buyerFiles", label: "Buyer files", icon: "🗂", tone: "bg-brand-tint text-brand" },
@@ -53,7 +55,8 @@ function groupOf(id: string): GroupId {
   const starts = (...p: string[]) => p.some((x) => id.startsWith(x));
   if (starts("doc-", "visa")) return "documents";
   if (starts("draft-", "offer-", "inforeq-", "assigned-")) return "preapproval";
-  if (starts("call-", "photos-", "proposal-", "booking-")) return "viewings";
+  if (starts("agentsetup-")) return "buyerAgent";
+  if (starts("proposal-", "booking-")) return "viewings";
   if (starts("lic-", "kyc-", "sign-")) return "licences";
   if (starts("photoreq-", "decision-")) return "buyerFiles";
   if (starts("areq-", "adminreq-", "req-")) return "loqalRequests";
@@ -71,6 +74,32 @@ function adminGroupOf(id: string): GroupId {
   return "other";
 }
 
+/**
+ * Only items the user still has to act on belong in the tracker. Purely
+ * informational alerts (something was assigned, photos arrived, a call is
+ * confirmed, a document was received) and repeat reminders of a task already
+ * listed are filtered out, so the count matches real open work.
+ */
+function isActionable(n: AppNotification): boolean {
+  if (n.completed) return false;
+  const id = n.id;
+  if (id.includes("-rem-")) return false; // reminder of a task already counted
+  if (id.endsWith("-done")) return false;
+  const informational = [
+    "assigned-",
+    "photos-",
+    "call-",
+    "active-",
+    "areq-booked-",
+    "areq-answered-",
+    "decision-",
+  ];
+  if (informational.some((p) => id.startsWith(p))) return false;
+  return true;
+}
+
+const MAX_VISIBLE = 4;
+
 type Row = { def: GroupDef; count: number; href?: string | undefined; urgent: boolean };
 
 export function TaskTracker({ className = "" }: { className?: string }) {
@@ -81,7 +110,7 @@ export function TaskTracker({ className = "" }: { className?: string }) {
   const { notifications: adminItems } = useNotifications(isAdmin ? "admins" : undefined);
 
   const rows = useMemo<Row[]>(() => {
-    const open = (list: AppNotification[]) => list.filter((n) => !n.completed);
+    const open = (list: AppNotification[]) => list.filter(isActionable);
     const buckets = new Map<GroupId, Row>();
 
     const add = (n: AppNotification, gid: GroupId) => {
