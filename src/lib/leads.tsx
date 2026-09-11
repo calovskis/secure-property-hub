@@ -154,6 +154,11 @@ export type MortgageLead = {
   clientQuestions?: ClientQuestion[];
   /** Buyer's agent engagement after the client accepts the terms. */
   buyerAgent?: BuyerAgentEngagement;
+  /** Mortgage lender partner company serving this file (partner registration id). */
+  lenderPartnerId?: string;
+  lenderPartnerName?: string;
+  /** Permanent record of every manual partner change made by a Loqal admin. */
+  partnerChanges?: PartnerChangeRecord[];
   /** Team member inside the lender company reviewing this inquiry. */
   assignedToId?: string | undefined;
   assignedToName?: string | undefined;
