@@ -583,14 +583,41 @@ function BuyerFile({ lead, me }: { lead: MortgageLead; me: Realtor }) {
 function CalendarSection({ me, myLeads }: { me: Realtor; myLeads: MortgageLead[] }) {
   const { bookings } = useBuyerProcess();
   const leadIds = useMemo(() => new Set(myLeads.map((l) => l.id)), [myLeads]);
-  const upcoming = bookings
-    .filter((b) => b.realtorId === me.id || leadIds.has(b.leadId))
+  const mine = bookings.filter((b) => b.realtorId === me.id || leadIds.has(b.leadId));
+  const pending = mine
+    .filter((b) => b.status === "proposed")
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const upcoming = mine
+    .filter((b) => b.status !== "proposed")
     .filter((b) => new Date(b.endAt).getTime() > Date.now() - 24 * 60 * 60 * 1000)
     .sort((a, b) => a.startAt.localeCompare(b.startAt));
 
   return (
     <div className="space-y-6">
       <GoogleCalendarCard agentRef={me.id} agentEmail={me.email} />
+
+      {pending.length ? (
+        <section className="rounded-lg border border-gold/40 bg-card p-6">
+          <h2 className="text-base font-semibold text-foreground">Times to agree with your buyers</h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Your buyers ranked their preferred times. Confirm one, or propose your own options with a
+            note.
+          </p>
+          <div className="mt-4 space-y-4">
+            {pending.map((b) => (
+              <div key={b.id} id={b.id}>
+                <div className="text-sm font-semibold text-foreground">
+                  {b.clientName} · {b.propertyLabel}
+                </div>
+                <div className="mt-2">
+                  <TourProposalPanel booking={b} side="agent" realtorId={me.id} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
 
       <section className="rounded-lg border border-border bg-card p-6">
         <h2 className="text-base font-semibold text-foreground">My calendar</h2>
