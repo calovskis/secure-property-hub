@@ -382,6 +382,11 @@ function ProceedPanel({ lead }: { lead: MortgageLead }) {
         ))}
       </div>
 
+      <div className="mt-3">
+        <PaymentScheduleButton lead={lead} />
+      </div>
+
+
       <div className="mt-3 space-y-1.5 rounded-md border border-border bg-background/70 p-3 text-[11px] leading-relaxed text-muted-foreground">
         <p>
           These are <strong className="text-foreground">preliminary estimated terms</strong> — they
