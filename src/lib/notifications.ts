@@ -110,6 +110,27 @@ export function completeNotifications(ids: string[]) {
   if (changed) commit({ items });
 }
 
+/**
+ * Derived notifications describe live platform state, so a notification that
+ * is no longer derived (the licence was renewed, the request disappeared, an
+ * older app version created it) must not linger as an open task. Each sync
+ * pass declares the id prefixes it owns and the ids it still derives; every
+ * other, not-yet-completed item under those prefixes is dropped. Completed
+ * items are kept — they are the recipient's history.
+ */
+export function pruneDerived(recipient: string, prefixes: string[], liveIds: string[]) {
+  const key = recipient.toLowerCase();
+  if (!key) return;
+  const live = new Set(liveIds);
+  const cur = load();
+  const items = cur.items.filter((item) => {
+    if (item.to !== key || item.completed) return true;
+    if (!prefixes.some((p) => item.id.startsWith(p))) return true;
+    return live.has(item.id);
+  });
+  if (items.length !== cur.items.length) commit({ items });
+}
+
 const SERVER_SNAPSHOT: NotificationState = { items: [] };
 
 export function useNotifications(recipient: string | undefined) {
