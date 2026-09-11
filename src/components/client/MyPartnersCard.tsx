@@ -23,6 +23,7 @@ import {
 } from "@/lib/partner-assignments";
 import { useDeepLinkAction } from "@/lib/deep-link";
 import { formatDateTime } from "@/lib/dates";
+import { firstNameOnly, partnerDisplayForClient } from "@/lib/user-id";
 
 const ROLE_ICON: Record<PartnerRole, string> = { lender: "🏦", realtor: "🤝" };
 
@@ -92,10 +93,10 @@ export function MyPartnersCard() {
             You have a new {PARTNER_ROLE_LABEL[change.role].toLowerCase()}
           </h3>
           <p className="mt-1 text-xs text-foreground">
-            From now on <strong>{change.toName}</strong>
+            From now on <strong>{partnerDisplayForClient(change.toName, change.toEmail)}</strong>
             {change.toCompany ? ` (${change.toCompany})` : ""} looks after{" "}
             {change.propertyLabel}
-            {change.fromName ? `, taking over from ${change.fromName}` : ""}. They have already
+            {change.fromName ? `, taking over from ${firstNameOnly(change.fromName)}` : ""}. They have already
             accepted your file and received the full history, so there is nothing for you to repeat
             or send again — everything continues exactly where it stopped.
           </p>
@@ -124,7 +125,11 @@ export function MyPartnersCard() {
 
       <div className="mt-4 grid gap-3 md:grid-cols-2">
         {seats.map(({ key, role, lead, partner }) => {
-          const person = `${partner!.firstName} ${partner!.lastName}`.trim();
+          // Clients see first name + internal number only — never the family name.
+          const person = partnerDisplayForClient(
+            `${partner!.firstName} ${partner!.lastName}`.trim(),
+            partner!.email,
+          );
           const phone = partner!.phone || partner!.companyPhone || "";
           const mail = partner!.email;
           return (

@@ -43,3 +43,18 @@ export function clientDisplayForPartner(
   if (opts.withNumber === false) return first;
   return `${first} · ${loqalNumber(email)}`;
 }
+
+/**
+ * What a client is allowed to see for a partner: first name plus the internal
+ * number — "Anna · LQ-731204". Family names of partners stay hidden from
+ * clients, exactly as client family names stay hidden from partners.
+ */
+export function partnerDisplayForClient(
+  fullName?: string | null,
+  email?: string | null,
+  opts: { withNumber?: boolean } = {},
+): string {
+  const first = firstNameOnly(fullName) || "Your partner";
+  if (opts.withNumber === false) return first;
+  return `${first} · ${loqalNumber(email)}`;
+}
