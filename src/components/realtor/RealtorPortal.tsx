@@ -19,6 +19,7 @@ import { formatDate, formatDateTime } from "@/lib/dates";
 import { DateInput } from "@/components/form/DateInput";
 import { CallScheduler } from "@/components/buyer/CallScheduler";
 import { TourProposalPanel } from "@/components/buyer/TourProposalPanel";
+import { FileChatPanel } from "@/components/messaging/FileChatPanel";
 
 import { GoogleCalendarCard } from "@/components/google/GoogleCalendarCard";
 import { RealtorAnalytics } from "@/components/realtor/RealtorAnalytics";
@@ -599,6 +600,16 @@ function BuyerFile({ lead, me }: { lead: MortgageLead; me: Realtor }) {
               <PhotoPanel lead={lead} />
             </>
           )}
+
+          <FileChatPanel
+            leadId={lead.id}
+            side="agent"
+            myName={`${me.firstName} ${me.lastName}`.trim()}
+            otherName={clientDisplayForPartner(lead.clientName, lead.clientEmail)}
+            otherEmail={lead.clientEmail}
+            propertyId={lead.propertyId}
+            propertyLabel={lead.propertyLabel}
+          />
 
           <ClientDecisions lead={lead} />
         </div>

@@ -13,6 +13,9 @@ import { formatDate, formatDateTime } from "@/lib/dates";
 import { CallScheduler } from "@/components/buyer/CallScheduler";
 import { TourProposalPanel } from "@/components/buyer/TourProposalPanel";
 import { BuyerAgentDialog } from "@/components/mortgage/BuyerAgentDialog";
+import { FileChatPanel } from "@/components/messaging/FileChatPanel";
+import { clientDisplayForPartner } from "@/lib/user-id";
+import { usePartnerRequests } from "@/lib/partner-requests";
 
 const money = (n: number) => `$${Math.round(n).toLocaleString()}`;
 const inputClass =
@@ -62,6 +65,7 @@ const ACTION_TILES: { id: ClientNextAction; title: string; blurb: string }[] = [
  */
 export function BuyerProcessCard({ lead }: { lead: MortgageLead }) {
   const { photos, bookings, actions, addClientAction, bookCall } = useBuyerProcess();
+  const { requests: partnerRegistrations } = usePartnerRequests();
   const [setupOpen, setSetupOpen] = useState(false);
   const [active, setActive] = useState<ClientNextAction | null>(null);
   const [details, setDetails] = useState("");
@@ -96,6 +100,9 @@ export function BuyerProcessCard({ lead }: { lead: MortgageLead }) {
   }
 
   const photo = photos[lead.id];
+  const agentEmail = ba.agentId
+    ? partnerRegistrations.find((r) => r.id === ba.agentId)?.email
+    : undefined;
   const history = actions[lead.id] ?? [];
   const callBooking = bookings.find((b) => b.leadId === lead.id && b.kind === "intro_call");
   const tourBooking = bookings.find(
@@ -227,7 +234,17 @@ export function BuyerProcessCard({ lead }: { lead: MortgageLead }) {
             </div>
           ) : null}
 
-
+          <div className="mt-4">
+            <FileChatPanel
+              leadId={lead.id}
+              side="client"
+              myName={clientDisplayForPartner(lead.clientName, lead.clientEmail)}
+              otherName={ba.agentName ?? "your buyer's agent"}
+              otherEmail={agentEmail}
+              propertyId={lead.propertyId}
+              propertyLabel={lead.propertyLabel}
+            />
+          </div>
 
           {photo?.status === "delivered" ? (
             <div className="mt-4 rounded-lg border border-border bg-background p-4">
