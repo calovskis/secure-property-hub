@@ -29,6 +29,7 @@ import { LenderMortgages } from "@/components/lender/LenderMortgages";
 import { LenderTeam } from "@/components/lender/LenderTeam";
 import { LenderEmployees } from "@/components/lender/LenderEmployees";
 import { InfoRequestDialog } from "@/components/lender/InfoRequestDialog";
+import { PaymentScheduleButton } from "@/components/mortgage/PaymentScheduleDialog";
 
 const money = (n: number) => `$${Math.round(n).toLocaleString()}`;
 const date = (iso?: string) => formatDateTime(iso);
