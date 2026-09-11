@@ -51,8 +51,13 @@ export type CallBooking = {
    */
   status: "proposed" | "confirmed";
   proposedSlots?: string[];
+  /** Who proposed the times currently on the table. */
+  proposedBy?: "buyer" | "agent";
   /** Buyer's note attached to the proposal. */
   note?: string;
+  /** Agent's note attached to an alternative proposal. */
+  agentNote?: string;
+
   /** Google Calendar event created in the agent's calendar. */
   googleEventId?: string;
   /** Google Meet link for the appointment. */
@@ -416,6 +421,8 @@ export function useBuyerProcess() {
         createdAt: new Date().toISOString(),
         status: "proposed",
         proposedSlots: sorted,
+        proposedBy: "buyer",
+
         ...(input.realtorId ? { realtorId: input.realtorId } : {}),
         ...(input.note ? { note: input.note } : {}),
         recordingConsentedAt: new Date().toISOString(),
@@ -445,6 +452,37 @@ export function useBuyerProcess() {
       ),
     });
   }, []);
+
+  /**
+   * The other side cannot make any of the proposed times work and offers
+   * alternatives instead (ranked, first = preferred) with an optional note.
+   */
+  const counterPropose = useCallback(
+    (bookingId: string, slots: string[], by: "buyer" | "agent", note?: string) => {
+      if (!slots.length) return;
+      const cur = load();
+      const end = new Date(new Date(slots[0]!).getTime() + 60 * 60 * 1000);
+      commit({
+        ...cur,
+        bookings: cur.bookings.map((b) =>
+          b.id === bookingId
+            ? {
+                ...b,
+                status: "proposed" as const,
+                proposedSlots: slots,
+                proposedBy: by,
+                startAt: slots[0]!,
+                endAt: end.toISOString(),
+                ...(by === "agent" ? { agentNote: note ?? "" } : { note: note ?? "" }),
+              }
+            : b,
+        ),
+      });
+    },
+    [],
+  );
+
+
 
   /** Call ended — the recording and the AI transcript are saved to the file. */
   const endCall = useCallback((bookingId: string, durationMin: number, transcript: string) => {
@@ -498,6 +536,7 @@ export function useBuyerProcess() {
     bookCall,
     proposeSlots,
     confirmProposal,
+    counterPropose,
     endCall,
     addClientAction,
   };
