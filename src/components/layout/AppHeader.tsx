@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
+import { CircleHelp, Settings as SettingsIcon } from "lucide-react";
 import { PARTNER_LABEL, ROLE_LABEL, fullName, homeRouteFor, initials, useAuth } from "@/lib/auth";
 import { LANGUAGES, useI18n } from "@/lib/i18n";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
@@ -302,9 +303,9 @@ export function AppHeader({
               type="button"
               aria-label={t("Help")}
               onClick={() => setHelpOpen(!helpOpen)}
-              className="flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-brand-tint"
+              className="flex size-9 items-center justify-center rounded-full border border-border bg-background text-foreground transition-colors hover:bg-brand-tint hover:text-brand"
             >
-              ❓
+              <CircleHelp size={17} strokeWidth={1.8} />
             </button>
             {helpOpen ? (
               <div className="absolute right-0 top-[calc(100%+8px)] w-52 rounded-lg border border-border bg-popover p-1.5 shadow-lg">
@@ -324,9 +325,9 @@ export function AppHeader({
           <Link
             to="/settings"
             aria-label={t("Settings")}
-            className="hidden size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-brand-tint sm:flex"
+            className="flex size-9 items-center justify-center rounded-full border border-border bg-background text-foreground transition-colors hover:bg-brand-tint hover:text-brand sm:flex"
           >
-            ⚙️
+            <SettingsIcon size={17} strokeWidth={1.8} />
           </Link>
 
 
