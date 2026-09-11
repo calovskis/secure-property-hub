@@ -377,10 +377,10 @@ export function FeedbackDialog({
           ) : null}
         </div>
 
-        {priced ? (
+        {priced && !lead.clientDecision ? (
           <div className="sticky bottom-0 space-y-3 border-t border-border bg-card/95 px-6 py-4 backdrop-blur">
             <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-              {lead.clientDecision ? "Change your answer" : "Your answer to these terms"}
+              Your answer to these terms
             </div>
             <div className="grid gap-2 sm:grid-cols-2">
               <button
