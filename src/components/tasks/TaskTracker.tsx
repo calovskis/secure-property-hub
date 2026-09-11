@@ -15,6 +15,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { useNotifications, type AppNotification } from "@/lib/notifications";
 import { openDeepLink } from "@/lib/deep-link";
+import { useLeads } from "@/lib/leads";
 
 type GroupId =
   | "documents"
@@ -108,9 +109,42 @@ export function TaskTracker({ className = "" }: { className?: string }) {
   const isAdmin = user?.role === "admin";
   const { notifications } = useNotifications(user?.email);
   const { notifications: adminItems } = useNotifications(isAdmin ? "admins" : undefined);
+  const { leads } = useLeads();
 
   const rows = useMemo<Row[]>(() => {
-    const open = (list: AppNotification[]) => list.filter(isActionable);
+    const email = user?.email.toLowerCase() ?? "";
+    const myLeads = leads.filter(
+      (lead) => lead.clientEmail.toLowerCase() === email && lead.status !== "annulled",
+    );
+    const hasSubmittedMortgage = Boolean(user?.mortgageProfile?.submittedAt) || myLeads.length > 0;
+
+    const isStillOpen = (notification: AppNotification) => {
+      if (!isActionable(notification)) return false;
+
+      // Browser notifications can outlive the state that created them. The
+      // saved mortgage profile / submitted lead is authoritative, so an old
+      // questionnaire draft can never reappear as an open dashboard task.
+      if (notification.id.startsWith("draft-") && hasSubmittedMortgage) return false;
+
+      const leadForNotification = myLeads.find((lead) =>
+        notification.id.includes(lead.id),
+      );
+      if (!leadForNotification) return true;
+      if (notification.id.startsWith("offer-") && leadForNotification.clientDecision) return false;
+      if (
+        notification.id.startsWith("agentsetup-") &&
+        leadForNotification.buyerAgent?.representation
+      ) return false;
+      if (notification.id.startsWith("inforeq-")) {
+        const request = leadForNotification.infoRequests.find((item) =>
+          notification.id.includes(item.id),
+        );
+        if (request?.answeredAt) return false;
+      }
+      return true;
+    };
+
+    const open = (list: AppNotification[]) => list.filter(isStillOpen);
     const buckets = new Map<GroupId, Row>();
 
     const add = (n: AppNotification, gid: GroupId) => {
@@ -134,7 +168,7 @@ export function TaskTracker({ className = "" }: { className?: string }) {
     for (const n of open(adminItems)) add(n, adminGroupOf(n.id));
 
     return [...buckets.values()].sort((a, b) => b.count - a.count);
-  }, [notifications, adminItems]);
+  }, [notifications, adminItems, leads, user?.email, user?.mortgageProfile?.submittedAt]);
 
   const [showAll, setShowAll] = useState(false);
 
