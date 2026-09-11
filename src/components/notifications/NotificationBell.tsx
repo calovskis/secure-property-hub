@@ -270,22 +270,9 @@ function useDerivedNotifications() {
       for (const kind of ["idDocuments", "visaDocuments", "bankruptcyDocuments"] as const) {
         if (outstanding.some((r) => r.kind === kind)) continue;
         const key = `doc-${kind}-${email}`;
+        /* The client uploaded it themselves — no "received" notification. */
         completedIds.push(key);
         clearRequestOpenedAt(key);
-        const docs = p[kind];
-        if (docs?.length) {
-          const def = documentRequestDefinition(kind);
-          list.push({
-            id: `${key}-done`,
-            to: email,
-            title: `${def.title} received`,
-            body: "Thank you — the document is on file and nothing else is needed.",
-            href: "/profile",
-            severity: "info",
-            completed: true,
-            createdAt: docs[docs.length - 1]?.uploadedAt,
-          });
-        }
       }
     }
 
