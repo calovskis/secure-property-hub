@@ -61,7 +61,8 @@ const INTERNAL_ROLES: { value: Role; label: string }[] = [
 function AuthPage() {
   const { signIn } = useAuth();
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"login" | "register">("login");
+  const { mode: initialMode } = Route.useSearch();
+  const [mode, setMode] = useState<"login" | "register">(initialMode);
 
   const [firstName, setFirstName] = useState("");
   const [middleName, setMiddleName] = useState("");

@@ -240,6 +240,7 @@ function Landing() {
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
               to="/auth"
+              search={{ mode: "register" }}
               className="rounded-md bg-brand px-6 py-3 text-sm font-semibold text-background transition-colors hover:bg-brand-soft"
             >
               {t("Become a Loqal")}
@@ -415,6 +416,7 @@ function Landing() {
               </Link>
               <Link
                 to="/auth"
+                search={{ mode: "register" }}
                 className="flex items-center gap-3 rounded-lg border border-gold/40 bg-gold-tint px-4 py-3 text-sm font-semibold text-gold transition-colors hover:bg-gold-tint/70"
               >
                 <span aria-hidden>✨</span> {t("Become a Loqal")}
