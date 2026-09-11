@@ -67,9 +67,9 @@ export function ClientHandoverCard() {
     notify({
       id: `handover-client-${h.id}`,
       to: h.clientEmail.toLowerCase(),
-      title: `Your ${PARTNER_ROLE_LABEL[h.role].toLowerCase()} has changed`,
-      body: `${h.toName}${h.toCompany ? ` (${h.toCompany})` : ""} now looks after ${h.propertyLabel}. They already have the full history of your file.`,
-      href: "/profile",
+      title: `You have a new ${PARTNER_ROLE_LABEL[h.role].toLowerCase()}`,
+      body: `${h.toName}${h.toCompany ? ` (${h.toCompany})` : ""} now looks after ${h.propertyLabel}. They already have the full history of your file — nothing to repeat. Tap to read the note and contact them.`,
+      href: `/?open=partner-change&focus=${h.id}`,
       severity: "info",
     });
     notify({
