@@ -65,6 +65,7 @@ const ACTION_TILES: { id: ClientNextAction; title: string; blurb: string }[] = [
  */
 export function BuyerProcessCard({ lead }: { lead: MortgageLead }) {
   const { photos, bookings, actions, addClientAction, bookCall } = useBuyerProcess();
+  const { requests: partnerRegistrations } = usePartnerRequests();
   const [setupOpen, setSetupOpen] = useState(false);
   const [active, setActive] = useState<ClientNextAction | null>(null);
   const [details, setDetails] = useState("");
