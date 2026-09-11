@@ -13,6 +13,9 @@ import { formatDate, formatDateTime } from "@/lib/dates";
 import { CallScheduler } from "@/components/buyer/CallScheduler";
 import { TourProposalPanel } from "@/components/buyer/TourProposalPanel";
 import { BuyerAgentDialog } from "@/components/mortgage/BuyerAgentDialog";
+import { FileChatPanel } from "@/components/messaging/FileChatPanel";
+import { clientDisplayForPartner } from "@/lib/user-id";
+import { usePartnerRequests } from "@/lib/partner-requests";
 
 const money = (n: number) => `$${Math.round(n).toLocaleString()}`;
 const inputClass =
