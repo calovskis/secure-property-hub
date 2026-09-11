@@ -124,7 +124,9 @@ function DecisionPanel({ lead }: { lead: MortgageLead }) {
     const years = Number(termYears);
     const down = Number(downPct);
     const closing = Number(closingPct);
-    const taxIns = Number(taxInsPct);
+    const taxInsUsdYear = Number(taxInsUsd);
+    const taxIns =
+      lead.propertyPrice > 0 ? (taxInsUsdYear / lead.propertyPrice) * 100 : NaN;
     if (status === "qualified") {
       if (!lenderName || !lenderNmls) {
         setError(
