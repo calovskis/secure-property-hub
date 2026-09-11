@@ -290,12 +290,17 @@ function useDerivedNotifications() {
     const submittedPropertyIds = new Set(
       myLeads.filter((lead) => lead.status !== "annulled").map((lead) => lead.propertyId),
     );
+    const hasSubmittedPreApproval =
+      Boolean(user.mortgageProfile?.submittedAt) || submittedPropertyIds.size > 0;
     for (const d of drafts(email)) {
       /* A browser draft can survive an older questionnaire submission. The
        * submitted lead is authoritative: never turn that stale draft back
        * into a new pre-approval task. Complete any notification already
        * created for it without changing its original date or order. */
-      if (submittedPropertyIds.has(d.propertyId)) {
+      if (
+        submittedPropertyIds.has(d.propertyId) ||
+        (d.propertyId === 0 && hasSubmittedPreApproval)
+      ) {
         completedIds.push(`draft-${d.propertyId}`);
         clearDraft(email, d.propertyId);
         continue;

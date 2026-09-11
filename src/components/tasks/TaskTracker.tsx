@@ -157,7 +157,7 @@ export function TaskTracker({ className = "" }: { className?: string }) {
 
       {total === 0 ? (
         <p className="mt-3 rounded-lg border border-border px-3 py-4 text-center text-xs text-muted-foreground">
-          Nothing needs your attention right now.
+          No open tasks.
         </p>
       ) : (
         <div className="mt-2 divide-y divide-border">
