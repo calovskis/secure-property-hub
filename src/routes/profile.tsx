@@ -61,6 +61,7 @@ import { LicenceRenewalDialog } from "@/components/profile/LicenceRenewalDialog"
 
 import { toast } from "sonner";
 import { useDeepLinkAction } from "@/lib/deep-link";
+import { loqalNumber } from "@/lib/user-id";
 
 const DOC_KINDS = ["idDocuments", "visaDocuments", "bankruptcyDocuments"] as const;
 
