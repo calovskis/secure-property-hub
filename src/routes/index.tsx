@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 
 import { AppHeader, LanguageMenu } from "@/components/layout/AppHeader";
 import { useAuth } from "@/lib/auth";
@@ -443,6 +443,10 @@ function Dashboard() {
 
   if (!ready) return <div className="min-h-screen bg-background" />;
   if (!user) return <Landing />;
+  // The client dashboard is for clients only: partners and admins are sent
+  // straight to their own portals, never shown the client workspace.
+  if (user.role === "partner") return <Navigate to="/partner" replace />;
+  if (user.role === "admin") return <Navigate to="/admin" replace />;
 
   const pendingOffers = leadsForClient(user.email).filter(pendingOfferDecision);
 
