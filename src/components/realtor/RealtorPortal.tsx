@@ -527,7 +527,12 @@ function BuyerFile({ lead, me }: { lead: MortgageLead; me: Realtor }) {
                   </h3>
                   {videoTour && videoTour.status === "proposed" ? (
                     <div className="mt-3">
-                      <TourProposalPanel booking={videoTour} side="agent" realtorId={me.id} />
+                      <TourProposalPanel
+                        booking={videoTour}
+                        side="agent"
+                        realtorId={me.id}
+                        agentEmail={me.email}
+                      />
                     </div>
                   ) : videoTour ? (
                     <p className="mt-1 text-sm text-muted-foreground">
@@ -614,7 +619,7 @@ function CalendarSection({ me, myLeads }: { me: Realtor; myLeads: MortgageLead[]
                   {clientDisplayForPartner(b.clientName, b.clientEmail)} · {b.propertyLabel}
                 </div>
                 <div className="mt-2">
-                  <TourProposalPanel booking={b} side="agent" realtorId={me.id} />
+                  <TourProposalPanel booking={b} side="agent" realtorId={me.id} agentEmail={me.email} />
                 </div>
               </div>
             ))}

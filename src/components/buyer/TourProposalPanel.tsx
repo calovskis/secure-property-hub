@@ -9,10 +9,12 @@
  * clearly in one court.
  */
 import { useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { formatDateTime } from "@/lib/dates";
 import { availableSlots, useBuyerProcess, type CallBooking } from "@/lib/buyer-process";
 import { clientDisplayForPartner } from "@/lib/user-id";
+import { bookAgentMeeting } from "@/lib/google-calendar.functions";
 
 const RANK = ["Priority 1", "Priority 2", "Priority 3", "Priority 4", "Priority 5"];
 
@@ -20,17 +22,23 @@ export function TourProposalPanel({
   booking,
   side,
   realtorId,
+  agentEmail,
 }: {
   booking: CallBooking;
   /** Who is looking at the panel. */
   side: "agent" | "buyer";
   /** Whose calendar the alternative times are taken from. */
   realtorId?: string | undefined;
+  /** Fallback lookup when the agent connected Google under their e-mail. */
+  agentEmail?: string | undefined;
 }) {
   const { bookings, confirmProposal, counterPropose } = useBuyerProcess();
+  const createMeeting = useServerFn(bookAgentMeeting);
   const [mode, setMode] = useState<"review" | "alternative">("review");
   const [picked, setPicked] = useState<string[]>([]);
   const [note, setNote] = useState("");
+  const [busy, setBusy] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const kindLabel = booking.kind === "video_tour" ? "live video tour" : "in-person visit";
   const proposedBy = booking.proposedBy ?? "buyer";
@@ -45,11 +53,61 @@ export function TourProposalPanel({
     );
   }
 
-  function confirm(slot: string) {
-    confirmProposal(booking.id, slot);
-    toast(`${booking.kind === "video_tour" ? "Video tour" : "Visit"} confirmed`, {
-      description: `${formatDateTime(slot)} (1 hour) — both calendars are updated.`,
-    });
+  /**
+   * Confirming a time also creates the real appointment in the agent's Google
+   * Calendar. A video tour always gets a Google Meet link, so buyer and agent
+   * walk the property together in Meet; an in-person visit is calendar only.
+   */
+  async function confirm(slot: string) {
+    const video = booking.kind === "video_tour";
+    setBusy(slot);
+    setError(null);
+    try {
+      const meeting = await createMeeting({
+        data: {
+          ...(booking.realtorId ?? realtorId ? { agentRef: booking.realtorId ?? realtorId! } : {}),
+          ...(agentEmail ? { agentEmail } : {}),
+          startAt: slot,
+          durationMin: 60,
+          summary: video
+            ? `Loqal — live video tour: ${booking.propertyLabel}`
+            : `Loqal — property visit: ${booking.propertyLabel}`,
+          description: video
+            ? "Live video walkthrough of the property with your Loqal buyer's agent, on Google Meet."
+            : "In-person property visit with your Loqal buyer's agent.",
+          ...(booking.clientEmail ? { attendeeEmails: [booking.clientEmail] } : {}),
+        },
+      });
+      confirmProposal(booking.id, slot, {
+        ...(meeting.eventId ? { eventId: meeting.eventId } : {}),
+        meetUrl: video ? meeting.meetUrl : null,
+        calendarLink: meeting.htmlLink,
+      });
+      toast(video ? "Video tour confirmed" : "Visit confirmed", {
+        description: `${formatDateTime(slot)} (1 hour) — ${
+          video && meeting.meetUrl
+            ? "the Google Meet link is in both calendars."
+            : "both calendars are updated."
+        }`,
+      });
+    } catch (err) {
+      // Without a connected Google Calendar we still agree the time, but we say
+      // plainly that the Meet link is missing so nobody shows up to nothing.
+      confirmProposal(booking.id, slot);
+      setError(
+        video
+          ? "The time is agreed, but the Google Meet link could not be created — the agent needs to connect their Google Calendar."
+          : "The time is agreed, but it could not be written to Google Calendar.",
+      );
+      toast(video ? "Time agreed — Meet link pending" : "Time agreed", {
+        description:
+          err instanceof Error && err.message
+            ? err.message
+            : "Google Calendar did not accept the appointment.",
+      });
+    } finally {
+      setBusy(null);
+    }
   }
 
   function sendAlternative() {
@@ -113,14 +171,25 @@ export function TourProposalPanel({
             </div>
             <button
               type="button"
-              onClick={() => confirm(s)}
-              className="rounded-md bg-brand px-3 py-1.5 text-xs font-semibold text-background hover:bg-brand-soft"
+              disabled={busy !== null}
+              onClick={() => void confirm(s)}
+              className="rounded-md bg-brand px-3 py-1.5 text-xs font-semibold text-background hover:bg-brand-soft disabled:opacity-50"
             >
-              Confirm this time
+              {busy === s
+                ? "Booking…"
+                : booking.kind === "video_tour"
+                  ? "Confirm & create Meet"
+                  : "Confirm this time"}
             </button>
           </li>
         ))}
       </ol>
+
+      {error ? (
+        <p className="mt-3 rounded-md border border-destructive/40 bg-destructive/5 p-2.5 text-[11px] text-destructive">
+          {error}
+        </p>
+      ) : null}
 
       {theirNote ? (
         <p className="mt-3 rounded-md bg-card p-2.5 text-[11px] text-muted-foreground">
