@@ -204,6 +204,90 @@ function normalizeUser(user: LoqalUser): LoqalUser {
   };
 }
 
+/** Identity exactly as it was given at registration. */
+export type RegisteredIdentity = {
+  firstName: string;
+  middleName?: string;
+  lastName: string;
+  phone?: string;
+  usPerson?: boolean;
+  companyName?: string;
+  partnerType?: PartnerType;
+  lenderLicence?: string;
+};
+
+/**
+ * The single source of truth for a person's name anywhere on Loqal: the
+ * registration record in the database (client registration first, then a
+ * partner registration). Browser caches are never consulted here, so one
+ * account can never inherit another person's name.
+ */
+export async function fetchRegisteredIdentity(
+  authUserId: string | null,
+  email?: string | null,
+): Promise<RegisteredIdentity | null> {
+  const mail = (email ?? "").trim().toLowerCase();
+  if (authUserId) {
+    const { data } = await supabase
+      .from("client_profiles")
+      .select("first_name,middle_name,last_name,phone,us_person")
+      .eq("user_id", authUserId)
+      .maybeSingle();
+    if (data && (data.first_name || data.last_name)) {
+      return {
+        firstName: normalizeName(data.first_name),
+        lastName: normalizeName(data.last_name),
+        ...(data.middle_name ? { middleName: normalizeName(data.middle_name) } : {}),
+        ...(data.phone ? { phone: data.phone } : {}),
+        usPerson: data.us_person,
+      };
+    }
+  }
+
+  type PartnerRow = {
+    first_name: string | null;
+    last_name: string | null;
+    phone: string | null;
+    company_name: string | null;
+    partner_type: string | null;
+    lender_licence: string | null;
+  };
+  const cols = "first_name,last_name,phone,company_name,partner_type,lender_licence";
+  let partner: PartnerRow | null = null;
+
+  if (authUserId) {
+    const { data } = await supabase
+      .from("partner_requests")
+      .select(cols)
+      .eq("user_id", authUserId)
+      .order("submitted_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    partner = (data as PartnerRow | null) ?? null;
+  }
+  if (!partner && mail) {
+    const { data } = await supabase
+      .from("partner_requests")
+      .select(cols)
+      .ilike("email", mail)
+      .order("submitted_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    partner = (data as PartnerRow | null) ?? null;
+  }
+  if (partner && (partner.first_name || partner.last_name)) {
+    return {
+      firstName: normalizeName(partner.first_name),
+      lastName: normalizeName(partner.last_name),
+      ...(partner.phone ? { phone: partner.phone } : {}),
+      ...(partner.company_name ? { companyName: partner.company_name } : {}),
+      ...(partner.partner_type ? { partnerType: partner.partner_type as PartnerType } : {}),
+      ...(partner.lender_licence ? { lenderLicence: partner.lender_licence } : {}),
+    };
+  }
+  return null;
+}
+
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
