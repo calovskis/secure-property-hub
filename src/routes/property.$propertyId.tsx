@@ -4,6 +4,7 @@ import { AppHeader } from "@/components/layout/AppHeader";
 import { MortgageQuestionnaire } from "@/components/mortgage/MortgageQuestionnaire";
 import { MortgageCaseCard } from "@/components/mortgage/MortgageCaseCard";
 import { BuyerProcessCard } from "@/components/buyer/BuyerProcessCard";
+import { BuyerAgentDialog } from "@/components/mortgage/BuyerAgentDialog";
 import { FeedbackDialog } from "@/components/mortgage/FeedbackDialog";
 import { VideoCallDialog } from "@/components/calls/VideoCallDialog";
 
@@ -21,13 +22,14 @@ import {
 
 export const Route = createFileRoute("/property/$propertyId")({
   component: PropertyDetailPage,
-  /** `?open=feedback|questionnaire|call` lets a notification jump straight into the pop-up. */
+  /** `?open=feedback|questionnaire|call|agent` lets a notification jump straight into the pop-up. */
   validateSearch: (
     search: Record<string, unknown>,
-  ): { open?: "feedback" | "questionnaire" | "call"; focus?: string } => {
+  ): { open?: "feedback" | "questionnaire" | "call" | "agent"; focus?: string } => {
     const value = search["open"];
-    const out: { open?: "feedback" | "questionnaire" | "call"; focus?: string } = {};
-    if (value === "feedback" || value === "questionnaire" || value === "call") out.open = value;
+    const out: { open?: "feedback" | "questionnaire" | "call" | "agent"; focus?: string } = {};
+    if (value === "feedback" || value === "questionnaire" || value === "call" || value === "agent")
+      out.open = value;
     if (typeof search["focus"] === "string") out.focus = search["focus"];
     return out;
   },
@@ -151,6 +153,7 @@ function PropertyDetailPage() {
   const [questionnaireOpen, setQuestionnaireOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [callOpen, setCallOpen] = useState(false);
+  const [agentOpen, setAgentOpen] = useState(false);
   const { open: openParam, focus: focusParam } = Route.useSearch();
   const { bookings } = useBuyerProcess();
 
@@ -167,6 +170,7 @@ function PropertyDetailPage() {
     if (openParam === "feedback") setFeedbackOpen(true);
     if (openParam === "questionnaire") setQuestionnaireOpen(true);
     if (openParam === "call" && callBooking) setCallOpen(true);
+    if (openParam === "agent") setAgentOpen(true);
   }, [openParam, callBooking?.id]);
 
 
@@ -615,7 +619,10 @@ function PropertyDetailPage() {
         property={{ id: property.id, price: property.price }}
       />
       {lead ? (
-        <FeedbackDialog lead={lead} open={feedbackOpen} onOpenChange={setFeedbackOpen} />
+        <>
+          <FeedbackDialog lead={lead} open={feedbackOpen} onOpenChange={setFeedbackOpen} />
+          <BuyerAgentDialog lead={lead} open={agentOpen} onOpenChange={setAgentOpen} />
+        </>
       ) : null}
       {callBooking ? (
         <VideoCallDialog
