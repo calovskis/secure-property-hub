@@ -26,19 +26,32 @@ import {
 } from "@/lib/admin-users.functions";
 import type { AdminPerson } from "@/components/admin/people-model";
 import { PartnerCorrespondence } from "@/components/admin/PartnerCorrespondence";
+import {
+  ClientPartnersTab,
+  PartnerClientsTab,
+} from "@/components/admin/PartnerAssignments";
 import { PhoneField } from "@/components/form/PhoneField";
 import { isValidPhone } from "@/lib/phone";
 
-type Tab = "profile" | "documents" | "correspondence" | "properties" | "activity" | "metrics";
+type Tab =
+  | "profile"
+  | "documents"
+  | "correspondence"
+  | "partners"
+  | "properties"
+  | "activity"
+  | "metrics";
 
 const TABS: [Tab, string, string][] = [
   ["profile", "👤", "Profile & registration"],
   ["documents", "📎", "Uploaded documents"],
   ["correspondence", "✉️", "Requests & correspondence"],
+  ["partners", "🤝", "Partners & clients"],
   ["properties", "🏠", "Properties & files"],
   ["activity", "🕘", "Activity history"],
   ["metrics", "📊", "Engagement metrics"],
 ];
+
 
 export function PersonDetail({
   person,
@@ -171,6 +184,13 @@ export function PersonDetailContent({
             <p className="text-sm text-muted-foreground">
               No Loqal correspondence on file for this person.
             </p>
+          )
+        ) : null}
+        {tab === "partners" ? (
+          person.group === "partner" ? (
+            <PartnerClientsTab person={person} />
+          ) : (
+            <ClientPartnersTab person={person} />
           )
         ) : null}
         {tab === "properties" ? <PropertiesTab person={person} /> : null}

@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/layout/AppHeader";
+import { ClientHandoverCard } from "@/components/partner/ClientHandoverCard";
 import { LenderPortal, useLenderTabs, type LenderTabId } from "@/components/lender/LenderPortal";
 import { RealtorPortal, type RealtorTabId } from "@/components/realtor/RealtorPortal";
 import { PointOfContactCard } from "@/components/partner/PointOfContactCard";
@@ -277,6 +278,9 @@ function LenderWorkspace({ lenderName }: { lenderName: string }) {
           </>
         }
       />
+      <div className="mx-auto max-w-[1400px] px-4 pt-6 md:px-7">
+        <ClientHandoverCard />
+      </div>
       <LenderPortal lenderName={lenderName} tab={current} onTabChange={setTab} focusLead={focus} />
     </div>
   );
@@ -394,6 +398,9 @@ function RealtorWorkspace({ user }: { user: LoqalUser }) {
           </>
         }
       />
+      <div className="mx-auto max-w-[1400px] px-4 pt-6 md:px-7">
+        <ClientHandoverCard />
+      </div>
       <RealtorPortal user={user} tab={tab} onTabChange={setTab} />
     </div>
   );
