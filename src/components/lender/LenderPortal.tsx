@@ -106,8 +106,10 @@ function DecisionPanel({ lead }: { lead: MortgageLead }) {
   const [closingPct, setClosingPct] = useState(
     lead.terms ? String(lead.terms.closingCostPct) : "2.5",
   );
-  const [taxInsPct, setTaxInsPct] = useState(
-    lead.terms ? String(lead.terms.taxInsurancePct) : "1.45",
+  const [taxInsUsd, setTaxInsUsd] = useState(
+    lead.terms
+      ? String(Math.round((lead.propertyPrice * lead.terms.taxInsurancePct) / 100))
+      : "",
   );
   const [infoOpen, setInfoOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
