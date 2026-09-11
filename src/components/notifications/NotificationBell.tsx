@@ -192,6 +192,19 @@ function useDerivedNotifications() {
             severity: "info",
             createdAt: b.confirmedAt,
           });
+          completedIds.push(`altslots-${b.id}`);
+        }
+        /* The agent could not make the buyer's times work and proposed
+           alternatives — the buyer now has to answer. */
+        if (b.status === "proposed" && b.proposedBy === "agent") {
+          list.push({
+            id: `altslots-${b.id}`,
+            to: email,
+            title: "Your agent proposed other times",
+            body: `${lead.propertyLabel} — confirm one of the proposed times or reply with your own.`,
+            href: `${href}?open=agenttimes&focus=${b.id}`,
+            severity: "warning",
+          });
         }
       }
     }
