@@ -338,8 +338,8 @@ function useDerivedNotifications() {
             id: `lic-exp-${seat.id}-${lic.state}`,
             to: email,
             title: `Your ${lic.state} real estate licence has expired`,
-            body: "Renew it and update the details — expired licences are excluded from assignments.",
-            href: "/profile?open=licences",
+            body: `Renew the ${lic.state} licence and enter the new number and validity — only this state is affected.`,
+            href: `/profile?open=licence-renewal&focus=${lic.state}`,
             severity: "critical",
             emailCopy: true,
           });
@@ -348,8 +348,8 @@ function useDerivedNotifications() {
             id: `lic-15-${seat.id}-${lic.state}`,
             to: email,
             title: `Your ${lic.state} licence expires in ${left} days`,
-            body: "Renew now and update the licence details in your portal.",
-            href: "/profile?open=licences",
+            body: `Renew the ${lic.state} licence and enter the new number and validity — your other licences stay as they are.`,
+            href: `/profile?open=licence-renewal&focus=${lic.state}`,
             severity: "critical",
             emailCopy: true,
           });
@@ -358,8 +358,8 @@ function useDerivedNotifications() {
             id: `lic-30-${seat.id}-${lic.state}`,
             to: email,
             title: `Your ${lic.state} licence expires in ${left} days`,
-            body: "Please plan the renewal — you can update the licence details in your portal.",
-            href: "/profile?open=licences",
+            body: `Please plan the ${lic.state} renewal — you will be asked for the new number and validity date.`,
+            href: `/profile?open=licence-renewal&focus=${lic.state}`,
             severity: "warning",
           });
         }
