@@ -14,6 +14,7 @@ import {
   IncomeTopic,
   LiabilitiesTopic,
   PersonalTopic,
+  VisaSupportTopic,
 } from "@/components/profile/ProfileTopicsContent";
 import { PartnerProfile } from "@/components/profile/PartnerProfile";
 import { AgreementCard } from "@/components/profile/AgreementCard";
