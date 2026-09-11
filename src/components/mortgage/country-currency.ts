@@ -1,27 +1,46 @@
 /**
- * Best-effort ISO 3166-1 alpha-2 country -> ISO 4217 currency code map, used
- * to auto-assign the currency for a non-US employer/business address. Falls
- * back to USD when a country isn't in the map (the client can still change
- * the currency manually).
+ * ISO 3166-1 alpha-2 country -> ISO 4217 currency code map, used to
+ * auto-assign the currency for a non-US employer/business address. Falls back
+ * to USD when a country isn't in the map (the client can still change the
+ * currency manually).
  */
 export const COUNTRY_CURRENCY: Record<string, string> = {
-  US: "USD", CA: "CAD", MX: "MXN", GB: "GBP", IE: "EUR",
-  DE: "EUR", FR: "EUR", ES: "EUR", PT: "EUR", IT: "EUR", NL: "EUR", BE: "EUR",
-  AT: "EUR", FI: "EUR", GR: "EUR", LU: "EUR", MT: "EUR", CY: "EUR", SK: "EUR",
-  SI: "EUR", EE: "EUR", LV: "EUR", LT: "EUR", HR: "EUR", AD: "EUR", MC: "EUR",
-  CH: "CHF", LI: "CHF", NO: "NOK", SE: "SEK", DK: "DKK", IS: "ISK",
-  PL: "PLN", CZ: "CZK", HU: "HUF", RO: "RON", BG: "BGN", RS: "RSD",
-  MK: "MKD", AL: "ALL", BA: "BAM", MD: "MDL", UA: "UAH", RU: "RUB", GE: "GEL",
-  AM: "AMD", AZ: "AZN", KZ: "KZT", UZ: "UZS", TR: "TRY",
-  IL: "ILS", AE: "AED", SA: "SAR", QA: "QAR", KW: "KWD", BH: "BHD",
-  OM: "OMR", JO: "JOD", EG: "EGP", MA: "MAD", TN: "TND",
-  ZA: "ZAR", NG: "NGN", KE: "KES", GH: "GHS",
-  CN: "CNY", HK: "HKD", SG: "SGD", KR: "KRW", TW: "TWD", JP: "JPY",
-  IN: "INR", ID: "IDR", MY: "MYR", TH: "THB", PH: "PHP", VN: "VND",
-  PK: "PKR", BD: "BDT", LK: "LKR", NP: "NPR",
-  AU: "AUD", NZ: "NZD",
-  BR: "BRL", AR: "ARS", CL: "CLP", CO: "COP", PE: "PEN", UY: "UYU",
-  DO: "DOP", JM: "JMD", TT: "TTD", PA: "PAB", CR: "CRC", GT: "GTQ",
+  AF: "AFN", AX: "EUR", AL: "ALL", DZ: "DZD", AS: "USD", AD: "EUR", AO: "AOA",
+  AI: "XCD", AQ: "USD", AG: "XCD", AR: "ARS", AM: "AMD", AW: "AWG", AU: "AUD",
+  AT: "EUR", AZ: "AZN", BS: "BSD", BH: "BHD", BD: "BDT", BB: "BBD", BY: "BYN",
+  BE: "EUR", BZ: "BZD", BJ: "XOF", BM: "BMD", BT: "BTN", BO: "BOB", BA: "BAM",
+  BW: "BWP", BV: "NOK", BR: "BRL", IO: "USD", VG: "USD", BN: "BND", BG: "BGN",
+  BF: "XOF", BI: "BIF", KH: "KHR", CM: "XAF", CA: "CAD", CV: "CVE", BQ: "USD",
+  KY: "KYD", CF: "XAF", TD: "XAF", CL: "CLP", CN: "CNY", CX: "AUD", CC: "AUD",
+  CO: "COP", KM: "KMF", CG: "XAF", CD: "CDF", CK: "NZD", CR: "CRC", CI: "XOF",
+  HR: "EUR", CU: "CUP", CW: "ANG", CY: "EUR", CZ: "CZK", DK: "DKK", DJ: "DJF",
+  DM: "XCD", DO: "DOP", EC: "USD", EG: "EGP", SV: "USD", GQ: "XAF", ER: "ERN",
+  EE: "EUR", SZ: "SZL", ET: "ETB", FK: "FKP", FO: "DKK", FJ: "FJD", FI: "EUR",
+  FR: "EUR", GF: "EUR", PF: "XPF", TF: "EUR", GA: "XAF", GM: "GMD", GE: "GEL",
+  DE: "EUR", GH: "GHS", GI: "GIP", GR: "EUR", GL: "DKK", GD: "XCD", GP: "EUR",
+  GU: "USD", GT: "GTQ", GG: "GBP", GN: "GNF", GW: "XOF", GY: "GYD", HT: "HTG",
+  HM: "AUD", HN: "HNL", HK: "HKD", HU: "HUF", IS: "ISK", IN: "INR", ID: "IDR",
+  IR: "IRR", IQ: "IQD", IE: "EUR", IM: "GBP", IL: "ILS", IT: "EUR", JM: "JMD",
+  JP: "JPY", JE: "GBP", JO: "JOD", KZ: "KZT", KE: "KES", KI: "AUD", KW: "KWD",
+  KG: "KGS", LA: "LAK", LV: "EUR", LB: "LBP", LS: "LSL", LR: "LRD", LY: "LYD",
+  LI: "CHF", LT: "EUR", LU: "EUR", MO: "MOP", MG: "MGA", MW: "MWK", MY: "MYR",
+  MV: "MVR", ML: "XOF", MT: "EUR", MH: "USD", MQ: "EUR", MR: "MRU", MU: "MUR",
+  YT: "EUR", MX: "MXN", FM: "USD", MD: "MDL", MC: "EUR", MN: "MNT", ME: "EUR",
+  MS: "XCD", MA: "MAD", MZ: "MZN", MM: "MMK", NA: "NAD", NR: "AUD", NP: "NPR",
+  NL: "EUR", NC: "XPF", NZ: "NZD", NI: "NIO", NE: "XOF", NG: "NGN", NU: "NZD",
+  NF: "AUD", KP: "KPW", MK: "MKD", MP: "USD", NO: "NOK", OM: "OMR", PK: "PKR",
+  PW: "USD", PS: "ILS", PA: "PAB", PG: "PGK", PY: "PYG", PE: "PEN", PH: "PHP",
+  PN: "NZD", PL: "PLN", PT: "EUR", PR: "USD", QA: "QAR", RE: "EUR", RO: "RON",
+  RU: "RUB", RW: "RWF", WS: "WST", SM: "EUR", ST: "STN", SA: "SAR", SN: "XOF",
+  RS: "RSD", SC: "SCR", SL: "SLE", SG: "SGD", SX: "ANG", SK: "EUR", SI: "EUR",
+  SB: "SBD", SO: "SOS", ZA: "ZAR", GS: "GBP", KR: "KRW", SS: "SSP", ES: "EUR",
+  LK: "LKR", BL: "EUR", SH: "SHP", KN: "XCD", LC: "XCD", MF: "EUR", PM: "EUR",
+  VC: "XCD", SD: "SDG", SR: "SRD", SJ: "NOK", SE: "SEK", CH: "CHF", SY: "SYP",
+  TW: "TWD", TJ: "TJS", TZ: "TZS", TH: "THB", TL: "USD", TG: "XOF", TK: "NZD",
+  TO: "TOP", TT: "TTD", TN: "TND", TR: "TRY", TM: "TMT", TC: "USD", TV: "AUD",
+  UM: "USD", VI: "USD", UG: "UGX", UA: "UAH", AE: "AED", GB: "GBP", US: "USD",
+  UY: "UYU", UZ: "UZS", VU: "VUV", VA: "EUR", VE: "VES", VN: "VND", WF: "XPF",
+  EH: "MAD", YE: "YER", ZM: "ZMW", ZW: "ZWG",
 };
 
 /** Currency an address's country implies; USD for the US or unknown countries. */
