@@ -421,6 +421,8 @@ export function useBuyerProcess() {
         createdAt: new Date().toISOString(),
         status: "proposed",
         proposedSlots: sorted,
+        proposedBy: "buyer",
+
         ...(input.realtorId ? { realtorId: input.realtorId } : {}),
         ...(input.note ? { note: input.note } : {}),
         recordingConsentedAt: new Date().toISOString(),
