@@ -131,7 +131,7 @@ function useDerivedNotifications() {
           body: `${lead.propertyLabel} — choose how you want to work with your agent and how to start. Your answers so far are saved.`,
           href: `/property/${lead.propertyId}?open=agent`,
           severity: "warning",
-          createdAt: lead.buyerAgent?.agreedAt ?? lead.decisionAt,
+          createdAt: lead.buyerAgent?.agreedAt ?? lead.clientDecisionAt,
         });
       }
 
