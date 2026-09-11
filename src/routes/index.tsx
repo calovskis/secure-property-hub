@@ -7,6 +7,7 @@ import { offerReminders, pendingOfferDecision, useLeads } from "@/lib/leads";
 import { formatDateTime } from "@/lib/dates";
 import { useGreeting } from "@/lib/greeting";
 import { TaskTracker } from "@/components/tasks/TaskTracker";
+import { MyPartnersCard } from "@/components/client/MyPartnersCard";
 
 export const Route = createFileRoute("/")({
   head: () => ({
