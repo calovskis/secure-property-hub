@@ -235,7 +235,7 @@ function DecisionPanel({ lead }: { lead: MortgageLead }) {
               ["Loan term (years)", termYears, setTermYears, "30"],
               ["Down payment (%)", downPct, setDownPct, "20"],
               ["Closing costs (%)", closingPct, setClosingPct, "2.5"],
-              ["Taxes + insurance (%/yr)", taxInsPct, setTaxInsPct, "1.45"],
+              ["Taxes + insurance (USD/yr)", taxInsUsd, setTaxInsUsd, "7250"],
             ] as [string, string, (v: string) => void, string][]
           ).map(([label, value, setter, ph]) => (
             <label key={label} className="block">
