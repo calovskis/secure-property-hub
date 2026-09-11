@@ -303,9 +303,9 @@ export function AppHeader({
               type="button"
               aria-label={t("Help")}
               onClick={() => setHelpOpen(!helpOpen)}
-              className="flex size-9 items-center justify-center rounded-full border border-border bg-background text-foreground transition-colors hover:bg-brand-tint hover:text-brand"
+              className="icon-orb"
             >
-              <CircleHelp size={17} strokeWidth={1.8} />
+              <CircleHelp size={17} strokeWidth={1.6} />
             </button>
             {helpOpen ? (
               <div className="absolute right-0 top-[calc(100%+8px)] w-52 rounded-lg border border-border bg-popover p-1.5 shadow-lg">
@@ -325,9 +325,9 @@ export function AppHeader({
           <Link
             to="/settings"
             aria-label={t("Settings")}
-            className="flex size-9 items-center justify-center rounded-full border border-border bg-background text-foreground transition-colors hover:bg-brand-tint hover:text-brand sm:flex"
+            className="icon-orb hidden sm:flex"
           >
-            <SettingsIcon size={17} strokeWidth={1.8} />
+            <SettingsIcon size={17} strokeWidth={1.6} />
           </Link>
 
 
