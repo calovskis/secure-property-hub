@@ -28,15 +28,17 @@ export function markVisit(email: string): number | undefined {
   const all = readVisits();
   const now = Date.now();
   const entry = all[key];
-  // Treat anything within 20 minutes as the same visit.
-  const previous = entry && now - entry.last > 20 * 60 * 1000 ? entry.last : entry?.previous;
+  // Treat anything within 20 minutes as the same visit — re-renders and
+  // remounts must not look like a person returning "quickly".
+  const sameVisit = entry ? now - entry.last <= 20 * 60 * 1000 : false;
+  const previous = sameVisit ? entry?.previous : entry?.last;
   all[key] = { last: now, ...(previous ? { previous } : {}) };
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
   } catch {
     /* storage unavailable */
   }
-  return entry?.last;
+  return previous;
 }
 
 /** Local-language hellos keyed by the country part of the browser timezone. */

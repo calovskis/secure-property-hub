@@ -250,7 +250,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    * the source of truth for their name, so the session adopts it.
    */
   useEffect(() => {
-    if (!authUserId || !user) return;
+    // Only partner accounts adopt the name from their registration record —
+    // a client session must never be renamed by a partner_requests row.
+    if (!authUserId || !user || user.role !== "partner") return;
     let active = true;
     void supabase
       .from("partner_requests")
