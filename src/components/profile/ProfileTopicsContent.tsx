@@ -76,6 +76,7 @@ export function PersonalTopic({ profile, onSave }: { profile: MortgageProfile; o
       } · ${profile.dependents?.length ?? 0} dependent(s)`}
       onEdit={() => setEditOpen(true)}
       defaultOpen={open}
+      attention={!profile.dateOfBirth || !profile.maritalStatus}
     >
       <TopicField label="Date of birth" value={isoToUsDate(profile.dateOfBirth)} />
       <TopicField
@@ -239,6 +240,14 @@ export function CitizenshipTopic({
         profile.countryOfResidence ? ` · ${countryLabel(profile.countryOfResidence)}` : ""
       }`}
       onEdit={() => setEditOpen(true)}
+      attention={
+        usPerson
+          ? !status || !profile.ssn
+          : !status ||
+            !profile.countryOfResidence ||
+            !profile.citizenship ||
+            (Boolean(profile.usVisaActive) && !profile.visaValidUntil)
+      }
     >
       <TopicField label="US status" value={status ? US_STATUS_LABEL[status] : undefined} />
       {usPerson ? (
@@ -427,6 +436,7 @@ export function AddressTopic({ profile, onSave }: { profile: MortgageProfile; on
       title="Address history"
       summary={`${addresses.length} address${addresses.length === 1 ? "" : "es"}`}
       onEdit={() => setEditOpen(true)}
+      attention={addresses.length === 0}
     >
       <ul className="space-y-2">
         {addresses.map((a) => (
@@ -586,6 +596,7 @@ export function IncomeTopic({ profile, onSave }: { profile: MortgageProfile; onS
       title="Income & employment"
       summary={`${money(profile.monthlyGross ?? 0)}/mo · ${employment.length} employer(s)`}
       onEdit={() => setEditOpen(true)}
+      attention={!profile.monthlyGross || employment.length === 0}
     >
       <TopicField label="Monthly gross income" value={money(profile.monthlyGross ?? 0)} />
       {incomes.length ? (
@@ -752,6 +763,7 @@ export function AssetsTopic({ profile, onSave }: { profile: MortgageProfile; onS
       title="Assets"
       summary={`${assets.entries.length} item(s) · ${money(totalAssets(profile.assets))} total`}
       onEdit={() => setEditOpen(true)}
+      attention={assets.entries.length === 0}
     >
       <ul className="space-y-2">
         {assets.entries.map((a) => (
@@ -917,6 +929,7 @@ export function LiabilitiesTopic({ profile, onSave }: { profile: MortgageProfile
       title="Liabilities"
       summary={`${money(totalLiabilities(l))} total`}
       onEdit={() => setEditOpen(true)}
+      attention={!profile.liabilities}
     >
       <TopicField label="Property loans" value={money(num(l.propertyLoans))} />
       <TopicField label="Vehicle loans" value={money(num(l.vehicleLoans))} />
@@ -1115,6 +1128,7 @@ export function DemographicsTopic({ profile, onSave }: { profile: MortgageProfil
       title="Demographics"
       summary={dem.sex ? `Sex: ${dem.sex}` : "Not provided"}
       onEdit={() => setEditOpen(true)}
+      attention={!dem.sex}
     >
       <TopicField label="Ethnicity" value={dem.ethnicityDeclined ? "Declined to answer" : dem.ethnicity.join(", ")} />
       <TopicField label="Race" value={dem.raceDeclined ? "Declined to answer" : dem.race.join(", ")} />
@@ -1200,7 +1214,7 @@ export function DocumentsTopic({ profile, onSave }: { profile: MortgageProfile; 
     (profile.bankruptcyDocuments?.length ?? 0);
 
   return (
-    <TopicCard title="Documents" summary={`${totalDocs} document(s) on file`}>
+    <TopicCard title="Documents" summary={`${totalDocs} document(s) on file`} attention={totalDocs === 0}>
       {expiry === "expired" ? (
         <div className="mb-4 rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
           Your visa document has expired (valid until {isoToUsDate(profile.visaValidUntil ?? "")}). Please
@@ -1286,6 +1300,7 @@ export function VisaSupportTopic({
             : "No visa on file — action needed"
       }
       onEdit={() => setEditOpen(true)}
+      attention={!profile.visaType || !profile.visaValidUntil}
     >
       <div className="mb-4 rounded-md border border-gold/40 bg-gold-tint/60 p-3 text-sm text-foreground">
         Under US law, to close a property purchase the buyer must hold a visa valid for at least
