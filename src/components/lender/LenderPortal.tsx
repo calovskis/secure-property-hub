@@ -753,13 +753,19 @@ export function LenderPortal({
   lenderName,
   tab: tabProp,
   onTabChange,
+  focusLead,
 }: {
   lenderName: string;
   tab?: TabId;
   onTabChange?: (tab: TabId) => void;
+  /** Lead id coming from a notification deep-link (?focus=…). */
+  focusLead?: string | undefined;
 }) {
   const [tabState, setTabState] = useState<TabId>("home");
   const [focusLeadId, setFocusLeadId] = useState<string | null>(null);
+  useEffect(() => {
+    if (focusLead) setFocusLeadId(focusLead);
+  }, [focusLead]);
   const tab = tabProp ?? tabState;
   const setTab = onTabChange ?? setTabState;
   const { active, can, isCompanyOnVacation, companyVacation } = useLenderTeam();

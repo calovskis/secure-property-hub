@@ -11,10 +11,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { openDeepLink } from "@/lib/deep-link";
 import { useAuth, PARTNER_LABEL } from "@/lib/auth";
-import { offerReminders, pendingOfferDecision, useLeads } from "@/lib/leads";
+import { offerReminders, pendingOfferDecision, leadState, useLeads } from "@/lib/leads";
 import { useBuyerProcess } from "@/lib/buyer-process";
 import { usePartnerRequests } from "@/lib/partner-requests";
 import { useRealtors } from "@/lib/realtors";
+import { useLenderTeam } from "@/lib/lender-team";
 import { useMortgageDrafts } from "@/lib/mortgage-draft";
 import {
   clearRequestOpenedAt,
@@ -50,6 +51,7 @@ function useDerivedNotifications() {
   const { requests } = usePartnerRequests();
   const { realtors } = useRealtors();
   const { drafts, clearDraft } = useMortgageDrafts();
+  const { scopedStates } = useLenderTeam();
 
   const email = user?.email.toLowerCase() ?? "";
   const isAdmin = user?.role === "admin";
@@ -634,7 +636,37 @@ function useDerivedNotifications() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.email, requests, email]);
 
+  /* ------------------------------- lender side ------------------------------
+     A mortgage lender partner is told about every pre-approval inquiry routed
+     to their desk (within their licensed state scope). Once the inquiry is
+     picked up by someone on their team, the same notification is marked
+     "Assigned" in place — same id, date and position in the list. */
+  useEffect(() => {
+    if (!user || !leadsReady) return;
+    if (user.role !== "partner" || user.partnerType !== "lender") return;
+    const list: Draft[] = [];
+    for (const lead of leads) {
+      if (lead.status === "annulled") continue;
+      if (scopedStates && !scopedStates.includes(leadState(lead))) continue;
+      const assigned = Boolean(lead.assignedToId);
+      list.push({
+        id: `lenderinq-${lead.id}`,
+        to: email,
+        title: "New pre-approval inquiry",
+        body: `${lead.clientName} · ${lead.propertyLabel}${
+          assigned ? ` — assigned to ${lead.assignedToName ?? "your team"}.` : " — awaiting first review."
+        }`,
+        href: `/partner?tab=requests&focus=${lead.id}`,
+        severity: assigned ? "info" : "warning",
+        ...(assigned ? { badge: "Assigned" } : {}),
+        createdAt: lead.submittedAt,
+      });
+    }
+    if (list.length) syncNotifications(list);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.email, user?.role, user?.partnerType, leads, leadsReady, scopedStates, email]);
 }
+
 
 export function NotificationBell() {
   const { user } = useAuth();
@@ -732,8 +764,14 @@ export function NotificationBell() {
                             <span className="h-1.5 w-1.5 rounded-full bg-success" />
                             Completed
                           </span>
+                        ) : n.badge ? (
+                          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-tint px-2 py-0.5 text-[11px] font-semibold text-brand">
+                            <span className="h-1.5 w-1.5 rounded-full bg-brand" />
+                            {n.badge}
+                          </span>
                         ) : null}
                       </span>
+
                       {n.body ? (
                         <span className="mt-0.5 block truncate text-xs text-muted-foreground">
                           {n.body}

@@ -246,7 +246,7 @@ function PartnerPage() {
 }
 
 function LenderWorkspace({ lenderName }: { lenderName: string }) {
-  const { tab: tabParam } = Route.useSearch();
+  const { tab: tabParam, focus } = Route.useSearch();
   const [tab, setTab] = useState<LenderTabId>("home");
   useEffect(() => {
     if (tabParam) setTab(tabParam as LenderTabId);
@@ -277,7 +277,7 @@ function LenderWorkspace({ lenderName }: { lenderName: string }) {
           </>
         }
       />
-      <LenderPortal lenderName={lenderName} tab={current} onTabChange={setTab} />
+      <LenderPortal lenderName={lenderName} tab={current} onTabChange={setTab} focusLead={focus} />
     </div>
   );
 }
