@@ -30,7 +30,6 @@ import {
 } from "@/lib/partner-assignments";
 import type { AdminPerson } from "@/components/admin/people-model";
 
-const uid = () => Math.random().toString(36).slice(2, 10);
 
 /* ------------------------------------------------------------------ */
 /* Shared building blocks                                              */
