@@ -88,7 +88,10 @@ function FileDetail({ lead }: { lead: MortgageLead }) {
           <Row label="Term" value={`${t.termYears} years`} />
           <Row label="Down payment" value={`${t.downPaymentPct}%`} />
           <Row label="Closing costs" value={`${t.closingCostPct}%`} />
-          <Row label="Taxes + insurance" value={`${t.taxInsurancePct}% / yr`} />
+          <Row
+            label="Taxes + insurance"
+            value={`${money(Math.round((lead.propertyPrice * t.taxInsurancePct) / 100))} / yr`}
+          />
           <Row label="Soft credit score" value={lead.creditScore ?? "—"} />
           <Row label="DTI ceiling" value={`${Math.round(lead.dtiLimit * 100)}%`} />
           <Row label="Issued" value={formatDate(t.issuedAt)} />
