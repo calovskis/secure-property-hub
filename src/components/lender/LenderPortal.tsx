@@ -143,11 +143,11 @@ function DecisionPanel({ lead }: { lead: MortgageLead }) {
         down < 100 &&
         closing >= 0 &&
         closing < 20 &&
-        taxIns >= 0 &&
-        taxIns < 10;
+        taxInsUsdYear > 0 &&
+        taxInsUsdYear <= lead.propertyPrice;
       if (!valid) {
         setError(
-          "Approved pricing is required to unlock the client estimate: interest rate, loan term, down payment, closing costs and tax/insurance rate.",
+          "Approved pricing is required to unlock the client estimate: interest rate, loan term, down payment, closing costs and the annual taxes + insurance amount in USD.",
         );
         return;
       }
