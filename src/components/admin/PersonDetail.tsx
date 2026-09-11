@@ -29,16 +29,25 @@ import { PartnerCorrespondence } from "@/components/admin/PartnerCorrespondence"
 import { PhoneField } from "@/components/form/PhoneField";
 import { isValidPhone } from "@/lib/phone";
 
-type Tab = "profile" | "documents" | "correspondence" | "properties" | "activity" | "metrics";
+type Tab =
+  | "profile"
+  | "documents"
+  | "correspondence"
+  | "partners"
+  | "properties"
+  | "activity"
+  | "metrics";
 
 const TABS: [Tab, string, string][] = [
   ["profile", "👤", "Profile & registration"],
   ["documents", "📎", "Uploaded documents"],
   ["correspondence", "✉️", "Requests & correspondence"],
+  ["partners", "🤝", "Partners & clients"],
   ["properties", "🏠", "Properties & files"],
   ["activity", "🕘", "Activity history"],
   ["metrics", "📊", "Engagement metrics"],
 ];
+
 
 export function PersonDetail({
   person,
