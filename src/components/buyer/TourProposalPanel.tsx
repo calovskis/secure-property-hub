@@ -12,6 +12,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { formatDateTime } from "@/lib/dates";
 import { availableSlots, useBuyerProcess, type CallBooking } from "@/lib/buyer-process";
+import { clientDisplayForPartner } from "@/lib/user-id";
 
 const RANK = ["Priority 1", "Priority 2", "Priority 3", "Priority 4", "Priority 5"];
 
@@ -90,7 +91,7 @@ export function TourProposalPanel({
     <div className="rounded-lg border border-gold/40 bg-gold-tint/30 p-4">
       <h4 className="text-sm font-semibold text-foreground">
         {proposedBy === "buyer"
-          ? `${booking.clientName} proposed times for the ${kindLabel}`
+          ? `${clientDisplayForPartner(booking.clientName, booking.clientEmail)} proposed times for the ${kindLabel}`
           : `Your agent proposed alternative times for the ${kindLabel}`}
       </h4>
       <p className="mt-1 text-xs text-muted-foreground">

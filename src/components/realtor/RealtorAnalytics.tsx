@@ -7,6 +7,7 @@ import { KICKOFF_LABEL, type MortgageLead } from "@/lib/leads";
 import { buyerAgentSummary, useBuyerProcess } from "@/lib/buyer-process";
 import { REALTOR_COMMISSION_PCT, usd } from "@/lib/accounting";
 import type { Realtor } from "@/lib/realtors";
+import { clientDisplayForPartner } from "@/lib/user-id";
 
 function Stat({ label, value, note }: { label: string; value: string | number; note?: string }) {
   return (
@@ -89,7 +90,7 @@ export function RealtorAnalytics({ me, mine }: { me: Realtor; mine: MortgageLead
               <tbody className="divide-y divide-border">
                 {mine.map((l) => (
                   <tr key={l.id}>
-                    <td className="py-2.5 pr-4 font-semibold text-foreground">{l.clientName}</td>
+                    <td className="py-2.5 pr-4 font-semibold text-foreground">{clientDisplayForPartner(l.clientName, l.clientEmail)}</td>
                     <td className="py-2.5 pr-4 text-muted-foreground">{l.propertyLabel}</td>
                     <td className="py-2.5 pr-4 text-muted-foreground">
                       {l.buyerAgent?.kickoff ? KICKOFF_LABEL[l.buyerAgent.kickoff] : "—"}

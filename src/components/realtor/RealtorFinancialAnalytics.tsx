@@ -5,6 +5,7 @@
  */
 import { type MortgageLead } from "@/lib/leads";
 import { REALTOR_COMMISSION_PCT, REALTOR_PLATFORM_FEE_PCT, usd } from "@/lib/accounting";
+import { clientDisplayForPartner } from "@/lib/user-id";
 
 function Stat({ label, value, note }: { label: string; value: string | number; note?: string }) {
   return (
@@ -77,7 +78,7 @@ export function RealtorFinancialAnalytics({ mine }: { mine: MortgageLead[] }) {
               <tbody className="divide-y divide-border">
                 {rows.map(({ lead, gross, fee, net }) => (
                   <tr key={lead.id}>
-                    <td className="py-2.5 pr-4 font-semibold text-foreground">{lead.clientName}</td>
+                    <td className="py-2.5 pr-4 font-semibold text-foreground">{clientDisplayForPartner(lead.clientName, lead.clientEmail)}</td>
                     <td className="py-2.5 pr-4 text-muted-foreground">{lead.propertyLabel}</td>
                     <td className="py-2.5 pr-4 text-muted-foreground">{usd(lead.propertyPrice)}</td>
                     <td className="py-2.5 pr-4 text-muted-foreground">{usd(gross)}</td>

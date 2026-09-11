@@ -15,6 +15,7 @@ import { ApplicantFile, Row } from "@/components/lender/ApplicantFile";
 import { useLenderTeam } from "@/lib/lender-team";
 import { buyerAgentSummary, useBuyerProcess } from "@/lib/buyer-process";
 import { PaymentScheduleButton } from "@/components/mortgage/PaymentScheduleDialog";
+import { clientDisplayForPartner } from "@/lib/user-id";
 
 const money = (n: number) => `$${Math.round(n).toLocaleString()}`;
 
@@ -275,7 +276,9 @@ export function LenderMortgages({ canManage }: { canManage: boolean }) {
                   className="flex w-full flex-wrap items-center gap-4 p-5 text-left hover:bg-brand-tint/30"
                 >
                   <div className="min-w-[200px] flex-1">
-                    <div className="text-sm font-semibold text-foreground">{l.clientName}</div>
+                    <div className="text-sm font-semibold text-foreground">
+                      {clientDisplayForPartner(l.clientName, l.clientEmail)}
+                    </div>
                     <div className="text-xs text-muted-foreground">
                       {l.propertyLabel} · {money(l.propertyPrice)}
                     </div>

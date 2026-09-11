@@ -14,6 +14,7 @@ import {
 import { formatDate } from "@/lib/dates";
 import { logActivity } from "@/lib/activity";
 import type { Realtor } from "@/lib/realtors";
+import { clientDisplayForPartner } from "@/lib/user-id";
 
 function Stat({ label, value, note }: { label: string; value: string | number; note?: string }) {
   return (
@@ -89,7 +90,7 @@ export function RealtorAccounting({ me, mine }: { me: Realtor; mine: MortgageLea
                     <td className="py-2.5 pr-4 font-semibold text-foreground">
                       {lead.propertyLabel}
                     </td>
-                    <td className="py-2.5 pr-4 text-muted-foreground">{lead.clientName}</td>
+                    <td className="py-2.5 pr-4 text-muted-foreground">{clientDisplayForPartner(lead.clientName, lead.clientEmail)}</td>
                     <td className="py-2.5 pr-4 text-muted-foreground">{usd(lead.propertyPrice)}</td>
                     <td className="py-2.5 pr-4 text-muted-foreground">{usd(gross)}</td>
                     <td className="py-2.5 pr-4 text-muted-foreground">{usd(fee)}</td>
