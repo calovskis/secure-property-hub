@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { BuyerAgentDialog } from "@/components/mortgage/BuyerAgentDialog";
+import { PaymentScheduleButton } from "@/components/mortgage/PaymentScheduleDialog";
 import {
   CLIENT_DECISION_LABEL,
   LEAD_STATUS_LABEL,

@@ -11,6 +11,7 @@ import {
 } from "@/lib/leads";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import { BuyerAgentDialog } from "@/components/mortgage/BuyerAgentDialog";
+import { PaymentScheduleButton } from "@/components/mortgage/PaymentScheduleDialog";
 import { BuyerProcessCard } from "@/components/buyer/BuyerProcessCard";
 import {
   Dialog,
