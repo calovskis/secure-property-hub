@@ -634,7 +634,37 @@ function useDerivedNotifications() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.email, requests, email]);
 
+  /* ------------------------------- lender side ------------------------------
+     A mortgage lender partner is told about every pre-approval inquiry routed
+     to their desk (within their licensed state scope). Once the inquiry is
+     picked up by someone on their team, the same notification is marked
+     "Assigned" in place — same id, date and position in the list. */
+  useEffect(() => {
+    if (!user || !leadsReady) return;
+    if (user.role !== "partner" || user.partnerType !== "lender") return;
+    const list: Draft[] = [];
+    for (const lead of leads) {
+      if (lead.status === "annulled") continue;
+      if (scopedStates && !scopedStates.includes(leadState(lead))) continue;
+      const assigned = Boolean(lead.assignedToId);
+      list.push({
+        id: `lenderinq-${lead.id}`,
+        to: email,
+        title: "New pre-approval inquiry",
+        body: `${lead.clientName} · ${lead.propertyLabel}${
+          assigned ? ` — assigned to ${lead.assignedToName ?? "your team"}.` : " — awaiting first review."
+        }`,
+        href: `/partner?tab=requests&focus=${lead.id}`,
+        severity: assigned ? "info" : "warning",
+        ...(assigned ? { badge: "Assigned" } : {}),
+        createdAt: lead.submittedAt,
+      });
+    }
+    if (list.length) syncNotifications(list);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.email, user?.role, user?.partnerType, leads, leadsReady, scopedStates, email]);
 }
+
 
 export function NotificationBell() {
   const { user } = useAuth();
