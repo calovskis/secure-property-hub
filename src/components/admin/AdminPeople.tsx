@@ -19,6 +19,7 @@ import {
   type PeopleScope,
 } from "@/components/admin/people-model";
 import type { PartnerType } from "@/lib/auth";
+import { loqalNumber } from "@/lib/user-id";
 
 type Filters = {
   q: string;
