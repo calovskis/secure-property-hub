@@ -15,6 +15,10 @@ import { PhoneField } from "@/components/form/PhoneField";
 import { isValidPhone } from "@/lib/phone";
 
 export const Route = createFileRoute("/auth")({
+  validateSearch: (search: Record<string, unknown>): { mode?: "register" | "login" } =>
+    search["mode"] === "register" || search["mode"] === "login"
+      ? { mode: search["mode"] }
+      : {},
   component: AuthPage,
   head: () => ({
     meta: [
@@ -58,7 +62,8 @@ const INTERNAL_ROLES: { value: Role; label: string }[] = [
 function AuthPage() {
   const { signIn } = useAuth();
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"login" | "register">("login");
+  const { mode: initialMode } = Route.useSearch();
+  const [mode, setMode] = useState<"login" | "register">(initialMode ?? "login");
 
   const [firstName, setFirstName] = useState("");
   const [middleName, setMiddleName] = useState("");
