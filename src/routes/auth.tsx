@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import {
-  knownName,
+  fetchRegisteredIdentity,
   PARTNER_LABEL,
   homeRouteFor,
   useAuth,
