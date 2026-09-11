@@ -96,6 +96,9 @@ function FileDetail({ lead }: { lead: MortgageLead }) {
           <Row label="DTI ceiling" value={`${Math.round(lead.dtiLimit * 100)}%`} />
           <Row label="Issued" value={formatDate(t.issuedAt)} />
         </div>
+        <div className="mt-3">
+          <PaymentScheduleButton lead={lead} />
+        </div>
       </section>
 
       <section className="rounded-lg border border-border bg-card p-4">
