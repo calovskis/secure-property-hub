@@ -182,6 +182,13 @@ export function PersonDetailContent({
             </p>
           )
         ) : null}
+        {tab === "partners" ? (
+          person.group === "partner" ? (
+            <PartnerClientsTab person={person} />
+          ) : (
+            <ClientPartnersTab person={person} />
+          )
+        ) : null}
         {tab === "properties" ? <PropertiesTab person={person} /> : null}
         {tab === "activity" ? <ActivityTab person={person} /> : null}
         {tab === "metrics" ? <MetricsTab person={person} /> : null}
