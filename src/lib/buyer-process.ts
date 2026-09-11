@@ -51,8 +51,13 @@ export type CallBooking = {
    */
   status: "proposed" | "confirmed";
   proposedSlots?: string[];
+  /** Who proposed the times currently on the table. */
+  proposedBy?: "buyer" | "agent";
   /** Buyer's note attached to the proposal. */
   note?: string;
+  /** Agent's note attached to an alternative proposal. */
+  agentNote?: string;
+
   /** Google Calendar event created in the agent's calendar. */
   googleEventId?: string;
   /** Google Meet link for the appointment. */
