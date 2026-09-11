@@ -479,10 +479,6 @@ function Dashboard() {
           </span>
         </div>
 
-        <div className="mb-8">
-          <TaskTracker />
-        </div>
-
         {pendingOffers.length ? (
           <div className="mb-8 rounded-xl border border-gold/40 bg-gold-tint/50 p-5">
             <div className="text-sm font-semibold text-foreground">
