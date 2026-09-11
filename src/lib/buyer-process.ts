@@ -536,6 +536,7 @@ export function useBuyerProcess() {
     bookCall,
     proposeSlots,
     confirmProposal,
+    counterPropose,
     endCall,
     addClientAction,
   };
