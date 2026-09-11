@@ -333,75 +333,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   /**
-   * Partners registered through /partner-access: the registration record is
-   * the source of truth for their name, so the session adopts it.
+   * The registration record in the database is the single source of truth for
+   * everybody's first and last name — clients, corporates and partners alike.
+   * Whatever a stale browser session holds is corrected here on every sign-in.
    */
+  const userRef = useRef(user);
+  userRef.current = user;
+  const email = user?.email ?? null;
+  const role = user?.role ?? null;
   useEffect(() => {
-    // Only partner accounts adopt the name from their registration record —
-    // a client session must never be renamed by a partner_requests row.
-    if (!authUserId || !user || user.role !== "partner") return;
+    if (!email || !role || role === "admin") return;
     let active = true;
-    void supabase
-      .from("partner_requests")
-      .select("first_name,last_name,company_name,phone")
-      .eq("user_id", authUserId)
-      .order("submitted_at", { ascending: false })
-      .limit(1)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (!active || !data) return;
-        const firstName = normalizeName(data.first_name);
-        const lastName = normalizeName(data.last_name);
-        if (!firstName && !lastName) return;
-        if (firstName === user.firstName && lastName === user.lastName) return;
-        persist({
-          ...user,
-          ...(firstName ? { firstName } : {}),
-          ...(lastName ? { lastName } : {}),
-          ...(data.company_name && !user.companyName ? { companyName: data.company_name } : {}),
-          ...(data.phone && !user.phone ? { phone: data.phone } : {}),
-        });
+    void fetchRegisteredIdentity(authUserId, email).then((identity) => {
+      const current = userRef.current;
+      if (!active || !identity || !current) return;
+      if (!identity.firstName && !identity.lastName) return;
+      const middleName = identity.middleName ?? "";
+      const unchanged =
+        identity.firstName === current.firstName &&
+        identity.lastName === current.lastName &&
+        middleName === (current.middleName ?? "") &&
+        (!identity.phone || identity.phone === current.phone) &&
+        (identity.usPerson === undefined || identity.usPerson === current.usPerson);
+      if (unchanged) return;
+      const { middleName: _previousMiddleName, ...rest } = current;
+      persist({
+        ...rest,
+        firstName: identity.firstName,
+        lastName: identity.lastName,
+        ...(middleName ? { middleName } : {}),
+        ...(identity.phone ? { phone: identity.phone } : {}),
+        ...(identity.usPerson !== undefined ? { usPerson: identity.usPerson } : {}),
+        ...(identity.companyName && role === "partner"
+          ? { companyName: identity.companyName }
+          : {}),
+        ...(identity.lenderLicence && role === "partner"
+          ? { lenderLicence: identity.lenderLicence }
+          : {}),
       });
+    });
     return () => {
       active = false;
     };
-  }, [authUserId, user, persist]);
-
-  /** Client registration data is authoritative for the signed-in client's identity. */
-  useEffect(() => {
-    if (!authUserId || !user || (user.role !== "client" && user.role !== "corporate")) return;
-    let active = true;
-    void supabase
-      .from("client_profiles")
-      .select("first_name,middle_name,last_name,phone,us_person")
-      .eq("user_id", authUserId)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (!active || !data) return;
-        const firstName = normalizeName(data.first_name);
-        const middleName = normalizeName(data.middle_name);
-        const lastName = normalizeName(data.last_name);
-        const unchanged =
-          firstName === user.firstName &&
-          middleName === (user.middleName ?? "") &&
-          lastName === user.lastName &&
-          data.phone === user.phone &&
-          data.us_person === user.usPerson;
-        if (unchanged) return;
-        const { middleName: _previousMiddleName, ...userWithoutMiddleName } = user;
-        persist({
-          ...userWithoutMiddleName,
-          firstName,
-          lastName,
-          phone: data.phone,
-          usPerson: data.us_person,
-          ...(middleName ? { middleName } : {}),
-        });
-      });
-    return () => {
-      active = false;
-    };
-  }, [authUserId, user, persist]);
+  }, [authUserId, email, role, persist]);
 
   const value = useMemo<AuthContextValue>(() => {
     const privileged = user?.role === "admin" || user?.role === "partner";
