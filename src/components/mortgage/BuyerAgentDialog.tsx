@@ -16,6 +16,8 @@ import {
   type Representation,
 } from "@/lib/leads";
 import { useI18n } from "@/lib/i18n";
+import { usePartnerRequests } from "@/lib/partner-requests";
+import { partnerDisplayForClient } from "@/lib/user-id";
 import { useBuyerProcess } from "@/lib/buyer-process";
 import { CallScheduler } from "@/components/buyer/CallScheduler";
 import { formatDateTime } from "@/lib/dates";
@@ -135,7 +137,14 @@ export function BuyerAgentDialog({
     setStep("done");
   }
 
-  const agentName = lead.buyerAgent?.agentName;
+  const { requests: partnerRegs } = usePartnerRequests();
+  const agentReg = lead.buyerAgent?.agentId
+    ? partnerRegs.find((r) => r.id === lead.buyerAgent!.agentId)
+    : undefined;
+  // Clients only see the agent's first name + internal number.
+  const agentName = lead.buyerAgent?.agentName
+    ? partnerDisplayForClient(lead.buyerAgent.agentName, agentReg?.email)
+    : undefined;
   const saved = lead.buyerAgent;
 
   return (
