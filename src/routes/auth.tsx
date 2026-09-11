@@ -174,9 +174,6 @@ function AuthPage() {
       : loginRole === "partner" && !identity?.partnerType && identity?.usPerson !== undefined
         ? "client"
         : loginRole;
-    if (loginRole !== effectiveRole && loginRole === "client" && partnerOnly) {
-      setNotice(null);
-    }
     setBusy(false);
     const effectivePartnerType: PartnerType =
       identity?.partnerType ?? loginPartnerType;
@@ -188,16 +185,16 @@ function AuthPage() {
       email,
       phone: identity?.phone || "",
       usPerson: identity?.usPerson ?? false,
-      role: loginRole,
-      ...(loginRole === "partner"
+      role: effectiveRole,
+      ...(effectiveRole === "partner"
         ? {
-            partnerType: identity?.partnerType ?? loginPartnerType,
+            partnerType: effectivePartnerType,
             companyName:
               identity?.companyName ??
-              (loginPartnerType === "lender" ? "Demo Mortgage Partners" : "Demo Partner Co."),
+              (effectivePartnerType === "lender" ? "Demo Mortgage Partners" : "Demo Partner Co."),
             ...(identity?.lenderLicence
               ? { lenderLicence: identity.lenderLicence }
-              : loginPartnerType === "lender"
+              : effectivePartnerType === "lender"
                 ? { lenderLicence: "NMLS-2481907" }
                 : {}),
           }
