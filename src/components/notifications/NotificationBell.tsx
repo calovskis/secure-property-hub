@@ -242,6 +242,8 @@ function useDerivedNotifications() {
       for (const request of outstanding) {
         const key = `doc-${request.kind}-${email}`;
         const since = requestOpenedAt(key);
+        /* Nothing is announced for the first 2 hours after the form is done. */
+        if (!documentNoticeDue(since, new Date(now))) continue;
         list.push({
           id: key,
           to: email,
