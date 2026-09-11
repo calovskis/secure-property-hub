@@ -26,10 +26,12 @@ import {
 } from "@/lib/document-requests";
 import {
   completeNotifications,
+  pruneDerived,
   syncNotifications,
   useNotifications,
   type AppNotification,
 } from "@/lib/notifications";
+import { clientDisplayForPartner } from "@/lib/user-id";
 import { formatDateTime, usDateToIso } from "@/lib/dates";
 
 type Draft = Omit<AppNotification, "createdAt"> & { createdAt?: string | undefined };
