@@ -1,1 +1,2 @@
 - [x] Fix current preview typecheck/build errors
+- [x] Remove stale mortgage questionnaire tasks after a pre-approval has been submitted
