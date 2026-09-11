@@ -39,6 +39,8 @@ export type CallBooking = {
   leadId: string;
   realtorId?: string;
   clientName: string;
+  /** Buyer's account e-mail — used only to derive their internal Loqal number. */
+  clientEmail?: string;
   propertyLabel: string;
   kind: CallKind;
   /** ISO start/end — 1 hour per booking. While proposed, startAt is the first option. */
@@ -363,6 +365,7 @@ export function useBuyerProcess() {
       leadId: string;
       realtorId?: string;
       clientName: string;
+      clientEmail?: string;
       propertyLabel: string;
       kind: CallKind;
       startAt: string;
@@ -376,6 +379,7 @@ export function useBuyerProcess() {
         id: uid(),
         leadId: input.leadId,
         clientName: input.clientName,
+        ...(input.clientEmail ? { clientEmail: input.clientEmail } : {}),
         propertyLabel: input.propertyLabel,
         kind: input.kind,
         startAt: input.startAt,
@@ -400,6 +404,7 @@ export function useBuyerProcess() {
       leadId: string;
       realtorId?: string;
       clientName: string;
+      clientEmail?: string;
       propertyLabel: string;
       kind: CallKind;
       slots: string[];
@@ -414,6 +419,7 @@ export function useBuyerProcess() {
         id: uid(),
         leadId: input.leadId,
         clientName: input.clientName,
+        ...(input.clientEmail ? { clientEmail: input.clientEmail } : {}),
         propertyLabel: input.propertyLabel,
         kind: input.kind,
         startAt: sorted[0]!,
