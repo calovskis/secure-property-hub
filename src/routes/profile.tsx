@@ -857,6 +857,15 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
             licenses={licenses}
             onSubmit={uploadCopies}
           />
+          <LicenceRenewalDialog
+            open={Boolean(renewState)}
+            onOpenChange={(o) => (o ? null : setRenewState(null))}
+            license={licenses.find((l) => l.state === renewState)}
+            onSubmit={(next) => {
+              if (renewState) renewLicence(renewState, next);
+            }}
+          />
+
         </>
       ) : null}
     </section>
