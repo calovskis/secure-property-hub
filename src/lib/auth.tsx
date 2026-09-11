@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -204,6 +205,90 @@ function normalizeUser(user: LoqalUser): LoqalUser {
   };
 }
 
+/** Identity exactly as it was given at registration. */
+export type RegisteredIdentity = {
+  firstName: string;
+  middleName?: string;
+  lastName: string;
+  phone?: string;
+  usPerson?: boolean;
+  companyName?: string;
+  partnerType?: PartnerType;
+  lenderLicence?: string;
+};
+
+/**
+ * The single source of truth for a person's name anywhere on Loqal: the
+ * registration record in the database (client registration first, then a
+ * partner registration). Browser caches are never consulted here, so one
+ * account can never inherit another person's name.
+ */
+export async function fetchRegisteredIdentity(
+  authUserId: string | null,
+  email?: string | null,
+): Promise<RegisteredIdentity | null> {
+  const mail = (email ?? "").trim().toLowerCase();
+  if (authUserId) {
+    const { data } = await supabase
+      .from("client_profiles")
+      .select("first_name,middle_name,last_name,phone,us_person")
+      .eq("user_id", authUserId)
+      .maybeSingle();
+    if (data && (data.first_name || data.last_name)) {
+      return {
+        firstName: normalizeName(data.first_name),
+        lastName: normalizeName(data.last_name),
+        ...(data.middle_name ? { middleName: normalizeName(data.middle_name) } : {}),
+        ...(data.phone ? { phone: data.phone } : {}),
+        usPerson: data.us_person,
+      };
+    }
+  }
+
+  type PartnerRow = {
+    first_name: string | null;
+    last_name: string | null;
+    phone: string | null;
+    company_name: string | null;
+    partner_type: string | null;
+    lender_licence: string | null;
+  };
+  const cols = "first_name,last_name,phone,company_name,partner_type,lender_licence";
+  let partner: PartnerRow | null = null;
+
+  if (authUserId) {
+    const { data } = await supabase
+      .from("partner_requests")
+      .select(cols)
+      .eq("user_id", authUserId)
+      .order("submitted_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    partner = (data as PartnerRow | null) ?? null;
+  }
+  if (!partner && mail) {
+    const { data } = await supabase
+      .from("partner_requests")
+      .select(cols)
+      .ilike("email", mail)
+      .order("submitted_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    partner = (data as PartnerRow | null) ?? null;
+  }
+  if (partner && (partner.first_name || partner.last_name)) {
+    return {
+      firstName: normalizeName(partner.first_name),
+      lastName: normalizeName(partner.last_name),
+      ...(partner.phone ? { phone: partner.phone } : {}),
+      ...(partner.company_name ? { companyName: partner.company_name } : {}),
+      ...(partner.partner_type ? { partnerType: partner.partner_type as PartnerType } : {}),
+      ...(partner.lender_licence ? { lenderLicence: partner.lender_licence } : {}),
+    };
+  }
+  return null;
+}
+
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -249,75 +334,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   /**
-   * Partners registered through /partner-access: the registration record is
-   * the source of truth for their name, so the session adopts it.
+   * The registration record in the database is the single source of truth for
+   * everybody's first and last name — clients, corporates and partners alike.
+   * Whatever a stale browser session holds is corrected here on every sign-in.
    */
+  const userRef = useRef(user);
+  userRef.current = user;
+  const email = user?.email ?? null;
+  const role = user?.role ?? null;
   useEffect(() => {
-    // Only partner accounts adopt the name from their registration record —
-    // a client session must never be renamed by a partner_requests row.
-    if (!authUserId || !user || user.role !== "partner") return;
+    if (!email || !role || role === "admin") return;
     let active = true;
-    void supabase
-      .from("partner_requests")
-      .select("first_name,last_name,company_name,phone")
-      .eq("user_id", authUserId)
-      .order("submitted_at", { ascending: false })
-      .limit(1)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (!active || !data) return;
-        const firstName = normalizeName(data.first_name);
-        const lastName = normalizeName(data.last_name);
-        if (!firstName && !lastName) return;
-        if (firstName === user.firstName && lastName === user.lastName) return;
-        persist({
-          ...user,
-          ...(firstName ? { firstName } : {}),
-          ...(lastName ? { lastName } : {}),
-          ...(data.company_name && !user.companyName ? { companyName: data.company_name } : {}),
-          ...(data.phone && !user.phone ? { phone: data.phone } : {}),
-        });
+    void fetchRegisteredIdentity(authUserId, email).then((identity) => {
+      const current = userRef.current;
+      if (!active || !identity || !current) return;
+      if (!identity.firstName && !identity.lastName) return;
+      const middleName = identity.middleName ?? "";
+      const unchanged =
+        identity.firstName === current.firstName &&
+        identity.lastName === current.lastName &&
+        middleName === (current.middleName ?? "") &&
+        (!identity.phone || identity.phone === current.phone) &&
+        (identity.usPerson === undefined || identity.usPerson === current.usPerson);
+      if (unchanged) return;
+      const { middleName: _previousMiddleName, ...rest } = current;
+      persist({
+        ...rest,
+        firstName: identity.firstName,
+        lastName: identity.lastName,
+        ...(middleName ? { middleName } : {}),
+        ...(identity.phone ? { phone: identity.phone } : {}),
+        ...(identity.usPerson !== undefined ? { usPerson: identity.usPerson } : {}),
+        ...(identity.companyName && role === "partner"
+          ? { companyName: identity.companyName }
+          : {}),
+        ...(identity.lenderLicence && role === "partner"
+          ? { lenderLicence: identity.lenderLicence }
+          : {}),
       });
+    });
     return () => {
       active = false;
     };
-  }, [authUserId, user, persist]);
-
-  /** Client registration data is authoritative for the signed-in client's identity. */
-  useEffect(() => {
-    if (!authUserId || !user || (user.role !== "client" && user.role !== "corporate")) return;
-    let active = true;
-    void supabase
-      .from("client_profiles")
-      .select("first_name,middle_name,last_name,phone,us_person")
-      .eq("user_id", authUserId)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (!active || !data) return;
-        const firstName = normalizeName(data.first_name);
-        const middleName = normalizeName(data.middle_name);
-        const lastName = normalizeName(data.last_name);
-        const unchanged =
-          firstName === user.firstName &&
-          middleName === (user.middleName ?? "") &&
-          lastName === user.lastName &&
-          data.phone === user.phone &&
-          data.us_person === user.usPerson;
-        if (unchanged) return;
-        const { middleName: _previousMiddleName, ...userWithoutMiddleName } = user;
-        persist({
-          ...userWithoutMiddleName,
-          firstName,
-          lastName,
-          phone: data.phone,
-          usPerson: data.us_person,
-          ...(middleName ? { middleName } : {}),
-        });
-      });
-    return () => {
-      active = false;
-    };
-  }, [authUserId, user, persist]);
+  }, [authUserId, email, role, persist]);
 
   const value = useMemo<AuthContextValue>(() => {
     const privileged = user?.role === "admin" || user?.role === "partner";

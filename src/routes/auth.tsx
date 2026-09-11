@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import {
-  knownName,
+  fetchRegisteredIdentity,
   PARTNER_LABEL,
   homeRouteFor,
   useAuth,
@@ -162,36 +162,30 @@ function AuthPage() {
       );
     }
     const { data: authData } = await supabase.auth.getUser();
-    const authId = authData.user?.id;
-    const { data: clientProfile } = authId
-      ? await supabase
-          .from("client_profiles")
-          .select("first_name,middle_name,last_name,phone,us_person")
-          .eq("user_id", authId)
-          .maybeSingle()
-      : { data: null };
+    const authId = authData.user?.id ?? null;
+    // The registration record — never a browser cache — decides the name.
+    const identity = await fetchRegisteredIdentity(authId, email);
     setBusy(false);
-    const remembered = knownName(email);
     const derived = namesFromEmail(email);
     complete({
-      firstName: clientProfile?.first_name || remembered?.firstName || derived.firstName,
-      lastName: clientProfile?.last_name || remembered?.lastName || derived.lastName,
-      ...(clientProfile?.middle_name
-        ? { middleName: clientProfile.middle_name }
-        : remembered?.middleName
-          ? { middleName: remembered.middleName }
-          : {}),
+      firstName: identity?.firstName || derived.firstName,
+      lastName: identity?.lastName || derived.lastName,
+      ...(identity?.middleName ? { middleName: identity.middleName } : {}),
       email,
-      phone: clientProfile?.phone || remembered?.phone || "",
-
-      usPerson: clientProfile?.us_person ?? false,
+      phone: identity?.phone || "",
+      usPerson: identity?.usPerson ?? false,
       role: loginRole,
       ...(loginRole === "partner"
         ? {
-            partnerType: loginPartnerType,
+            partnerType: identity?.partnerType ?? loginPartnerType,
             companyName:
-              loginPartnerType === "lender" ? "Demo Mortgage Partners" : "Demo Partner Co.",
-            ...(loginPartnerType === "lender" ? { lenderLicence: "NMLS-2481907" } : {}),
+              identity?.companyName ??
+              (loginPartnerType === "lender" ? "Demo Mortgage Partners" : "Demo Partner Co."),
+            ...(identity?.lenderLicence
+              ? { lenderLicence: identity.lenderLicence }
+              : loginPartnerType === "lender"
+                ? { lenderLicence: "NMLS-2481907" }
+                : {}),
           }
         : {}),
     });
