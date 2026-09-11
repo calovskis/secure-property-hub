@@ -27,6 +27,8 @@ export type AppNotification = {
   emailCopy?: boolean;
   /** The action this notification asked for has been completed. */
   completed?: boolean;
+  /** Small status chip shown next to the title (e.g. "Assigned"). */
+  badge?: string;
   createdAt: string;
   readAt?: string;
 };
