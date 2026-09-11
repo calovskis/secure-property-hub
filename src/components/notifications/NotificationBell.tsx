@@ -364,9 +364,21 @@ function useDerivedNotifications() {
           });
         }
       }
+      /* Licences that were renewed must not keep an expiry task alive. */
+      for (const lic of seat.licenses) {
+        if (daysLeft(lic.validUntil) > 30) {
+          completedIds.push(
+            `lic-exp-${seat.id}-${lic.state}`,
+            `lic-15-${seat.id}-${lic.state}`,
+            `lic-30-${seat.id}-${lic.state}`,
+          );
+        }
+      }
       const myFiles = leads.filter((l) => l.buyerAgent?.agentId === seat.id);
       for (const lead of myFiles) {
         const photo = proc.photos[lead.id];
+        if (photo && photo.status === "delivered")
+          completedIds.push(`photoreq-${lead.id}-${photo.requestedAt}`);
         if (photo && photo.status !== "delivered") {
           list.push({
             id: `photoreq-${lead.id}-${photo.requestedAt}`,
@@ -391,16 +403,23 @@ function useDerivedNotifications() {
         }
       }
       for (const b of proc.bookings) {
-        if (b.realtorId === seat.id && b.status === "proposed") {
+        if (b.realtorId !== seat.id && !myFiles.some((l) => l.id === b.leadId)) continue;
+        /* Only the side that has to answer keeps an open task. Once a time is
+           agreed — or the agent has replied with alternatives — the original
+           request is marked completed in place. */
+        const waitingForAgent = b.status === "proposed" && (b.proposedBy ?? "buyer") === "buyer";
+        if (waitingForAgent) {
           list.push({
             id: `proposal-${b.id}`,
             to: email,
             title: b.kind === "video_tour" ? "Video tour times proposed" : "In-person visit times proposed",
-            body: `${b.clientName} — ${b.propertyLabel}. Confirm one of the proposed slots.`,
+            body: `${b.clientName} — ${b.propertyLabel}. Confirm one of the ranked times or propose your own.`,
             href: `/partner?tab=calendar&focus=${b.id}`,
             severity: "warning",
             createdAt: b.createdAt,
           });
+        } else {
+          completedIds.push(`proposal-${b.id}`);
         }
       }
     }
