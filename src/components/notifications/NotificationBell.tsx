@@ -496,8 +496,9 @@ function useDerivedNotifications() {
       const isRealtor = r.partnerType === "realtor";
       if (isRealtor) {
         const idKey = `pdoc-identity-${r.id}`;
-        if (!rv?.identityDoc) {
-          const since = requestOpenedAt(idKey);
+        const idSince = requestOpenedAt(idKey);
+        if (!rv?.identityDoc && documentNoticeDue(idSince)) {
+          const since = idSince;
           list.push({
             id: idKey,
             to: email,
