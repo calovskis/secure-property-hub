@@ -737,6 +737,7 @@ function useDerivedNotifications() {
       });
     }
     if (list.length) syncNotifications(list);
+    pruneDerived(email, ["lenderinq-"], list.map((n) => n.id));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.email, user?.role, user?.partnerType, leads, leadsReady, scopedStates, email]);
 }
