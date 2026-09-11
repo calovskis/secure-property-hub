@@ -527,16 +527,39 @@ function BuyerFile({ lead, me }: { lead: MortgageLead; me: Realtor }) {
                   </h3>
                   {videoTour && videoTour.status === "proposed" ? (
                     <div className="mt-3">
-                      <TourProposalPanel booking={videoTour} side="agent" realtorId={me.id} />
+                      <TourProposalPanel
+                        booking={videoTour}
+                        side="agent"
+                        realtorId={me.id}
+                        agentEmail={me.email}
+                      />
                     </div>
                   ) : videoTour ? (
-                    <p className="mt-1 text-sm text-muted-foreground">
+                    <div className="mt-1 text-sm text-muted-foreground">
                       Video tour scheduled for{" "}
                       <strong className="text-foreground">
                         {formatDateTime(videoTour.startAt)}
                       </strong>{" "}
-                      (1 hour).
-                    </p>
+                      (1 hour) on Google Meet.
+                      {videoTour.meetUrl ? (
+                        <div className="mt-2">
+                          <a
+                            href={videoTour.meetUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex rounded-md bg-brand px-3 py-1.5 text-xs font-semibold text-background hover:bg-brand-soft"
+                          >
+                            Join Google Meet
+                          </a>
+                          <div className="mt-1 break-all text-[11px]">{videoTour.meetUrl}</div>
+                        </div>
+                      ) : (
+                        <div className="mt-2 text-[11px]">
+                          No Meet link yet — connect your Google Calendar below and the link is
+                          created for you.
+                        </div>
+                      )}
+                    </div>
                   ) : (
 
                     <>
@@ -614,7 +637,7 @@ function CalendarSection({ me, myLeads }: { me: Realtor; myLeads: MortgageLead[]
                   {clientDisplayForPartner(b.clientName, b.clientEmail)} · {b.propertyLabel}
                 </div>
                 <div className="mt-2">
-                  <TourProposalPanel booking={b} side="agent" realtorId={me.id} />
+                  <TourProposalPanel booking={b} side="agent" realtorId={me.id} agentEmail={me.email} />
                 </div>
               </div>
             ))}
@@ -644,6 +667,16 @@ function CalendarSection({ me, myLeads }: { me: Realtor; myLeads: MortgageLead[]
                   </div>
                   <div className="text-xs text-muted-foreground">{b.propertyLabel}</div>
                 </div>
+                {b.meetUrl ? (
+                  <a
+                    href={b.meetUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-md bg-brand px-3 py-1.5 text-[11px] font-semibold text-background hover:bg-brand-soft"
+                  >
+                    Join Google Meet
+                  </a>
+                ) : null}
                 <span className="rounded-full bg-brand-tint px-3 py-1 text-[11px] font-semibold text-brand">
                   {formatDateTime(b.startAt)} –{" "}
                   {new Date(b.endAt).toLocaleTimeString("en-US", {
