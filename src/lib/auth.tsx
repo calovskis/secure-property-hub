@@ -354,7 +354,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // the partner portal — an old session holding a client role is corrected.
       const partnerOnly =
         Boolean(identity.partnerType) && identity.usPerson === undefined;
-      const correctedRole: Role = partnerOnly && role !== "admin" ? "partner" : current.role;
+      const correctedRole: Role = partnerOnly ? "partner" : current.role;
       const unchanged =
         identity.firstName === current.firstName &&
         identity.lastName === current.lastName &&
