@@ -729,7 +729,7 @@ function useDerivedNotifications() {
         id: `lenderinq-${lead.id}`,
         to: email,
         title: "New pre-approval inquiry",
-        body: `${lead.clientName} · ${lead.propertyLabel}${
+        body: `${clientDisplayForPartner(lead.clientName, lead.clientEmail)} · ${lead.propertyLabel}${
           assigned ? ` — assigned to ${lead.assignedToName ?? "your team"}.` : " — awaiting first review."
         }`,
         href: `/partner?tab=requests&focus=${lead.id}`,
