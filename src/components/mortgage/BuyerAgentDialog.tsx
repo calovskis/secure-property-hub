@@ -123,6 +123,7 @@ export function BuyerAgentDialog({
       proposeSlots({
         leadId: lead.id,
         clientName: lead.clientName,
+                          clientEmail: lead.clientEmail,
         propertyLabel: lead.propertyLabel,
         kind: "video_tour",
         slots: tourSlots,
@@ -371,6 +372,7 @@ export function BuyerAgentDialog({
                     bookCall({
                       leadId: lead.id,
                       clientName: lead.clientName,
+                          clientEmail: lead.clientEmail,
                       propertyLabel: lead.propertyLabel,
                       kind: "intro_call",
                       startAt,

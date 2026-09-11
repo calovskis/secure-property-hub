@@ -30,6 +30,7 @@ import { LenderTeam } from "@/components/lender/LenderTeam";
 import { LenderEmployees } from "@/components/lender/LenderEmployees";
 import { InfoRequestDialog } from "@/components/lender/InfoRequestDialog";
 import { PaymentScheduleButton } from "@/components/mortgage/PaymentScheduleDialog";
+import { clientDisplayForPartner } from "@/lib/user-id";
 
 const money = (n: number) => `$${Math.round(n).toLocaleString()}`;
 const date = (iso?: string) => formatDateTime(iso);
@@ -567,7 +568,7 @@ function RequestsInbox({
             <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
               <div>
                 <h2 className="text-lg font-bold text-foreground">
-                  Pre-approval application — {selected.clientName}
+                  Pre-approval application — {clientDisplayForPartner(selected.clientName, selected.clientEmail)}
                 </h2>
                 <p className="text-xs text-muted-foreground">
                   {selected.propertyLabel}
@@ -672,7 +673,9 @@ function RequestsInbox({
                     className="grid w-full grid-cols-1 gap-3 p-4 text-left transition-colors hover:bg-brand-tint/40 md:grid-cols-[1.25fr_1fr_0.8fr_0.9fr_1.1fr_1.25fr] md:items-start"
                   >
                     <div>
-                      <div className="text-sm font-semibold text-foreground">{l.clientName}</div>
+                      <div className="text-sm font-semibold text-foreground">
+                        {clientDisplayForPartner(l.clientName, l.clientEmail)}
+                      </div>
                       <div className="text-[11px] text-muted-foreground">
                         Submitted {date(l.submittedAt)}
                       </div>

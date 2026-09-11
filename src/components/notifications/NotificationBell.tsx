@@ -26,10 +26,12 @@ import {
 } from "@/lib/document-requests";
 import {
   completeNotifications,
+  pruneDerived,
   syncNotifications,
   useNotifications,
   type AppNotification,
 } from "@/lib/notifications";
+import { clientDisplayForPartner } from "@/lib/user-id";
 import { formatDateTime, usDateToIso } from "@/lib/dates";
 
 type Draft = Omit<AppNotification, "createdAt"> & { createdAt?: string | undefined };
@@ -426,7 +428,7 @@ function useDerivedNotifications() {
             id: `proposal-${b.id}`,
             to: email,
             title: b.kind === "video_tour" ? "Video tour times proposed" : "In-person visit times proposed",
-            body: `${b.clientName} — ${b.propertyLabel}. Confirm one of the ranked times or propose your own.`,
+            body: `${clientDisplayForPartner(b.clientName, leads.find((l) => l.id === b.leadId)?.clientEmail)} — ${b.propertyLabel}. Confirm one of the ranked times or propose your own.`,
             href: `/partner?tab=calendar&focus=${b.id}`,
             severity: "warning",
             createdAt: b.createdAt,
@@ -439,6 +441,29 @@ function useDerivedNotifications() {
 
     completeNotifications(completedIds);
     if (list.length) syncNotifications(list);
+    /* Anything under these prefixes that is no longer derived is stale (a
+       renewed licence, a withdrawn request, an older app version) and must
+       stop counting as an open task. */
+    pruneDerived(
+      email,
+      [
+        "assigned-",
+        "offer-",
+        "inforeq-",
+        "agentsetup-",
+        "photos-",
+        "call-",
+        "altslots-",
+        "visa",
+        "doc-",
+        "draft-",
+        "lic-",
+        "photoreq-",
+        "decision-",
+        "proposal-",
+      ],
+      [...list.map((n) => n.id), ...completedIds],
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.email, leadsReady, leads, proc, realtors, email]);
 
@@ -683,6 +708,7 @@ function useDerivedNotifications() {
       }
     }
     if (list.length) syncNotifications(list);
+    pruneDerived(email, ["sign-", "pdoc-", "preq-", "active-"], list.map((n) => n.id));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.email, requests, email]);
 
@@ -703,7 +729,7 @@ function useDerivedNotifications() {
         id: `lenderinq-${lead.id}`,
         to: email,
         title: "New pre-approval inquiry",
-        body: `${lead.clientName} · ${lead.propertyLabel}${
+        body: `${clientDisplayForPartner(lead.clientName, lead.clientEmail)} · ${lead.propertyLabel}${
           assigned ? ` — assigned to ${lead.assignedToName ?? "your team"}.` : " — awaiting first review."
         }`,
         href: `/partner?tab=requests&focus=${lead.id}`,
@@ -713,6 +739,7 @@ function useDerivedNotifications() {
       });
     }
     if (list.length) syncNotifications(list);
+    pruneDerived(email, ["lenderinq-"], list.map((n) => n.id));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.email, user?.role, user?.partnerType, leads, leadsReady, scopedStates, email]);
 }

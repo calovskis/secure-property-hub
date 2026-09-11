@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import type { CallBooking } from "@/lib/buyer-process";
 import { formatDateTime } from "@/lib/dates";
+import { clientDisplayForPartner } from "@/lib/user-id";
 
 function formatClock(totalSeconds: number) {
   const m = Math.floor(totalSeconds / 60);
@@ -25,7 +26,7 @@ function buildTranscript(booking: CallBooking, durationMin: number): string {
   const when = formatDateTime(new Date().toISOString());
   return [
     `Call recording saved — ${when} · duration ${durationMin} min · ${booking.propertyLabel}.`,
-    `Participants: buyer (${booking.clientName}) and the assigned buyer's agent.`,
+    `Participants: buyer (${clientDisplayForPartner(booking.clientName, booking.clientEmail)}) and the assigned buyer's agent.`,
     "",
     "AI transcript (auto-generated for quality purposes):",
     `[Agent] Welcome, and thanks for joining the live walkthrough of ${booking.propertyLabel}. I'll start at the front of the property and move room by room — tell me where you'd like me to stop or zoom in.`,

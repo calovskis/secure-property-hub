@@ -27,6 +27,7 @@ import { RealtorFinancialAnalytics } from "@/components/realtor/RealtorFinancial
 import { useGreeting } from "@/lib/greeting";
 import { PointOfContactCard } from "@/components/partner/PointOfContactCard";
 import { TaskTracker } from "@/components/tasks/TaskTracker";
+import { clientDisplayForPartner } from "@/lib/user-id";
 
 const money = (n: number) => `$${Math.round(n).toLocaleString()}`;
 const inputClass =
@@ -420,7 +421,9 @@ function BuyerFile({ lead, me }: { lead: MortgageLead; me: Realtor }) {
         className="flex w-full flex-wrap items-center gap-4 p-5 text-left hover:bg-brand-tint/30"
       >
         <div className="min-w-[220px] flex-1">
-          <div className="text-sm font-semibold text-foreground">{lead.clientName}</div>
+          <div className="text-sm font-semibold text-foreground">
+            {clientDisplayForPartner(lead.clientName, lead.clientEmail)}
+          </div>
           <div className="text-xs text-muted-foreground">
             {lead.propertyLabel} · {money(lead.propertyPrice)}
           </div>
@@ -458,7 +461,7 @@ function BuyerFile({ lead, me }: { lead: MortgageLead; me: Realtor }) {
             <section className="rounded-lg border border-border bg-card p-4">
               <h3 className="text-sm font-semibold text-foreground">Buyer</h3>
               <div className="mt-2">
-                <Row label="Name" value={lead.clientName} />
+                <Row label="Buyer" value={clientDisplayForPartner(lead.clientName, lead.clientEmail)} />
                 <Row
                   label="US status"
                   value={lead.usPerson ? "US citizen / green card" : "Non-US person"}
@@ -553,6 +556,7 @@ function BuyerFile({ lead, me }: { lead: MortgageLead; me: Realtor }) {
                               leadId: lead.id,
                               realtorId: me.id,
                               clientName: lead.clientName,
+                          clientEmail: lead.clientEmail,
                               propertyLabel: lead.propertyLabel,
                               kind: "video_tour",
                               startAt,
@@ -607,7 +611,7 @@ function CalendarSection({ me, myLeads }: { me: Realtor; myLeads: MortgageLead[]
             {pending.map((b) => (
               <div key={b.id} id={b.id}>
                 <div className="text-sm font-semibold text-foreground">
-                  {b.clientName} · {b.propertyLabel}
+                  {clientDisplayForPartner(b.clientName, b.clientEmail)} · {b.propertyLabel}
                 </div>
                 <div className="mt-2">
                   <TourProposalPanel booking={b} side="agent" realtorId={me.id} />
@@ -635,7 +639,8 @@ function CalendarSection({ me, myLeads }: { me: Realtor; myLeads: MortgageLead[]
                 <span className="text-xl">{b.kind === "video_tour" ? "🎥" : "📞"}</span>
                 <div className="min-w-[200px] flex-1">
                   <div className="text-sm font-semibold text-foreground">
-                    {b.kind === "video_tour" ? "Video property tour" : "Intro call"} — {b.clientName}
+                    {b.kind === "video_tour" ? "Video property tour" : "Intro call"} —{" "}
+                    {clientDisplayForPartner(b.clientName, b.clientEmail)}
                   </div>
                   <div className="text-xs text-muted-foreground">{b.propertyLabel}</div>
                 </div>
