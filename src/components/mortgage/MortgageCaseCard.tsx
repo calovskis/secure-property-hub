@@ -11,6 +11,7 @@ import {
 } from "@/lib/leads";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import { BuyerAgentDialog } from "@/components/mortgage/BuyerAgentDialog";
+import { PaymentScheduleButton } from "@/components/mortgage/PaymentScheduleDialog";
 import { BuyerProcessCard } from "@/components/buyer/BuyerProcessCard";
 import {
   Dialog,
@@ -380,6 +381,11 @@ function ProceedPanel({ lead }: { lead: MortgageLead }) {
           </div>
         ))}
       </div>
+
+      <div className="mt-3">
+        <PaymentScheduleButton lead={lead} />
+      </div>
+
 
       <div className="mt-3 space-y-1.5 rounded-md border border-border bg-background/70 p-3 text-[11px] leading-relaxed text-muted-foreground">
         <p>
