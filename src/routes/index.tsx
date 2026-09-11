@@ -616,6 +616,10 @@ function Dashboard() {
         </div>
 
         <div className="mt-8">
+          <MyPartnersCard />
+        </div>
+
+        <div className="mt-8">
           <TaskTracker />
         </div>
       </main>
