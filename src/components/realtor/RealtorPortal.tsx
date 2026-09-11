@@ -520,7 +520,11 @@ function BuyerFile({ lead, me }: { lead: MortgageLead; me: Realtor }) {
                   <h3 className="text-sm font-semibold text-foreground">
                     🎥 Real-time video showcasing requested
                   </h3>
-                  {videoTour ? (
+                  {videoTour && videoTour.status === "proposed" ? (
+                    <div className="mt-3">
+                      <TourProposalPanel booking={videoTour} side="agent" realtorId={me.id} />
+                    </div>
+                  ) : videoTour ? (
                     <p className="mt-1 text-sm text-muted-foreground">
                       Video tour scheduled for{" "}
                       <strong className="text-foreground">
@@ -529,6 +533,7 @@ function BuyerFile({ lead, me }: { lead: MortgageLead; me: Realtor }) {
                       (1 hour).
                     </p>
                   ) : (
+
                     <>
                       <p className="mt-1 text-sm text-muted-foreground">
                         Visit the property and showcase it to the buyer live on video. Pick a slot
