@@ -136,48 +136,46 @@ export function TaskTracker({ className = "" }: { className?: string }) {
     return [...buckets.values()].sort((a, b) => b.count - a.count);
   }, [notifications, adminItems]);
 
+  const [showAll, setShowAll] = useState(false);
+
   if (!user) return null;
 
+  const visible = showAll ? rows : rows.slice(0, MAX_VISIBLE);
+  const hidden = rows.length - visible.length;
   const total = rows.reduce((s, r) => s + r.count, 0);
 
   return (
-    <section className={`rounded-xl border border-border bg-card p-5 ${className}`}>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <span
-            aria-hidden
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-border text-base"
-          >
-            ☰
-          </span>
-          <h2 className="text-lg font-semibold text-foreground">All tasks</h2>
-          <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">
+    <section className={`rounded-xl border border-border bg-card p-4 ${className}`}>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <h2 className="text-sm font-semibold text-foreground">Open tasks</h2>
+          <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
             {total}
           </span>
         </div>
       </div>
 
       {total === 0 ? (
-        <p className="mt-4 rounded-lg border border-border px-4 py-6 text-center text-sm text-muted-foreground">
+        <p className="mt-3 rounded-lg border border-border px-3 py-4 text-center text-xs text-muted-foreground">
           Nothing needs your attention right now.
         </p>
       ) : (
-        <div className="mt-3 divide-y divide-border">
-          {rows.map((r) => (
+        <div className="mt-2 divide-y divide-border">
+          {visible.map((r) => (
             <button
               key={r.def.id}
               type="button"
               disabled={!r.href}
               onClick={() => r.href && openDeepLink(navigate, r.href)}
-              className="flex w-full items-center gap-3 py-3 text-left transition-colors hover:bg-brand-tint/40 disabled:cursor-default"
+              className="flex w-full items-center gap-2.5 py-2 text-left transition-colors hover:bg-brand-tint/40 disabled:cursor-default"
             >
               <span
                 aria-hidden
-                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-base ${r.def.tone}`}
+                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs ${r.def.tone}`}
               >
                 {r.def.icon}
               </span>
-              <span className="flex-1 text-sm font-medium text-foreground">
+              <span className="flex-1 text-[13px] font-medium text-foreground">
                 {r.def.label}
                 {r.urgent ? (
                   <span className="ml-2 rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-semibold uppercase text-destructive">
@@ -185,12 +183,21 @@ export function TaskTracker({ className = "" }: { className?: string }) {
                   </span>
                 ) : null}
               </span>
-              <span className="text-sm font-semibold text-foreground">{r.count}</span>
+              <span className="text-[13px] font-semibold text-foreground">{r.count}</span>
               <span aria-hidden className="text-xs text-muted-foreground">
                 ›
               </span>
             </button>
           ))}
+          {hidden > 0 || showAll ? (
+            <button
+              type="button"
+              onClick={() => setShowAll((v) => !v)}
+              className="w-full py-2 text-left text-xs font-semibold text-brand hover:underline"
+            >
+              {showAll ? "Show less" : `Show ${hidden} more`}
+            </button>
+          ) : null}
         </div>
       )}
     </section>
