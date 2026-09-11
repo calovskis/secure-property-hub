@@ -272,6 +272,13 @@ export function FeedbackDialog({
                     <div className="text-xs text-muted-foreground">
                       Answered {formatDateTime(lead.clientDecisionAt)}
                     </div>
+                    <p className="text-sm leading-relaxed text-muted-foreground">
+                      {lead.clientDecision === "accepted"
+                        ? "Status: accepted and moving forward. You can change the property within 3 months under the same pre-approval and purchase price. Your next step is to finish the buyer-agent setup for this property."
+                        : lead.clientDecision === "hold"
+                          ? "Status: on hold. These terms are saved — nothing more is needed from you right now."
+                          : "Status: you declined these terms. The file stays on record and you can still proceed later."}
+                    </p>
                   </div>
                 ) : (
                   <div className="space-y-2">
@@ -377,10 +384,10 @@ export function FeedbackDialog({
           ) : null}
         </div>
 
-        {priced ? (
+        {priced && !lead.clientDecision ? (
           <div className="sticky bottom-0 space-y-3 border-t border-border bg-card/95 px-6 py-4 backdrop-blur">
             <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-              {lead.clientDecision ? "Change your answer" : "Your answer to these terms"}
+              Your answer to these terms
             </div>
             <div className="grid gap-2 sm:grid-cols-2">
               <button
