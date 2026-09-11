@@ -623,6 +623,9 @@ function RequestsInbox({
                 {MORTGAGE_STAGE_LABEL[mortgageStage(selected)]} — this file is tracked under
                 Mortgages.
               </p>
+              <div className="mt-3">
+                <PaymentScheduleButton lead={selected} />
+              </div>
             </div>
           ) : canDecide ? (
             <DecisionPanel key={selected.id} lead={selected} />
