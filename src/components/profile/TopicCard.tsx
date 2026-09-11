@@ -96,7 +96,9 @@ export function ConfirmChangesDialog({
   );
 }
 
-/** Collapsible topic card: collapsed summary line, expands to full detail + edit. */
+/** Collapsible topic card: collapsed summary line, expands to full detail + edit.
+ *  `attention` marks a topic that is still missing information: the card gets a
+ *  light orange tint and a small escalation dot next to its title. */
 
 export function TopicCard({
   title,
@@ -105,6 +107,7 @@ export function TopicCard({
   onEdit,
   children,
   defaultOpen,
+  attention,
 }: {
   title: string;
   summary: string;
@@ -112,18 +115,32 @@ export function TopicCard({
   onEdit?: (() => void) | undefined;
   children: ReactNode;
   defaultOpen?: boolean;
+  attention?: boolean;
 }) {
   const [open, setOpen] = useState(Boolean(defaultOpen));
 
   return (
-    <div className="rounded-lg border border-border bg-card">
+    <div
+      className={`rounded-lg border ${
+        attention ? "border-gold/50 bg-gold-tint/20" : "border-border bg-card"
+      }`}
+    >
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
         className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left"
       >
         <div>
-          <div className="text-sm font-semibold text-foreground">{title}</div>
+          <div className="flex items-center gap-2">
+            {attention ? (
+              <span
+                title="Information missing"
+                aria-label="Information missing"
+                className="inline-block h-2 w-2 shrink-0 rounded-full bg-gold"
+              />
+            ) : null}
+            <span className="text-sm font-semibold text-foreground">{title}</span>
+          </div>
           {!open ? <div className="mt-0.5 text-xs text-muted-foreground">{summary}</div> : null}
         </div>
         <ChevronDown
