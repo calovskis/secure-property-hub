@@ -428,7 +428,7 @@ function useDerivedNotifications() {
             id: `proposal-${b.id}`,
             to: email,
             title: b.kind === "video_tour" ? "Video tour times proposed" : "In-person visit times proposed",
-            body: `${b.clientName} — ${b.propertyLabel}. Confirm one of the ranked times or propose your own.`,
+            body: `${clientDisplayForPartner(b.clientName, leads.find((l) => l.id === b.leadId)?.clientEmail)} — ${b.propertyLabel}. Confirm one of the ranked times or propose your own.`,
             href: `/partner?tab=calendar&focus=${b.id}`,
             severity: "warning",
             createdAt: b.createdAt,
