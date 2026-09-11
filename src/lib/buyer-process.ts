@@ -440,24 +440,34 @@ export function useBuyerProcess() {
   );
 
   /** Agent confirms one of the buyer's proposed slots. */
-  const confirmProposal = useCallback((bookingId: string, slot: string) => {
-    const cur = load();
-    const end = new Date(new Date(slot).getTime() + 60 * 60 * 1000);
-    commit({
-      ...cur,
-      bookings: cur.bookings.map((b) =>
-        b.id === bookingId
-          ? {
-              ...b,
-              status: "confirmed",
-              startAt: slot,
-              endAt: end.toISOString(),
-              confirmedAt: new Date().toISOString(),
-            }
-          : b,
-      ),
-    });
-  }, []);
+  const confirmProposal = useCallback(
+    (
+      bookingId: string,
+      slot: string,
+      meeting?: { eventId?: string; meetUrl?: string | null; calendarLink?: string | null },
+    ) => {
+      const cur = load();
+      const end = new Date(new Date(slot).getTime() + 60 * 60 * 1000);
+      commit({
+        ...cur,
+        bookings: cur.bookings.map((b) =>
+          b.id === bookingId
+            ? {
+                ...b,
+                status: "confirmed" as const,
+                startAt: slot,
+                endAt: end.toISOString(),
+                confirmedAt: new Date().toISOString(),
+                ...(meeting?.eventId ? { googleEventId: meeting.eventId } : {}),
+                ...(meeting?.meetUrl ? { meetUrl: meeting.meetUrl } : {}),
+                ...(meeting?.calendarLink ? { calendarLink: meeting.calendarLink } : {}),
+              }
+            : b,
+        ),
+      });
+    },
+    [],
+  );
 
   /**
    * The other side cannot make any of the proposed times work and offers
