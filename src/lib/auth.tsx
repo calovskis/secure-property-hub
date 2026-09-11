@@ -301,13 +301,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           data.phone === user.phone &&
           data.us_person === user.usPerson;
         if (unchanged) return;
+        const { middleName: _previousMiddleName, ...userWithoutMiddleName } = user;
         persist({
-          ...user,
+          ...userWithoutMiddleName,
           firstName,
           lastName,
           phone: data.phone,
           usPerson: data.us_person,
-          ...(middleName ? { middleName } : { middleName: undefined }),
+          ...(middleName ? { middleName } : {}),
         });
       });
     return () => {
