@@ -100,6 +100,9 @@ export function BuyerProcessCard({ lead }: { lead: MortgageLead }) {
   }
 
   const photo = photos[lead.id];
+  const agentEmail = ba.agentId
+    ? partnerRegistrations.find((r) => r.id === ba.agentId)?.email
+    : undefined;
   const history = actions[lead.id] ?? [];
   const callBooking = bookings.find((b) => b.leadId === lead.id && b.kind === "intro_call");
   const tourBooking = bookings.find(
