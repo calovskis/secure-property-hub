@@ -553,6 +553,7 @@ function BuyerFile({ lead, me }: { lead: MortgageLead; me: Realtor }) {
                               leadId: lead.id,
                               realtorId: me.id,
                               clientName: lead.clientName,
+                          clientEmail: lead.clientEmail,
                               propertyLabel: lead.propertyLabel,
                               kind: "video_tour",
                               startAt,

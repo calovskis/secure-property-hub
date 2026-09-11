@@ -493,6 +493,7 @@ export function BuyerProcessCard({ lead }: { lead: MortgageLead }) {
                         bookCall({
                           leadId: lead.id,
                           clientName: lead.clientName,
+                          clientEmail: lead.clientEmail,
                           propertyLabel: lead.propertyLabel,
                           kind: "intro_call",
                           startAt,
