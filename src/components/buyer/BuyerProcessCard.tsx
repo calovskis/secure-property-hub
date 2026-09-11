@@ -188,6 +188,24 @@ export function BuyerProcessCard({ lead }: { lead: MortgageLead }) {
             ) : null}
           </div>
 
+          {tourBooking && tourBooking.status === "proposed" ? (
+            <div className="mt-4">
+              <TourProposalPanel
+                booking={tourBooking}
+                side="buyer"
+                realtorId={tourBooking.realtorId}
+              />
+            </div>
+          ) : tourBooking ? (
+            <p className="mt-4 rounded-lg border border-border bg-background p-3 text-sm text-muted-foreground">
+              🎥 {tourBooking.kind === "video_tour" ? "Live video tour" : "Property visit"} confirmed
+              for <strong className="text-foreground">{formatDateTime(tourBooking.startAt)}</strong>{" "}
+              (1 hour).
+            </p>
+          ) : null}
+
+
+
           {photo?.status === "delivered" ? (
             <div className="mt-4 rounded-lg border border-border bg-background p-4">
               <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
