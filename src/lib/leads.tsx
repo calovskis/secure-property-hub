@@ -129,6 +129,19 @@ export type BuyerAgentEngagement = {
   kickoffAt?: string;
 };
 
+/** One manual partner swap performed by a Loqal admin. */
+export type PartnerChangeRecord = {
+  id: string;
+  role: "lender" | "realtor";
+  fromName?: string;
+  toName: string;
+  reason?: string;
+  by: string;
+  requestedAt: string;
+  acceptedAt?: string;
+};
+
+
 export type MortgageLead = {
   id: string;
   clientEmail: string;
