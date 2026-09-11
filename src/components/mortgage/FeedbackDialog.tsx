@@ -272,6 +272,13 @@ export function FeedbackDialog({
                     <div className="text-xs text-muted-foreground">
                       Answered {formatDateTime(lead.clientDecisionAt)}
                     </div>
+                    <p className="text-sm leading-relaxed text-muted-foreground">
+                      {lead.clientDecision === "accepted"
+                        ? "Status: accepted and moving forward. You can change the property within 3 months under the same pre-approval and purchase price. Your next step is to finish the buyer-agent setup for this property."
+                        : lead.clientDecision === "hold"
+                          ? "Status: on hold. These terms are saved — nothing more is needed from you right now."
+                          : "Status: you declined these terms. The file stays on record and you can still proceed later."}
+                    </p>
                   </div>
                 ) : (
                   <div className="space-y-2">
