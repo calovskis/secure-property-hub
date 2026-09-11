@@ -11,6 +11,7 @@ import {
 import { KICKOFF_LABEL, type MortgageLead } from "@/lib/leads";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import { CallScheduler } from "@/components/buyer/CallScheduler";
+import { TourProposalPanel } from "@/components/buyer/TourProposalPanel";
 import { BuyerAgentDialog } from "@/components/mortgage/BuyerAgentDialog";
 
 const money = (n: number) => `$${Math.round(n).toLocaleString()}`;
@@ -97,6 +98,9 @@ export function BuyerProcessCard({ lead }: { lead: MortgageLead }) {
   const photo = photos[lead.id];
   const history = actions[lead.id] ?? [];
   const callBooking = bookings.find((b) => b.leadId === lead.id && b.kind === "intro_call");
+  const tourBooking = bookings.find(
+    (b) => b.leadId === lead.id && (b.kind === "video_tour" || b.kind === "in_person_visit"),
+  );
 
   function resetForms() {
     setActive(null);
@@ -180,7 +184,9 @@ export function BuyerProcessCard({ lead }: { lead: MortgageLead }) {
                     : ` — photos due ${formatDate(photo.dueAt)}`
                 : ""}
               {ba.kickoff === "video_showcase"
-                ? " — the agent will confirm the tour time"
+                ? tourBooking?.status === "confirmed"
+                  ? ` — confirmed for ${formatDateTime(tourBooking.startAt)}`
+                  : " — agreeing the tour time with your agent"
                 : ""}
             </p>
             {ba.kickoffNotes ? (
