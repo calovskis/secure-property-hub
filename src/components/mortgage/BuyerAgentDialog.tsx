@@ -19,6 +19,11 @@ import { useI18n } from "@/lib/i18n";
 import { useBuyerProcess } from "@/lib/buyer-process";
 import { CallScheduler } from "@/components/buyer/CallScheduler";
 import { formatDateTime } from "@/lib/dates";
+import {
+  clearBuyerAgentDraft,
+  loadBuyerAgentDraft,
+  saveBuyerAgentDraft,
+} from "@/lib/buyer-agent-draft";
 
 const btnPrimary =
   "rounded-md bg-brand px-4 py-2.5 text-sm font-semibold text-background hover:bg-brand-soft disabled:opacity-50";
@@ -60,20 +65,31 @@ export function BuyerAgentDialog({
   const [callMeetUrl, setCallMeetUrl] = useState<string | null>(null);
   const [showFeeInfo, setShowFeeInfo] = useState(false);
 
-  /* Reset every time the dialog opens; skip steps that are already done. */
+  /* Resume where the client left off — saved choices are never lost. */
   useEffect(() => {
     if (!open) return;
-    setRepresentation(null);
-    setKickoff(null);
-    setNotes("");
-    setCallSlot(null);
-    setTourSlots([]);
+    const draft = loadBuyerAgentDraft(lead.id);
+    setRepresentation(draft.representation ?? null);
+    setKickoff((draft.kickoff as KickoffRequest | undefined) ?? null);
+    setNotes(draft.notes ?? "");
+    setCallSlot(draft.callSlot ?? null);
+    setCallMeetUrl(draft.callMeetUrl ?? null);
+    setTourSlots(draft.tourSlots ?? []);
     setShowFeeInfo(false);
     setStep(
-      lead.buyerAgent?.representation ? "done" : lead.buyerAgent ? "representation" : "agree",
+      lead.buyerAgent?.representation
+        ? "done"
+        : lead.buyerAgent
+          ? (draft.step ?? "representation")
+          : "agree",
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
+
+  /** Remember a choice immediately, so closing the pop-up keeps it. */
+  function keep(patch: Parameters<typeof saveBuyerAgentDraft>[1]) {
+    saveBuyerAgentDraft(lead.id, patch);
+  }
 
   function close() {
     onOpenChange(false);
@@ -81,6 +97,7 @@ export function BuyerAgentDialog({
 
   function agree() {
     agreeBuyerAgent(lead.id, [lang === "ru" ? "Russian" : "English"]);
+    keep({ step: "representation" });
     setStep("representation");
   }
 
@@ -88,8 +105,10 @@ export function BuyerAgentDialog({
     if (!representation) return;
     if (representation === "loqal_rep") {
       setBuyerRepresentation(lead.id, "loqal_rep", undefined, notes.trim() || undefined);
+      clearBuyerAgentDraft(lead.id);
       setStep("done");
     } else {
+      keep({ step: "kickoff", representation, notes });
       setStep("kickoff");
     }
   }
@@ -111,6 +130,7 @@ export function BuyerAgentDialog({
         ...(notes.trim() ? { note: notes.trim() } : {}),
       });
     }
+    clearBuyerAgentDraft(lead.id);
     setStep("done");
   }
 
@@ -213,7 +233,10 @@ export function BuyerAgentDialog({
             <div className="grid gap-3">
               <button
                 type="button"
-                onClick={() => setRepresentation("loqal_rep")}
+                onClick={() => {
+                  setRepresentation("loqal_rep");
+                  keep({ representation: "loqal_rep" });
+                }}
                 className={`rounded-lg border p-4 text-left transition-colors ${
                   representation === "loqal_rep"
                     ? "border-brand bg-brand-tint/50"
@@ -236,7 +259,10 @@ export function BuyerAgentDialog({
 
               <button
                 type="button"
-                onClick={() => setRepresentation("buyer_direct")}
+                onClick={() => {
+                  setRepresentation("buyer_direct");
+                  keep({ representation: "buyer_direct" });
+                }}
                 className={`rounded-lg border p-4 text-left transition-colors ${
                   representation === "buyer_direct"
                     ? "border-brand bg-brand-tint/50"
@@ -261,7 +287,10 @@ export function BuyerAgentDialog({
                   rows={3}
                   placeholder="Anything we or your agent should know…"
                   value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
+                  onChange={(e) => {
+                    setNotes(e.target.value);
+                    keep({ notes: e.target.value });
+                  }}
                   className={inputClass}
                 />
               </label>
@@ -316,7 +345,10 @@ export function BuyerAgentDialog({
                 <button
                   key={id}
                   type="button"
-                  onClick={() => setKickoff(id)}
+                  onClick={() => {
+                    setKickoff(id);
+                    keep({ kickoff: id });
+                  }}
                   className={`rounded-lg border p-4 text-left transition-colors ${
                     kickoff === id
                       ? "border-brand bg-brand-tint/50"
@@ -351,6 +383,10 @@ export function BuyerAgentDialog({
                     });
                     setCallSlot(startAt);
                     setCallMeetUrl(meeting?.meetUrl ?? null);
+                    keep({
+                      callSlot: startAt,
+                      ...(meeting?.meetUrl ? { callMeetUrl: meeting.meetUrl } : {}),
+                    });
                   }}
                 />
               ) : null}
@@ -363,7 +399,10 @@ export function BuyerAgentDialog({
                     tourSlots.length ? `Save ${tourSlots.length} preferred time(s)` : "Save my preferred times"
                   }
                   summary={`Loqal live video walkthrough — ${lead.propertyLabel}`}
-                  onPropose={(slots) => setTourSlots(slots)}
+                  onPropose={(slots) => {
+                    setTourSlots(slots);
+                    keep({ tourSlots: slots });
+                  }}
                   onBook={() => undefined}
                 />
               ) : null}
@@ -383,14 +422,20 @@ export function BuyerAgentDialog({
                   rows={3}
                   placeholder="Anything your agent should know before starting…"
                   value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
+                  onChange={(e) => {
+                    setNotes(e.target.value);
+                    keep({ notes: e.target.value });
+                  }}
                   className={inputClass}
                 />
               </label>
             </div>
 
             <DialogFooter>
-              <button type="button" onClick={() => setStep("representation")} className={btnGhost}>
+              <button type="button" onClick={() => {
+                  keep({ step: "representation" });
+                  setStep("representation");
+                }} className={btnGhost}>
                 Back
               </button>
               <button
