@@ -14,6 +14,7 @@ import { formatDate, formatDateTime } from "@/lib/dates";
 import { ApplicantFile, Row } from "@/components/lender/ApplicantFile";
 import { useLenderTeam } from "@/lib/lender-team";
 import { buyerAgentSummary, useBuyerProcess } from "@/lib/buyer-process";
+import { PaymentScheduleButton } from "@/components/mortgage/PaymentScheduleDialog";
 
 const money = (n: number) => `$${Math.round(n).toLocaleString()}`;
 
