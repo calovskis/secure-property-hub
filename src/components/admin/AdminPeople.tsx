@@ -310,6 +310,9 @@ export function AdminPeople({
                 <tr key={p.key}>
                   <td className="py-2.5 pr-4">
                     <div className="font-semibold text-foreground">{p.name}</div>
+                    <div className="text-[11px] font-semibold text-muted-foreground">
+                      {loqalNumber(p.email)}
+                    </div>
                     {p.company ? (
                       <div className="text-xs text-muted-foreground">{p.company}</div>
                     ) : null}
