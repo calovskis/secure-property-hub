@@ -369,7 +369,10 @@ function ProceedPanel({ lead }: { lead: MortgageLead }) {
           ["Term", `${t.termYears} years`],
           ["Down payment", `${t.downPaymentPct}%`],
           ["Closing costs", `${t.closingCostPct}%`],
-          ["Taxes + insurance", `${t.taxInsurancePct}% / yr`],
+          [
+            "Taxes + insurance",
+            `${money(Math.round((lead.propertyPrice * t.taxInsurancePct) / 100))} / yr`,
+          ],
         ].map(([label, value]) => (
           <div key={label} className="flex items-center justify-between py-2 text-sm">
             <span className="text-muted-foreground">{label}</span>

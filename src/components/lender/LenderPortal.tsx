@@ -106,8 +106,10 @@ function DecisionPanel({ lead }: { lead: MortgageLead }) {
   const [closingPct, setClosingPct] = useState(
     lead.terms ? String(lead.terms.closingCostPct) : "2.5",
   );
-  const [taxInsPct, setTaxInsPct] = useState(
-    lead.terms ? String(lead.terms.taxInsurancePct) : "1.45",
+  const [taxInsUsd, setTaxInsUsd] = useState(
+    lead.terms
+      ? String(Math.round((lead.propertyPrice * lead.terms.taxInsurancePct) / 100))
+      : "",
   );
   const [infoOpen, setInfoOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -122,7 +124,9 @@ function DecisionPanel({ lead }: { lead: MortgageLead }) {
     const years = Number(termYears);
     const down = Number(downPct);
     const closing = Number(closingPct);
-    const taxIns = Number(taxInsPct);
+    const taxInsUsdYear = Number(taxInsUsd);
+    const taxIns =
+      lead.propertyPrice > 0 ? (taxInsUsdYear / lead.propertyPrice) * 100 : NaN;
     if (status === "qualified") {
       if (!lenderName || !lenderNmls) {
         setError(
@@ -139,11 +143,11 @@ function DecisionPanel({ lead }: { lead: MortgageLead }) {
         down < 100 &&
         closing >= 0 &&
         closing < 20 &&
-        taxIns >= 0 &&
-        taxIns < 10;
+        taxInsUsdYear > 0 &&
+        taxInsUsdYear <= lead.propertyPrice;
       if (!valid) {
         setError(
-          "Approved pricing is required to unlock the client estimate: interest rate, loan term, down payment, closing costs and tax/insurance rate.",
+          "Approved pricing is required to unlock the client estimate: interest rate, loan term, down payment, closing costs and the annual taxes + insurance amount in USD.",
         );
         return;
       }
@@ -231,7 +235,7 @@ function DecisionPanel({ lead }: { lead: MortgageLead }) {
               ["Loan term (years)", termYears, setTermYears, "30"],
               ["Down payment (%)", downPct, setDownPct, "20"],
               ["Closing costs (%)", closingPct, setClosingPct, "2.5"],
-              ["Taxes + insurance (%/yr)", taxInsPct, setTaxInsPct, "1.45"],
+              ["Taxes + insurance (USD/yr)", taxInsUsd, setTaxInsUsd, "7250"],
             ] as [string, string, (v: string) => void, string][]
           ).map(([label, value, setter, ph]) => (
             <label key={label} className="block">
