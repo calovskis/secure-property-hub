@@ -554,17 +554,9 @@ function useDerivedNotifications() {
               createdAt: rem.dueAt,
             });
           }
-        } else if (licences.length) {
+        } else if (licences.length && !missing.length) {
+          /* Uploaded by the partner — no confirmation notification. */
           clearRequestOpenedAt(licKey);
-          list.push({
-            id: `${licKey}-done`,
-            to: email,
-            title: "All state licence copies received",
-            body: `${licences.length} state(s) are on file.`,
-            href: "/profile",
-            severity: "info",
-            completed: true,
-          });
         }
       }
 
