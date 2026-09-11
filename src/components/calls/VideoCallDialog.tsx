@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { formatDateTime } from "@/lib/dates";
+import { clientDisplayForPartner } from "@/lib/user-id";
 
 type Props = {
   open: boolean;
