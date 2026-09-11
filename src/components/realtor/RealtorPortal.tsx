@@ -18,6 +18,8 @@ import { usePartnerRequests } from "@/lib/partner-requests";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import { DateInput } from "@/components/form/DateInput";
 import { CallScheduler } from "@/components/buyer/CallScheduler";
+import { TourProposalPanel } from "@/components/buyer/TourProposalPanel";
+
 import { GoogleCalendarCard } from "@/components/google/GoogleCalendarCard";
 import { RealtorAnalytics } from "@/components/realtor/RealtorAnalytics";
 import { RealtorAccounting } from "@/components/realtor/RealtorAccounting";
