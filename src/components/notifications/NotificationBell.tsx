@@ -49,7 +49,7 @@ function useDerivedNotifications() {
   const proc = useBuyerProcess();
   const { requests } = usePartnerRequests();
   const { realtors } = useRealtors();
-  const { drafts } = useMortgageDrafts();
+  const { drafts, clearDraft } = useMortgageDrafts();
 
   const email = user?.email.toLowerCase() ?? "";
   const isAdmin = user?.role === "admin";
@@ -297,6 +297,7 @@ function useDerivedNotifications() {
        * created for it without changing its original date or order. */
       if (submittedPropertyIds.has(d.propertyId)) {
         completedIds.push(`draft-${d.propertyId}`);
+        clearDraft(email, d.propertyId);
         continue;
       }
       if (d.submitted || d.completion >= 100) continue;
