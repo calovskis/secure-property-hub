@@ -124,7 +124,11 @@ export function MyPartnersCard() {
 
       <div className="mt-4 grid gap-3 md:grid-cols-2">
         {seats.map(({ key, role, lead, partner }) => {
-          const person = `${partner!.firstName} ${partner!.lastName}`.trim();
+          // Clients see first name + internal number only — never the family name.
+          const person = partnerDisplayForClient(
+            `${partner!.firstName} ${partner!.lastName}`.trim(),
+            partner!.email,
+          );
           const phone = partner!.phone || partner!.companyPhone || "";
           const mail = partner!.email;
           return (
