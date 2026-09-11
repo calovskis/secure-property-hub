@@ -165,7 +165,21 @@ function AuthPage() {
     const authId = authData.user?.id ?? null;
     // The registration record — never a browser cache — decides the name.
     const identity = await fetchRegisteredIdentity(authId, email);
+    // Role comes from how the account was registered, not from the sign-in
+    // selector: someone registered as a partner only (no client profile) can
+    // never enter the client portal.
+    const partnerOnly = Boolean(identity?.partnerType) && identity?.usPerson === undefined;
+    const effectiveRole: Role = partnerOnly
+      ? "partner"
+      : loginRole === "partner" && !identity?.partnerType && identity?.usPerson !== undefined
+        ? "client"
+        : loginRole;
+    if (loginRole !== effectiveRole && loginRole === "client" && partnerOnly) {
+      setNotice(null);
+    }
     setBusy(false);
+    const effectivePartnerType: PartnerType =
+      identity?.partnerType ?? loginPartnerType;
     const derived = namesFromEmail(email);
     complete({
       firstName: identity?.firstName || derived.firstName,
