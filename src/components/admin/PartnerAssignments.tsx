@@ -542,4 +542,3 @@ function ClientRow({
   );
 }
 
-export { uid as handoverUid };
