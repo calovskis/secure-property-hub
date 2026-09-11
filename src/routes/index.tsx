@@ -7,6 +7,7 @@ import { offerReminders, pendingOfferDecision, useLeads } from "@/lib/leads";
 import { formatDateTime } from "@/lib/dates";
 import { useGreeting } from "@/lib/greeting";
 import { TaskTracker } from "@/components/tasks/TaskTracker";
+import { MyPartnersCard } from "@/components/client/MyPartnersCard";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -613,6 +614,10 @@ function Dashboard() {
               <ActivityRow key={a.title} icon={a.icon} title={a.title} desc={a.desc} time={a.time} service={a.service} />
             ))}
           </div>
+        </div>
+
+        <div className="mt-8">
+          <MyPartnersCard />
         </div>
 
         <div className="mt-8">
