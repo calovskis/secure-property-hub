@@ -251,12 +251,6 @@ function Landing() {
             >
               {t("Log in")}
             </Link>
-            <Link
-              to="/marketplace"
-              className="rounded-md border border-gold/30 bg-gold-tint px-6 py-3 text-sm font-semibold text-gold"
-            >
-              {t("Browse properties")}
-            </Link>
           </div>
         </section>
 

@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { PropertiesInAction } from "@/components/property/PropertiesInAction";
 import { useClientPropertyActivity } from "@/lib/property-activity";
@@ -35,6 +35,12 @@ const PROPERTIES_PER_PAGE = 6;
 function MarketplacePage() {
   const navigate = useNavigate();
   const { user } = useAuth();
+
+  // Property browsing is for signed-in Loqal users only.
+  useEffect(() => {
+    if (!user) navigate({ to: "/auth", replace: true });
+  }, [user, navigate]);
+
   const [locationInput, setLocationInput] = useState("");
 
 
@@ -144,6 +150,8 @@ function MarketplacePage() {
     navigate({ to: "/property/$propertyId", params: { propertyId: String(id) } });
   };
 
+
+  if (!user) return null;
 
   return (
     <div className="min-h-screen bg-background">
