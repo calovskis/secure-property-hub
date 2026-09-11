@@ -600,6 +600,16 @@ function BuyerFile({ lead, me }: { lead: MortgageLead; me: Realtor }) {
             </>
           )}
 
+          <FileChatPanel
+            leadId={lead.id}
+            side="agent"
+            myName={me.name}
+            otherName={clientDisplayForPartner(lead.clientName, lead.clientEmail)}
+            otherEmail={lead.clientEmail}
+            propertyId={lead.propertyId}
+            propertyLabel={lead.propertyLabel}
+          />
+
           <ClientDecisions lead={lead} />
         </div>
       ) : null}
