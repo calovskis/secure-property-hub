@@ -65,6 +65,39 @@ export type Database = {
         }
         Relationships: []
       }
+      client_profiles: {
+        Row: {
+          created_at: string
+          first_name: string
+          last_name: string
+          middle_name: string | null
+          phone: string
+          updated_at: string
+          us_person: boolean
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          first_name?: string
+          last_name?: string
+          middle_name?: string | null
+          phone?: string
+          updated_at?: string
+          us_person?: boolean
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          first_name?: string
+          last_name?: string
+          middle_name?: string | null
+          phone?: string
+          updated_at?: string
+          us_person?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
       partner_requests: {
         Row: {
           additional_contacts: Json

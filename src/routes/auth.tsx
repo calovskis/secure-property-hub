@@ -156,17 +156,30 @@ function AuthPage() {
         err instanceof Error ? err.message : "We could not sign you in. Please try again.",
       );
     }
+    const { data: authData } = await supabase.auth.getUser();
+    const authId = authData.user?.id;
+    const { data: clientProfile } = authId
+      ? await supabase
+          .from("client_profiles")
+          .select("first_name,middle_name,last_name,phone,us_person")
+          .eq("user_id", authId)
+          .maybeSingle()
+      : { data: null };
     setBusy(false);
     const remembered = knownName(email);
     const derived = namesFromEmail(email);
     complete({
-      firstName: remembered?.firstName || derived.firstName,
-      lastName: remembered?.lastName || derived.lastName,
-      ...(remembered?.middleName ? { middleName: remembered.middleName } : {}),
+      firstName: clientProfile?.first_name || remembered?.firstName || derived.firstName,
+      lastName: clientProfile?.last_name || remembered?.lastName || derived.lastName,
+      ...(clientProfile?.middle_name
+        ? { middleName: clientProfile.middle_name }
+        : remembered?.middleName
+          ? { middleName: remembered.middleName }
+          : {}),
       email,
-      phone: remembered?.phone ?? "",
+      phone: clientProfile?.phone || remembered?.phone || "",
 
-      usPerson: false,
+      usPerson: clientProfile?.us_person ?? false,
       role: loginRole,
       ...(loginRole === "partner"
         ? {
@@ -205,6 +218,23 @@ function AuthPage() {
       return setError(
         err instanceof Error ? err.message : "We could not create your account. Please try again.",
       );
+    }
+    const { data: authData } = await supabase.auth.getUser();
+    if (!authData.user) {
+      setBusy(false);
+      return setError("We could not save your registration. Please try again.");
+    }
+    const { error: profileError } = await supabase.from("client_profiles").upsert({
+      user_id: authData.user.id,
+      first_name: firstName.trim(),
+      middle_name: middleName.trim() || null,
+      last_name: lastName.trim(),
+      phone,
+      us_person: usPerson,
+    });
+    if (profileError) {
+      setBusy(false);
+      return setError("We could not save your registration. Please try again.");
     }
     setBusy(false);
     complete({

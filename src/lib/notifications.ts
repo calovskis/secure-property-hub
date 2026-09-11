@@ -93,6 +93,20 @@ export function syncNotifications(
   list.forEach((n) => notify(n));
 }
 
+/** Mark previously-created action notifications complete without changing their date or order. */
+export function completeNotifications(ids: string[]) {
+  if (!ids.length) return;
+  const wanted = new Set(ids);
+  const cur = load();
+  let changed = false;
+  const items = cur.items.map((item) => {
+    if (!wanted.has(item.id) || item.completed) return item;
+    changed = true;
+    return { ...item, completed: true };
+  });
+  if (changed) commit({ items });
+}
+
 const SERVER_SNAPSHOT: NotificationState = { items: [] };
 
 export function useNotifications(recipient: string | undefined) {

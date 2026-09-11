@@ -24,6 +24,7 @@ import {
   requestOpenedAt,
 } from "@/lib/document-requests";
 import {
+  completeNotifications,
   syncNotifications,
   useNotifications,
   type AppNotification,
@@ -56,6 +57,7 @@ function useDerivedNotifications() {
   useEffect(() => {
     if (!user || !leadsReady) return;
     const list: Draft[] = [];
+    const completedIds: string[] = [];
     const now = Date.now();
 
     /* ------------------------------ client side ------------------------------ */
@@ -102,10 +104,15 @@ function useDerivedNotifications() {
             createdAt: r.dueAt,
           });
         }
+      } else if (lead.clientDecision) {
+        completedIds.push(`offer-${lead.id}`);
       }
 
       for (const r of lead.infoRequests) {
-        if (r.answeredAt) continue;
+        if (r.answeredAt) {
+          completedIds.push(`inforeq-${r.id}`);
+          continue;
+        }
         list.push({
           id: `inforeq-${r.id}`,
           to: email,
@@ -133,6 +140,8 @@ function useDerivedNotifications() {
           severity: "warning",
           createdAt: lead.buyerAgent?.agreedAt ?? lead.clientDecisionAt,
         });
+      } else if (lead.buyerAgent?.representation) {
+        completedIds.push(`agentsetup-${lead.id}`);
       }
 
       const photo = proc.photos[lead.id];
@@ -259,6 +268,7 @@ function useDerivedNotifications() {
       for (const kind of ["idDocuments", "visaDocuments", "bankruptcyDocuments"] as const) {
         if (outstanding.some((r) => r.kind === kind)) continue;
         const key = `doc-${kind}-${email}`;
+        completedIds.push(key);
         clearRequestOpenedAt(key);
         const docs = p[kind];
         if (docs?.length) {
@@ -369,6 +379,7 @@ function useDerivedNotifications() {
       }
     }
 
+    completeNotifications(completedIds);
     if (list.length) syncNotifications(list);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.email, leadsReady, leads, proc, realtors, email]);
