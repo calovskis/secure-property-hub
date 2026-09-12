@@ -42,6 +42,7 @@ export function FileChatPanel({
 }) {
   const { messages, unread, send, markRead } = useFileChat(leadId, side);
   const [body, setBody] = useState("");
+  const [files, setFiles] = useState<ChatAttachment[]>([]);
   const [kind, setKind] = useState<"message" | "info_request">("message");
   const endRef = useRef<HTMLDivElement | null>(null);
 
@@ -56,8 +57,14 @@ export function FileChatPanel({
 
   function submit() {
     const text = body.trim();
-    if (!text) return;
-    send({ authorName: myName, kind: side === "agent" ? kind : "message", body: text });
+    if (!text && !files.length) return;
+    send({
+      authorName: myName,
+      kind: side === "agent" ? kind : "message",
+      body: text || (files.length === 1 ? "Sent a file." : "Sent files."),
+      ...(files.length ? { attachments: files } : {}),
+    });
+    setFiles([]);
     setBody("");
     setKind("message");
     if (otherEmail) {
