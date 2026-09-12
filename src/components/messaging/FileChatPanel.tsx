@@ -188,11 +188,52 @@ export function FileChatPanel({
         }
         className="mt-2 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-brand"
       />
-      <div className="mt-2 flex justify-end">
+      {files.length ? (
+        <ul className="mt-2 space-y-1.5">
+          {files.map((f) => (
+            <li
+              key={f.id}
+              className="flex items-center justify-between rounded-md border border-border bg-background px-3 py-1.5 text-[11px]"
+            >
+              <span className="text-foreground">📎 {f.name}</span>
+              <button
+                type="button"
+                onClick={() => setFiles((cur) => cur.filter((x) => x.id !== f.id))}
+                className="font-semibold text-destructive"
+              >
+                Remove
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+        <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground hover:bg-brand-tint">
+          📎 Attach a file
+          <input
+            type="file"
+            multiple
+            accept="image/*,application/pdf"
+            className="hidden"
+            onChange={async (e) => {
+              const selected = Array.from(e.target.files ?? []);
+              e.currentTarget.value = "";
+              const next = await Promise.all(
+                selected.map(async (file) => ({
+                  id: Math.random().toString(36).slice(2, 10),
+                  name: file.name,
+                  url: await readFile(file),
+                })),
+              );
+              setFiles((cur) => [...cur, ...next]);
+            }}
+          />
+        </label>
         <button
           type="button"
           onClick={submit}
-          disabled={!body.trim()}
+          disabled={!body.trim() && !files.length}
           className="rounded-md bg-brand px-4 py-2 text-xs font-semibold text-background hover:bg-brand-soft disabled:opacity-50"
         >
           {side === "agent" && kind === "info_request" ? "Send request" : "Send message"}
