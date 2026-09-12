@@ -12,7 +12,14 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { formatDateTime } from "@/lib/dates";
 import { notify } from "@/lib/notifications";
-import { useFileChat, type ChatSide } from "@/lib/file-chat";
+import { useFileChat, type ChatAttachment, type ChatSide } from "@/lib/file-chat";
+
+const readFile = (file: File) =>
+  new Promise<string>((resolve) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : "");
+    reader.readAsDataURL(file);
+  });
 
 export function FileChatPanel({
   leadId,
