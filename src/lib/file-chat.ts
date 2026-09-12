@@ -11,6 +11,8 @@ import { useCallback, useMemo, useSyncExternalStore } from "react";
 
 export type ChatSide = "client" | "agent";
 
+export type ChatAttachment = { id: string; name: string; url: string };
+
 export type FileMessage = {
   id: string;
   /** Mortgage/property file the exchange belongs to. */
@@ -21,6 +23,8 @@ export type FileMessage = {
   /** An agent asking the buyer for information, vs. a plain message. */
   kind: "message" | "info_request";
   body: string;
+  /** Files attached to the message (photos, PDFs…). */
+  attachments?: ChatAttachment[];
   createdAt: string;
   /** Set when the other side has opened the thread. */
   readAt?: string;
