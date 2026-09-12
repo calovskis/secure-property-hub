@@ -128,6 +128,20 @@ export function FileChatPanel({
                   </span>
                 </div>
                 <p className="mt-1 whitespace-pre-wrap text-foreground">{m.body}</p>
+                {m.attachments?.length ? (
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    {m.attachments.map((a) => (
+                      <a
+                        key={a.id}
+                        href={a.url}
+                        download={a.name}
+                        className="rounded bg-background px-2 py-1 text-[11px] font-semibold text-brand underline"
+                      >
+                        📎 {a.name}
+                      </a>
+                    ))}
+                  </div>
+                ) : null}
               </div>
             );
           })
