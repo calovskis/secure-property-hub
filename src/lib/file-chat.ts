@@ -109,6 +109,12 @@ export function useFileChat(leadId: string, side: ChatSide) {
   return { messages, unread, send, markRead };
 }
 
+/** Every message across all files — used where several files are shown at once. */
+export function useAllFileChat() {
+  const snapshot = useStore();
+  return { messages: snapshot.items };
+}
+
 /** Unanswered questions/requests waiting for one side, across all files. */
 export function awaitingReply(items: FileMessage[], side: ChatSide) {
   const byLead = new Map<string, FileMessage>();
