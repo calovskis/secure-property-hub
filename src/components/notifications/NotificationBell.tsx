@@ -55,6 +55,7 @@ function useDerivedNotifications() {
   const { realtors } = useRealtors();
   const { drafts, clearDraft } = useMortgageDrafts();
   const { scopedStates } = useLenderTeam();
+  const { purchases, changes } = usePropertyRequests();
 
   const email = user?.email.toLowerCase() ?? "";
   const isAdmin = user?.role === "admin";
