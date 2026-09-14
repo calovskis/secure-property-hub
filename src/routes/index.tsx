@@ -519,6 +519,10 @@ function Dashboard() {
         ) : null}
 
         <div className="mb-8">
+          <PriceConfirmedCard />
+        </div>
+
+        <div className="mb-8">
           <UpcomingCallsCard />
         </div>
 
