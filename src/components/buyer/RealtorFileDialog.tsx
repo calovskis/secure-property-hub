@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { formatDateTime } from "@/lib/dates";
-import { notify } from "@/lib/notifications";
 import { allProperties, formatPrice } from "@/data/properties";
 import type { MortgageLead } from "@/lib/leads";
 import { FileChatPanel } from "@/components/messaging/FileChatPanel";
@@ -96,17 +95,6 @@ export function RealtorFileDialog({
     [lead.propertyId],
   );
 
-  function alertAgent(title: string, body: string) {
-    if (!agentEmail) return;
-    notify({
-      id: `filereq-${lead.id}-${Date.now()}`,
-      to: agentEmail.toLowerCase(),
-      title,
-      body,
-      href: `/partner?tab=buyers&focus=${lead.id}`,
-      severity: "warning",
-    });
-  }
 
   function submitPurchase() {
     const offerPrice =
@@ -124,14 +112,8 @@ export function RealtorFileDialog({
       mode: priceMode,
       ...(purchaseNote.trim() ? { buyerNote: purchaseNote.trim() } : {}),
     });
-    alertAgent(
-      "Your buyer wants to proceed with the purchase",
-      `${lead.propertyLabel} — ${
-        priceMode === "listing"
-          ? `at the listing price ${formatPrice(lead.propertyPrice)}`
-          : `offering ${formatPrice(offerPrice)} instead of ${formatPrice(lead.propertyPrice)} — your price opinion is needed`
-      }`,
-    );
+    /* The agent's open task is derived from the file itself (see
+       NotificationBell), so no separate one-off alert is created here. */
     setPurchaseNote("");
     toast("Request sent", { description: `${agentName} has been notified.` });
     setTab("status");
@@ -168,14 +150,6 @@ export function RealtorFileDialog({
           }
         : {}),
     });
-    alertAgent(
-      changeKind === "buyer_picked"
-        ? "Your buyer chose another property"
-        : "Your buyer asks for other property options",
-      picked
-        ? `${picked.address}, ${picked.location} — reason for leaving ${lead.propertyLabel}: ${reason.trim()}`
-        : `${lead.propertyLabel} — ${reason.trim()}`,
-    );
     setReason("");
     setCriteria([]);
     setCustomCriteria("");
@@ -252,12 +226,9 @@ export function RealtorFileDialog({
                         type="button"
                         onClick={() => {
                           raiseOffer(lastPurchase.id, lastPurchase.agentSuggestedPrice!);
-                          alertAgent(
-                            "Your buyer accepted your suggested price",
-                            `${lead.propertyLabel} — new offer ${formatPrice(
-                              lastPurchase.agentSuggestedPrice!,
-                            )}`,
-                          );
+                          /* The agent's task is derived from the raised offer
+                             on the file, so no one-off alert is needed. */
+
                           toast("Your agent has been notified.");
                         }}
                         className={`${btnPrimary} mt-2`}

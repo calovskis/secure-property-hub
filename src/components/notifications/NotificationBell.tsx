@@ -17,6 +17,8 @@ import { usePartnerRequests } from "@/lib/partner-requests";
 import { useRealtors } from "@/lib/realtors";
 import { useLenderTeam } from "@/lib/lender-team";
 import { useMortgageDrafts } from "@/lib/mortgage-draft";
+import { usePropertyRequests } from "@/lib/property-requests";
+import { formatPrice } from "@/data/properties";
 import {
   clearRequestOpenedAt,
   documentReminders,
@@ -54,6 +56,7 @@ function useDerivedNotifications() {
   const { realtors } = useRealtors();
   const { drafts, clearDraft } = useMortgageDrafts();
   const { scopedStates } = useLenderTeam();
+  const { purchases, changes } = usePropertyRequests();
 
   const email = user?.email.toLowerCase() ?? "";
   const isAdmin = user?.role === "admin";
@@ -405,6 +408,51 @@ function useDerivedNotifications() {
             createdAt: photo.requestedAt,
           });
         }
+        /* Buyer asked to proceed with a purchase price — the agent has to
+           either take that price to the seller or come back with a higher
+           one. Derived from the file itself, so the task disappears the
+           moment the agent answers and can never linger. */
+        for (const p of purchases.filter((x) => x.leadId === lead.id)) {
+          const waiting = p.status === "pending" || p.status === "buyer_raised";
+          if (!waiting) {
+            completedIds.push(`buyerprice-${p.id}`);
+            continue;
+          }
+          list.push({
+            id: `buyerprice-${p.id}`,
+            to: email,
+            title: "Your buyer wants to proceed — price opinion needed",
+            body: `${clientDisplayForPartner(lead.clientName, lead.clientEmail)} · ${lead.propertyLabel} — ${
+              p.mode === "listing" && p.status === "pending"
+                ? `at the listing price ${formatPrice(p.offerPrice)}`
+                : `offering ${formatPrice(p.offerPrice)} against ${formatPrice(p.listingPrice)}`
+            }. Confirm the price for the seller or suggest a higher one.`,
+            href: `/partner?tab=buyers&focus=${lead.id}`,
+            severity: "warning",
+            createdAt: p.raisedAt ?? p.createdAt,
+          });
+        }
+        /* Buyer asked for other property options, or picked another property. */
+        for (const c of changes.filter((x) => x.leadId === lead.id)) {
+          if (c.status !== "pending") {
+            completedIds.push(`buyerchange-${c.id}`);
+            continue;
+          }
+          list.push({
+            id: `buyerchange-${c.id}`,
+            to: email,
+            title:
+              c.kind === "buyer_picked"
+                ? "Your buyer chose another property"
+                : "Your buyer asks for other property options",
+            body: `${clientDisplayForPartner(lead.clientName, lead.clientEmail)} · ${
+              c.pickedPropertyLabel ?? lead.propertyLabel
+            } — ${c.reason}`,
+            href: `/partner?tab=buyers&focus=${lead.id}`,
+            severity: "warning",
+            createdAt: c.createdAt,
+          });
+        }
         const lastAction = (proc.actions[lead.id] ?? []).slice(-1)[0];
         if (lastAction) {
           list.push({
@@ -461,11 +509,16 @@ function useDerivedNotifications() {
         "photoreq-",
         "decision-",
         "proposal-",
+        "buyerprice-",
+        "buyerchange-",
+        /* One-off "your buyer wants…" alerts from earlier app versions: the
+           same work is now derived above, so they must not double-count. */
+        "filereq-",
       ],
       [...list.map((n) => n.id), ...completedIds],
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.email, leadsReady, leads, proc, realtors, email]);
+  }, [user?.email, leadsReady, leads, proc, realtors, email, purchases, changes]);
 
   /* -------------------------------- admin side ------------------------------
      Kept in its own effect: partner registrations and their correspondence are
