@@ -53,6 +53,51 @@ export function LicenceRenewalDialog({
 
   if (!license) return null;
 
+  if (completed) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{license.state} licence updated</DialogTitle>
+            <DialogDescription>
+              Thank you — we have updated your {license.state} licence information. Nothing else is
+              needed from you for this state.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-2 space-y-3">
+            <div className="rounded-md border border-success/30 bg-success/5 p-3 text-sm">
+              <div className="text-xs font-semibold uppercase tracking-wide text-success">
+                Now on file
+              </div>
+              <div className="mt-1 font-semibold text-foreground">Licence no. {license.number}</div>
+              <div className="text-xs text-muted-foreground">
+                Valid until {formatDate(license.validUntil)}
+              </div>
+              {license.doc ? (
+                <div className="mt-1 truncate text-xs font-semibold text-gold">📎 {license.doc}</div>
+              ) : null}
+              {license.uploadedAt ? (
+                <div className="mt-1 text-[11px] text-muted-foreground">
+                  Provided on {formatDate(license.uploadedAt)}
+                </div>
+              ) : null}
+            </div>
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => onOpenChange(false)}
+                className="rounded-md bg-brand px-4 py-2 text-sm font-semibold text-background hover:bg-brand-soft"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+
   const expired = new Date(license.validUntil).getTime() < Date.now();
 
   function submit() {
