@@ -17,6 +17,7 @@ import { usePartnerRequests } from "@/lib/partner-requests";
 import { useRealtors } from "@/lib/realtors";
 import { useLenderTeam } from "@/lib/lender-team";
 import { useMortgageDrafts } from "@/lib/mortgage-draft";
+import { usePropertyRequests } from "@/lib/property-requests";
 import {
   clearRequestOpenedAt,
   documentReminders,
