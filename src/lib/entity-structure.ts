@@ -39,18 +39,18 @@ export type EntityPlan = {
   /** Does the client already have a US entity? null = not answered yet. */
   hasEntity?: boolean | null | undefined;
   /** When they have one — do they want to purchase through it? */
-  useExisting?: boolean;
-  entityName?: string;
-  entityState?: string;
-  entityEin?: string;
-  path?: EntityPath;
+  useExisting?: boolean | undefined;
+  entityName?: string | undefined;
+  entityState?: string | undefined;
+  entityEin?: string | undefined;
+  path?: EntityPath | undefined;
   /** Client confirmed the Loqal set-up fees. */
-  feesAcknowledgedAt?: string;
+  feesAcknowledgedAt?: string | undefined;
   /** Client opened the corporate-structure guide. */
-  guideSeenAt?: string;
+  guideSeenAt?: string | undefined;
   /** Purchase agreement signed by the buyer. */
-  agreementSignedAt?: string;
-  notes?: string;
+  agreementSignedAt?: string | undefined;
+  notes?: string | undefined;
   createdAt: string;
   updatedAt: string;
 };
