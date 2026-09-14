@@ -169,6 +169,32 @@ function useDerivedNotifications() {
         completedIds.push(`agentsetup-${lead.id}`);
       }
 
+      /* The agent confirmed the buyer's price and takes it to the seller: the
+         buyer is told, and keeps an open task until the purchase agreement is
+         signed. Derived, so it clears itself on signing. */
+      for (const p of purchases.filter((x) => x.leadId === lead.id)) {
+        if (p.status !== "price_supported") {
+          completedIds.push(`pricedecided-${p.id}`);
+          continue;
+        }
+        const signed = Boolean(entityPlans.find((pl) => pl.leadId === lead.id)?.agreementSignedAt);
+        if (signed) {
+          completedIds.push(`pricedecided-${p.id}`);
+          continue;
+        }
+        list.push({
+          id: `pricedecided-${p.id}`,
+          to: email,
+          title: "Your price is confirmed — proceed with the purchase agreement",
+          body: `${lead.propertyLabel} — ${formatPrice(p.offerPrice)} is decided and is being presented to the seller. Next step: sign the purchase agreement and tell us how the property will be held.${
+            p.agentNote ? ` Your agent: ${p.agentNote}` : ""
+          }`,
+          href: `/property/${lead.propertyId}?open=agreement`,
+          severity: "warning",
+          createdAt: p.respondedAt ?? p.createdAt,
+        });
+      }
+
       const photo = proc.photos[lead.id];
       if (photo?.status === "delivered") {
         list.push({
