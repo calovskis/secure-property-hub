@@ -18,6 +18,7 @@ import { useRealtors } from "@/lib/realtors";
 import { useLenderTeam } from "@/lib/lender-team";
 import { useMortgageDrafts } from "@/lib/mortgage-draft";
 import { usePropertyRequests } from "@/lib/property-requests";
+import { useEntityPlans } from "@/lib/entity-structure";
 import { formatPrice } from "@/data/properties";
 import {
   clearRequestOpenedAt,
@@ -57,6 +58,7 @@ function useDerivedNotifications() {
   const { drafts, clearDraft } = useMortgageDrafts();
   const { scopedStates } = useLenderTeam();
   const { purchases, changes } = usePropertyRequests();
+  const { plans: entityPlans } = useEntityPlans();
 
   const email = user?.email.toLowerCase() ?? "";
   const isAdmin = user?.role === "admin";
@@ -167,6 +169,32 @@ function useDerivedNotifications() {
         }
       } else if (lead.buyerAgent?.representation) {
         completedIds.push(`agentsetup-${lead.id}`);
+      }
+
+      /* The agent confirmed the buyer's price and takes it to the seller: the
+         buyer is told, and keeps an open task until the purchase agreement is
+         signed. Derived, so it clears itself on signing. */
+      for (const p of purchases.filter((x) => x.leadId === lead.id)) {
+        if (p.status !== "price_supported") {
+          completedIds.push(`pricedecided-${p.id}`);
+          continue;
+        }
+        const signed = Boolean(entityPlans.find((pl) => pl.leadId === lead.id)?.agreementSignedAt);
+        if (signed) {
+          completedIds.push(`pricedecided-${p.id}`);
+          continue;
+        }
+        list.push({
+          id: `pricedecided-${p.id}`,
+          to: email,
+          title: "Your price is confirmed — proceed with the purchase agreement",
+          body: `${lead.propertyLabel} — ${formatPrice(p.offerPrice)} is decided and is being presented to the seller. Next step: sign the purchase agreement and tell us how the property will be held.${
+            p.agentNote ? ` Your agent: ${p.agentNote}` : ""
+          }`,
+          href: `/property/${lead.propertyId}?open=agreement`,
+          severity: "warning",
+          createdAt: p.respondedAt ?? p.createdAt,
+        });
       }
 
       const photo = proc.photos[lead.id];
@@ -511,6 +539,7 @@ function useDerivedNotifications() {
         "proposal-",
         "buyerprice-",
         "buyerchange-",
+        "pricedecided-",
         /* One-off "your buyer wants…" alerts from earlier app versions: the
            same work is now derived above, so they must not double-count. */
         "filereq-",
@@ -518,7 +547,7 @@ function useDerivedNotifications() {
       [...list.map((n) => n.id), ...completedIds],
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.email, leadsReady, leads, proc, realtors, email, purchases, changes]);
+  }, [user?.email, leadsReady, leads, proc, realtors, email, purchases, changes, entityPlans]);
 
   /* -------------------------------- admin side ------------------------------
      Kept in its own effect: partner registrations and their correspondence are
