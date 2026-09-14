@@ -509,11 +509,16 @@ function useDerivedNotifications() {
         "photoreq-",
         "decision-",
         "proposal-",
+        "buyerprice-",
+        "buyerchange-",
+        /* One-off "your buyer wants…" alerts from earlier app versions: the
+           same work is now derived above, so they must not double-count. */
+        "filereq-",
       ],
       [...list.map((n) => n.id), ...completedIds],
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.email, leadsReady, leads, proc, realtors, email]);
+  }, [user?.email, leadsReady, leads, proc, realtors, email, purchases, changes]);
 
   /* -------------------------------- admin side ------------------------------
      Kept in its own effect: partner registrations and their correspondence are
