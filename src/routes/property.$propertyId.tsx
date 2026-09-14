@@ -22,13 +22,26 @@ import {
 
 export const Route = createFileRoute("/property/$propertyId")({
   component: PropertyDetailPage,
-  /** `?open=feedback|questionnaire|call|agent` lets a notification jump straight into the pop-up. */
+  /** `?open=feedback|questionnaire|call|agent|chat|agreement` lets a notification jump straight in. */
   validateSearch: (
     search: Record<string, unknown>,
-  ): { open?: "feedback" | "questionnaire" | "call" | "agent"; focus?: string } => {
+  ): {
+    open?: "feedback" | "questionnaire" | "call" | "agent" | "chat" | "agreement";
+    focus?: string;
+  } => {
     const value = search["open"];
-    const out: { open?: "feedback" | "questionnaire" | "call" | "agent"; focus?: string } = {};
-    if (value === "feedback" || value === "questionnaire" || value === "call" || value === "agent")
+    const out: {
+      open?: "feedback" | "questionnaire" | "call" | "agent" | "chat" | "agreement";
+      focus?: string;
+    } = {};
+    if (
+      value === "feedback" ||
+      value === "questionnaire" ||
+      value === "call" ||
+      value === "agent" ||
+      value === "chat" ||
+      value === "agreement"
+    )
       out.open = value;
     if (typeof search["focus"] === "string") out.focus = search["focus"];
     return out;
