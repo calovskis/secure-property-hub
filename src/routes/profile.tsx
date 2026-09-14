@@ -827,7 +827,7 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
       {items.length ? (
         <ul className="mt-4 space-y-3">
           {items.map((item) => {
-            const draft = drafts.find((d) => d.id === item.id);
+            const draft = liveDrafts.find((d) => d.id === item.id);
             const staged = draft
               ? draft.states
                 ? Object.keys(draft.states).length
