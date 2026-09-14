@@ -184,6 +184,17 @@ function PropertyDetailPage() {
     if (openParam === "questionnaire") setQuestionnaireOpen(true);
     if (openParam === "call" && callBooking) setCallOpen(true);
     if (openParam === "agent") setAgentOpen(true);
+    if (openParam === "agreement") {
+      const t = window.setTimeout(
+        () =>
+          document
+            .getElementById("purchase-agreement")
+            ?.scrollIntoView({ behavior: "smooth", block: "start" }),
+        250,
+      );
+      return () => window.clearTimeout(t);
+    }
+    return undefined;
   }, [openParam, callBooking?.id]);
 
 
