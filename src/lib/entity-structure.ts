@@ -114,8 +114,8 @@ export function useEntityPlan(leadId: string) {
         ? { ...existing, ...patch, updatedAt: now }
         : {
             leadId,
-            hasEntity: null,
             ...patch,
+            hasEntity: patch.hasEntity ?? null,
             createdAt: now,
             updatedAt: now,
           };
