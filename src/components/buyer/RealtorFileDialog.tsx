@@ -56,6 +56,11 @@ export function RealtorFileDialog({
   initialTab?: Tab;
 }) {
   const [tab, setTab] = useState<Tab>(initialTab);
+
+  useEffect(() => {
+    if (open) setTab(initialTab);
+  }, [open, initialTab]);
+
   const {
     purchases,
     changes,
