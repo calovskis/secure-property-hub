@@ -13,9 +13,11 @@ import { formatDate, formatDateTime } from "@/lib/dates";
 import { CallScheduler } from "@/components/buyer/CallScheduler";
 import { TourProposalPanel } from "@/components/buyer/TourProposalPanel";
 import { BuyerAgentDialog } from "@/components/mortgage/BuyerAgentDialog";
-import { FileChatPanel } from "@/components/messaging/FileChatPanel";
+import { RealtorFileDialog } from "@/components/buyer/RealtorFileDialog";
 import { clientDisplayForPartner, partnerDisplayForClient } from "@/lib/user-id";
 import { usePartnerRequests } from "@/lib/partner-requests";
+import { useFileChat } from "@/lib/file-chat";
+import { PURCHASE_STATUS_LABEL, useFileRequests } from "@/lib/property-requests";
 
 const money = (n: number) => `$${Math.round(n).toLocaleString()}`;
 const inputClass =
@@ -74,6 +76,17 @@ export function BuyerProcessCard({ lead }: { lead: MortgageLead }) {
   const [changeMode, setChangeMode] = useState<PropertyChangeMode>("agent_propose");
   const [callSlot, setCallSlot] = useState<string | null>(null);
   const [callMeetUrl, setCallMeetUrl] = useState<string | null>(null);
+  const [fileOpen, setFileOpen] = useState(false);
+  const [fileTab, setFileTab] = useState<"status" | "chat" | "purchase" | "change">("status");
+  const { unread: chatUnread } = useFileChat(lead.id, "client");
+  const { purchases } = useFileRequests(lead.id);
+  const latestPurchase = purchases[0];
+
+  function openFile(tab: "status" | "chat" | "purchase" | "change") {
+    setFileTab(tab);
+    setFileOpen(true);
+  }
+
 
   const ba = lead.buyerAgent;
   if (!ba || lead.clientDecision !== "accepted") return null;
@@ -238,17 +251,45 @@ export function BuyerProcessCard({ lead }: { lead: MortgageLead }) {
             </div>
           ) : null}
 
-          <div className="mt-4">
-            <FileChatPanel
-              leadId={lead.id}
-              side="client"
-              myName={clientDisplayForPartner(lead.clientName, lead.clientEmail)}
-              otherName={agentDisplay ?? "your buyer's agent"}
-              otherEmail={agentEmail}
-              propertyId={lead.propertyId}
-              propertyLabel={lead.propertyLabel}
-            />
-          </div>
+          <section className="mt-4 rounded-lg border border-brand/40 bg-brand-tint/40 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h4 className="text-sm font-semibold text-foreground">
+                💬 Your file with {agentDisplay ?? "your buyer's agent"}
+              </h4>
+              {chatUnread ? (
+                <span className="rounded-full bg-brand px-2 py-0.5 text-[10px] font-semibold text-background">
+                  {chatUnread} new
+                </span>
+              ) : null}
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {latestPurchase
+                ? PURCHASE_STATUS_LABEL[latestPurchase.status]
+                : "Message your agent, ask to proceed with the purchase, or ask for other properties."}
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button type="button" onClick={() => openFile("chat")} className={btnPrimary}>
+                Message the agent
+              </button>
+              <button type="button" onClick={() => openFile("purchase")} className={btnGhost}>
+                Request to proceed with the purchase
+              </button>
+              <button type="button" onClick={() => openFile("change")} className={btnGhost}>
+                Request a property change
+              </button>
+            </div>
+          </section>
+
+          <RealtorFileDialog
+            lead={lead}
+            agentName={agentDisplay ?? "your buyer's agent"}
+            agentEmail={agentEmail}
+            myName={clientDisplayForPartner(lead.clientName, lead.clientEmail)}
+            open={fileOpen}
+            onOpenChange={setFileOpen}
+            initialTab={fileTab}
+          />
+
 
           {photo?.status === "delivered" ? (
             <div className="mt-4 rounded-lg border border-border bg-background p-4">

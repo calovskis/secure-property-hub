@@ -20,6 +20,7 @@ import { DateInput } from "@/components/form/DateInput";
 import { CallScheduler } from "@/components/buyer/CallScheduler";
 import { TourProposalPanel } from "@/components/buyer/TourProposalPanel";
 import { FileChatPanel } from "@/components/messaging/FileChatPanel";
+import { BuyerRequestsPanel } from "@/components/realtor/BuyerRequestsPanel";
 
 import { GoogleCalendarCard } from "@/components/google/GoogleCalendarCard";
 import { RealtorAnalytics } from "@/components/realtor/RealtorAnalytics";
@@ -600,6 +601,14 @@ function BuyerFile({ lead, me }: { lead: MortgageLead; me: Realtor }) {
               <PhotoPanel lead={lead} />
             </>
           )}
+
+          <BuyerRequestsPanel
+            leadId={lead.id}
+            propertyId={lead.propertyId}
+            propertyLabel={lead.propertyLabel}
+            buyerName={clientDisplayForPartner(lead.clientName, lead.clientEmail)}
+            buyerEmail={lead.clientEmail}
+          />
 
           <FileChatPanel
             leadId={lead.id}
