@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { formatDateTime } from "@/lib/dates";
-import { notify } from "@/lib/notifications";
 import { allProperties, formatPrice } from "@/data/properties";
 import type { MortgageLead } from "@/lib/leads";
 import { FileChatPanel } from "@/components/messaging/FileChatPanel";
