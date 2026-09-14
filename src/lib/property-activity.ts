@@ -408,15 +408,40 @@ export function useClientPropertyActivity(): PropertyActivity[] {
   const { user } = useAuth();
   const { leadsForClient, ready } = useLeads();
   const { photos, bookings, actions } = useBuyerProcess();
+  const { purchases, changes } = usePropertyRequests();
+  const { messages } = useAllFileChat();
+  const { plans } = useEntityPlans();
 
   return useMemo(() => {
     if (!ready || !user?.email) return [];
     const leads = leadsForClient(user.email);
     return leads
-      .map((lead) => buildActivity(lead, photos, bookings, actions))
+      .map((lead) =>
+        buildActivity(
+          lead,
+          photos,
+          bookings,
+          actions,
+          purchases,
+          changes,
+          messages,
+          plans.find((p) => p.leadId === lead.id),
+        ),
+      )
       .sort((a, b) => {
         if (a.awaitingClient !== b.awaitingClient) return b.awaitingClient - a.awaitingClient;
         return new Date(b.items[0]?.at ?? 0).getTime() - new Date(a.items[0]?.at ?? 0).getTime();
       });
-  }, [ready, user?.email, leadsForClient, photos, bookings, actions]);
+  }, [
+    ready,
+    user?.email,
+    leadsForClient,
+    photos,
+    bookings,
+    actions,
+    purchases,
+    changes,
+    messages,
+    plans,
+  ]);
 }
