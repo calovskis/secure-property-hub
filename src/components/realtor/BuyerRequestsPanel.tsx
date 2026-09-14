@@ -124,7 +124,7 @@ export function BuyerRequestsPanel({
                 />
                 <button
                   type="button"
-                  disabled={!suggested}
+                  disabled={!suggested || !note.trim()}
                   onClick={() => {
                     const price = Math.round(Number(suggested) || 0);
                     if (!price) return;
