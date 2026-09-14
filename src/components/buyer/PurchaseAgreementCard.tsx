@@ -72,7 +72,10 @@ export function PurchaseAgreementCard({
     });
   }
 
-  function choosePath(next: EntityPath, extra?: Record<string, string>) {
+  function choosePath(
+    next: EntityPath,
+    extra?: { entityName?: string; entityState?: string; entityEin?: string },
+  ) {
     savePlan({ path: next, ...(extra ?? {}) });
     if (next === "loqal_setup") {
       tellLoqal(

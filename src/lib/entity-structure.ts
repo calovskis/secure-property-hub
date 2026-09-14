@@ -86,6 +86,10 @@ function commit(next: State) {
   listeners.forEach((l) => l());
 }
 
+export type EntityPlanPatch = {
+  [K in keyof Omit<EntityPlan, "leadId" | "createdAt" | "updatedAt">]?: EntityPlan[K] | undefined;
+};
+
 export function useEntityPlan(leadId: string) {
   const snapshot = useSyncExternalStore(
     (cb) => {
@@ -102,7 +106,7 @@ export function useEntityPlan(leadId: string) {
   );
 
   const savePlan = useCallback(
-    (patch: Partial<Omit<EntityPlan, "leadId" | "createdAt" | "updatedAt">>) => {
+    (patch: EntityPlanPatch) => {
       const cur = load();
       const now = new Date().toISOString();
       const existing = cur.plans.find((p) => p.leadId === leadId);
