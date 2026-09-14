@@ -874,6 +874,9 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
             open={Boolean(renewState)}
             onOpenChange={(o) => (o ? null : setRenewState(null))}
             license={licenses.find((l) => l.state === renewState)}
+            completed={Boolean(
+              renewState && !expiringLicences.some((l) => l.state === renewState),
+            )}
             onSubmit={(next) => {
               if (renewState) renewLicence(renewState, next);
             }}
