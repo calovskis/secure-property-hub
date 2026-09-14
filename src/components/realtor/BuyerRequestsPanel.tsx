@@ -164,7 +164,7 @@ export function BuyerRequestsPanel({
 
           {purchaseActive ? (
             <div className="mt-3 space-y-3 rounded-md border border-brand/30 bg-brand-tint/30 p-3">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-brand-deep">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-brand">
                 Your price opinion
               </p>
               <textarea
@@ -282,7 +282,7 @@ export function BuyerRequestsPanel({
 
           {changeActive ? (
             <div className="mt-3 space-y-2 rounded-md border border-brand/30 bg-brand-tint/30 p-3">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-brand-deep">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-brand">
                 Your response
               </p>
               <textarea
