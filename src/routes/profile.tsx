@@ -23,7 +23,7 @@ import { CorrespondenceCard } from "@/components/profile/CorrespondenceCard";
 import { UpcomingCallsCard } from "@/components/client/UpcomingCallsCard";
 
 import { InfoRequestsList } from "@/components/profile/InfoRequestsList";
-import { useUploadDrafts, requestOpenUpload } from "@/lib/upload-drafts";
+import { useUploadDrafts, requestOpenUpload, clearUploadDraft } from "@/lib/upload-drafts";
 import {
   PARTNER_LABEL,
   ROLE_LABEL,
@@ -672,6 +672,28 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
   const identityDone = Boolean(realtor && registration?.realtorVerification?.identityDoc);
   const needsIdentity = Boolean(realtor && registration && !identityDone);
 
+  /**
+   * A pre-saved (unfinished) upload must disappear everywhere as soon as the
+   * information behind it was actually provided — through this page, through a
+   * notification pop-up or anywhere else on the platform.
+   */
+  const satisfiedDrafts = drafts
+    .filter((d) => {
+      if (d.id === "realtor-identity") return identityDone;
+      if (d.id === "realtor-licences") return realtor && !missingLicences.length;
+      if (d.id.startsWith("licence-renewal-")) {
+        const state = d.id.slice("licence-renewal-".length);
+        return !expiringLicences.some((l) => l.state === state);
+      }
+      return false;
+    })
+    .map((d) => d.id);
+  const satisfiedKey = satisfiedDrafts.join(",");
+  useEffect(() => {
+    for (const id of satisfiedKey ? satisfiedKey.split(",") : []) clearUploadDraft(id);
+  }, [satisfiedKey]);
+  const liveDrafts = drafts.filter((d) => !satisfiedDrafts.includes(d.id));
+
   const items: { id: string; title: string; detail: string; open: () => void }[] = [];
 
   if (needsIdentity)
@@ -704,7 +726,7 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
     });
 
 
-  for (const d of drafts)
+  for (const d of liveDrafts)
     if (!items.some((i) => i.id === d.id))
       items.push({
         id: d.id,
@@ -749,6 +771,7 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
       ],
     );
     setRenewState(null);
+    clearUploadDraft(`licence-renewal-${state}`);
     toast(`${state} licence renewed`, {
       description: "The renewed licence was sent to Loqal for verification.",
     });
@@ -766,6 +789,7 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
         identityUploadedAt: new Date().toISOString(),
       },
     });
+    clearUploadDraft("realtor-identity");
     toast("Identity document uploaded", { description: "Loqal will verify it shortly." });
   }
 
@@ -805,7 +829,7 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
       {items.length ? (
         <ul className="mt-4 space-y-3">
           {items.map((item) => {
-            const draft = drafts.find((d) => d.id === item.id);
+            const draft = liveDrafts.find((d) => d.id === item.id);
             const staged = draft
               ? draft.states
                 ? Object.keys(draft.states).length
