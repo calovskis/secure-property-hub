@@ -4,7 +4,7 @@
  * proceed with the purchase (listing price or a lower offer) and the request to
  * change the property.
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   Dialog,
