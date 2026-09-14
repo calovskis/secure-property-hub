@@ -56,6 +56,10 @@ function buildActivity(
   photos: ReturnType<typeof useBuyerProcess>["photos"],
   bookings: ReturnType<typeof useBuyerProcess>["bookings"],
   actions: ReturnType<typeof useBuyerProcess>["actions"],
+  purchases: PurchaseRequest[],
+  changes: ChangeRequest[],
+  messages: FileMessage[],
+  plan: EntityPlan | undefined,
 ): PropertyActivity {
   const items: ActivityItem[] = [];
   let awaiting = 0;
