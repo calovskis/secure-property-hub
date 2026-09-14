@@ -155,6 +155,21 @@ export function useEntityPlans() {
   return { plans: snapshot.plans };
 }
 
+/** Update one file's plan from outside a component (used by the admin console). */
+export function updateEntityPlan(leadId: string, patch: EntityPlanPatch) {
+  const cur = load();
+  const now = new Date().toISOString();
+  const existing = cur.plans.find((p) => p.leadId === leadId);
+  const next: EntityPlan = existing
+    ? { ...existing, ...patch, updatedAt: now }
+    : { leadId, ...patch, createdAt: now, updatedAt: now };
+  commit({
+    plans: existing
+      ? cur.plans.map((p) => (p.leadId === leadId ? next : p))
+      : [...cur.plans, next],
+  });
+}
+
 /** Why a foreign national is usually better off holding US property in a company. */
 export const CORPORATE_STRUCTURE_GUIDE: { title: string; body: string }[] = [
   {
