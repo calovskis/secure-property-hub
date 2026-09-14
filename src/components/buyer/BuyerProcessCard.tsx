@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { Link, useSearch } from "@tanstack/react-router";
 import {
   CLIENT_ACTION_LABEL,
   INSPECTION_OPTIONS,
