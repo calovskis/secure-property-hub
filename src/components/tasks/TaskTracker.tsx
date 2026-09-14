@@ -28,6 +28,7 @@ type GroupId =
   | "registrations"
   | "agreements"
   | "correspondence"
+  | "companySetup"
   | "other";
 
 type GroupDef = {
@@ -48,6 +49,7 @@ const GROUPS: Record<GroupId, GroupDef> = {
   registrations: { id: "registrations", label: "Partner registrations", icon: "🤝", tone: "bg-brand-tint text-brand" },
   agreements: { id: "agreements", label: "Agreements to countersign", icon: "✍️", tone: "bg-gold-tint text-gold" },
   correspondence: { id: "correspondence", label: "Partner correspondence", icon: "💬", tone: "bg-brand-tint text-brand" },
+  companySetup: { id: "companySetup", label: "Company set-ups & agreements", icon: "🏢", tone: "bg-gold-tint text-gold" },
   other: { id: "other", label: "Other actions", icon: "✅", tone: "bg-muted text-foreground" },
 };
 
@@ -75,6 +77,7 @@ function adminGroupOf(id: string): GroupId {
   if (id.startsWith("countersign-")) return "agreements";
   if (id.startsWith("kyc-")) return "registrations";
   if (id.startsWith("areq-")) return "correspondence";
+  if (id.startsWith("entitysetup-")) return "companySetup";
   return "other";
 }
 
@@ -97,6 +100,9 @@ function isActionable(n: AppNotification): boolean {
     "areq-booked-",
     "areq-answered-",
     "decision-",
+    "entityown-",
+    "entityexisting-",
+    "agreement-signed-",
   ];
   if (informational.some((p) => id.startsWith(p))) return false;
   return true;
