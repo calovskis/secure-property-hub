@@ -18,6 +18,7 @@ import { useRealtors } from "@/lib/realtors";
 import { useLenderTeam } from "@/lib/lender-team";
 import { useMortgageDrafts } from "@/lib/mortgage-draft";
 import { usePropertyRequests } from "@/lib/property-requests";
+import { useEntityPlans } from "@/lib/entity-structure";
 import { formatPrice } from "@/data/properties";
 import {
   clearRequestOpenedAt,
