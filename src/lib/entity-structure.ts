@@ -50,6 +50,17 @@ export type EntityPlan = {
   guideSeenAt?: string | undefined;
   /** Purchase agreement signed by the buyer. */
   agreementSignedAt?: string | undefined;
+  /** Typed e-signature used to sign. */
+  agreementSignedBy?: string | undefined;
+  /** Buyer's choices inside the agreement template (deposit, contingencies…). */
+  agreementChoices?: unknown;
+  /** Furthest step the buyer reached in the signing window (1–3). */
+  wizardStep?: number | undefined;
+  /** Client asked Loqal to handle the company set-up. */
+  loqalSetupRequestedAt?: string | undefined;
+  /** A Loqal admin marked the structure set-up as handled. */
+  loqalSetupHandledAt?: string | undefined;
+  loqalSetupHandledBy?: string | undefined;
   notes?: string | undefined;
   createdAt: string;
   updatedAt: string;
