@@ -39,17 +39,72 @@ type GroupDef = {
 };
 
 const GROUPS: Record<GroupId, GroupDef> = {
-  documents: { id: "documents", label: "Documents & data", icon: "📄", tone: "bg-brand-tint text-brand" },
-  preapproval: { id: "preapproval", label: "Mortgage pre-approval", icon: "🏦", tone: "bg-brand-tint text-brand" },
-  buyerAgent: { id: "buyerAgent", label: "Your buyer's agent", icon: "🤝", tone: "bg-gold-tint text-gold" },
-  viewings: { id: "viewings", label: "Viewings & calls", icon: "🗓", tone: "bg-gold-tint text-gold" },
-  licences: { id: "licences", label: "Licences & verification", icon: "🪪", tone: "bg-gold-tint text-gold" },
-  buyerFiles: { id: "buyerFiles", label: "Buyer files", icon: "🗂", tone: "bg-brand-tint text-brand" },
-  loqalRequests: { id: "loqalRequests", label: "Requests from Loqal", icon: "📝", tone: "bg-brand-tint text-brand" },
-  registrations: { id: "registrations", label: "Partner registrations", icon: "🤝", tone: "bg-brand-tint text-brand" },
-  agreements: { id: "agreements", label: "Agreements to countersign", icon: "✍️", tone: "bg-gold-tint text-gold" },
-  correspondence: { id: "correspondence", label: "Partner correspondence", icon: "💬", tone: "bg-brand-tint text-brand" },
-  companySetup: { id: "companySetup", label: "Company set-ups & agreements", icon: "🏢", tone: "bg-gold-tint text-gold" },
+  documents: {
+    id: "documents",
+    label: "Documents & data",
+    icon: "📄",
+    tone: "bg-brand-tint text-brand",
+  },
+  preapproval: {
+    id: "preapproval",
+    label: "Mortgage pre-approval",
+    icon: "🏦",
+    tone: "bg-brand-tint text-brand",
+  },
+  buyerAgent: {
+    id: "buyerAgent",
+    label: "Your buyer's agent",
+    icon: "🤝",
+    tone: "bg-gold-tint text-gold",
+  },
+  viewings: {
+    id: "viewings",
+    label: "Viewings & calls",
+    icon: "🗓",
+    tone: "bg-gold-tint text-gold",
+  },
+  licences: {
+    id: "licences",
+    label: "Licences & verification",
+    icon: "🪪",
+    tone: "bg-gold-tint text-gold",
+  },
+  buyerFiles: {
+    id: "buyerFiles",
+    label: "Buyer files",
+    icon: "🗂",
+    tone: "bg-brand-tint text-brand",
+  },
+  loqalRequests: {
+    id: "loqalRequests",
+    label: "Requests from Loqal",
+    icon: "📝",
+    tone: "bg-brand-tint text-brand",
+  },
+  registrations: {
+    id: "registrations",
+    label: "Partner registrations",
+    icon: "🤝",
+    tone: "bg-brand-tint text-brand",
+  },
+  agreements: {
+    id: "agreements",
+    label: "Agreements to countersign",
+    icon: "✍️",
+    tone: "bg-gold-tint text-gold",
+  },
+  correspondence: {
+    id: "correspondence",
+    label: "Partner correspondence",
+    icon: "💬",
+    tone: "bg-brand-tint text-brand",
+  },
+  companySetup: {
+    id: "companySetup",
+    label: "Company set-ups & agreements",
+    icon: "🏢",
+    tone: "bg-gold-tint text-gold",
+  },
   other: { id: "other", label: "Other actions", icon: "✅", tone: "bg-muted text-foreground" },
 };
 
@@ -135,15 +190,14 @@ export function TaskTracker({ className = "" }: { className?: string }) {
       // questionnaire draft can never reappear as an open dashboard task.
       if (notification.id.startsWith("draft-") && hasSubmittedMortgage) return false;
 
-      const leadForNotification = myLeads.find((lead) =>
-        notification.id.includes(lead.id),
-      );
+      const leadForNotification = myLeads.find((lead) => notification.id.includes(lead.id));
       if (!leadForNotification) return true;
       if (notification.id.startsWith("offer-") && leadForNotification.clientDecision) return false;
       if (
         notification.id.startsWith("agentsetup-") &&
         leadForNotification.buyerAgent?.representation
-      ) return false;
+      )
+        return false;
       if (notification.id.startsWith("inforeq-")) {
         const request = leadForNotification.infoRequests.find((item) =>
           notification.id.includes(item.id),

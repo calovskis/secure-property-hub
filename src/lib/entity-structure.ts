@@ -164,9 +164,7 @@ export function updateEntityPlan(leadId: string, patch: EntityPlanPatch) {
     ? { ...existing, ...patch, updatedAt: now }
     : { leadId, ...patch, createdAt: now, updatedAt: now };
   commit({
-    plans: existing
-      ? cur.plans.map((p) => (p.leadId === leadId ? next : p))
-      : [...cur.plans, next],
+    plans: existing ? cur.plans.map((p) => (p.leadId === leadId ? next : p)) : [...cur.plans, next],
   });
 }
 

@@ -69,8 +69,8 @@ export function PurchaseAgreementCard({
               agreement to the seller.
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              {plan?.path ? `${ENTITY_PATH_LABEL[plan.path]}. ` : ""}The seller may accept, propose a
-              lower price, or ask to adjust terms — you decide before anything changes.
+              {plan?.path ? `${ENTITY_PATH_LABEL[plan.path]}. ` : ""}The seller may accept, propose
+              a lower price, or ask to adjust terms — you decide before anything changes.
             </p>
           </>
         ) : (

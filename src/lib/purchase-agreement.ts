@@ -92,8 +92,25 @@ export type AgreementSection = { n: string; title: string; body: string[] };
 const money = (n: number) => formatPrice(Math.round(n));
 
 const ONES = [
-  "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten",
-  "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen",
+  "zero",
+  "one",
+  "two",
+  "three",
+  "four",
+  "five",
+  "six",
+  "seven",
+  "eight",
+  "nine",
+  "ten",
+  "eleven",
+  "twelve",
+  "thirteen",
+  "fourteen",
+  "fifteen",
+  "sixteen",
+  "seventeen",
+  "eighteen",
   "nineteen",
 ];
 const TENS = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
@@ -225,7 +242,9 @@ export function buildAgreement(
             ).toLocaleString()}, Buyer may, by written notice before expiry of the Inspection Period, (a) terminate this Agreement and receive a prompt refund of the Deposit, (b) request that Seller repair such defects or provide a closing credit, or (c) waive such defects and proceed to Closing “as is”.`,
             "6.4 Failure to Timely Notify. If Buyer fails to deliver written notice under Section 6.3 by the end of the Inspection Period, the inspection contingency shall be deemed satisfied and waived by Buyer.",
           ]
-        : ["6.1 No inspection contingency. Buyer waives any inspection contingency and accepts the Property “AS IS”."],
+        : [
+            "6.1 No inspection contingency. Buyer waives any inspection contingency and accepts the Property “AS IS”.",
+          ],
     },
     {
       n: "7",
@@ -249,7 +268,9 @@ export function buildAgreement(
             "8.3 Failure to Obtain Commitment. If Buyer, despite good-faith efforts, does not obtain a mortgage commitment by the deadline, Buyer may (a) terminate this Agreement by written notice, whereupon the Deposit shall be refunded, or (b) waive the financing contingency and proceed to Closing on an all-cash basis or using alternative financing acceptable to Buyer.",
             "8.4 Lender Conditions. Buyer's obligations are further subject to satisfaction of lender requirements, including satisfactory appraisal, title insurance and review of the Property.",
           ]
-        : ["8.1 No financing contingency. This is not conditioned upon Buyer obtaining mortgage financing."],
+        : [
+            "8.1 No financing contingency. This is not conditioned upon Buyer obtaining mortgage financing.",
+          ],
     },
     {
       n: "9",
@@ -336,7 +357,9 @@ export function choiceSummary(facts: AgreementFacts, c: AgreementChoices): strin
       : c.paymentMode === "financed"
         ? "Financed with a mortgage"
         : "Part seller financing",
-    c.inspection ? `Inspection contingency — ${c.inspectionDays} days` : "No inspection contingency",
+    c.inspection
+      ? `Inspection contingency — ${c.inspectionDays} days`
+      : "No inspection contingency",
     c.appraisal ? "Appraisal contingency included" : "No appraisal contingency",
     c.financing ? `Financing contingency — ${c.financingDays} days` : "No financing contingency",
     `Buyer's broker commission ${c.commissionPct}%, paid by the seller`,
@@ -350,8 +373,7 @@ export function agreementWordHtml(
   signedAt?: string,
 ): string {
   const doc = buildAgreement(facts, c, signedAt);
-  const esc = (s: string) =>
-    s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   const body = [
     `<h1>${esc(doc.heading)}</h1>`,
     ...doc.preamble.map((p) => `<p>${esc(p)}</p>`),

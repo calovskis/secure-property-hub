@@ -15,11 +15,7 @@ import {
   type MortgageLead,
 } from "@/lib/leads";
 import { formatDate, formatDateTime } from "@/lib/dates";
-import {
-  ENTITY_PATH_LABEL,
-  updateEntityPlan,
-  useEntityPlans,
-} from "@/lib/entity-structure";
+import { ENTITY_PATH_LABEL, updateEntityPlan, useEntityPlans } from "@/lib/entity-structure";
 import { notify } from "@/lib/notifications";
 import { usd } from "@/lib/accounting";
 import type { StoredDocument } from "@/lib/auth";
@@ -30,7 +26,8 @@ function documentsOf(lead: MortgageLead): { label: string; docs: StoredDocument[
   const p = lead.profile;
   const groups: { label: string; docs: StoredDocument[] }[] = [];
   if (p.visaDocuments?.length) groups.push({ label: "Visa", docs: p.visaDocuments });
-  if (p.idDocuments?.length) groups.push({ label: "ID / green card / passport", docs: p.idDocuments });
+  if (p.idDocuments?.length)
+    groups.push({ label: "ID / green card / passport", docs: p.idDocuments });
   if (p.bankruptcyDocuments?.length)
     groups.push({ label: "Bankruptcy discharge", docs: p.bankruptcyDocuments });
   const infoDocs = lead.infoRequests.flatMap((r) => r.documents);
@@ -86,7 +83,11 @@ function timelineOf(lead: MortgageLead): TimelineItem[] {
     });
   const ba = lead.buyerAgent;
   if (ba?.agreedAt)
-    items.push({ at: ba.agreedAt, who: lead.clientName, what: "Confirmed the buyer's agent agreement (3% at closing)" });
+    items.push({
+      at: ba.agreedAt,
+      who: lead.clientName,
+      what: "Confirmed the buyer's agent agreement (3% at closing)",
+    });
   if (ba?.representation)
     items.push({
       at: ba.assignedAt ?? ba.agreedAt,
@@ -141,7 +142,9 @@ function CaseDetail({ lead, onClose }: { lead: MortgageLead; onClose: () => void
           <Mini label="Status" value={LEAD_STATUS_LABEL[lead.status]} />
           <Mini
             label="Stage"
-            value={isMortgageFile(lead) ? MORTGAGE_STAGE_LABEL[mortgageStage(lead)] : "Pre-approval"}
+            value={
+              isMortgageFile(lead) ? MORTGAGE_STAGE_LABEL[mortgageStage(lead)] : "Pre-approval"
+            }
           />
           <Mini label="Lender owner" value={lead.assignedToName ?? "Unassigned"} />
           <Mini
@@ -222,7 +225,7 @@ function OwnershipTask({ lead }: { lead: MortgageLead }) {
       severity: "info",
       completed: true,
       badge: "Handled",
-      createdAt: plan.loqalSetupRequestedAt ?? now,
+      createdAt: plan?.loqalSetupRequestedAt ?? now,
     });
   }
 

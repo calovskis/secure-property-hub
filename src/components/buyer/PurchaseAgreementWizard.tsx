@@ -153,7 +153,8 @@ export function PurchaseAgreementWizard({
   /* ------------------------------------------------------------- the buyer */
   const holdingCompany =
     path === "existing_entity" ? (plan?.entityName ?? "").trim() : (plan?.entityName ?? "").trim();
-  const buyingThroughCompany = path === "existing_entity" || path === "own_setup" || path === "loqal_setup";
+  const buyingThroughCompany =
+    path === "existing_entity" || path === "own_setup" || path === "loqal_setup";
   const companyKnown = Boolean(holdingCompany);
   /** The name that goes on the deed: the company when there is one. */
   const buyerLegalName = companyKnown ? holdingCompany : fullName(user ?? ({} as never));
@@ -190,8 +191,16 @@ export function PurchaseAgreementWizard({
       buyerBrokerLicence: "",
       listingBrokerName: "Listing broker of record",
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [buyerLegalName, companyKnown, plan?.entityState, property, purchase, agentName, usPerson, user]);
+  }, [
+    buyerLegalName,
+    companyKnown,
+    plan?.entityState,
+    property,
+    purchase,
+    agentName,
+    usPerson,
+    user,
+  ]);
 
   const draft = useMemo(
     () => buildAgreement(facts, choices, plan?.agreementSignedAt),
@@ -403,8 +412,8 @@ export function PurchaseAgreementWizard({
                 {path === "loqal_setup" ? (
                   <p className="mt-1 text-xs text-muted-foreground">
                     Your Loqal team has the task and will choose the best set-up for the property
-                    location and your profile, then come back with the plan and the exact costs.
-                    You can continue with the agreement in the meantime.
+                    location and your profile, then come back with the plan and the exact costs. You
+                    can continue with the agreement in the meantime.
                   </p>
                 ) : null}
                 {!signed ? (
@@ -556,10 +565,10 @@ export function PurchaseAgreementWizard({
                       <p className="mt-2 text-[11px] text-foreground">
                         One-time Loqal Managerial Set-up fee of{" "}
                         <strong>${LOQAL_SETUP_FEE_USD}</strong>, plus all related services to open
-                        the company (company formation, registered agent, EIN, bank account
-                        opening) — <strong>up to ${RELATED_SERVICES_MAX_USD} in total</strong>,
-                        charged transparently at cost. We will choose the best set-up based on the
-                        property location and your profile.
+                        the company (company formation, registered agent, EIN, bank account opening)
+                        — <strong>up to ${RELATED_SERVICES_MAX_USD} in total</strong>, charged
+                        transparently at cost. We will choose the best set-up based on the property
+                        location and your profile.
                       </p>
                     </div>
                   </div>
@@ -852,9 +861,7 @@ export function PurchaseAgreementWizard({
                   my typed name is my legally binding electronic signature under applicable
                   electronic signature law.
                 </label>
-                {error ? (
-                  <p className="text-xs font-semibold text-destructive">{error}</p>
-                ) : null}
+                {error ? <p className="text-xs font-semibold text-destructive">{error}</p> : null}
                 <p className="text-[11px] text-muted-foreground">
                   After signing, the agreement goes to the seller. They may accept, propose a lower
                   price, or ask to adjust terms — you will be asked before anything changes.
