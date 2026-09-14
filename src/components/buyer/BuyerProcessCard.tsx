@@ -76,6 +76,17 @@ export function BuyerProcessCard({ lead }: { lead: MortgageLead }) {
   const [changeMode, setChangeMode] = useState<PropertyChangeMode>("agent_propose");
   const [callSlot, setCallSlot] = useState<string | null>(null);
   const [callMeetUrl, setCallMeetUrl] = useState<string | null>(null);
+  const [fileOpen, setFileOpen] = useState(false);
+  const [fileTab, setFileTab] = useState<"status" | "chat" | "purchase" | "change">("status");
+  const { unread: chatUnread } = useFileChat(lead.id, "client");
+  const { purchases } = useFileRequests(lead.id);
+  const latestPurchase = purchases[0];
+
+  function openFile(tab: "status" | "chat" | "purchase" | "change") {
+    setFileTab(tab);
+    setFileOpen(true);
+  }
+
 
   const ba = lead.buyerAgent;
   if (!ba || lead.clientDecision !== "accepted") return null;
