@@ -37,7 +37,7 @@ export const ENTITY_PATH_LABEL: Record<EntityPath, string> = {
 export type EntityPlan = {
   leadId: string;
   /** Does the client already have a US entity? null = not answered yet. */
-  hasEntity: boolean | null;
+  hasEntity?: boolean | null | undefined;
   /** When they have one — do they want to purchase through it? */
   useExisting?: boolean;
   entityName?: string;
@@ -115,7 +115,6 @@ export function useEntityPlan(leadId: string) {
         : {
             leadId,
             ...patch,
-            hasEntity: patch.hasEntity ?? null,
             createdAt: now,
             updatedAt: now,
           };
