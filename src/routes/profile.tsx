@@ -672,6 +672,28 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
   const identityDone = Boolean(realtor && registration?.realtorVerification?.identityDoc);
   const needsIdentity = Boolean(realtor && registration && !identityDone);
 
+  /**
+   * A pre-saved (unfinished) upload must disappear everywhere as soon as the
+   * information behind it was actually provided — through this page, through a
+   * notification pop-up or anywhere else on the platform.
+   */
+  const satisfiedDrafts = drafts
+    .filter((d) => {
+      if (d.id === "realtor-identity") return identityDone;
+      if (d.id === "realtor-licences") return realtor && !missingLicences.length;
+      if (d.id.startsWith("licence-renewal-")) {
+        const state = d.id.slice("licence-renewal-".length);
+        return !expiringLicences.some((l) => l.state === state);
+      }
+      return false;
+    })
+    .map((d) => d.id);
+  const satisfiedKey = satisfiedDrafts.join(",");
+  useEffect(() => {
+    for (const id of satisfiedKey ? satisfiedKey.split(",") : []) clearUploadDraft(id);
+  }, [satisfiedKey]);
+  const liveDrafts = drafts.filter((d) => !satisfiedDrafts.includes(d.id));
+
   const items: { id: string; title: string; detail: string; open: () => void }[] = [];
 
   if (needsIdentity)
