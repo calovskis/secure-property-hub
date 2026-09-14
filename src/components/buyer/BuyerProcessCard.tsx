@@ -238,17 +238,45 @@ export function BuyerProcessCard({ lead }: { lead: MortgageLead }) {
             </div>
           ) : null}
 
-          <div className="mt-4">
-            <FileChatPanel
-              leadId={lead.id}
-              side="client"
-              myName={clientDisplayForPartner(lead.clientName, lead.clientEmail)}
-              otherName={agentDisplay ?? "your buyer's agent"}
-              otherEmail={agentEmail}
-              propertyId={lead.propertyId}
-              propertyLabel={lead.propertyLabel}
-            />
-          </div>
+          <section className="mt-4 rounded-lg border border-brand/40 bg-brand-tint/40 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h4 className="text-sm font-semibold text-foreground">
+                💬 Your file with {agentDisplay ?? "your buyer's agent"}
+              </h4>
+              {chatUnread ? (
+                <span className="rounded-full bg-brand px-2 py-0.5 text-[10px] font-semibold text-background">
+                  {chatUnread} new
+                </span>
+              ) : null}
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {latestPurchase
+                ? PURCHASE_STATUS_LABEL[latestPurchase.status]
+                : "Message your agent, ask to proceed with the purchase, or ask for other properties."}
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button type="button" onClick={() => openFile("chat")} className={btnPrimary}>
+                Message the agent
+              </button>
+              <button type="button" onClick={() => openFile("purchase")} className={btnGhost}>
+                Request to proceed with the purchase
+              </button>
+              <button type="button" onClick={() => openFile("change")} className={btnGhost}>
+                Request a property change
+              </button>
+            </div>
+          </section>
+
+          <RealtorFileDialog
+            lead={lead}
+            agentName={agentDisplay ?? "your buyer's agent"}
+            agentEmail={agentEmail}
+            myName={clientDisplayForPartner(lead.clientName, lead.clientEmail)}
+            open={fileOpen}
+            onOpenChange={setFileOpen}
+            initialTab={fileTab}
+          />
+
 
           {photo?.status === "delivered" ? (
             <div className="mt-4 rounded-lg border border-border bg-background p-4">
