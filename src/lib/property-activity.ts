@@ -16,8 +16,17 @@ import {
   type MortgageLead,
 } from "@/lib/leads";
 import { CLIENT_ACTION_LABEL, useBuyerProcess } from "@/lib/buyer-process";
-import { allProperties, type Property } from "@/data/properties";
+import { allProperties, formatPrice, type Property } from "@/data/properties";
 import { formatDate } from "@/lib/dates";
+import {
+  usePropertyRequests,
+  type ChangeRequest,
+  type PurchaseRequest,
+} from "@/lib/property-requests";
+import { useAllFileChat, type FileMessage } from "@/lib/file-chat";
+import { ENTITY_PATH_LABEL, useEntityPlans, type EntityPlan } from "@/lib/entity-structure";
+
+const money = (n: number) => formatPrice(n);
 
 export type ActivityTone = "pending" | "update" | "done";
 
