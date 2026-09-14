@@ -23,7 +23,7 @@ import { CorrespondenceCard } from "@/components/profile/CorrespondenceCard";
 import { UpcomingCallsCard } from "@/components/client/UpcomingCallsCard";
 
 import { InfoRequestsList } from "@/components/profile/InfoRequestsList";
-import { useUploadDrafts, requestOpenUpload } from "@/lib/upload-drafts";
+import { useUploadDrafts, requestOpenUpload, clearUploadDraft } from "@/lib/upload-drafts";
 import {
   PARTNER_LABEL,
   ROLE_LABEL,
