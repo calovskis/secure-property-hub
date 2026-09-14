@@ -230,6 +230,144 @@ function buildActivity(
     });
   }
 
+  /* ------------------------- work with the buyer's agent -------------------
+     Everything exchanged with the realtor on this property file: the request
+     to proceed with a price and the agent's answer, property-change requests,
+     messages both ways, and the purchase agreement. */
+  const chatHref = `/property/${lead.propertyId}?open=chat`;
+
+  for (const p of purchases.filter((x) => x.leadId === lead.id)) {
+    push(items, {
+      at: p.createdAt,
+      label:
+        p.mode === "listing"
+          ? "You asked to proceed at the listing price"
+          : "You asked to proceed with a lower price",
+      detail: `Offered ${money(p.offerPrice)}${
+        p.mode === "lower" ? ` against the listing price of ${money(p.listingPrice)}` : ""
+      }${p.buyerNote ? ` — ${p.buyerNote}` : ""}`,
+      tone: p.status === "pending" ? "update" : "done",
+    });
+    if (p.status === "pending") {
+      push(items, {
+        at: p.createdAt,
+        label: "Your agent is preparing a price opinion",
+        detail: "They will either confirm your price for the seller or suggest a higher one.",
+        tone: "update",
+      });
+    }
+    if (p.status === "price_pushback" && p.respondedAt) {
+      awaiting += 1;
+      push(items, {
+        at: p.respondedAt,
+        label: "Your agent suggests a higher price",
+        detail: `${p.agentSuggestedPrice ? `${money(p.agentSuggestedPrice)} — ` : ""}${
+          p.agentNote ?? ""
+        }`,
+        tone: "pending",
+        action: { href: chatHref, cta: "Answer your agent" },
+      });
+    }
+    if (p.status === "buyer_raised" && p.raisedAt) {
+      push(items, {
+        at: p.raisedAt,
+        label: "You raised your offer",
+        detail: p.raisedPrice ? money(p.raisedPrice) : undefined,
+        tone: "update",
+      });
+    }
+    if (p.status === "price_supported" && p.respondedAt) {
+      push(items, {
+        at: p.respondedAt,
+        label: "Price confirmed — your agent is presenting it to the seller",
+        detail: `${money(p.offerPrice)}${p.agentNote ? ` — ${p.agentNote}` : ""}`,
+        tone: "done",
+      });
+      if (!plan?.agreementSignedAt) {
+        awaiting += 1;
+        push(items, {
+          at: p.respondedAt,
+          label: "Sign the purchase agreement and tell us how the property will be held",
+          detail: "Directly, or through a US company holding the property.",
+          tone: "pending",
+          action: {
+            href: `/property/${lead.propertyId}?open=agreement`,
+            cta: "Continue to the purchase agreement",
+          },
+        });
+      }
+    }
+    if (p.status === "withdrawn") {
+      push(items, {
+        at: p.respondedAt ?? p.createdAt,
+        label: "You withdrew the purchase request",
+        tone: "done",
+      });
+    }
+  }
+
+  if (plan) {
+    if (plan.path) {
+      push(items, {
+        at: plan.updatedAt,
+        label: `Ownership structure: ${ENTITY_PATH_LABEL[plan.path]}`,
+        detail: plan.entityName || undefined,
+        tone: "done",
+      });
+    }
+    if (plan.agreementSignedAt) {
+      push(items, {
+        at: plan.agreementSignedAt,
+        label: "You signed the purchase agreement",
+        tone: "done",
+      });
+    }
+  }
+
+  for (const c of changes.filter((x) => x.leadId === lead.id)) {
+    push(items, {
+      at: c.createdAt,
+      label:
+        c.kind === "buyer_picked"
+          ? "You chose another property"
+          : "You asked your agent for other property options",
+      detail: `${c.pickedPropertyLabel ? `${c.pickedPropertyLabel} — ` : ""}${c.reason}`,
+      tone: c.status === "pending" ? "update" : "done",
+    });
+    if (c.status === "acknowledged" && c.respondedAt) {
+      push(items, {
+        at: c.respondedAt,
+        label: "Your agent picked up your property change",
+        detail: c.agentNote || undefined,
+        tone: "done",
+      });
+    }
+  }
+
+  for (const m of messages.filter((x) => x.leadId === lead.id)) {
+    if (m.from === "client") {
+      push(items, {
+        at: m.createdAt,
+        label: "You messaged your buyer's agent",
+        detail: m.body,
+        tone: "done",
+      });
+      continue;
+    }
+    const isRequest = m.kind === "info_request";
+    if (isRequest && !m.readAt) awaiting += 1;
+    push(items, {
+      at: m.createdAt,
+      label: isRequest
+        ? "Your agent asked you for information"
+        : "Your buyer's agent sent you a message",
+      detail: m.body,
+      tone: isRequest && !m.readAt ? "pending" : "done",
+      action:
+        isRequest && !m.readAt ? { href: chatHref, cta: "Open the message" } : undefined,
+    });
+  }
+
   items.sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
 
   const pending = items.find((i) => i.tone === "pending");
