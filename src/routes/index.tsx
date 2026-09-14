@@ -9,6 +9,7 @@ import { useGreeting } from "@/lib/greeting";
 import { TaskTracker } from "@/components/tasks/TaskTracker";
 import { MyPartnersCard } from "@/components/client/MyPartnersCard";
 import { UpcomingCallsCard } from "@/components/client/UpcomingCallsCard";
+import { PriceConfirmedCard } from "@/components/client/PriceConfirmedCard";
 
 
 export const Route = createFileRoute("/")({
