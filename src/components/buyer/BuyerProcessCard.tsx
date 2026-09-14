@@ -88,6 +88,16 @@ export function BuyerProcessCard({ lead }: { lead: MortgageLead }) {
     setFileOpen(true);
   }
 
+  /* A "?open=chat" deep link (notification or "Properties in action") opens the
+     conversation with the buyer's agent straight away. */
+  const search = useSearch({ strict: false }) as { open?: string };
+  useEffect(() => {
+    if (search.open === "chat") {
+      setFileTab("chat");
+      setFileOpen(true);
+    }
+  }, [search.open]);
+
 
   const ba = lead.buyerAgent;
   if (!ba || lead.clientDecision !== "accepted") return null;
