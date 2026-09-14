@@ -547,7 +547,7 @@ function useDerivedNotifications() {
       [...list.map((n) => n.id), ...completedIds],
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.email, leadsReady, leads, proc, realtors, email, purchases, changes]);
+  }, [user?.email, leadsReady, leads, proc, realtors, email, purchases, changes, entityPlans]);
 
   /* -------------------------------- admin side ------------------------------
      Kept in its own effect: partner registrations and their correspondence are
