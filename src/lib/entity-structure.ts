@@ -131,6 +131,19 @@ export function useEntityPlan(leadId: string) {
   return { plan, savePlan };
 }
 
+/** All ownership/agreement plans — used where several files are shown at once. */
+export function useEntityPlans() {
+  const snapshot = useSyncExternalStore(
+    (cb) => {
+      listeners.add(cb);
+      return () => listeners.delete(cb);
+    },
+    () => load(),
+    () => EMPTY,
+  );
+  return { plans: snapshot.plans };
+}
+
 /** Why a foreign national is usually better off holding US property in a company. */
 export const CORPORATE_STRUCTURE_GUIDE: { title: string; body: string }[] = [
   {
