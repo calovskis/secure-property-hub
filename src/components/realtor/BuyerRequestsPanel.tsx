@@ -101,8 +101,8 @@ export function BuyerRequestsPanel({
                   onClick={() => {
                     supportPrice(purchase.id, note.trim() || undefined);
                     tellBuyer(
-                      "Your agent supports your price",
-                      `${propertyLabel} — ${formatPrice(purchase.offerPrice)} will be presented to the seller.${
+                      "Your price is confirmed and goes to the seller",
+                      `${propertyLabel} — ${formatPrice(purchase.offerPrice)} is decided and will be presented to the seller. Next step: sign the purchase agreement and tell us how the property will be held.${
                         note.trim() ? ` ${note.trim()}` : ""
                       }`,
                     );
@@ -143,6 +143,9 @@ export function BuyerRequestsPanel({
                 >
                   Suggest a higher price
                 </button>
+                <span className="text-[10px] text-muted-foreground">
+                  Add the reason above — the buyer sees why you recommend this price.
+                </span>
               </div>
             </div>
           ) : null}
