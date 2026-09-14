@@ -173,6 +173,8 @@ function CaseDetail({ lead, onClose }: { lead: MortgageLead; onClose: () => void
           </div>
         )}
 
+        <OwnershipTask lead={lead} />
+
         <h4 className="mt-6 text-sm font-semibold text-foreground">Correspondence & history</h4>
         <ol className="mt-2 space-y-2 border-l-2 border-border pl-4">
           {timeline.map((t, i) => (
