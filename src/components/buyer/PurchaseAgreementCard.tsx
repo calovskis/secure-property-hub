@@ -120,7 +120,10 @@ export function PurchaseAgreementCard({
   }
 
   return (
-    <section className="mt-4 rounded-lg border border-success/40 bg-success/5 p-4">
+    <section
+      id="purchase-agreement"
+      className="mt-4 scroll-mt-24 rounded-lg border border-success/40 bg-success/5 p-4"
+    >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h4 className="text-sm font-semibold text-foreground">
           ✅ Your price is agreed — purchase agreement
