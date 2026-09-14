@@ -124,14 +124,8 @@ export function RealtorFileDialog({
       mode: priceMode,
       ...(purchaseNote.trim() ? { buyerNote: purchaseNote.trim() } : {}),
     });
-    alertAgent(
-      "Your buyer wants to proceed with the purchase",
-      `${lead.propertyLabel} — ${
-        priceMode === "listing"
-          ? `at the listing price ${formatPrice(lead.propertyPrice)}`
-          : `offering ${formatPrice(offerPrice)} instead of ${formatPrice(lead.propertyPrice)} — your price opinion is needed`
-      }`,
-    );
+    /* The agent's open task is derived from the file itself (see
+       NotificationBell), so no separate one-off alert is created here. */
     setPurchaseNote("");
     toast("Request sent", { description: `${agentName} has been notified.` });
     setTab("status");
@@ -168,14 +162,6 @@ export function RealtorFileDialog({
           }
         : {}),
     });
-    alertAgent(
-      changeKind === "buyer_picked"
-        ? "Your buyer chose another property"
-        : "Your buyer asks for other property options",
-      picked
-        ? `${picked.address}, ${picked.location} — reason for leaving ${lead.propertyLabel}: ${reason.trim()}`
-        : `${lead.propertyLabel} — ${reason.trim()}`,
-    );
     setReason("");
     setCriteria([]);
     setCustomCriteria("");
