@@ -92,7 +92,7 @@ export function BuyerRequestsPanel({
                 rows={2}
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
-                placeholder="Your price opinion for the buyer (optional)"
+                placeholder="Your price opinion for the buyer — required if you suggest a higher price"
                 className={inputClass}
               />
               <div className="flex flex-wrap items-center gap-2">
