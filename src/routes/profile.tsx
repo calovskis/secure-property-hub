@@ -789,6 +789,7 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
         identityUploadedAt: new Date().toISOString(),
       },
     });
+    clearUploadDraft("realtor-identity");
     toast("Identity document uploaded", { description: "Loqal will verify it shortly." });
   }
 
