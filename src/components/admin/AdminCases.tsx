@@ -192,6 +192,87 @@ function CaseDetail({ lead, onClose }: { lead: MortgageLead; onClose: () => void
   );
 }
 
+/**
+ * Ownership structure & purchase agreement on this file. When the client asks
+ * Loqal to handle the company set-up it becomes an open task here, closed by
+ * the admin once the structure is in place.
+ */
+function OwnershipTask({ lead }: { lead: MortgageLead }) {
+  const { plans } = useEntityPlans();
+  const plan = plans.find((p) => p.leadId === lead.id);
+  if (!plan?.path && !plan?.agreementSignedAt) return null;
+
+  const setupOpen = Boolean(plan.loqalSetupRequestedAt) && !plan.loqalSetupHandledAt;
+
+  function markHandled() {
+    const now = new Date().toISOString();
+    updateEntityPlan(lead.id, { loqalSetupHandledAt: now, loqalSetupHandledBy: "Loqal admin" });
+    notify({
+      id: `entitysetup-${lead.id}`,
+      to: "admins",
+      title: "Company set-up to be handled by Loqal",
+      body: `${lead.clientName} — ${lead.propertyLabel}. Structure set up and confirmed.`,
+      href: `/admin?tab=cases&focus=${lead.id}`,
+      severity: "info",
+      completed: true,
+      badge: "Handled",
+      createdAt: plan.loqalSetupRequestedAt,
+    });
+  }
+
+  return (
+    <>
+      <h4 className="mt-6 text-sm font-semibold text-foreground">
+        Ownership structure & purchase agreement
+      </h4>
+      <div
+        className={`mt-2 rounded-md border p-3 ${
+          setupOpen ? "border-l-4 border-brand bg-brand-tint/40" : "border-border"
+        }`}
+      >
+        {plan.path ? (
+          <p className="text-sm font-semibold text-foreground">{ENTITY_PATH_LABEL[plan.path]}</p>
+        ) : null}
+        {plan.entityName ? (
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {plan.entityName}
+            {plan.entityState ? ` · ${plan.entityState}` : ""}
+            {plan.entityEin ? ` · EIN ${plan.entityEin}` : ""}
+          </p>
+        ) : null}
+        {setupOpen ? (
+          <>
+            <p className="mt-2 text-xs font-semibold text-brand">
+              Task: set up the holding structure — requested{" "}
+              {formatDateTime(plan.loqalSetupRequestedAt!)}. Choose the best set-up for the property
+              location and the client profile, then confirm here.
+            </p>
+            <button
+              type="button"
+              onClick={markHandled}
+              className="mt-2 rounded-md bg-brand px-3 py-1.5 text-xs font-semibold text-background hover:bg-brand-soft"
+            >
+              Mark set-up as handled
+            </button>
+          </>
+        ) : plan.loqalSetupHandledAt ? (
+          <p className="mt-2 text-xs text-success">
+            Structure set-up handled {formatDateTime(plan.loqalSetupHandledAt)}.
+          </p>
+        ) : null}
+        <p className="mt-2 text-xs text-muted-foreground">
+          Purchase agreement:{" "}
+          {plan.agreementSignedAt
+            ? `signed by ${plan.agreementSignedBy ?? lead.clientName} on ${formatDateTime(
+                plan.agreementSignedAt,
+              )} — with the seller for acceptance.`
+            : "not signed yet."}
+        </p>
+      </div>
+    </>
+  );
+}
+
 function Mini({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-md border border-border p-3">
