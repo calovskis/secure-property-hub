@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { Link, useSearch } from "@tanstack/react-router";
 import {
   CLIENT_ACTION_LABEL,
   INSPECTION_OPTIONS,
@@ -87,6 +87,16 @@ export function BuyerProcessCard({ lead }: { lead: MortgageLead }) {
     setFileTab(tab);
     setFileOpen(true);
   }
+
+  /* A "?open=chat" deep link (notification or "Properties in action") opens the
+     conversation with the buyer's agent straight away. */
+  const search = useSearch({ strict: false }) as { open?: string };
+  useEffect(() => {
+    if (search.open === "chat") {
+      setFileTab("chat");
+      setFileOpen(true);
+    }
+  }, [search.open]);
 
 
   const ba = lead.buyerAgent;
