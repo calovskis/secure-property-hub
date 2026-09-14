@@ -15,6 +15,12 @@ import {
   type MortgageLead,
 } from "@/lib/leads";
 import { formatDate, formatDateTime } from "@/lib/dates";
+import {
+  ENTITY_PATH_LABEL,
+  updateEntityPlan,
+  useEntityPlans,
+} from "@/lib/entity-structure";
+import { notify } from "@/lib/notifications";
 import { usd } from "@/lib/accounting";
 import type { StoredDocument } from "@/lib/auth";
 
