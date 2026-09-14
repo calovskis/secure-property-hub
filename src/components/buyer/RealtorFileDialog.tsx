@@ -96,17 +96,6 @@ export function RealtorFileDialog({
     [lead.propertyId],
   );
 
-  function alertAgent(title: string, body: string) {
-    if (!agentEmail) return;
-    notify({
-      id: `filereq-${lead.id}-${Date.now()}`,
-      to: agentEmail.toLowerCase(),
-      title,
-      body,
-      href: `/partner?tab=buyers&focus=${lead.id}`,
-      severity: "warning",
-    });
-  }
 
   function submitPurchase() {
     const offerPrice =
