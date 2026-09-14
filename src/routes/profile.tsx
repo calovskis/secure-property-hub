@@ -771,6 +771,7 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
       ],
     );
     setRenewState(null);
+    clearUploadDraft(`licence-renewal-${state}`);
     toast(`${state} licence renewed`, {
       description: "The renewed licence was sent to Loqal for verification.",
     });
