@@ -116,11 +116,11 @@ export function PurchaseAgreementWizard({
   const [error, setError] = useState<string | null>(null);
 
   const property = getProperty(purchase.propertyId);
-  const financed = purchase.mode === "listing" || true; // mortgage files are financed by default
+  // Files come through the mortgage flow, so a financed purchase is the default.
   const [choices, setChoices] = useState<AgreementChoices>(
     () =>
       (plan?.agreementChoices as AgreementChoices | undefined) ??
-      defaultChoices(purchase.offerPrice, financed),
+      defaultChoices(purchase.offerPrice, true),
   );
 
   const path = plan?.path;

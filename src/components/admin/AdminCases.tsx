@@ -222,7 +222,7 @@ function OwnershipTask({ lead }: { lead: MortgageLead }) {
       severity: "info",
       completed: true,
       badge: "Handled",
-      createdAt: plan.loqalSetupRequestedAt,
+      createdAt: plan.loqalSetupRequestedAt ?? now,
     });
   }
 
