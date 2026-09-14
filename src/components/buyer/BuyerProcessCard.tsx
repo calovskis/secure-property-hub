@@ -14,6 +14,7 @@ import { CallScheduler } from "@/components/buyer/CallScheduler";
 import { TourProposalPanel } from "@/components/buyer/TourProposalPanel";
 import { BuyerAgentDialog } from "@/components/mortgage/BuyerAgentDialog";
 import { RealtorFileDialog } from "@/components/buyer/RealtorFileDialog";
+import { PurchaseAgreementCard } from "@/components/buyer/PurchaseAgreementCard";
 import { clientDisplayForPartner, partnerDisplayForClient } from "@/lib/user-id";
 import { usePartnerRequests } from "@/lib/partner-requests";
 import { useFileChat } from "@/lib/file-chat";
@@ -290,6 +291,16 @@ export function BuyerProcessCard({ lead }: { lead: MortgageLead }) {
             initialTab={fileTab}
           />
 
+          {latestPurchase?.status === "price_supported" ? (
+            <PurchaseAgreementCard
+              leadId={lead.id}
+              purchase={latestPurchase}
+              usPerson={lead.usPerson}
+              agentName={agentDisplay ?? "your buyer's agent"}
+              agentEmail={agentEmail}
+              clientLabel={clientDisplayForPartner(lead.clientName, lead.clientEmail)}
+            />
+          ) : null}
 
           {photo?.status === "delivered" ? (
             <div className="mt-4 rounded-lg border border-border bg-background p-4">
