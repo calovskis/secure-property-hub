@@ -290,6 +290,16 @@ export function BuyerProcessCard({ lead }: { lead: MortgageLead }) {
             initialTab={fileTab}
           />
 
+          {latestPurchase?.status === "price_supported" ? (
+            <PurchaseAgreementCard
+              leadId={lead.id}
+              purchase={latestPurchase}
+              usPerson={lead.usPerson}
+              agentName={agentDisplay ?? "your buyer's agent"}
+              agentEmail={agentEmail}
+              clientLabel={clientDisplayForPartner(lead.clientName, lead.clientEmail)}
+            />
+
 
           {photo?.status === "delivered" ? (
             <div className="mt-4 rounded-lg border border-border bg-background p-4">
