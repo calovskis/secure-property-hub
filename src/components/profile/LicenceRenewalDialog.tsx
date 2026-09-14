@@ -27,11 +27,14 @@ export function LicenceRenewalDialog({
   onOpenChange,
   license,
   onSubmit,
+  completed = false,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   license: RealtorLicenseDoc | undefined;
   onSubmit: (next: { number: string; validUntil: string; doc: string }) => void;
+  /** Renewal already provided — show what is on file instead of an empty form. */
+  completed?: boolean;
 }) {
   const [number, setNumber] = useState("");
   const [validUntil, setValidUntil] = useState("");
