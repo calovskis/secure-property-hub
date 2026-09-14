@@ -407,6 +407,51 @@ function useDerivedNotifications() {
             createdAt: photo.requestedAt,
           });
         }
+        /* Buyer asked to proceed with a purchase price — the agent has to
+           either take that price to the seller or come back with a higher
+           one. Derived from the file itself, so the task disappears the
+           moment the agent answers and can never linger. */
+        for (const p of purchases.filter((x) => x.leadId === lead.id)) {
+          const waiting = p.status === "pending" || p.status === "buyer_raised";
+          if (!waiting) {
+            completedIds.push(`buyerprice-${p.id}`);
+            continue;
+          }
+          list.push({
+            id: `buyerprice-${p.id}`,
+            to: email,
+            title: "Your buyer wants to proceed — price opinion needed",
+            body: `${clientDisplayForPartner(lead.clientName, lead.clientEmail)} · ${lead.propertyLabel} — ${
+              p.mode === "listing" && p.status === "pending"
+                ? `at the listing price ${formatPrice(p.offerPrice)}`
+                : `offering ${formatPrice(p.offerPrice)} against ${formatPrice(p.listingPrice)}`
+            }. Confirm the price for the seller or suggest a higher one.`,
+            href: `/partner?tab=buyers&focus=${lead.id}`,
+            severity: "warning",
+            createdAt: p.raisedAt ?? p.createdAt,
+          });
+        }
+        /* Buyer asked for other property options, or picked another property. */
+        for (const c of changes.filter((x) => x.leadId === lead.id)) {
+          if (c.status !== "pending") {
+            completedIds.push(`buyerchange-${c.id}`);
+            continue;
+          }
+          list.push({
+            id: `buyerchange-${c.id}`,
+            to: email,
+            title:
+              c.kind === "buyer_picked"
+                ? "Your buyer chose another property"
+                : "Your buyer asks for other property options",
+            body: `${clientDisplayForPartner(lead.clientName, lead.clientEmail)} · ${
+              c.pickedPropertyLabel ?? lead.propertyLabel
+            } — ${c.reason}`,
+            href: `/partner?tab=buyers&focus=${lead.id}`,
+            severity: "warning",
+            createdAt: c.createdAt,
+          });
+        }
         const lastAction = (proc.actions[lead.id] ?? []).slice(-1)[0];
         if (lastAction) {
           list.push({
