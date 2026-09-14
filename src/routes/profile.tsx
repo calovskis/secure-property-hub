@@ -726,7 +726,7 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
     });
 
 
-  for (const d of drafts)
+  for (const d of liveDrafts)
     if (!items.some((i) => i.id === d.id))
       items.push({
         id: d.id,
