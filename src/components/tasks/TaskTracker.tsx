@@ -61,7 +61,8 @@ function groupOf(id: string): GroupId {
   if (starts("lic-", "kyc-", "sign-", "pdoc-licences", "pdoc-identity")) return "licences";
   if (starts("lenderinq-")) return "buyerFiles";
   if (starts("photoreq-", "decision-")) return "buyerFiles";
-  if (starts("buyerprice-", "buyerchange-", "filereq-", "filechat-")) return "buyerFiles";
+  if (starts("buyerprice-", "buyerchange-", "filereq-", "filechat-", "pricedecided-"))
+    return "buyerFiles";
   if (starts("areq-", "adminreq-", "req-")) return "loqalRequests";
   if (starts("preq-")) return "registrations";
   if (starts("countersign-")) return "agreements";
