@@ -238,12 +238,9 @@ export function RealtorFileDialog({
                         type="button"
                         onClick={() => {
                           raiseOffer(lastPurchase.id, lastPurchase.agentSuggestedPrice!);
-                          alertAgent(
-                            "Your buyer accepted your suggested price",
-                            `${lead.propertyLabel} — new offer ${formatPrice(
-                              lastPurchase.agentSuggestedPrice!,
-                            )}`,
-                          );
+                          /* The agent's task is derived from the raised offer
+                             on the file, so no one-off alert is needed. */
+
                           toast("Your agent has been notified.");
                         }}
                         className={`${btnPrimary} mt-2`}
