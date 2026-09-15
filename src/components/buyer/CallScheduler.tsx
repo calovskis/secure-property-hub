@@ -436,6 +436,28 @@ export function CallScheduler({
         </p>
       ) : null}
 
+      {/* Chosen-slot confirmation (single mode) */}
+      {!multi && slot ? (
+        <div className="mt-3 flex items-center justify-between gap-2 rounded-md border-2 border-brand bg-brand-tint/50 px-3 py-2.5">
+          <div className="text-xs leading-relaxed">
+            <span className="font-semibold uppercase tracking-wide text-brand">Your choice</span>
+            <span className="mt-0.5 block text-sm font-semibold text-foreground">
+              {dateOf(slot)} at {timeOf(slot)} (1 hour)
+            </span>
+            <span className="text-muted-foreground">
+              Press “Book this slot” below to confirm — nothing is booked yet.
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setSlot(null)}
+            className="shrink-0 rounded-md border border-border px-2 py-1 text-xs font-semibold text-muted-foreground hover:bg-brand-tint"
+          >
+            Change
+          </button>
+        </div>
+      ) : null}
+
       {error ? (
         <p className="mt-2 rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
           {error}
