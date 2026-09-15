@@ -578,6 +578,8 @@ function useDerivedNotifications() {
         "proposal-",
         "buyerprice-",
         "buyerchange-",
+        "newbuyer-",
+        "booked-",
         "pricedecided-",
         /* One-off "your buyer wants…" alerts from earlier app versions: the
            same work is now derived above, so they must not double-count. */
