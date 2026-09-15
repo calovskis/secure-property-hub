@@ -10,6 +10,7 @@ import { TaskTracker } from "@/components/tasks/TaskTracker";
 import { MyPartnersCard } from "@/components/client/MyPartnersCard";
 import { UpcomingCallsCard } from "@/components/client/UpcomingCallsCard";
 import { PriceConfirmedCard } from "@/components/client/PriceConfirmedCard";
+import { EntityTipCard } from "@/components/client/EntityTipCard";
 
 
 export const Route = createFileRoute("/")({
@@ -518,6 +519,10 @@ function Dashboard() {
             </div>
           </div>
         ) : null}
+
+        <div className="mb-8">
+          <EntityTipCard />
+        </div>
 
         <div className="mb-8">
           <PriceConfirmedCard />

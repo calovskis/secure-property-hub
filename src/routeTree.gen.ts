@@ -15,6 +15,7 @@ import { Route as AdminPartnerRequestsRouteImport } from './routes/admin-partner
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DocumentsRouteImport } from './routes/documents'
+import { Route as EntityStructureFaqRouteImport } from './routes/entity-structure-faq'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as FinancialsRouteImport } from './routes/financials'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
@@ -60,6 +61,11 @@ const AuthRoute = AuthRouteImport.update({
 const DocumentsRoute = DocumentsRouteImport.update({
   id: '/documents',
   path: '/documents',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EntityStructureFaqRoute = EntityStructureFaqRouteImport.update({
+  id: '/entity-structure-faq',
+  path: '/entity-structure-faq',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FaqRoute = FaqRouteImport.update({
@@ -150,6 +156,7 @@ export interface FileRoutesByFullPath {
   '/analytics': typeof AnalyticsRoute
   '/auth': typeof AuthRoute
   '/documents': typeof DocumentsRoute
+  '/entity-structure-faq': typeof EntityStructureFaqRoute
   '/faq': typeof FaqRoute
   '/financials': typeof FinancialsRoute
   '/marketplace': typeof MarketplaceRoute
@@ -174,6 +181,7 @@ export interface FileRoutesByTo {
   '/analytics': typeof AnalyticsRoute
   '/auth': typeof AuthRoute
   '/documents': typeof DocumentsRoute
+  '/entity-structure-faq': typeof EntityStructureFaqRoute
   '/faq': typeof FaqRoute
   '/financials': typeof FinancialsRoute
   '/marketplace': typeof MarketplaceRoute
@@ -199,6 +207,7 @@ export interface FileRoutesById {
   '/analytics': typeof AnalyticsRoute
   '/auth': typeof AuthRoute
   '/documents': typeof DocumentsRoute
+  '/entity-structure-faq': typeof EntityStructureFaqRoute
   '/faq': typeof FaqRoute
   '/financials': typeof FinancialsRoute
   '/marketplace': typeof MarketplaceRoute
@@ -225,6 +234,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/auth'
     | '/documents'
+    | '/entity-structure-faq'
     | '/faq'
     | '/financials'
     | '/marketplace'
@@ -249,6 +259,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/auth'
     | '/documents'
+    | '/entity-structure-faq'
     | '/faq'
     | '/financials'
     | '/marketplace'
@@ -273,6 +284,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/auth'
     | '/documents'
+    | '/entity-structure-faq'
     | '/faq'
     | '/financials'
     | '/marketplace'
@@ -298,6 +310,7 @@ export interface RootRouteChildren {
   AnalyticsRoute: typeof AnalyticsRoute
   AuthRoute: typeof AuthRoute
   DocumentsRoute: typeof DocumentsRoute
+  EntityStructureFaqRoute: typeof EntityStructureFaqRoute
   FaqRoute: typeof FaqRoute
   FinancialsRoute: typeof FinancialsRoute
   MarketplaceRoute: typeof MarketplaceRoute
@@ -358,6 +371,13 @@ declare module '@tanstack/react-router' {
       path: '/documents'
       fullPath: '/documents'
       preLoaderRoute: typeof DocumentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/entity-structure-faq': {
+      id: '/entity-structure-faq'
+      path: '/entity-structure-faq'
+      fullPath: '/entity-structure-faq'
+      preLoaderRoute: typeof EntityStructureFaqRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/faq': {
@@ -482,6 +502,7 @@ const rootRouteChildren: RootRouteChildren = {
   AnalyticsRoute: AnalyticsRoute,
   AuthRoute: AuthRoute,
   DocumentsRoute: DocumentsRoute,
+  EntityStructureFaqRoute: EntityStructureFaqRoute,
   FaqRoute: FaqRoute,
   FinancialsRoute: FinancialsRoute,
   MarketplaceRoute: MarketplaceRoute,
