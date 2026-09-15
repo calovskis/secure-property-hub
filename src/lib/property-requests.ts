@@ -47,6 +47,21 @@ export type PurchaseRequest = {
   /** Set when the buyer answers a pushback with a higher price. */
   raisedPrice?: number;
   raisedAt?: string;
+  /** The buyer's reason when they counter the agent's suggested price. */
+  buyerCounterNote?: string;
+  /**
+   * How many times the agent has come back with a higher price. Used so each
+   * round of the negotiation reaches both sides as its own notification.
+   */
+  round?: number;
+  /** Every step of the price negotiation, oldest first. */
+  negotiation?: {
+    at: string;
+    by: "buyer" | "agent";
+    price: number;
+    note?: string;
+    kind: "offer" | "suggestion" | "counter" | "accepted";
+  }[];
 };
 
 /* ------------------------------------------------------------------ change */
