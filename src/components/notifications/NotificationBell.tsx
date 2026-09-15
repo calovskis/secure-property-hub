@@ -426,6 +426,21 @@ function useDerivedNotifications() {
       }
       const myFiles = leads.filter((l) => l.buyerAgent?.agentId === seat.id);
       for (const lead of myFiles) {
+        /* Every step of the buyer's journey reaches the agent as its own
+           notification — starting with the moment the file was assigned. */
+        list.push({
+          id: `newbuyer-${lead.id}`,
+          to: email,
+          title: "New buyer assigned to you",
+          body: `${clientDisplayForPartner(lead.clientName, lead.clientEmail)} · ${lead.propertyLabel}${
+            lead.buyerAgent?.representation
+              ? ` — representation: ${lead.buyerAgent.representation}`
+              : ""
+          }`,
+          href: `/partner?tab=buyers&focus=${lead.id}`,
+          severity: "info",
+          createdAt: lead.buyerAgent?.assignedAt ?? lead.buyerAgent?.agreedAt,
+        });
         const photo = proc.photos[lead.id];
         if (photo && photo.status === "delivered")
           completedIds.push(`photoreq-${lead.id}-${photo.requestedAt}`);
@@ -516,6 +531,26 @@ function useDerivedNotifications() {
         } else {
           completedIds.push(`proposal-${b.id}`);
         }
+        /* A time that is already agreed still has to reach the agent as its
+           own note, so a booked call is never silently missed. */
+        if (b.status === "confirmed") {
+          list.push({
+            id: `booked-${b.id}`,
+            to: email,
+            title:
+              b.kind === "video_tour"
+                ? "Video tour scheduled with your buyer"
+                : b.kind === "in_person_visit"
+                  ? "Property visit scheduled with your buyer"
+                  : "Call scheduled with your buyer",
+            body: `${clientDisplayForPartner(b.clientName, leads.find((l) => l.id === b.leadId)?.clientEmail)} · ${
+              b.propertyLabel
+            } — ${formatDateTime(b.startAt)}.`,
+            href: `/partner?tab=calendar&focus=${b.id}`,
+            severity: "info",
+            createdAt: b.confirmedAt ?? b.createdAt,
+          });
+        }
       }
     }
 
@@ -543,6 +578,8 @@ function useDerivedNotifications() {
         "proposal-",
         "buyerprice-",
         "buyerchange-",
+        "newbuyer-",
+        "booked-",
         "pricedecided-",
         /* One-off "your buyer wants…" alerts from earlier app versions: the
            same work is now derived above, so they must not double-count. */
