@@ -299,6 +299,7 @@ function ProfileTopics({ profile }: { profile: MortgageProfile }) {
       {!user?.usPerson && !profile.usVisaActive ? (
         <VisaSupportTopic profile={profile} onSave={save} />
       ) : null}
+      {!user?.usPerson ? <EntityProfileTopic /> : null}
       <AddressTopic profile={profile} onSave={save} />
       <IncomeTopic profile={profile} onSave={save} />
       <AssetsTopic profile={profile} onSave={save} />
