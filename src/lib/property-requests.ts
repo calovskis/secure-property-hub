@@ -190,6 +190,16 @@ export function usePropertyRequests() {
         ...(input.buyerNote ? { buyerNote: input.buyerNote } : {}),
         createdAt: new Date().toISOString(),
         status: "pending",
+        round: 0,
+        negotiation: [
+          {
+            at: new Date().toISOString(),
+            by: "buyer",
+            price: input.offerPrice,
+            ...(input.buyerNote ? { note: input.buyerNote } : {}),
+            kind: "offer",
+          },
+        ],
       };
       commit({ ...cur, purchases: [...cur.purchases, entry] });
       return entry;
