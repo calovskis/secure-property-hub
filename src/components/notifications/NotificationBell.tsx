@@ -531,6 +531,26 @@ function useDerivedNotifications() {
         } else {
           completedIds.push(`proposal-${b.id}`);
         }
+        /* A time that is already agreed still has to reach the agent as its
+           own note, so a booked call is never silently missed. */
+        if (b.status === "confirmed") {
+          list.push({
+            id: `booked-${b.id}`,
+            to: email,
+            title:
+              b.kind === "video_tour"
+                ? "Video tour scheduled with your buyer"
+                : b.kind === "in_person_visit"
+                  ? "Property visit scheduled with your buyer"
+                  : "Call scheduled with your buyer",
+            body: `${clientDisplayForPartner(b.clientName, leads.find((l) => l.id === b.leadId)?.clientEmail)} · ${
+              b.propertyLabel
+            } — ${formatDateTime(b.startAt)}.`,
+            href: `/partner?tab=calendar&focus=${b.id}`,
+            severity: "info",
+            createdAt: b.confirmedAt ?? b.createdAt,
+          });
+        }
       }
     }
 
