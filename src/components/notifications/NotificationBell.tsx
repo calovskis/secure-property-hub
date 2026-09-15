@@ -482,19 +482,31 @@ function useDerivedNotifications() {
            moment the agent answers and can never linger. */
         for (const p of purchases.filter((x) => x.leadId === lead.id)) {
           const waiting = p.status === "pending" || p.status === "buyer_raised";
-          if (!waiting) {
-            completedIds.push(`buyerprice-${p.id}`);
-            continue;
+          const round = p.round ?? 0;
+          /* Each negotiation round is its own task, so a new buyer price after
+             the agent's counter always arrives as a fresh notification. */
+          for (let r = 0; r <= round; r += 1) {
+            if (waiting && r === round) continue;
+            completedIds.push(`buyerprice-${p.id}-${r}`);
           }
+          completedIds.push(`buyerprice-${p.id}`);
+          if (!waiting) continue;
           list.push({
-            id: `buyerprice-${p.id}`,
+            id: `buyerprice-${p.id}-${round}`,
             to: email,
-            title: "Your buyer wants to proceed — price opinion needed",
+            title:
+              p.status === "buyer_raised"
+                ? "Your buyer answered with another price"
+                : "Your buyer wants to proceed — price opinion needed",
             body: `${clientDisplayForPartner(lead.clientName, lead.clientEmail)} · ${lead.propertyLabel} — ${
               p.mode === "listing" && p.status === "pending"
                 ? `at the listing price ${formatPrice(p.offerPrice)}`
                 : `offering ${formatPrice(p.offerPrice)} against ${formatPrice(p.listingPrice)}`
-            }. Confirm the price for the seller or suggest a higher one.`,
+            }${
+              p.status === "buyer_raised" && p.agentSuggestedPrice
+                ? ` (you suggested ${formatPrice(p.agentSuggestedPrice)})`
+                : ""
+            }${p.buyerCounterNote ? ` — ${p.buyerCounterNote}` : ""}. Confirm the price for the seller or suggest a higher one.`,
             href: `/partner?tab=buyers&focus=${lead.id}`,
             severity: "warning",
             createdAt: p.raisedAt ?? p.createdAt,
