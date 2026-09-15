@@ -47,6 +47,21 @@ export type PurchaseRequest = {
   /** Set when the buyer answers a pushback with a higher price. */
   raisedPrice?: number;
   raisedAt?: string;
+  /** The buyer's reason when they counter the agent's suggested price. */
+  buyerCounterNote?: string;
+  /**
+   * How many times the agent has come back with a higher price. Used so each
+   * round of the negotiation reaches both sides as its own notification.
+   */
+  round?: number;
+  /** Every step of the price negotiation, oldest first. */
+  negotiation?: {
+    at: string;
+    by: "buyer" | "agent";
+    price: number;
+    note?: string;
+    kind: "offer" | "suggestion" | "counter" | "accepted";
+  }[];
 };
 
 /* ------------------------------------------------------------------ change */
@@ -175,6 +190,16 @@ export function usePropertyRequests() {
         ...(input.buyerNote ? { buyerNote: input.buyerNote } : {}),
         createdAt: new Date().toISOString(),
         status: "pending",
+        round: 0,
+        negotiation: [
+          {
+            at: new Date().toISOString(),
+            by: "buyer",
+            price: input.offerPrice,
+            ...(input.buyerNote ? { note: input.buyerNote } : {}),
+            kind: "offer",
+          },
+        ],
       };
       commit({ ...cur, purchases: [...cur.purchases, entry] });
       return entry;
@@ -185,6 +210,7 @@ export function usePropertyRequests() {
   /** Agent supports the buyer's price and takes it to the seller. */
   const supportPrice = useCallback((id: string, note?: string) => {
     const cur = load();
+    const at = new Date().toISOString();
     commit({
       ...cur,
       purchases: cur.purchases.map((p) =>
@@ -192,8 +218,18 @@ export function usePropertyRequests() {
           ? {
               ...p,
               status: "price_supported" as const,
-              respondedAt: new Date().toISOString(),
+              respondedAt: at,
               ...(note ? { agentNote: note } : {}),
+              negotiation: [
+                ...(p.negotiation ?? []),
+                {
+                  at,
+                  by: "agent" as const,
+                  price: p.offerPrice,
+                  ...(note ? { note } : {}),
+                  kind: "accepted" as const,
+                },
+              ],
             }
           : p,
       ),
@@ -204,6 +240,7 @@ export function usePropertyRequests() {
   const suggestHigherPrice = useCallback(
     (id: string, suggestedPrice: number, note?: string) => {
       const cur = load();
+      const at = new Date().toISOString();
       commit({
         ...cur,
         purchases: cur.purchases.map((p) =>
@@ -212,8 +249,19 @@ export function usePropertyRequests() {
                 ...p,
                 status: "price_pushback" as const,
                 agentSuggestedPrice: suggestedPrice,
-                respondedAt: new Date().toISOString(),
+                respondedAt: at,
                 ...(note ? { agentNote: note } : {}),
+                round: (p.round ?? 0) + 1,
+                negotiation: [
+                  ...(p.negotiation ?? []),
+                  {
+                    at,
+                    by: "agent" as const,
+                    price: suggestedPrice,
+                    ...(note ? { note } : {}),
+                    kind: "suggestion" as const,
+                  },
+                ],
               }
             : p,
         ),
@@ -222,9 +270,14 @@ export function usePropertyRequests() {
     [],
   );
 
-  /** Buyer answers a pushback with a higher price. */
-  const raiseOffer = useCallback((id: string, price: number) => {
+  /**
+   * Buyer answers a pushback with another price — the file goes back to the
+   * agent, who can confirm it or come back once more. The loop continues
+   * until one side agrees.
+   */
+  const raiseOffer = useCallback((id: string, price: number, note?: string) => {
     const cur = load();
+    const at = new Date().toISOString();
     commit({
       ...cur,
       purchases: cur.purchases.map((p) =>
@@ -234,7 +287,51 @@ export function usePropertyRequests() {
               status: "buyer_raised" as const,
               raisedPrice: price,
               offerPrice: price,
-              raisedAt: new Date().toISOString(),
+              raisedAt: at,
+              ...(note ? { buyerCounterNote: note } : {}),
+              negotiation: [
+                ...(p.negotiation ?? []),
+                {
+                  at,
+                  by: "buyer" as const,
+                  price,
+                  ...(note ? { note } : {}),
+                  kind: "counter" as const,
+                },
+              ],
+            }
+          : p,
+      ),
+    });
+  }, []);
+
+  /**
+   * Buyer accepts the price the agent recommended. The agent already stands
+   * behind that number, so the price is decided and goes to the seller.
+   */
+  const acceptAgentPrice = useCallback((id: string) => {
+    const cur = load();
+    const at = new Date().toISOString();
+    commit({
+      ...cur,
+      purchases: cur.purchases.map((p) =>
+        p.id === id
+          ? {
+              ...p,
+              status: "price_supported" as const,
+              offerPrice: p.agentSuggestedPrice ?? p.offerPrice,
+              raisedPrice: p.agentSuggestedPrice ?? p.offerPrice,
+              raisedAt: at,
+              respondedAt: at,
+              negotiation: [
+                ...(p.negotiation ?? []),
+                {
+                  at,
+                  by: "buyer" as const,
+                  price: p.agentSuggestedPrice ?? p.offerPrice,
+                  kind: "accepted" as const,
+                },
+              ],
             }
           : p,
       ),
@@ -290,6 +387,7 @@ export function usePropertyRequests() {
     supportPrice,
     suggestHigherPrice,
     raiseOffer,
+    acceptAgentPrice,
     withdrawPurchase,
     requestChange,
     acknowledgeChange,
@@ -320,6 +418,6 @@ export const PURCHASE_STATUS_LABEL: Record<PurchaseRequestStatus, string> = {
   pending: "Waiting for your agent's price opinion",
   price_supported: "Price decided — your agent is presenting it to the seller",
   price_pushback: "Agent suggests a higher price",
-  buyer_raised: "You raised your offer — with your agent",
+  buyer_raised: "Your new price is with your agent",
   withdrawn: "Withdrawn",
 };
