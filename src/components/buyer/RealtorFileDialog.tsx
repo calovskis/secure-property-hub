@@ -221,25 +221,65 @@ export function RealtorFileDialog({
                   ) : null}
                   {lastPurchase.status === "price_pushback" &&
                   lastPurchase.agentSuggestedPrice ? (
-                    <div className="mt-2 rounded-md border border-gold/40 bg-gold-tint/40 p-3">
+                    <div className="mt-2 space-y-3 rounded-md border border-gold/40 bg-gold-tint/40 p-3">
+                      <p className="text-[11px] font-bold uppercase tracking-wide text-gold-foreground">
+                        Action needed — your answer on the price
+                      </p>
                       <p className="text-xs text-foreground">
                         {agentName} recommends keeping the price a little higher —{" "}
-                        <strong>{formatPrice(lastPurchase.agentSuggestedPrice)}</strong> — to have a
-                        realistic chance with the seller.
+                        <strong>{formatPrice(lastPurchase.agentSuggestedPrice)}</strong> — instead of
+                        your {formatPrice(lastPurchase.raisedPrice ?? lastPurchase.offerPrice)}, to
+                        have a realistic chance with the seller.
                       </p>
                       <button
                         type="button"
                         onClick={() => {
-                          raiseOffer(lastPurchase.id, lastPurchase.agentSuggestedPrice!);
-                          /* The agent's task is derived from the raised offer
-                             on the file, so no one-off alert is needed. */
-
-                          toast("Your agent has been notified.");
+                          acceptAgentPrice(lastPurchase.id);
+                          toast("Price agreed — your agent takes it to the seller.");
                         }}
-                        className={`${btnPrimary} mt-2`}
+                        className={btnPrimary}
                       >
-                        Offer {formatPrice(lastPurchase.agentSuggestedPrice)} instead
+                        Accept {formatPrice(lastPurchase.agentSuggestedPrice)}
                       </button>
+                      <div className="space-y-2 border-t border-gold/40 pt-2">
+                        <p className="text-xs text-foreground">
+                          Or propose another price — your agent answers again, and you keep going
+                          back and forth until you both agree.
+                        </p>
+                        <input
+                          inputMode="numeric"
+                          value={counterPrice}
+                          onChange={(e) =>
+                            setCounterPrice(e.target.value.replace(/[^\d]/g, ""))
+                          }
+                          placeholder="Your new price"
+                          className={`${inputClass} max-w-[220px]`}
+                        />
+                        <textarea
+                          rows={2}
+                          value={counterNote}
+                          onChange={(e) => setCounterNote(e.target.value)}
+                          placeholder="Why this price works for you (optional)"
+                          className={inputClass}
+                        />
+                        <button
+                          type="button"
+                          disabled={!counterPrice}
+                          onClick={() => {
+                            const price = Math.round(Number(counterPrice) || 0);
+                            if (!price) return;
+                            raiseOffer(lastPurchase.id, price, counterNote.trim() || undefined);
+                            setCounterPrice("");
+                            setCounterNote("");
+                            /* The agent's task is derived from the file, so the
+                               notification appears on their side by itself. */
+                            toast("Your new price was sent to your agent.");
+                          }}
+                          className={btnGhost}
+                        >
+                          Send this price to my agent
+                        </button>
+                      </div>
                     </div>
                   ) : null}
                 </div>
