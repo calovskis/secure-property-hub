@@ -76,7 +76,11 @@ function useDerivedNotifications() {
       // Feedback-related alerts open the pre-approval pop-up directly.
       const feedbackHref = `${href}?open=feedback`;
 
-      if (lead.assignedAt && lead.status !== "annulled") {
+      // Assignment notice is deliberately delayed by 12 minutes so it feels
+      // like a human picked the file up rather than an instant automation.
+      const assignmentVisible =
+        lead.assignedAt && now - new Date(lead.assignedAt).getTime() >= 12 * 60 * 1000;
+      if (assignmentVisible && lead.status !== "annulled") {
         list.push({
           id: `assigned-${lead.id}-${lead.assignedAt}`,
           to: email,
