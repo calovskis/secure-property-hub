@@ -65,8 +65,13 @@ export function RealtorFileDialog({
     changes,
     requestPurchase,
     raiseOffer,
+    acceptAgentPrice,
     requestChange,
   } = useFileRequests(lead.id);
+
+  /* answering the agent's higher-price suggestion with another price */
+  const [counterPrice, setCounterPrice] = useState("");
+  const [counterNote, setCounterNote] = useState("");
 
   /* purchase form */
   const [priceMode, setPriceMode] = useState<"listing" | "lower">("listing");
