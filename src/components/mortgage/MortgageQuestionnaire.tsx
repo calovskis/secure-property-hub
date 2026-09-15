@@ -450,6 +450,23 @@ export function MortgageQuestionnaire({
               </p>
             </div>
 
+            <div className="rounded-lg border border-brand/30 bg-brand-tint/60 p-5 text-left">
+              <div className="flex items-start gap-3">
+                <span className="text-xl leading-none">⏱️</span>
+                <div>
+                  <div className="text-sm font-semibold text-foreground">
+                    Next: the lending company's response
+                  </div>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    The mortgage lending company has received your information and will revert
+                    within <span className="font-semibold text-foreground">48 hours</span>. You will
+                    be notified here in your dashboard as soon as their answer arrives — no action
+                    is needed from you in the meantime.
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {data.visaActive ? (
               submittedProfile?.visaDocuments?.length ? (
                 <div className="rounded-lg border border-border bg-card p-5 text-left">
