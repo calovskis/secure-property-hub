@@ -49,6 +49,7 @@ export type UsStatus =
   | "refugee"
   | "u4u"
   | "other"
+  | "itin"
   | "none";
 
 export const US_STATUS_LABEL: Record<UsStatus, string> = {
@@ -60,6 +61,7 @@ export const US_STATUS_LABEL: Record<UsStatus, string> = {
   refugee: "Refugee status",
   u4u: "U4U (Uniting for Ukraine)",
   other: "Other visa / status",
+  itin: "ITIN holder (US taxpayer ID)",
   none: "No US status",
 };
 
@@ -529,12 +531,15 @@ export const QUESTIONNAIRE_STEPS = [
 
 /** Derive the US status shown to lending partners from a mortgage profile. */
 export function usStatusOf(
-  profile: { usStatus?: UsStatus; visaType?: UsStatus; usVisaActive?: boolean } | undefined,
+  profile:
+    | { usStatus?: UsStatus; visaType?: UsStatus; usVisaActive?: boolean; hasItin?: boolean }
+    | undefined,
   usPerson: boolean,
 ): UsStatus {
   if (profile?.usStatus) return profile.usStatus;
   if (usPerson) return "citizen";
   if (profile?.usVisaActive && profile.visaType) return profile.visaType;
+  if (profile?.hasItin) return "itin";
   return "none";
 }
 
