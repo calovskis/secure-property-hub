@@ -195,7 +195,7 @@ function useDerivedNotifications() {
             body: `${lead.propertyLabel} — ${
               p.agentSuggestedPrice ? `${formatPrice(p.agentSuggestedPrice)} instead of ${formatPrice(p.raisedPrice ?? p.offerPrice)}` : "a higher price"
             }.${p.agentNote ? ` Your agent: ${p.agentNote}` : ""} You can accept this price or propose another one.`,
-            href: `/property/${lead.propertyId}?open=agent-file`,
+            href: `/property/${lead.propertyId}?open=chat`,
             severity: "warning",
             createdAt: p.respondedAt ?? p.createdAt,
           });
