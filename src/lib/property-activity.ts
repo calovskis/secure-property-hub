@@ -273,19 +273,21 @@ function buildActivity(
       awaiting += 1;
       push(items, {
         at: p.respondedAt,
-        label: "Your agent suggests a higher price",
+        label: "Your agent came back with a higher price",
         detail: `${p.agentSuggestedPrice ? `${money(p.agentSuggestedPrice)} — ` : ""}${
           p.agentNote ?? ""
-        }`,
+        } Accept it or propose another price.`,
         tone: "pending",
-        action: { href: chatHref, cta: "Answer your agent" },
+        action: { href: chatHref, cta: "Accept or propose another price" },
       });
     }
     if (p.status === "buyer_raised" && p.raisedAt) {
       push(items, {
         at: p.raisedAt,
-        label: "You raised your offer",
-        detail: p.raisedPrice ? money(p.raisedPrice) : undefined,
+        label: "You proposed another price — waiting for your agent",
+        detail: `${p.raisedPrice ? money(p.raisedPrice) : ""}${
+          p.buyerCounterNote ? ` — ${p.buyerCounterNote}` : ""
+        }`,
         tone: "update",
       });
     }
