@@ -378,11 +378,13 @@ export function CitizenshipTopic({
                 onChange={(e) => setDraft({ usStatus: e.target.value as UsStatus })}
               >
                 <option value="">Select…</option>
-                {Object.entries(US_STATUS_LABEL).map(([k, v]) => (
-                  <option key={k} value={k}>
-                    {v}
-                  </option>
-                ))}
+                {Object.entries(US_STATUS_LABEL)
+                  .filter(([k]) => k !== "itin")
+                  .map(([k, v]) => (
+                    <option key={k} value={k}>
+                      {v}
+                    </option>
+                  ))}
               </select>
             </label>
             <label className="block">
