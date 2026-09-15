@@ -16,6 +16,7 @@ import {
   PersonalTopic,
   VisaSupportTopic,
 } from "@/components/profile/ProfileTopicsContent";
+import { EntityProfileTopic } from "@/components/profile/EntityProfileTopic";
 import { PartnerProfile } from "@/components/profile/PartnerProfile";
 import { AgreementCard } from "@/components/profile/AgreementCard";
 import { KybCard } from "@/components/profile/KybCard";
