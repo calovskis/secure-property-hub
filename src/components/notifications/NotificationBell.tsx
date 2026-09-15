@@ -426,6 +426,21 @@ function useDerivedNotifications() {
       }
       const myFiles = leads.filter((l) => l.buyerAgent?.agentId === seat.id);
       for (const lead of myFiles) {
+        /* Every step of the buyer's journey reaches the agent as its own
+           notification — starting with the moment the file was assigned. */
+        list.push({
+          id: `newbuyer-${lead.id}`,
+          to: email,
+          title: "New buyer assigned to you",
+          body: `${clientDisplayForPartner(lead.clientName, lead.clientEmail)} · ${lead.propertyLabel}${
+            lead.buyerAgent?.representation
+              ? ` — representation: ${lead.buyerAgent.representation}`
+              : ""
+          }`,
+          href: `/partner?tab=buyers&focus=${lead.id}`,
+          severity: "info",
+          createdAt: lead.buyerAgent?.assignedAt ?? lead.buyerAgent?.agreedAt,
+        });
         const photo = proc.photos[lead.id];
         if (photo && photo.status === "delivered")
           completedIds.push(`photoreq-${lead.id}-${photo.requestedAt}`);
