@@ -88,7 +88,7 @@ export function EntityTipCard() {
       title: "Entity structure support requested",
       body: `${clientLabel} accepted the set-up terms and needs a Loqal entity manager assigned.`,
       href: "/admin?tab=people",
-      severity: "action",
+      severity: "warning",
     });
     notify({
       id: `entitysupport-client-${user!.email.toLowerCase()}`,
