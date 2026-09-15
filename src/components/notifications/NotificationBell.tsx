@@ -179,6 +179,27 @@ function useDerivedNotifications() {
          buyer is told, and keeps an open task until the purchase agreement is
          signed. Derived, so it clears itself on signing. */
       for (const p of purchases.filter((x) => x.leadId === lead.id)) {
+        /* The agent came back with a higher price: the buyer is told and can
+           accept it or propose another price — round after round until one
+           side agrees. Each round is its own notification. */
+        const round = p.round ?? 0;
+        for (let r = 0; r <= round; r += 1) {
+          if (p.status === "price_pushback" && r === round) continue;
+          completedIds.push(`pricepush-${p.id}-${r}`);
+        }
+        if (p.status === "price_pushback") {
+          list.push({
+            id: `pricepush-${p.id}-${round}`,
+            to: email,
+            title: "Your agent came back with a higher price",
+            body: `${lead.propertyLabel} — ${
+              p.agentSuggestedPrice ? `${formatPrice(p.agentSuggestedPrice)} instead of ${formatPrice(p.raisedPrice ?? p.offerPrice)}` : "a higher price"
+            }.${p.agentNote ? ` Your agent: ${p.agentNote}` : ""} You can accept this price or propose another one.`,
+            href: `/property/${lead.propertyId}?open=agent-file`,
+            severity: "warning",
+            createdAt: p.respondedAt ?? p.createdAt,
+          });
+        }
         if (p.status !== "price_supported") {
           completedIds.push(`pricedecided-${p.id}`);
           continue;
