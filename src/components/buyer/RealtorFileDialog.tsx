@@ -222,7 +222,7 @@ export function RealtorFileDialog({
                   {lastPurchase.status === "price_pushback" &&
                   lastPurchase.agentSuggestedPrice ? (
                     <div className="mt-2 space-y-3 rounded-md border border-gold/40 bg-gold-tint/40 p-3">
-                      <p className="text-[11px] font-bold uppercase tracking-wide text-gold-foreground">
+                      <p className="text-[11px] font-bold uppercase tracking-wide text-foreground">
                         Action needed — your answer on the price
                       </p>
                       <p className="text-xs text-foreground">

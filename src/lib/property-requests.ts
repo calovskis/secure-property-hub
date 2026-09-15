@@ -418,6 +418,6 @@ export const PURCHASE_STATUS_LABEL: Record<PurchaseRequestStatus, string> = {
   pending: "Waiting for your agent's price opinion",
   price_supported: "Price decided — your agent is presenting it to the seller",
   price_pushback: "Agent suggests a higher price",
-  buyer_raised: "You raised your offer — with your agent",
+  buyer_raised: "Your new price is with your agent",
   withdrawn: "Withdrawn",
 };
