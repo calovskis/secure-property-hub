@@ -472,7 +472,13 @@ export function CallScheduler({
           accent === "success" ? "bg-success hover:opacity-90" : "bg-brand hover:bg-brand-soft"
         }`}
       >
-        {multi ? proposeLabel : saving ? "Creating the Google invite…" : "Book this slot"}
+        {multi
+          ? proposeLabel
+          : saving
+            ? "Creating the Google invite…"
+            : slot
+              ? `Confirm booking — ${dateOf(slot)} at ${timeOf(slot)}`
+              : "Book this slot"}
       </button>
 
       {!multi && googleConnected && withMeet ? (
