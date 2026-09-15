@@ -387,6 +387,7 @@ export function usePropertyRequests() {
     supportPrice,
     suggestHigherPrice,
     raiseOffer,
+    acceptAgentPrice,
     withdrawPurchase,
     requestChange,
     acknowledgeChange,
