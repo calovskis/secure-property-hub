@@ -49,6 +49,7 @@ export type UsStatus =
   | "refugee"
   | "u4u"
   | "other"
+  | "itin"
   | "none";
 
 export const US_STATUS_LABEL: Record<UsStatus, string> = {
@@ -60,6 +61,7 @@ export const US_STATUS_LABEL: Record<UsStatus, string> = {
   refugee: "Refugee status",
   u4u: "U4U (Uniting for Ukraine)",
   other: "Other visa / status",
+  itin: "ITIN holder (US taxpayer ID)",
   none: "No US status",
 };
 
