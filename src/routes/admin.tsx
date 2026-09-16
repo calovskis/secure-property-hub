@@ -16,6 +16,7 @@ import {
   PartnerMetrics,
 } from "@/components/admin/AdminSections";
 import { TaskTracker } from "@/components/tasks/TaskTracker";
+import { GetStartedCard } from "@/components/onboarding/GetStartedCard";
 import { TeamAvailabilityCard } from "@/components/admin/TeamAvailabilityCard";
 import { AdminCases } from "@/components/admin/AdminCases";
 import { AdminAccounting } from "@/components/admin/AdminAccounting";
@@ -149,6 +150,10 @@ function AdminPage() {
           <p className="mt-1 text-sm text-muted-foreground">
             Cases, partners, people, accounting, support and platform settings in one place.
           </p>
+        </div>
+
+        <div className="mb-6">
+          <GetStartedCard />
         </div>
 
         <div className="mb-6">

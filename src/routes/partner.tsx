@@ -6,6 +6,7 @@ import { LenderPortal, useLenderTabs, type LenderTabId } from "@/components/lend
 import { RealtorPortal, type RealtorTabId } from "@/components/realtor/RealtorPortal";
 import { PointOfContactCard } from "@/components/partner/PointOfContactCard";
 import { TaskTracker } from "@/components/tasks/TaskTracker";
+import { GetStartedCard } from "@/components/onboarding/GetStartedCard";
 
 import { PARTNER_LABEL, fullName, useAuth, type LoqalUser, type PartnerType } from "@/lib/auth";
 
@@ -187,6 +188,10 @@ function PartnerPage() {
           <p className="mt-1 text-sm text-muted-foreground">
             {fullName(user)} · {board.intro}
           </p>
+        </div>
+
+        <div className="mb-6">
+          <GetStartedCard />
         </div>
 
         <div className="mb-6">
