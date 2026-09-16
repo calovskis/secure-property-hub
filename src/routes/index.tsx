@@ -7,6 +7,7 @@ import { offerReminders, pendingOfferDecision, useLeads } from "@/lib/leads";
 import { formatDateTime } from "@/lib/dates";
 import { useGreeting } from "@/lib/greeting";
 import { TaskTracker } from "@/components/tasks/TaskTracker";
+import { GetStartedCard } from "@/components/onboarding/GetStartedCard";
 import { MyPartnersCard } from "@/components/client/MyPartnersCard";
 import { UpcomingCallsCard } from "@/components/client/UpcomingCallsCard";
 import { PriceConfirmedCard } from "@/components/client/PriceConfirmedCard";
@@ -519,6 +520,10 @@ function Dashboard() {
             </div>
           </div>
         ) : null}
+
+        <div className="mb-8">
+          <GetStartedCard />
+        </div>
 
         <div className="mb-8">
           <EntityTipCard />
