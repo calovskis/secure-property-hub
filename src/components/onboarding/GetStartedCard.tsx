@@ -149,7 +149,7 @@ export function GetStartedCard({ className = "" }: { className?: string }) {
     // Clients and corporate clients
     const leads = leadsForClient(user.email);
     const mp = user.mortgageProfile;
-    const idDone = Boolean(mp?.identityDocument ?? mp?.visaDocument);
+    const idDone = (mp?.idDocuments?.length ?? 0) > 0 || (mp?.visaDocuments?.length ?? 0) > 0;
     const clientItems: Item[] = [
       {
         id: "c-details",
@@ -346,7 +346,7 @@ export function GetStartedCard({ className = "" }: { className?: string }) {
                   <div className="mt-2 flex flex-wrap items-center gap-2">
                     {item.to ? (
                       <Link
-                        to={item.to}
+                        to={item.to as "/profile"}
                         onClick={() => {
                           if (item.info) markRead(item.id);
                           setOpen(false);
