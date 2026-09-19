@@ -294,9 +294,13 @@ export function LenderMortgages({ canManage }: { canManage: boolean }) {
         {(
           [
             ["Open mortgage files", counts.in_underwriting, "Client confirmed — hard check"],
+            [
+              "Signed purchase agreements",
+              counts.signed,
+              `${counts.hardCheckOpen} awaiting your hard check and approval`,
+            ],
             ["Awaiting client decision", counts.awaiting_client, "Terms delivered — reminders running"],
             ["On hold by client", counts.client_on_hold, "Client paused the process"],
-            ["Qualified, not continuing", counts.client_declined, "Client declined the terms"],
           ] as const
         ).map(([label, value, note]) => (
           <div key={label} className="rounded-lg border border-border bg-card p-5">
