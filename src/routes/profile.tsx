@@ -59,6 +59,8 @@ import {
 } from "@/lib/document-requests";
 import { usePartnerRequests } from "@/lib/partner-requests";
 import { useRealtorLicences } from "@/components/profile/realtor-licences";
+import { isLicenceVerified } from "@/lib/licence-verification";
+
 import { UploadRequestDialog } from "@/components/profile/UploadRequestDialog";
 import { LicenceUploadDialog } from "@/components/profile/LicenceUploadDialog";
 import { LicenceRenewalDialog } from "@/components/profile/LicenceRenewalDialog";
@@ -684,10 +686,17 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
    * information behind it was actually provided — through this page, through a
    * notification pop-up or anywhere else on the platform.
    */
+  /* Lender licence copies live in the lender portal's own upload window. Once
+     every declared state has a copy, the request is Loqal's to verify — the
+     partner has nothing left to do, so the pre-saved upload disappears. */
+  const lenderCopiesComplete = licenses.length > 0 && licenses.every((l) => l.doc);
+  const awaitingVerification = licenses.filter((l) => l.doc && !isLicenceVerified(l));
+
   const satisfiedDrafts = drafts
     .filter((d) => {
       if (d.id === "realtor-identity") return identityDone;
       if (d.id === "realtor-licences") return realtor && !missingLicences.length;
+      if (d.id === "lender-licences") return lenderCopiesComplete;
       if (d.id.startsWith("licence-renewal-")) {
         const state = d.id.slice("licence-renewal-".length);
         return !expiringLicences.some((l) => l.state === state);
@@ -695,6 +704,7 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
       return false;
     })
     .map((d) => d.id);
+
   const satisfiedKey = satisfiedDrafts.join(",");
   useEffect(() => {
     for (const id of satisfiedKey ? satisfiedKey.split(",") : []) clearUploadDraft(id);
@@ -869,6 +879,15 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
           unfinished uploads are saved automatically.
         </p>
       )}
+
+      {lenderCopiesComplete && awaitingVerification.length ? (
+        <p className="mt-3 rounded-md border border-border bg-brand-tint/40 px-3 py-2 text-[11px] font-semibold text-brand">
+          All licence copies are provided — {awaitingVerification.map((l) => l.state).join(", ")}{" "}
+          {awaitingVerification.length === 1 ? "is" : "are"} awaiting Loqal verification. Nothing
+          else is needed from you.
+        </p>
+      ) : null}
+
 
       {/* Written information / document requests Loqal raised, plus their history. */}
       <InfoRequestsList user={user} />
