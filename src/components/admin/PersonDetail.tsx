@@ -441,22 +441,40 @@ function ProfileTab({ person }: { person: AdminPerson }) {
               </p>
               <button
                 type="button"
-                onClick={() => {
-                  updateRequest(req.id, {
-                    agreementCountersignedAt: new Date().toISOString(),
-                  });
-                  logActivity(
-                    "Loqal admin",
-                    "countersigned a partnership agreement",
-                    req.companyName,
-                  );
-                  toast("Agreement countersigned", { description: req.companyName });
-                }}
+                onClick={() => setCountersignOpen(true)}
                 className="rounded-md bg-success px-3.5 py-2 text-xs font-semibold text-background hover:opacity-90"
               >
                 Countersign agreement
               </button>
             </div>
+          ) : null}
+          {req.agreementSignedAt ? (
+            <PartnerCountersignDialog
+              request={req}
+              open={countersignOpen}
+              onOpenChange={setCountersignOpen}
+              onCountersign={(signatory) => {
+                updateRequest(req.id, {
+                  agreementCountersignedAt: new Date().toISOString(),
+                  agreementCountersignedBy: signatory.name,
+                  agreementCountersignedTitle: signatory.title,
+                });
+                notify({
+                  id: `countersigned-${req.id}`,
+                  to: req.email.toLowerCase(),
+                  title: "Loqal countersigned your partnership agreement",
+                  body: `${signatory.name}, ${signatory.title}, signed for Loqal — your partnership is fully active.`,
+                  href: "/profile",
+                  severity: "info",
+                });
+                logActivity(
+                  signatory.name,
+                  "countersigned a partnership agreement",
+                  req.companyName,
+                );
+                toast("Agreement countersigned", { description: req.companyName });
+              }}
+            />
           ) : null}
           {req.realtorLicenses?.length ? (
             <div className="mt-3 flex flex-wrap gap-1.5">
