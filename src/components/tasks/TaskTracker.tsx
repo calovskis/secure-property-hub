@@ -173,7 +173,7 @@ export function TaskTracker({ className = "" }: { className?: string }) {
   const isAdmin = user?.role === "admin";
   const { notifications } = useNotifications(user?.email);
   const { notifications: adminItems } = useNotifications(isAdmin ? "admins" : undefined);
-  const { leads } = useLeads();
+  const { leads } = useActiveLeads();
 
   const rows = useMemo<Row[]>(() => {
     const email = user?.email.toLowerCase() ?? "";
