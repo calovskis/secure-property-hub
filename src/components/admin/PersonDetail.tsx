@@ -100,6 +100,8 @@ export function PersonDetailContent({
   onMessage?: (p: { email: string; name: string; role: string }) => void;
 }) {
   const [tab, setTab] = useState<Tab>("profile");
+  const { user } = useAuth();
+  const { can } = useMyPermissions(user?.email, user?.role === "admin");
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const pageUrl = origin ? `${origin}/admin-people/${encodeURIComponent(person.key)}` : "";
 
