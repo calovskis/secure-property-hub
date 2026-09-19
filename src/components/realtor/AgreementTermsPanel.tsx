@@ -65,6 +65,27 @@ export function AgreementTermsPanel({
     setTerms((cur) => ({ ...cur, ...p }));
   }
 
+  /** The agreed terms are settled — the agent uploads the agreement to sign. */
+  function uploadAgreement(fileName: string) {
+    const now = new Date().toISOString();
+    savePlan({
+      agreementDoc: fileName,
+      agreementUploadedAt: now,
+      agreementUploadedBy: agentName,
+    });
+    if (buyerEmail) {
+      notify({
+        id: `agreement-ready-${leadId}-${now}`,
+        to: buyerEmail.toLowerCase(),
+        title: "Your purchase agreement is ready to sign",
+        body: `${propertyLabel} at ${formatPrice(purchase.offerPrice)} — review the agreement and sign it.`,
+        href: `/property/${propertyId}?open=agreement`,
+        severity: "warning",
+      });
+    }
+    toast("Agreement uploaded", { description: `${buyerName} can review and sign it now.` });
+  }
+
   function propose() {
     const now = new Date().toISOString();
     savePlan({
