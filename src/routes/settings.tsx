@@ -3,6 +3,7 @@ import { AppHeader } from "@/components/layout/AppHeader";
 import { PartnerAccountCard } from "@/components/profile/PartnerAccountCard";
 import { PARTNER_LABEL, ROLE_LABEL, fullName, useAuth } from "@/lib/auth";
 import { AdminNav } from "@/components/admin/AdminNav";
+import { DeleteMyAccountCard } from "@/components/profile/DeleteMyAccountCard";
 
 
 export const Route = createFileRoute("/settings")({
@@ -79,6 +80,16 @@ function SettingsPage() {
               </div>
             </section>
           )}
+
+          {user && user.role !== "admin" ? (
+            <DeleteMyAccountCard
+              email={user.email}
+              name={fullName(user) || user.email}
+              roleLabel={`${ROLE_LABEL[user.role]}${
+                user.partnerType ? ` · ${PARTNER_LABEL[user.partnerType]}` : ""
+              }`}
+            />
+          ) : null}
         </div>
       </main>
     </div>

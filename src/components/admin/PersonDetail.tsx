@@ -32,6 +32,9 @@ import {
 } from "@/components/admin/PartnerAssignments";
 import { PhoneField } from "@/components/form/PhoneField";
 import { isValidPhone } from "@/lib/phone";
+import { DeleteAccountControls } from "@/components/admin/DeleteAccountControls";
+import { useMyPermissions } from "@/lib/staff";
+import { fullName, useAuth } from "@/lib/auth";
 
 type Tab =
   | "profile"
@@ -97,6 +100,8 @@ export function PersonDetailContent({
   onMessage?: (p: { email: string; name: string; role: string }) => void;
 }) {
   const [tab, setTab] = useState<Tab>("profile");
+  const { user } = useAuth();
+  const { can } = useMyPermissions(user?.email, user?.role === "admin");
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const pageUrl = origin ? `${origin}/admin-people/${encodeURIComponent(person.key)}` : "";
 
@@ -175,7 +180,18 @@ export function PersonDetailContent({
       </header>
 
       <div className="flex-1 overflow-y-auto px-6 py-5">
-        {tab === "profile" ? <ProfileTab person={person} /> : null}
+        {tab === "profile" ? (
+          <>
+            <DeleteAccountControls
+              email={person.email}
+              name={person.name}
+              roleLabel={person.roleLabel}
+              actor={(user ? fullName(user) : "") || user?.email || "Loqal admin"}
+              can={can}
+            />
+            <ProfileTab person={person} />
+          </>
+        ) : null}
         {tab === "documents" ? <DocumentsTab person={person} /> : null}
         {tab === "correspondence" ? (
           person.request ? (
