@@ -594,6 +594,8 @@ const HISTORY_TONE: Record<RealtorLicenseEvent["action"], string> = {
   updated: "bg-brand-tint text-brand",
   removed: "bg-destructive/10 text-destructive",
   copy_uploaded: "bg-gold-tint text-gold",
+  verified: "bg-success/10 text-success",
+  info_requested: "bg-destructive/10 text-destructive",
 };
 
 /**
