@@ -16,7 +16,15 @@ import { ApplicantFile, Row } from "@/components/lender/ApplicantFile";
 import { useLenderTeam } from "@/lib/lender-team";
 import { buyerAgentSummary, useBuyerProcess } from "@/lib/buyer-process";
 import { PaymentScheduleButton } from "@/components/mortgage/PaymentScheduleDialog";
-import { clientDisplayForPartner } from "@/lib/user-id";
+import { clientDisplayForPartner, loqalNumber } from "@/lib/user-id";
+import { updateEntityPlan } from "@/lib/entity-structure";
+import {
+  PURCHASE_STAGE_LABEL,
+  PURCHASE_STAGE_NOTE,
+  PURCHASE_STAGE_TONE,
+  usePurchaseProgress,
+  type PurchaseProgress,
+} from "@/lib/purchase-stage";
 
 const money = (n: number) => `$${Math.round(n).toLocaleString()}`;
 
