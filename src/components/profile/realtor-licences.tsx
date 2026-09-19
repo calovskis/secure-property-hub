@@ -217,7 +217,11 @@ export function LicenceCoverageTable({
       number,
       validUntil: edit.validUntil,
       ...(changed
-        ? { recopyRequestedAt: new Date().toISOString() }
+        ? {
+            recopyRequestedAt: new Date().toISOString(),
+            /* New details need Loqal verification before cases are assigned. */
+            pendingSince: new Date().toISOString(),
+          }
         : {
             ...(previous.doc ? { doc: previous.doc } : {}),
             ...(previous.uploadedAt ? { uploadedAt: previous.uploadedAt } : {}),
