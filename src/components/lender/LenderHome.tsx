@@ -235,7 +235,7 @@ export function LenderHome({
                     <div className="text-sm font-semibold text-foreground">{lead.clientName}</div>
                     <div className="text-xs text-muted-foreground">
                       {lead.propertyLabel} · {PURCHASE_STAGE_LABEL[p.stage]}
-                      {p.hardCheckConfirmedAt ? " · terms reconfirmed" : " · hard check open"}
+                      {p.hardCheckConfirmedAt ? " · terms reconfirmed" : " · loan submission due"}
                     </div>
                   </div>
                   <div className="text-right text-xs">
