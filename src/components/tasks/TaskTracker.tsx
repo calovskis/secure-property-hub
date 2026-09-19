@@ -165,9 +165,22 @@ function isActionable(n: AppNotification): boolean {
   return true;
 }
 
-const MAX_VISIBLE = 4;
+const MAX_VISIBLE = 6;
 
-type Row = { def: GroupDef; count: number; href?: string | undefined; urgent: boolean };
+type Task = {
+  def: GroupDef;
+  notification: AppNotification;
+};
+
+/** "3 days ago" style age so it is obvious how long a task has been waiting. */
+function waitingFor(iso: string): string {
+  const ms = Date.now() - new Date(iso).getTime();
+  const days = Math.floor(ms / 86_400_000);
+  if (days >= 1) return `waiting ${days} day${days === 1 ? "" : "s"}`;
+  const hours = Math.floor(ms / 3_600_000);
+  if (hours >= 1) return `waiting ${hours} hour${hours === 1 ? "" : "s"}`;
+  return "new";
+}
 
 export function TaskTracker({ className = "" }: { className?: string }) {
   const { user } = useAuth();
@@ -177,7 +190,7 @@ export function TaskTracker({ className = "" }: { className?: string }) {
   const { notifications: adminItems } = useNotifications(isAdmin ? "admins" : undefined);
   const { leads } = useActiveLeads();
 
-  const rows = useMemo<Row[]>(() => {
+  const tasks = useMemo<Task[]>(() => {
     const email = user?.email.toLowerCase() ?? "";
     const myLeads = leads.filter(
       (lead) => lead.clientEmail.toLowerCase() === email && lead.status !== "annulled",
@@ -209,39 +222,34 @@ export function TaskTracker({ className = "" }: { className?: string }) {
       return true;
     };
 
-    const open = (list: AppNotification[]) => list.filter(isStillOpen);
-    const buckets = new Map<GroupId, Row>();
-
-    const add = (n: AppNotification, gid: GroupId) => {
-      const def = GROUPS[gid];
-      const cur = buckets.get(gid);
-      if (cur) {
-        cur.count += 1;
-        cur.urgent = cur.urgent || n.severity === "critical";
-        return;
-      }
-      buckets.set(gid, {
-        def,
-        count: 1,
-        href: n.href,
-        urgent: n.severity === "critical",
-      });
+    const list: Task[] = [];
+    const seen = new Set<string>();
+    const push = (n: AppNotification, gid: GroupId) => {
+      if (seen.has(n.id)) return;
+      seen.add(n.id);
+      list.push({ def: GROUPS[gid], notification: n });
     };
 
-    // Newest first already; the first item of a group becomes its link target.
-    for (const n of open(notifications)) add(n, groupOf(n.id));
-    for (const n of open(adminItems)) add(n, adminGroupOf(n.id));
+    for (const n of notifications.filter(isStillOpen)) push(n, groupOf(n.id));
+    for (const n of adminItems.filter(isStillOpen)) push(n, adminGroupOf(n.id));
 
-    return [...buckets.values()].sort((a, b) => b.count - a.count);
+    // Urgent first, then oldest waiting first — the longest-open task is the
+    // one that needs attention.
+    const weight = (n: AppNotification) =>
+      n.severity === "critical" ? 0 : n.severity === "warning" ? 1 : 2;
+    return list.sort(
+      (a, b) =>
+        weight(a.notification) - weight(b.notification) ||
+        new Date(a.notification.createdAt).getTime() - new Date(b.notification.createdAt).getTime(),
+    );
   }, [notifications, adminItems, leads, user?.email, user?.mortgageProfile?.submittedAt]);
 
   const [showAll, setShowAll] = useState(false);
 
   if (!user) return null;
 
-  const visible = showAll ? rows : rows.slice(0, MAX_VISIBLE);
-  const hidden = rows.length - visible.length;
-  const total = rows.reduce((s, r) => s + r.count, 0);
+  const visible = showAll ? tasks : tasks.slice(0, MAX_VISIBLE);
+  const hidden = tasks.length - visible.length;
 
   return (
     <section className={`rounded-xl border border-border bg-card p-4 ${className}`}>
@@ -249,41 +257,55 @@ export function TaskTracker({ className = "" }: { className?: string }) {
         <div className="flex items-center gap-2">
           <h2 className="text-sm font-semibold text-foreground">Open tasks</h2>
           <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
-            {total}
+            {tasks.length}
           </span>
         </div>
       </div>
 
-      {total === 0 ? (
+      {tasks.length === 0 ? (
         <p className="mt-3 rounded-lg border border-border px-3 py-4 text-center text-xs text-muted-foreground">
           No open tasks.
         </p>
       ) : (
         <div className="mt-2 divide-y divide-border">
-          {visible.map((r) => (
+          {visible.map(({ def, notification: n }) => (
             <button
-              key={r.def.id}
+              key={n.id}
               type="button"
-              disabled={!r.href}
-              onClick={() => r.href && openDeepLink(navigate, r.href)}
-              className="flex w-full items-center gap-2.5 py-2 text-left transition-colors hover:bg-brand-tint/40 disabled:cursor-default"
+              disabled={!n.href}
+              onClick={() => n.href && openDeepLink(navigate, n.href)}
+              className="flex w-full items-start gap-2.5 py-2.5 text-left transition-colors hover:bg-brand-tint/40 disabled:cursor-default"
             >
               <span
                 aria-hidden
-                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs ${r.def.tone}`}
+                className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs ${def.tone}`}
               >
-                {r.def.icon}
+                {def.icon}
               </span>
-              <span className="flex-1 text-[13px] font-medium text-foreground">
-                {r.def.label}
-                {r.urgent ? (
-                  <span className="ml-2 rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-semibold uppercase text-destructive">
-                    Urgent
+              <span className="min-w-0 flex-1">
+                <span className="flex flex-wrap items-center gap-2">
+                  <span className="text-[13px] font-semibold text-foreground">{n.title}</span>
+                  {n.severity === "critical" ? (
+                    <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-semibold uppercase text-destructive">
+                      Urgent
+                    </span>
+                  ) : null}
+                  {n.badge ? (
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
+                      {n.badge}
+                    </span>
+                  ) : null}
+                </span>
+                {n.body ? (
+                  <span className="mt-0.5 block text-[12px] leading-snug text-muted-foreground">
+                    {n.body}
                   </span>
                 ) : null}
+                <span className="mt-1 block text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  {def.label} · {waitingFor(n.createdAt)}
+                </span>
               </span>
-              <span className="text-[13px] font-semibold text-foreground">{r.count}</span>
-              <span aria-hidden className="text-xs text-muted-foreground">
+              <span aria-hidden className="mt-1 text-xs text-muted-foreground">
                 ›
               </span>
             </button>
@@ -302,3 +324,4 @@ export function TaskTracker({ className = "" }: { className?: string }) {
     </section>
   );
 }
+
