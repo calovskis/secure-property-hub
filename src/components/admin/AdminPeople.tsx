@@ -74,7 +74,7 @@ export function AdminPeople({
   const activeSub = subs?.some((s) => s.id === sub) ? sub : "all";
 
   const scoped = useMemo(() => {
-    let list = all;
+    let list = all.filter((p) => !deletedEmails.has(p.email.trim().toLowerCase()));
     if (scope === "clients") list = list.filter((p) => p.group !== "partner");
     if (scope === "partners") list = list.filter((p) => p.group === "partner");
     if (scope === "clients" && activeSub !== "all")
