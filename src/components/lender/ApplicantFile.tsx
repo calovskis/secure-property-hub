@@ -3,6 +3,7 @@ import { useAuth } from "@/lib/auth";
 import type { MortgageLead } from "@/lib/leads";
 import { LEAD_STATUS_LABEL } from "@/lib/leads";
 import { countryLabel } from "@/data/countries";
+import { ClientFileTransfer } from "@/components/lender/ClientFileTransfer";
 import { currencyLabel } from "@/data/currencies";
 import { formatDate, formatDateTime, isoToUsMonth } from "@/lib/dates";
 import {
@@ -332,6 +333,8 @@ export function ApplicantFile({
           <span>Submitted {date(lead.submittedAt)}</span>
         </div>
       </div>
+
+      <ClientFileTransfer lead={lead} />
 
       <div className="flex flex-wrap gap-2 border-b border-border pb-2">
         {TABS.map((t) => (
