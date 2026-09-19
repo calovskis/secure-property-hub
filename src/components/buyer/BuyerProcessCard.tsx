@@ -282,9 +282,20 @@ export function BuyerProcessCard({ lead }: { lead: MortgageLead }) {
               <button type="button" onClick={() => openFile("chat")} className={btnPrimary}>
                 Message the agent
               </button>
-              <button type="button" onClick={() => openFile("purchase")} className={btnGhost}>
-                Request to proceed with the purchase
-              </button>
+              {latestPurchase && latestPurchase.status !== "withdrawn" ? (
+                <button
+                  type="button"
+                  onClick={() => openFile("status")}
+                  className={btnGhost}
+                  title="The purchase is already underway — follow it in the file"
+                >
+                  Purchase underway — see the status
+                </button>
+              ) : (
+                <button type="button" onClick={() => openFile("purchase")} className={btnGhost}>
+                  Request to proceed with the purchase
+                </button>
+              )}
               <button type="button" onClick={() => openFile("change")} className={btnGhost}>
                 Request a property change
               </button>
