@@ -106,6 +106,7 @@ function PartnerAccessPage() {
 
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
+  const [sending, setSending] = useState(false);
   const { submit } = usePartnerRequests();
 
   const isRealtor = kind === "partner" && partnerType === "realtor";
