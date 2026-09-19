@@ -39,7 +39,7 @@ export type KybDraft = {
   authorizationDoc: string;
   /** The person filling the form is also a 25%+ shareholder. */
   creatorIsShareholder: boolean;
-  creatorSharePct?: number;
+  creatorSharePct: number | undefined;
   /** Creator details when the creator is a shareholder but NOT the director. */
   creatorShareholder: KycPerson;
 };
@@ -59,6 +59,7 @@ const emptyDraft = (): KybDraft => ({
   creatorIdDoc: "",
   authorizationDoc: "",
   creatorIsShareholder: false,
+  creatorSharePct: undefined,
   creatorShareholder: emptyKycPerson(),
 });
 
