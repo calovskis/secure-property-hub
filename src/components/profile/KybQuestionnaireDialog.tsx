@@ -310,6 +310,25 @@ export function KybQuestionnaireDialog({
     ? { ...data.director, fullName: fullName(user) }
     : data.director;
 
+  /**
+   * The creator as a shareholder. When the creator is also the director, their
+   * details are already collected in step 2 — only the share % is asked again.
+   * Otherwise the creator fills their own details once (name locked).
+   */
+  const creatorAsShareholder: KycPerson | null = data.creatorIsShareholder
+    ? data.directorIsCreator
+      ? { ...director, sharePct: data.creatorSharePct, idDoc: director.idDoc }
+      : {
+          ...data.creatorShareholder,
+          fullName: fullName(user),
+          sharePct: data.creatorSharePct,
+        }
+    : null;
+
+  const allShareholders: KycPerson[] = creatorAsShareholder
+    ? [creatorAsShareholder, ...data.shareholders]
+    : data.shareholders;
+
   function validate(s: number): string | null {
     if (s === 1) {
       if (!data.directorIsCreator) {
