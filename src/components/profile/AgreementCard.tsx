@@ -1,18 +1,22 @@
 /**
- * Partner-side view of the Loqal partnership agreement. Once Loqal approves
- * a partner registration, the partner signs here (typed-name signature with a
- * confirmation step); Loqal then countersigns in the admin console and the
- * partnership becomes fully active.
+ * Partner-side view of the Loqal partnership agreement. Once Loqal approves a
+ * partner registration, the partner opens the signing pop-up here: the full
+ * agreement — generated from their own registration details — can be read and
+ * downloaded, and is then signed electronically inside the portal. Loqal
+ * countersigns in the admin console and the partnership becomes fully active.
  */
 import { useEffect, useRef, useState } from "react";
-import { fullName, type LoqalUser } from "@/lib/auth";
+import type { LoqalUser } from "@/lib/auth";
 import { usePartnerRequests } from "@/lib/partner-requests";
 import { logActivity } from "@/lib/activity";
 import { formatDateTime } from "@/lib/dates";
 import { useDeepLink } from "@/lib/deep-link";
-
-const inputClass =
-  "w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-brand";
+import { PartnerAgreementDialog } from "@/components/profile/PartnerAgreementDialog";
+import {
+  buildPartnerAgreement,
+  downloadAgreementDoc,
+  executedAgreementText,
+} from "@/lib/partner-agreement";
 
 const STEPS = [
   "Registration submitted",
@@ -24,16 +28,12 @@ const STEPS = [
 export function AgreementCard({ user }: { user: LoqalUser }) {
   const { requests, updateRequest } = usePartnerRequests();
   const [signing, setSigning] = useState(false);
-  const [confirming, setConfirming] = useState(false);
-  const [signature, setSignature] = useState("");
-  const [agreed, setAgreed] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const ref = useRef<HTMLElement>(null);
   const { open: openParam } = useDeepLink();
   const request = requests.find((r) => r.email.toLowerCase() === user.email.toLowerCase());
 
-  // "Your agreement is ready to sign" notifications land on the signing form.
+  // "Your agreement is ready to sign" notifications land on the signing window.
   useEffect(() => {
     if (openParam !== "agreement" || !request) return;
     ref.current?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -50,18 +50,19 @@ export function AgreementCard({ user }: { user: LoqalUser }) {
         ? 1
         : 0;
 
-  function sign() {
+  function sign(signature: string) {
     if (!request) return;
-    if (signature.trim().toLowerCase() !== fullName(user).toLowerCase()) {
-      setError(`Type your full legal name exactly as registered: ${fullName(user)}.`);
-      return;
-    }
     const now = new Date().toISOString();
-    updateRequest(request.id, { agreementSignedAt: now, agreementSignedBy: signature.trim() });
-    logActivity(signature.trim(), `signed the Loqal partnership agreement`, request.companyName);
-    setSigning(false);
-    setConfirming(false);
+    updateRequest(request.id, { agreementSignedAt: now, agreementSignedBy: signature });
+    logActivity(signature, `signed the Loqal partnership agreement`, request.companyName);
   }
+
+  function downloadSigned() {
+    if (!request) return;
+    const agreement = buildPartnerAgreement(request);
+    downloadAgreementDoc(agreement.fileBase, executedAgreementText(agreement, request));
+  }
+
 
   return (
     <section ref={ref} className="rounded-lg border border-border bg-card p-6">
