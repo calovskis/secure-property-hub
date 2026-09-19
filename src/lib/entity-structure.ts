@@ -65,6 +65,17 @@ export type EntityPlan = {
   termsChangeNote?: string | undefined;
   /** Furthest step the buyer reached in the window (1–2). */
   wizardStep?: number | undefined;
+  /** The purchase agreement the buyer's agent uploaded for review and signing. */
+  agreementDoc?: string | undefined;
+  agreementUploadedAt?: string | undefined;
+  agreementUploadedBy?: string | undefined;
+  /** Buyer signed the uploaded purchase agreement. */
+  agreementSignedAt?: string | undefined;
+  agreementSignedBy?: string | undefined;
+  /** Mortgage company reconfirmed its terms against the signed agreement. */
+  hardCheckConfirmedAt?: string | undefined;
+  hardCheckConfirmedBy?: string | undefined;
+  hardCheckNote?: string | undefined;
   /** Client asked Loqal to handle the company set-up. */
   loqalSetupRequestedAt?: string | undefined;
   /** A Loqal admin marked the structure set-up as handled. */
