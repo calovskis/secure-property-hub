@@ -259,6 +259,7 @@ export function LenderMortgages({ canManage }: { canManage: boolean }) {
   const [openId, setOpenId] = useState<string | null>(null);
   const [state, setState] = useState("all");
   const [stage, setStage] = useState<MortgageFileStage | "all">("all");
+  const { progressOf } = usePurchaseProgress();
 
   const files = useMemo(
     () =>
