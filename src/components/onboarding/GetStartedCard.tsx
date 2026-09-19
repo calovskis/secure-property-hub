@@ -46,8 +46,42 @@ export function GetStartedCard({ className = "" }: { className?: string }) {
 
     if (user.role === "partner") {
       const req = requests.find((r) => (r.email ?? "").toLowerCase() === email);
-      const licenceDocs =
-        (req?.verificationDocs?.length ?? 0) > 0 || Boolean(req?.realtorVerification);
+      const type = req?.partnerType ?? user.partnerType;
+      const licenceDocs = req?.realtorVerification?.licenseDocs ?? [];
+      /* States the partner declared at registration — a licence copy is asked
+       * for each of them, nothing else document-wise. */
+      const declared = (
+        req?.realtorLicenses?.length
+          ? req.realtorLicenses.map((l) => l.state)
+          : (req?.states ?? [])
+      ).filter(Boolean);
+      const licenceItems: Item[] = [];
+      const label = type === "lender" ? "lending licence" : "licence";
+      if (declared.length > 0 && declared.length <= 8) {
+        for (const st of declared) {
+          const d = licenceDocs.find((x) => x.state === st);
+          licenceItems.push({
+            id: `p-licence-${st}`,
+            title: `Upload your ${st} ${label}`,
+            desc: `A copy of the ${label} for ${st}, with the licence number and validity date.`,
+            icon: "📜",
+            done: Boolean(d?.doc) && !d?.recopyRequestedAt,
+            to: "/profile",
+            actionLabel: "Upload",
+          });
+        }
+      } else if (declared.length > 0 || req?.allStates) {
+        licenceItems.push({
+          id: "p-licences",
+          title: `Upload your state ${label}s`,
+          desc: `A copy of the ${label} for every state you indicated at registration.`,
+          icon: "📜",
+          done: licenceDocs.length > 0 && licenceDocs.every((d) => d.doc && !d.recopyRequestedAt),
+          to: "/profile",
+          actionLabel: "Upload",
+        });
+      }
+
       return [
         {
           id: "p-registration",
@@ -58,15 +92,7 @@ export function GetStartedCard({ className = "" }: { className?: string }) {
           to: "/partner-access",
           actionLabel: "Open registration",
         },
-        {
-          id: "p-verification",
-          title: "Identity & licence verification",
-          desc: "Upload your ID document and a licence copy for every state you work in.",
-          icon: "🪪",
-          done: licenceDocs,
-          to: "/profile",
-          actionLabel: "Open my profile",
-        },
+        ...licenceItems,
         {
           id: "p-agreement",
           title: "Sign the Loqal partner agreement",
@@ -92,6 +118,18 @@ export function GetStartedCard({ className = "" }: { className?: string }) {
           done: read.has("p-privacy"),
           info: true,
         },
+        ...(type === "lender"
+          ? [
+              {
+                id: "p-inquiries",
+                title: "How mortgage inquiries reach you",
+                desc: "New pre-approval inquiries arrive for the states you are licensed in, and are marked Assigned once taken.",
+                icon: "🏦",
+                done: read.has("p-inquiries"),
+                info: true,
+              } as Item,
+            ]
+          : []),
         {
           id: "p-requests",
           title: "Requests & correspondence with Loqal",
@@ -112,6 +150,7 @@ export function GetStartedCard({ className = "" }: { className?: string }) {
         },
       ];
     }
+
 
     if (user.role === "admin") {
       return [
