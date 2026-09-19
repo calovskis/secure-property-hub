@@ -20,6 +20,7 @@ import {
 } from "@/components/admin/people-model";
 import type { PartnerType } from "@/lib/auth";
 import { loqalNumber } from "@/lib/user-id";
+import { daysLeft, useDeletions, type DeletionRecord } from "@/lib/deletions";
 
 type Filters = {
   q: string;
@@ -60,6 +61,12 @@ export function AdminPeople({
   const [sub, setSub] = useState<string>("all");
   const [filters, setFilters] = useState<Filters>(EMPTY);
   const [open, setOpen] = useState<AdminPerson | null>(null);
+  const [view, setView] = useState<"active" | "deleted">("active");
+  const { deleted, history } = useDeletions();
+  const deletedEmails = useMemo(
+    () => new Set(deleted.map((r) => r.email)),
+    [deleted],
+  );
 
   // Reset sub-tab when the scope changes.
   const subs =
