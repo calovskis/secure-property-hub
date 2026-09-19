@@ -204,16 +204,16 @@ function useDerivedNotifications() {
           completedIds.push(`pricedecided-${p.id}`);
           continue;
         }
-        const signed = Boolean(entityPlans.find((pl) => pl.leadId === lead.id)?.agreementSignedAt);
-        if (signed) {
+        const entityPlan = entityPlans.find((pl) => pl.leadId === lead.id);
+        if (entityPlan?.path) {
           completedIds.push(`pricedecided-${p.id}`);
           continue;
         }
         list.push({
           id: `pricedecided-${p.id}`,
           to: email,
-          title: "Your price is confirmed — proceed with the purchase agreement",
-          body: `${lead.propertyLabel} — ${formatPrice(p.offerPrice)} is decided and is being presented to the seller. Next step: sign the purchase agreement and tell us how the property will be held.${
+          title: "Your price is confirmed — tell us how the property will be held",
+          body: `${lead.propertyLabel} — ${formatPrice(p.offerPrice)} is decided and is being presented to the seller. Next step: tell us how the property will be held; your agent then proposes the purchase terms for your confirmation.${
             p.agentNote ? ` Your agent: ${p.agentNote}` : ""
           }`,
           href: `/property/${lead.propertyId}?open=agreement`,

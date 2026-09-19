@@ -209,7 +209,7 @@ function CaseDetail({ lead, onClose }: { lead: MortgageLead; onClose: () => void
 function OwnershipTask({ lead }: { lead: MortgageLead }) {
   const { plans } = useEntityPlans();
   const plan = plans.find((p) => p.leadId === lead.id);
-  if (!plan?.path && !plan?.agreementSignedAt) return null;
+  if (!plan?.path && !plan?.termsProposedAt) return null;
 
   const setupOpen = Boolean(plan.loqalSetupRequestedAt) && !plan.loqalSetupHandledAt;
 
@@ -270,12 +270,16 @@ function OwnershipTask({ lead }: { lead: MortgageLead }) {
           </p>
         ) : null}
         <p className="mt-2 text-xs text-muted-foreground">
-          Purchase agreement:{" "}
-          {plan.agreementSignedAt
-            ? `signed by ${plan.agreementSignedBy ?? lead.clientName} on ${formatDateTime(
-                plan.agreementSignedAt,
-              )} — with the seller for acceptance.`
-            : "not signed yet."}
+          Purchase terms:{" "}
+          {plan.termsConfirmedAt
+            ? `confirmed by ${plan.termsConfirmedBy ?? lead.clientName} on ${formatDateTime(
+                plan.termsConfirmedAt,
+              )} — the buyer's agent is putting them to the seller.`
+            : plan.termsChangeRequestedAt
+              ? `the buyer asked the agent to change something — ${plan.termsChangeNote ?? "no details"}.`
+              : plan.termsProposedAt
+                ? `proposed by the buyer's agent on ${formatDateTime(plan.termsProposedAt)} — awaiting the buyer's confirmation.`
+                : "not proposed by the buyer's agent yet."}
         </p>
       </div>
     </>
