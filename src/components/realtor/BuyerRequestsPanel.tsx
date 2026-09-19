@@ -20,6 +20,7 @@ import {
   PURCHASE_STATUS_LABEL,
   useFileRequests,
 } from "@/lib/property-requests";
+import { AgreementTermsPanel } from "@/components/realtor/AgreementTermsPanel";
 
 const inputClass =
   "w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-brand";
@@ -232,6 +233,20 @@ export function BuyerRequestsPanel({
           ) : null}
         </div>
       ) : null}
+
+      {purchase?.status === "price_supported" ? (
+        <AgreementTermsPanel
+          leadId={leadId}
+          propertyId={propertyId}
+          propertyLabel={propertyLabel}
+          purchase={purchase}
+          buyerName={buyerName}
+          buyerEmail={buyerEmail}
+          agentName={agentName}
+        />
+      ) : null}
+
+
 
       {change ? (
         <div
