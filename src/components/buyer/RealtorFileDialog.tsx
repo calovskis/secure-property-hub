@@ -90,9 +90,9 @@ export function RealtorFileDialog({
   const [price, setPrice] = useState<PricePreference>("same_range");
   const [pickedId, setPickedId] = useState("");
 
-  const openPurchase = purchases.find(
-    (p) => p.status !== "withdrawn" && p.status !== "price_supported",
-  );
+  /* One purchase request per property file — once sent (and not withdrawn),
+     the buyer negotiates on that request instead of starting a new one. */
+  const openPurchase = purchases.find((p) => p.status !== "withdrawn");
   const lastPurchase = purchases[0];
   const lastChange = changes[0];
   const otherProperties = useMemo(
@@ -338,8 +338,19 @@ export function RealtorFileDialog({
           <div className="space-y-3">
             {openPurchase ? (
               <p className="rounded-md border border-border bg-background p-3 text-sm text-muted-foreground">
-                You already have a request with {agentName} —{" "}
-                {PURCHASE_STATUS_LABEL[openPurchase.status].toLowerCase()}. Check the Status tab.
+                {openPurchase.status === "price_supported" ? (
+                  <>
+                    The price is already agreed with {agentName} —{" "}
+                    {formatPrice(openPurchase.offerPrice)} is being put to the seller. Everything
+                    continues on the Status tab and in the purchase terms below.
+                  </>
+                ) : (
+                  <>
+                    You already have a request with {agentName} —{" "}
+                    {PURCHASE_STATUS_LABEL[openPurchase.status].toLowerCase()}. Check the Status
+                    tab.
+                  </>
+                )}
               </p>
             ) : (
               <>
