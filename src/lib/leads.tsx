@@ -624,6 +624,31 @@ export function useLeads() {
   return ctx;
 }
 
+/**
+ * Same as useLeads(), but files of deleted clients are dropped. Partner
+ * portals use this: once a profile is deleted there is nothing left to work
+ * on, so its requests, deadlines and files disappear from partner views.
+ */
+export function useActiveLeads(): LeadsContextValue {
+  const ctx = useLeads();
+  const { records } = useDeletions();
+  return useMemo(() => {
+    const gone = new Set(
+      records.filter((r) => r.status === "deleted").map((r) => r.email),
+    );
+    if (gone.size === 0) return ctx;
+    const alive = (email: string) => !gone.has(email.trim().toLowerCase());
+    const leads = ctx.leads.filter((l) => alive(l.clientEmail));
+    return {
+      ...ctx,
+      leads,
+      leadsForClient: (email) => (alive(email) ? ctx.leadsForClient(email) : []),
+      leadForProperty: (email, propertyId) =>
+        alive(email) ? ctx.leadForProperty(email, propertyId) : undefined,
+    };
+  }, [ctx, records]);
+}
+
 /* ---------------------------------------------------------------- DTI math */
 
 export const LOAN_ASSUMPTIONS = {
