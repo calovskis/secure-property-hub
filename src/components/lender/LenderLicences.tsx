@@ -128,7 +128,8 @@ function LenderLicencesInner({ user }: { user: LoqalUser }) {
         <LicenceCoverageTable
           user={user}
           seed={seed}
-          hint="Licence copies are uploaded with the button above."
+          hint="Attach a copy per state with the row's Upload copy button, or upload several at once above."
+          onUploadCopy={() => setUploadOpen(true)}
         />
       </div>
 
