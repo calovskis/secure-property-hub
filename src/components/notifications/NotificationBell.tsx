@@ -713,6 +713,14 @@ function useDerivedNotifications() {
     }
 
     if (list.length) syncNotifications(list);
+    /* Open approval/countersign/KYB tasks that are no longer derived (e.g.
+       the partner's profile was deleted) are pruned; answered correspondence
+       stays as history. */
+    pruneDerived(
+      "admins",
+      ["preq-", "countersign-", "kyc-"],
+      list.map((n) => n.id),
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.email, requests, isAdmin]);
 
