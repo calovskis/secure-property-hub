@@ -15,6 +15,7 @@ import {
   type AssignCounts,
 } from "@/lib/lender-team";
 import { pickRealtor } from "@/lib/realtors";
+import { useDeletions } from "@/lib/deletions";
 
 export type LeadStatus =
   | "new"
