@@ -4,19 +4,21 @@
  * Mortgage lender and realtor partners submit licence details and copies from
  * their own portal; every submission is unusable until a Loqal admin verifies
  * it (no cases are assigned in an unverified state). This card makes those
- * checks visible on the admin overview with the partner name, the state, the
- * licence number and a direct link to the verification panel.
+ * checks visible on the admin overview; "Verify" opens the verification in a
+ * pop-up window instead of sending the admin to a separate page.
  */
-import { Link } from "@tanstack/react-router";
+import { useState } from "react";
 import { formatDate, formatDateTime } from "@/lib/dates";
-import { usePartnerRequests } from "@/lib/partner-requests";
+import { usePartnerRequests, type PartnerRequest } from "@/lib/partner-requests";
 import { pendingVerifications } from "@/lib/licence-verification";
 import { useDeletions } from "@/lib/deletions";
+import { LicenceVerificationDialog } from "@/components/admin/LicenceVerificationPanel";
 
 export function LicenceChecksCard() {
   const { requests } = usePartnerRequests();
   const { deleted } = useDeletions();
   const deletedEmails = new Set(deleted.map((r) => r.email.trim().toLowerCase()));
+  const [openFor, setOpenFor] = useState<PartnerRequest | null>(null);
 
   const items = requests
     .filter((r) => r.status !== "declined" && !deletedEmails.has(r.email.trim().toLowerCase()))
@@ -67,17 +69,26 @@ export function LicenceChecksCard() {
                     }`}
               </p>
             </div>
-            <Link
-              to="/admin-people/$personId"
-              params={{ personId: `${request.kind}-${request.id}` }}
-              hash="licence-verification"
+            <button
+              type="button"
+              onClick={() => setOpenFor(request)}
               className="rounded-md bg-brand px-3 py-1.5 text-xs font-semibold text-background hover:bg-brand-soft"
             >
               Verify {licence.state}
-            </Link>
+            </button>
           </li>
         ))}
       </ul>
+
+      {openFor ? (
+        <LicenceVerificationDialog
+          request={openFor}
+          open={Boolean(openFor)}
+          onOpenChange={(open) => {
+            if (!open) setOpenFor(null);
+          }}
+        />
+      ) : null}
     </section>
   );
 }
