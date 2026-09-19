@@ -55,21 +55,6 @@ export const Route = createFileRoute("/admin")({
   }),
 });
 
-const METRICS: [string, string, string][] = [
-  ["Total accounts", "1,284", "↑ 46 this month"],
-  ["Pending verifications", "23", "9 flagged for review"],
-  ["Active partners", "87", "12 awaiting onboarding"],
-  ["Mortgage requests", "31", "6 need a lender assigned"],
-];
-
-
-const QUEUES: [string, string, string][] = [
-  ["Mortgage profiles to review", "6", "SSN provided on 4 of 6"],
-  ["Partner applications", "12", "Documents pending on 5"],
-  ["Corporate KYB", "3", "Beneficial owner checks"],
-  ["Support escalations", "8", "2 breaching SLA"],
-];
-
 function AdminPage() {
   const { user, ready } = useAuth();
   const greeting = useGreeting(user?.firstName ?? "", user?.email);
@@ -83,11 +68,62 @@ function AdminPage() {
   const { can } = useMyPermissions(user?.email, ready && user?.role === "admin");
   /* Accounts panel: real platform accounts only (deleted profiles excluded). */
   const allPeople = useAdminPeople();
-  const { deleted } = useDeletions();
+  const { deleted, pending: pendingDeletions } = useDeletions();
   const deletedEmails = new Set(deleted.map((r) => r.email.trim().toLowerCase()));
-  const accounts = allPeople
-    .filter((p) => !deletedEmails.has(p.email.trim().toLowerCase()))
-    .slice(0, 8);
+  const livePeople = allPeople.filter((p) => !deletedEmails.has(p.email.trim().toLowerCase()));
+  const accounts = livePeople.slice(0, 8);
+
+  /* Dashboard numbers are derived from live data — never hardcoded. */
+  const approved = requests.filter((r) => r.status === "approved");
+  const pendingRequests = requests.filter((r) => r.status === "pending");
+  const openMortgages = leads.filter((l) => l.status === "new" || l.status === "info_required");
+  const unassignedMortgages = openMortgages.filter((l) => !l.assignedToId && !l.terms);
+  const kybPending = approved.filter((r) => !r.kyc);
+  const oldestPending = pendingRequests
+    .map((r) => r.submittedAt)
+    .sort()[0];
+  const metrics: [string, string, string][] = [
+    ["Total accounts", String(livePeople.length), "Clients, partners & corporates"],
+    [
+      "Partner applications",
+      String(pendingRequests.length),
+      pendingRequests.length ? "Awaiting Loqal review" : "Queue clear",
+    ],
+    [
+      "Active partners",
+      String(approved.length),
+      kybPending.length ? `${kybPending.length} with KYB outstanding` : "All KYB complete",
+    ],
+    [
+      "Mortgage requests",
+      String(leads.length),
+      openMortgages.length ? `${openMortgages.length} open on the pre-approval desk` : "No open requests",
+    ],
+  ];
+  const queues: [string, string, string][] = [
+    [
+      "Mortgage requests to review",
+      String(openMortgages.length),
+      unassignedMortgages.length
+        ? `${unassignedMortgages.length} not assigned to a lender member yet`
+        : "All open requests assigned",
+    ],
+    [
+      "Partner applications",
+      String(pendingRequests.length),
+      oldestPending ? `Oldest waiting since ${formatDate(oldestPending)}` : "Nothing waiting",
+    ],
+    [
+      "Partner KYB",
+      String(kybPending.length),
+      kybPending.length ? "Beneficial-owner checks outstanding" : "All partners verified",
+    ],
+    [
+      "Deletion requests",
+      String(pendingDeletions.length),
+      pendingDeletions.length ? "Awaiting a second admin to confirm" : "No pending deletions",
+    ],
+  ];
 
 
   useEffect(() => {
@@ -298,7 +334,7 @@ function AdminPage() {
         {tab === "overview" ? (
           <>
             <section className="mb-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
-              {METRICS.map(([label, value, note]) => (
+              {metrics.map(([label, value, note]) => (
                 <div key={label} className="rounded-lg border border-border bg-card p-6">
                   <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     {label}
@@ -450,7 +486,7 @@ function AdminPage() {
               <div className="rounded-lg border border-border bg-card p-6">
                 <h2 className="text-base font-semibold text-foreground">Review queues</h2>
                 <div className="mt-4 space-y-3">
-                  {QUEUES.map(([label, count, note]) => (
+                  {queues.map(([label, count, note]) => (
                     <div key={label} className="rounded-lg bg-brand-tint/50 p-4">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-semibold text-foreground">{label}</span>
