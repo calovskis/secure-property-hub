@@ -83,6 +83,17 @@ export function isLive(record: DeletionRecord): boolean {
   return record.status === "requested" || record.status === "deleted";
 }
 
+/**
+ * True once the profile's deletion is confirmed (or self-requested, which
+ * confirms immediately). Used to drop OPEN tasks partners/admins still had
+ * for that person — completed tasks stay as history.
+ */
+export function isProfileDeleted(email: string | null | undefined): boolean {
+  if (!email) return false;
+  const key = email.trim().toLowerCase();
+  return load().records.some((r) => r.email === key && r.status === "deleted");
+}
+
 export function useDeletions() {
   const snapshot = useSyncExternalStore(
     (cb) => {

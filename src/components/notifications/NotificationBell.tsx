@@ -35,6 +35,7 @@ import {
   type AppNotification,
 } from "@/lib/notifications";
 import { clientDisplayForPartner } from "@/lib/user-id";
+import { isProfileDeleted } from "@/lib/deletions";
 import { formatDateTime, usDateToIso } from "@/lib/dates";
 
 type Draft = Omit<AppNotification, "createdAt"> & { createdAt?: string | undefined };
@@ -445,7 +446,11 @@ function useDerivedNotifications() {
           );
         }
       }
-      const myFiles = leads.filter((l) => l.buyerAgent?.agentId === seat.id);
+      /* Files whose buyer was deleted stop producing open tasks — anything
+         still open is pruned below; completed entries stay as history. */
+      const myFiles = leads.filter(
+        (l) => l.buyerAgent?.agentId === seat.id && !isProfileDeleted(l.clientEmail),
+      );
       for (const lead of myFiles) {
         /* Every step of the buyer's journey reaches the agent as its own
            notification — starting with the moment the file was assigned. */
@@ -631,7 +636,11 @@ function useDerivedNotifications() {
     const list: Draft[] = [];
     {
       for (const r of requests) {
-        if (r.status === "pending") {
+        /* A deleted partner's registration stops being an open admin task
+           (approval, countersignature, KYB review). Correspondence history
+           below still derives, so the record of past exchanges remains. */
+        const partnerDeleted = isProfileDeleted(r.email);
+        if (!partnerDeleted && r.status === "pending") {
           list.push({
             id: `preq-${r.id}`,
             to: "admins",
@@ -642,7 +651,7 @@ function useDerivedNotifications() {
             createdAt: r.submittedAt,
           });
         }
-        if (r.status === "approved" && r.agreementSignedAt && !r.agreementCountersignedAt) {
+        if (!partnerDeleted && r.status === "approved" && r.agreementSignedAt && !r.agreementCountersignedAt) {
           list.push({
             id: `countersign-${r.id}`,
             to: "admins",
@@ -653,7 +662,7 @@ function useDerivedNotifications() {
             createdAt: r.agreementSignedAt,
           });
         }
-        if (r.kyc) {
+        if (!partnerDeleted && r.kyc) {
           list.push({
             id: `kyc-${r.id}`,
             to: "admins",
@@ -704,6 +713,14 @@ function useDerivedNotifications() {
     }
 
     if (list.length) syncNotifications(list);
+    /* Open approval/countersign/KYB tasks that are no longer derived (e.g.
+       the partner's profile was deleted) are pruned; answered correspondence
+       stays as history. */
+    pruneDerived(
+      "admins",
+      ["preq-", "countersign-", "kyc-"],
+      list.map((n) => n.id),
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.email, requests, isAdmin]);
 
@@ -879,6 +896,8 @@ function useDerivedNotifications() {
     const list: Draft[] = [];
     for (const lead of leads) {
       if (lead.status === "annulled") continue;
+      /* Deleted client — the inquiry is no longer an open lender task. */
+      if (isProfileDeleted(lead.clientEmail)) continue;
       if (scopedStates && !scopedStates.includes(leadState(lead))) continue;
       const assigned = Boolean(lead.assignedToId);
       list.push({
