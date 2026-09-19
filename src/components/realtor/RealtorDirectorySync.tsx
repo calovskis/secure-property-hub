@@ -3,6 +3,7 @@
  * partners in the database, then repairs any buyer file that still points at
  * an agent who is not (or no longer) an approved Loqal realtor partner.
  */
+import { useActiveLeads } from "@/lib/leads";
 import { useEffect, useRef } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/lib/auth";
@@ -12,7 +13,7 @@ import { pickRealtor, replaceApprovedRealtors, getRealtorSnapshot } from "@/lib/
 
 export function RealtorDirectorySync() {
   const { user, ready } = useAuth();
-  const { leads, updateLead } = useLeads();
+  const { leads, updateLead } = useActiveLeads();
   const fetchRealtors = useServerFn(listApprovedRealtors);
   const done = useRef(false);
   const leadsRef = useRef(leads);

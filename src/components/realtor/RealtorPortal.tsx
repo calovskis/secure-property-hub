@@ -1,3 +1,4 @@
+import { useActiveLeads } from "@/lib/leads";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { fullName, useAuth, type LoqalUser } from "@/lib/auth";
@@ -813,7 +814,7 @@ export function RealtorPortal({
   onTabChange: (tab: RealtorTabId) => void;
 }) {
   const { realtors, ensureSeat } = useRealtors();
-  const { leads, ready: leadsReady } = useLeads();
+  const { leads, ready: leadsReady } = useActiveLeads();
   const { photos } = useBuyerProcess();
   const { requests } = usePartnerRequests();
 

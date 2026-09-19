@@ -3,6 +3,7 @@
  * origination revenue on issued pre-approvals), the platform fees owed to
  * Loqal (with payment recording), and the bank accounts payouts land on.
  */
+import { useActiveLeads } from "@/lib/leads";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useLeads } from "@/lib/leads";
@@ -36,7 +37,7 @@ function loadBanks(): BankAccount[] {
 }
 
 export function LenderAccounting({ lenderName }: { lenderName: string }) {
-  const { leads } = useLeads();
+  const { leads } = useActiveLeads();
   const { invoices, issueInvoice, markPaid } = useAccounting();
   const [banks, setBanks] = useState<BankAccount[]>([]);
   const [bankName, setBankName] = useState("");
