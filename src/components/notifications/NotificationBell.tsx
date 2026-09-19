@@ -947,7 +947,7 @@ function useDerivedNotifications() {
           id: `hardcheck-${lead.id}`,
           to: email,
           title: prog.hardCheckOpen
-            ? "Purchase agreement signed — hard check needed"
+            ? "Purchase agreement signed — loan submission needed"
             : "Purchase agreement signed",
           body:
             `${clientDisplayForPartner(lead.clientName, lead.clientEmail)} · client ID ${loqalNumber(
