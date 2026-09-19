@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS partner_requests_one_active_per_user ON public.partner_requests (user_id) WHERE status <> 'declined';
