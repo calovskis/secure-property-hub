@@ -247,6 +247,8 @@ export function LicenceCoverageTable({
               onClick={() => {
                 setEdit({ state: "", number: "", validUntil: "" });
                 setEditState(null);
+                setError(null);
+                setConfirming(false);
               }}
               className="rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-brand-tint"
             >
