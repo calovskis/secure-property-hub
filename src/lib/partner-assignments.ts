@@ -10,6 +10,7 @@
 import { useCallback, useSyncExternalStore } from "react";
 import type { MortgageLead } from "@/lib/leads";
 import type { PartnerRequest } from "@/lib/partner-requests";
+import { partnerCoversState } from "@/lib/licence-verification";
 
 export type PartnerRole = "lender" | "realtor";
 

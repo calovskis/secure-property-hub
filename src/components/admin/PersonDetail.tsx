@@ -35,6 +35,7 @@ import { isValidPhone } from "@/lib/phone";
 import { DeleteAccountControls } from "@/components/admin/DeleteAccountControls";
 import { useMyPermissions } from "@/lib/staff";
 import { fullName, useAuth } from "@/lib/auth";
+import { LicenceVerificationPanel } from "@/components/admin/LicenceVerificationPanel";
 
 type Tab =
   | "profile"
