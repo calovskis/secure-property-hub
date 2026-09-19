@@ -350,9 +350,11 @@ export function KybQuestionnaireDialog({
         return "Upload the director's ID document.";
     }
     if (s === 3) {
-      for (const sh of data.shareholders) {
+      for (const sh of allShareholders) {
         if (!sh.fullName.trim() || !sh.sharePct || sh.sharePct <= 0)
           return "Every declared shareholder needs a name and an ownership share.";
+        if (!sh.address.trim() || !sh.citizenship || !sh.countryOfResidence)
+          return `Complete the address, citizenship and residence for ${sh.fullName || "the shareholder"}.`;
         if (!sh.idDoc)
           return `Upload the ID document for ${sh.fullName || "the shareholder"}.`;
       }
