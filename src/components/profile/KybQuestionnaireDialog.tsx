@@ -211,14 +211,13 @@ function PersonFields({
           />
         </label>
       ) : null}
-      <label className="block sm:col-span-2">
-        <span className={labelClass}>Home address</span>
-        <input
+      <div className="sm:col-span-2">
+        <HomeAddressField
           value={person.address}
-          onChange={(e) => onChange({ ...person, address: e.target.value })}
-          className={inputClass}
+          country={person.countryOfResidence}
+          onChange={(address) => onChange({ ...person, address })}
         />
-      </label>
+      </div>
       <div>
         <span className={labelClass}>Citizenship</span>
         <CountryCombobox
