@@ -743,8 +743,12 @@ export const TABS = [
   { id: "employees", label: "Employees", icon: "👥" },
   { id: "analytics", label: "Analytics", icon: "📈" },
   { id: "accounting", label: "Accounting", icon: "💵" },
-  { id: "other", label: "Other", icon: "⚙️" },
+  { id: "licences", label: "Licences", icon: "🪪" },
+  { id: "team", label: "Team & Access", icon: "🔑" },
 ] as const;
+
+/** Tab ids grouped under the "Other" dropdown in the lender navigation. */
+export const OTHER_TABS: LenderTabId[] = ["licences", "team"];
 
 export type LenderTabId = (typeof TABS)[number]["id"];
 type TabId = LenderTabId;
