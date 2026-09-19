@@ -182,6 +182,7 @@ export function PersonDetailContent({
       <div className="flex-1 overflow-y-auto px-6 py-5">
         {tab === "profile" ? (
           <>
+            <ProfileTab person={person} />
             <DeleteAccountControls
               email={person.email}
               name={person.name}
@@ -189,7 +190,6 @@ export function PersonDetailContent({
               actor={(user ? fullName(user) : "") || user?.email || "Loqal admin"}
               can={can}
             />
-            <ProfileTab person={person} />
           </>
         ) : null}
         {tab === "documents" ? <DocumentsTab person={person} /> : null}
