@@ -117,6 +117,10 @@ function FileDetail({ lead }: { lead: MortgageLead }) {
             }
           />
           <Row
+            label="Purchase status"
+            value={`${PURCHASE_STAGE_LABEL[progress.stage]} — ${PURCHASE_STAGE_NOTE[progress.stage]}`}
+          />
+          <Row
             label="Hard check"
             value={
               lead.clientDecision === "accepted"
@@ -129,6 +133,83 @@ function FileDetail({ lead }: { lead: MortgageLead }) {
           ) : null}
         </div>
       </section>
+
+      <HardCheckSection lead={lead} progress={progress} />
+    </div>
+  );
+}
+
+/**
+ * Once the purchase agreement is signed, the mortgage company must reconfirm
+ * its terms and give the mortgage approval before the agreement's deadline.
+ * Both dates are underlined so nothing is missed.
+ */
+function HardCheckSection({ lead, progress }: { lead: MortgageLead; progress: PurchaseProgress }) {
+  const [note, setNote] = useState("");
+  if (progress.stage !== "agreement_signed") return null;
+  const late = (iso?: string) => Boolean(iso && new Date(iso) < new Date());
+
+  function confirm() {
+    updateEntityPlan(lead.id, {
+      hardCheckConfirmedAt: new Date().toISOString(),
+      hardCheckConfirmedBy: "Mortgage company",
+      ...(note.trim() ? { hardCheckNote: note.trim() } : {}),
+    });
+    setNote("");
+  }
+
+  return (
+    <section className="rounded-lg border border-gold/50 bg-gold-tint/40 p-4">
+      <h3 className="text-sm font-semibold text-foreground">
+        Hard check — reconfirm the mortgage terms
+      </h3>
+      <p className="mt-1 text-xs text-muted-foreground">
+        The purchase agreement was signed
+        {progress.signedAt ? ` ${formatDateTime(progress.signedAt)}` : ""}
+        {progress.agreementDoc ? ` · ${progress.agreementDoc}` : ""}. Reconfirm the issued terms and
+        give your mortgage approval for the agreement.
+      </p>
+      <div className="mt-2 divide-y divide-border">
+        <Row label="Client" value={lead.clientName} />
+        <Row label="Client ID" value={loqalNumber(lead.clientEmail)} />
+        <Row
+          label="Closing date"
+          value={
+            <span className={`underline decoration-2 ${late(progress.closingDate) ? "text-destructive" : "text-foreground"} font-semibold`}>
+              {progress.closingDate ? formatDate(progress.closingDate) : "—"}
+            </span>
+          }
+        />
+        <Row
+          label="Mortgage approval due"
+          value={
+            <span className={`underline decoration-2 ${late(progress.approvalDueDate) ? "text-destructive" : "text-foreground"} font-semibold`}>
+              {progress.approvalDueDate ? formatDate(progress.approvalDueDate) : "—"}
+            </span>
+          }
+        />
+      </div>
+      {progress.hardCheckConfirmedAt ? (
+        <p className="mt-3 text-xs font-semibold text-success">
+          Terms reconfirmed {formatDateTime(progress.hardCheckConfirmedAt)}.
+        </p>
+      ) : (
+        <div className="mt-3 flex flex-wrap gap-2">
+          <input
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="Note for the file (optional)"
+            className="min-w-[220px] flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
+          />
+          <button
+            type="button"
+            onClick={confirm}
+            className="rounded-md bg-brand px-4 py-2 text-xs font-semibold text-background hover:bg-brand-soft"
+          >
+            Reconfirm the terms
+          </button>
+        </div>
+      )}
 
       <section className="rounded-lg border border-border bg-card p-4">
         <h3 className="text-sm font-semibold text-foreground">Pre-approval information</h3>
