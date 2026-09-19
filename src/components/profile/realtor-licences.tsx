@@ -145,8 +145,17 @@ type EditForm = { state: string; number: string; validUntil: string };
  * Coverage & licences table — one row per state with the licence number, the
  * validity date and whether Loqal verified the copy on file.
  */
-export function LicenceCoverageTable({ user }: { user: LoqalUser }) {
-  const { request, licenses, persist } = useRealtorLicences(user);
+export function LicenceCoverageTable({
+  user,
+  seed = [],
+  hint = "Licence copies are uploaded from the identity & licence verification card.",
+}: {
+  user: LoqalUser;
+  seed?: LicenceSeed[];
+  hint?: string;
+}) {
+  const { request, licenses, persist } = useRealtorLicences(user, seed);
+
   const [edit, setEdit] = useState<EditForm | null>(null);
   const [editState, setEditState] = useState<string | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
