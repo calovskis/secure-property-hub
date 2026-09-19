@@ -32,7 +32,7 @@ const money = (n: number) => `$${Math.round(n).toLocaleString()}`;
 const yesNo = (v?: boolean) => (v ? "Yes" : "No");
 
 type Row = [string, string];
-type Section = { title: string; rows: Row[]; note?: string };
+type Section = { title: string; rows: Row[]; note?: string | undefined };
 
 function sections(lead: MortgageLead, progress?: PurchaseProgress): Section[] {
   const p = lead.profile;
