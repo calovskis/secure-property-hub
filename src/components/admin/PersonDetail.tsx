@@ -261,9 +261,30 @@ function ProfileTab({ person }: { person: AdminPerson }) {
     toast("Profile saved", { description: person.email });
   }
 
+  const licencesToVerify = pendingVerifications(req);
+
   return (
     <div className="space-y-6">
+      {licencesToVerify.length ? (
+        <div className="rounded-lg border border-gold/50 bg-gold-tint/50 p-4">
+          <p className="text-sm font-semibold text-gold">
+            Action needed — {licencesToVerify.length} state licence
+            {licencesToVerify.length === 1 ? "" : "s"} awaiting your verification
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {licencesToVerify.map((l) => l.state).join(", ")} — the partner submitted licence
+            details or copies. Until you verify them, no cases are assigned in those states.
+          </p>
+          <a
+            href="#licence-verification"
+            className="mt-2 inline-flex rounded-md bg-brand px-3 py-1.5 text-xs font-semibold text-background hover:bg-brand-soft"
+          >
+            Review the licences
+          </a>
+        </div>
+      ) : null}
       <Card title="Contact & display data">
+
         <div className="grid gap-3 sm:grid-cols-2">
           <Text label="Full name" value={name} onChange={setName} />
           <label className="block">
