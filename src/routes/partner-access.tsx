@@ -121,6 +121,18 @@ function PartnerAccessPage() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    // A second click (or a slow first one) must never create a second
+    // registration — admins would then see the same request twice.
+    if (sending) return;
+    setSending(true);
+    try {
+      await runSubmit();
+    } finally {
+      setSending(false);
+    }
+  }
+
+  async function runSubmit() {
     if (!companyName.trim()) return setError("Company name is required.");
     if (!companyType.trim()) return setError("Company type is required.");
     if (!registrationNumber.trim()) return setError("Registration number is required.");
