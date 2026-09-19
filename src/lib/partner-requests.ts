@@ -462,7 +462,7 @@ export function usePartnerRequests() {
         const { data: updated, error: updateError } = await supabase
           .from("partner_requests")
           .update(toRow(input) as never)
-          .eq("id", existing.id)
+          .eq("id", String((existing as Record<string, unknown>)["id"]))
           .select("*")
           .single();
         if (updateError) throw new Error(updateError.message);
