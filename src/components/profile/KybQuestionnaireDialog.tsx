@@ -8,12 +8,15 @@
  * Step 3: shareholders owning 25% or more, each with an ID document
  * Step 4: review and submit
  */
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { fullName, type LoqalUser } from "@/lib/auth";
 import type { KycPerson, PartnerRequest } from "@/lib/partner-requests";
 import { CountryCombobox } from "@/components/form/CountryCombobox";
 import { countryLabel } from "@/data/countries";
+import { searchAddress, type AddressSuggestion } from "@/lib/geo";
+
+const ADDRESS_DEBOUNCE_MS = 350;
 
 const inputClass =
   "w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-brand";
