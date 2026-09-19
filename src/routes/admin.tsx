@@ -62,14 +62,6 @@ const METRICS: [string, string, string][] = [
   ["Mortgage requests", "31", "6 need a lender assigned"],
 ];
 
-
-const QUEUES: [string, string, string][] = [
-  ["Mortgage profiles to review", "6", "SSN provided on 4 of 6"],
-  ["Partner applications", "12", "Documents pending on 5"],
-  ["Corporate KYB", "3", "Beneficial owner checks"],
-  ["Support escalations", "8", "2 breaching SLA"],
-];
-
 function AdminPage() {
   const { user, ready } = useAuth();
   const greeting = useGreeting(user?.firstName ?? "", user?.email);
