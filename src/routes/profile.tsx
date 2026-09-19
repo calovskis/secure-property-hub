@@ -59,6 +59,8 @@ import {
 } from "@/lib/document-requests";
 import { usePartnerRequests } from "@/lib/partner-requests";
 import { useRealtorLicences } from "@/components/profile/realtor-licences";
+import { isLicenceVerified } from "@/lib/licence-verification";
+
 import { UploadRequestDialog } from "@/components/profile/UploadRequestDialog";
 import { LicenceUploadDialog } from "@/components/profile/LicenceUploadDialog";
 import { LicenceRenewalDialog } from "@/components/profile/LicenceRenewalDialog";
