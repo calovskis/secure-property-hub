@@ -278,6 +278,8 @@ export function LenderMortgages({ canManage }: { canManage: boolean }) {
     awaiting_client: files.filter((l) => mortgageStage(l) === "awaiting_client").length,
     client_on_hold: files.filter((l) => mortgageStage(l) === "client_on_hold").length,
     client_declined: files.filter((l) => mortgageStage(l) === "client_declined").length,
+    signed: files.filter((l) => progressOf(l.id).stage === "agreement_signed").length,
+    hardCheckOpen: files.filter((l) => progressOf(l.id).hardCheckOpen).length,
   };
 
   return (
