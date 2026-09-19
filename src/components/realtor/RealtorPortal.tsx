@@ -794,7 +794,7 @@ export type RealtorTabId =
   | "financial"
   | "accounting";
 
-const REALTOR_TABS: { id: RealtorTabId; label: string; icon: string }[] = [
+export const REALTOR_TABS: { id: RealtorTabId; label: string; icon: string }[] = [
   { id: "home", label: "Home", icon: "🏠" },
   { id: "buyers", label: "Buyer files", icon: "🗂" },
   { id: "calendar", label: "My calendar", icon: "🗓" },

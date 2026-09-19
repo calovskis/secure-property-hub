@@ -3,6 +3,7 @@ import { AppHeader } from "@/components/layout/AppHeader";
 import { PartnerAccountCard } from "@/components/profile/PartnerAccountCard";
 import { PARTNER_LABEL, ROLE_LABEL, fullName, useAuth } from "@/lib/auth";
 import { AdminNav } from "@/components/admin/AdminNav";
+import { PartnerWorkspaceNav } from "@/components/partner/PartnerWorkspaceNav";
 import { DeleteMyAccountCard } from "@/components/profile/DeleteMyAccountCard";
 
 
@@ -40,14 +41,22 @@ function Row({ label, value }: { label: string; value?: string | null }) {
 
 function SettingsPage() {
   const { user, ready } = useAuth();
-  // Admins keep the admin console headings on the settings page too.
+  // Admins keep the admin console headings, partners keep their own workspace
+  // headings — nobody on the settings page should fall back to the client nav.
   const isAdmin = ready && user?.role === "admin";
+  const isPartner = ready && user?.role === "partner";
 
   return (
     <div className="min-h-screen bg-background">
       <AppHeader
         active="Settings"
-        navSlot={isAdmin ? <AdminNav tab="settings" /> : undefined}
+        navSlot={
+          isAdmin ? (
+            <AdminNav tab="settings" />
+          ) : isPartner ? (
+            <PartnerWorkspaceNav partnerType={user?.partnerType} />
+          ) : undefined
+        }
       />
 
       <main className="mx-auto max-w-[900px] px-4 py-8 md:px-7">

@@ -18,6 +18,7 @@ import {
 } from "@/components/profile/ProfileTopicsContent";
 import { EntityProfileTopic } from "@/components/profile/EntityProfileTopic";
 import { PartnerProfile } from "@/components/profile/PartnerProfile";
+import { PartnerWorkspaceNav } from "@/components/partner/PartnerWorkspaceNav";
 import { AgreementCard } from "@/components/profile/AgreementCard";
 import { KybCard } from "@/components/profile/KybCard";
 import { CorrespondenceCard } from "@/components/profile/CorrespondenceCard";
@@ -415,7 +416,11 @@ function ProfilePage() {
     <div className="min-h-screen bg-background">
       <AppHeader
         active={isRealtor ? "My Profile" : "My profile"}
-        {...(isRealtor ? { navItems: realtorNav } : {})}
+        {...(isRealtor
+          ? { navItems: realtorNav }
+          : user.role === "partner"
+            ? { navSlot: <PartnerWorkspaceNav partnerType={user.partnerType} /> }
+            : {})}
       />
 
       <main className="mx-auto max-w-[1100px] px-4 py-8 md:px-7">
