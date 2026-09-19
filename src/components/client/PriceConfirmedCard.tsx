@@ -35,7 +35,7 @@ export function PriceConfirmedCard({ compact = false }: { compact?: boolean }) {
     const byId = new Map(mine.map((l) => [l.id, l]));
     return purchases
       .filter((p) => byId.has(p.leadId) && p.status === "price_supported")
-      .filter((p) => !plans.find((pl) => pl.leadId === p.leadId)?.agreementSignedAt)
+      .filter((p) => !plans.find((pl) => pl.leadId === p.leadId)?.termsConfirmedAt)
       .sort((a, b) => (b.respondedAt ?? b.createdAt).localeCompare(a.respondedAt ?? a.createdAt))
       .map((p) => {
         const lead = byId.get(p.leadId)!;
@@ -87,7 +87,8 @@ export function PriceConfirmedCard({ compact = false }: { compact?: boolean }) {
               </p>
             ) : null}
             <p className="mt-2 text-xs text-foreground">
-              Next step: sign the purchase agreement and tell us how the property will be held.
+              Next step: tell us how the property will be held and confirm the purchase terms your
+              agent proposes for the seller.
             </p>
             <Link
               to="/property/$propertyId"
@@ -95,7 +96,7 @@ export function PriceConfirmedCard({ compact = false }: { compact?: boolean }) {
               search={{ open: "agreement" } as never}
               className="mt-2 inline-flex items-center gap-1.5 rounded-md bg-brand px-3 py-2 text-xs font-semibold text-background hover:bg-brand-soft"
             >
-              Continue to the purchase agreement
+              Continue to the purchase terms
               <ArrowRight className="h-3.5 w-3.5" aria-hidden />
             </Link>
           </li>
