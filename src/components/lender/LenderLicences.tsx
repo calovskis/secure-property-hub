@@ -36,12 +36,19 @@ function LenderLicencesInner({ user }: { user: LoqalUser }) {
     (r) => r.email.toLowerCase() === user.email.toLowerCase(),
   );
 
-  /** States declared at registration, pre-filled with the licence number given there. */
-  const seed: LicenceSeed[] = (registration?.states ?? []).map((state) => ({
-    state,
-    number: registration?.lenderLicence ?? "",
-    validUntil: "",
-  }));
+  /**
+   * States declared at registration, pre-filled with the state-specific NMLS
+   * number and validity given there (falling back to the general NMLS number
+   * for older registrations that only had one).
+   */
+  const seed: LicenceSeed[] = (registration?.states ?? []).map((state) => {
+    const declared = (registration?.lenderLicenses ?? []).find((l) => l.state === state);
+    return {
+      state,
+      number: declared?.number ?? registration?.lenderLicence ?? "",
+      validUntil: declared?.validUntil ?? "",
+    };
+  });
 
   const { licenses, persist } = useRealtorLicences(user, seed);
 
