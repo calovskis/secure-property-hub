@@ -899,6 +899,8 @@ function useDerivedNotifications() {
       /* Deleted client — the inquiry is no longer an open lender task. */
       if (isProfileDeleted(lead.clientEmail)) continue;
       if (scopedStates && !scopedStates.includes(leadState(lead))) continue;
+      /* Licence not verified by Loqal for that state — no cases are assigned. */
+      if (myPartnerRequest && !partnerCoversState(myPartnerRequest, leadState(lead))) continue;
       const assigned = Boolean(lead.assignedToId);
       list.push({
         id: `lenderinq-${lead.id}`,
