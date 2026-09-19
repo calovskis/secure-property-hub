@@ -303,6 +303,8 @@ function fromRow(r: Row): PartnerRequest {
     agreementSignedAt: s(r["agreement_signed_at"]),
     agreementSignedBy: s(r["agreement_signed_by"]),
     agreementCountersignedAt: s(r["agreement_countersigned_at"]),
+    agreementCountersignedBy: s(r["agreement_countersigned_by"]),
+    agreementCountersignedTitle: s(r["agreement_countersigned_title"]),
     reviewerId: s(r["reviewer_id"]),
     reviewerName: s(r["reviewer_name"]),
     reviewStage: (s(r["review_stage"]) as ReviewStage) ?? "unassigned",
