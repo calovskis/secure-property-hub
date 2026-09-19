@@ -160,13 +160,23 @@ export function LicenceCoverageTable({
   const [editState, setEditState] = useState<string | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** Save is two-step: Save shows a summary, Confirm persists it. */
+  const [confirming, setConfirming] = useState(false);
   const history = request?.realtorVerification?.licenseHistory ?? [];
+
+  function closeEdit() {
+    setEdit(null);
+    setEditState(null);
+    setError(null);
+    setConfirming(false);
+  }
 
   function save() {
     if (!edit) return;
     if (!edit.state || !edit.number.trim() || !edit.validUntil)
       return setError("State, licence number and validity date are all required.");
     setError(null);
+    if (!confirming) return setConfirming(true);
     const number = edit.number.trim();
     const previous = licenses.find((l) => l.state === editState);
     const changed =
@@ -200,8 +210,7 @@ export function LicenceCoverageTable({
           : { state: entry.state, action: "added", after: describeLicence(entry) },
       ],
     );
-    setEdit(null);
-    setEditState(null);
+    closeEdit();
     toast(changed ? "New licence copy required" : "Licence saved", {
       description: changed
         ? "The details changed, so please upload a fresh copy of the licence."
@@ -238,6 +247,8 @@ export function LicenceCoverageTable({
               onClick={() => {
                 setEdit({ state: "", number: "", validUntil: "" });
                 setEditState(null);
+                setError(null);
+                setConfirming(false);
               }}
               className="rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-brand-tint"
             >
@@ -281,104 +292,203 @@ export function LicenceCoverageTable({
               </tr>
             </thead>
             <tbody>
-              {licenses.map((l) => (
-                <tr key={l.state} className="border-b border-border/60 last:border-b-0">
-                  <td className="py-2 pr-3 font-semibold text-foreground">{l.state}</td>
-                  <td className="py-2 pr-3 text-foreground">{l.number}</td>
-                  <td className="py-2 pr-3 text-muted-foreground">{formatDate(l.validUntil)}</td>
-                  <td className="py-2 pr-3">
-                    <VerificationBadge license={l} />
-                  </td>
-                  <td className="py-2 text-right">
-                    <div className="inline-flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEdit({
-                            state: l.state,
-                            number: l.number,
-                            validUntil: l.validUntil,
-                          });
-                          setEditState(l.state);
-                        }}
-                        className="rounded-md border border-border px-2.5 py-1 text-xs font-semibold text-brand hover:bg-brand-tint"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => remove(l)}
-                        className="rounded-md border border-border px-2.5 py-1 text-xs font-semibold text-muted-foreground hover:text-destructive"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              {licenses.map((l) =>
+                edit !== null && editState === l.state ? (
+                  <tr key={l.state} className="border-b border-border/60 last:border-b-0">
+                    <td colSpan={5} className="py-3">
+                      <LicenceEditPanel
+                        edit={edit}
+                        setEdit={setEdit}
+                        editingState={editState}
+                        previous={l}
+                        error={error}
+                        confirming={confirming}
+                        onCancel={closeEdit}
+                        onBack={() => setConfirming(false)}
+                        onSave={save}
+                      />
+                    </td>
+                  </tr>
+                ) : (
+                  <tr key={l.state} className="border-b border-border/60 last:border-b-0">
+                    <td className="py-2 pr-3 font-semibold text-foreground">{l.state}</td>
+                    <td className="py-2 pr-3 text-foreground">{l.number}</td>
+                    <td className="py-2 pr-3 text-muted-foreground">{formatDate(l.validUntil)}</td>
+                    <td className="py-2 pr-3">
+                      <VerificationBadge license={l} />
+                    </td>
+                    <td className="py-2 text-right">
+                      <div className="inline-flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEdit({
+                              state: l.state,
+                              number: l.number,
+                              validUntil: l.validUntil,
+                            });
+                            setEditState(l.state);
+                            setError(null);
+                            setConfirming(false);
+                          }}
+                          className="rounded-md border border-border px-2.5 py-1 text-xs font-semibold text-brand hover:bg-brand-tint"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => remove(l)}
+                          className="rounded-md border border-border px-2.5 py-1 text-xs font-semibold text-muted-foreground hover:text-destructive"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ),
+              )}
             </tbody>
           </table>
         </div>
       )}
 
-      {edit !== null ? (
-        <div className="mt-4 space-y-4 rounded-md border border-brand/40 bg-brand-tint/30 p-4">
-          <h4 className="text-sm font-semibold text-foreground">
-            {editState ? `Adjust the ${editState} licence` : "New licence"}
-          </h4>
-          <div className="grid gap-3 sm:grid-cols-3">
-            <div>
-              <span className={labelClass}>State</span>
-              <StateCombobox
-                value={edit.state}
-                onChange={(code) => setEdit({ ...edit, state: code })}
-              />
-            </div>
-            <label className="block">
-              <span className={labelClass}>Licence number</span>
-              <input
-                value={edit.number}
-                onChange={(e) => setEdit({ ...edit, number: e.target.value })}
-                placeholder="e.g. FL-SL-3488210"
-                className={inputClass}
-              />
-            </label>
-            <label className="block">
-              <span className={labelClass}>Valid until</span>
-              <DateInput
-                value={edit.validUntil}
-                onChange={(v) => setEdit({ ...edit, validUntil: v })}
-                className={inputClass}
-              />
-            </label>
-          </div>
-          <p className="text-[11px] text-muted-foreground">
-            Changing the number or the validity date requires a new copy of the licence so Loqal
-            can verify the update.
-          </p>
-          {error ? <p className="text-xs font-semibold text-destructive">{error}</p> : null}
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                setEdit(null);
-                setEditState(null);
-                setError(null);
-              }}
-              className="rounded-md border border-border px-4 py-2 text-sm font-semibold text-muted-foreground hover:bg-brand-tint"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={save}
-              className="rounded-md bg-brand px-4 py-2 text-sm font-semibold text-background hover:bg-brand-soft"
-            >
-              Save licence
-            </button>
-          </div>
+      {edit !== null && editState === null ? (
+        <div className="mt-4 rounded-md border border-brand/40 bg-brand-tint/30 p-4">
+          <LicenceEditPanel
+            edit={edit}
+            setEdit={setEdit}
+            editingState={null}
+            previous={undefined}
+            error={error}
+            confirming={confirming}
+            onCancel={closeEdit}
+            onBack={() => setConfirming(false)}
+            onSave={save}
+          />
         </div>
       ) : null}
+    </div>
+  );
+}
+
+/**
+ * Inline licence editor — shown inside the row being edited (or under the
+ * table for a new licence). Saving first shows a short confirmation of what
+ * will change; Confirm persists it.
+ */
+function LicenceEditPanel({
+  edit,
+  setEdit,
+  editingState,
+  previous,
+  error,
+  confirming,
+  onCancel,
+  onBack,
+  onSave,
+}: {
+  edit: EditForm;
+  setEdit: (v: EditForm) => void;
+  editingState: string | null;
+  previous: RealtorLicenseDoc | undefined;
+  error: string | null;
+  confirming: boolean;
+  onCancel: () => void;
+  onBack: () => void;
+  onSave: () => void;
+}) {
+  if (confirming) {
+    return (
+      <div className="space-y-3">
+        <h4 className="text-sm font-semibold text-foreground">
+          Confirm {editingState ? `the ${editingState}` : "the new"} licence details
+        </h4>
+        {previous ? (
+          <p className="text-xs text-muted-foreground">
+            Before: <span className="line-through">{describeLicence(previous)}</span>
+          </p>
+        ) : null}
+        <p className="text-xs text-foreground">
+          After: <span className="font-semibold">{describeLicence(edit)}</span>
+        </p>
+        <p className="text-[11px] text-muted-foreground">
+          {previous &&
+          (previous.number !== edit.number.trim() || previous.validUntil !== edit.validUntil)
+            ? "The details changed, so a fresh copy of the licence will be required for verification."
+            : "No change to the number or validity — the copy on file stays valid."}
+        </p>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={onBack}
+            className="rounded-md border border-border px-4 py-2 text-sm font-semibold text-muted-foreground hover:bg-brand-tint"
+          >
+            Back
+          </button>
+          <button
+            type="button"
+            onClick={onSave}
+            className="rounded-md bg-brand px-4 py-2 text-sm font-semibold text-background hover:bg-brand-soft"
+          >
+            Confirm changes
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <h4 className="text-sm font-semibold text-foreground">
+        {editingState ? `Adjust the ${editingState} licence` : "New licence"}
+      </h4>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <div>
+          <span className={labelClass}>State</span>
+          <StateCombobox
+            value={edit.state}
+            onChange={(code) => setEdit({ ...edit, state: code })}
+          />
+        </div>
+        <label className="block">
+          <span className={labelClass}>Licence number</span>
+          <input
+            value={edit.number}
+            onChange={(e) => setEdit({ ...edit, number: e.target.value })}
+            placeholder="e.g. FL-SL-3488210"
+            className={inputClass}
+          />
+        </label>
+        <label className="block">
+          <span className={labelClass}>Valid until</span>
+          <DateInput
+            value={edit.validUntil}
+            onChange={(v) => setEdit({ ...edit, validUntil: v })}
+            className={inputClass}
+          />
+        </label>
+      </div>
+      <p className="text-[11px] text-muted-foreground">
+        Changing the number or the validity date requires a new copy of the licence so Loqal can
+        verify the update.
+      </p>
+      {error ? <p className="text-xs font-semibold text-destructive">{error}</p> : null}
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="rounded-md border border-border px-4 py-2 text-sm font-semibold text-muted-foreground hover:bg-brand-tint"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          onClick={onSave}
+          className="rounded-md bg-brand px-4 py-2 text-sm font-semibold text-background hover:bg-brand-soft"
+        >
+          Save licence
+        </button>
+      </div>
     </div>
   );
 }
