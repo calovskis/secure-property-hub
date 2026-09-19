@@ -14,6 +14,7 @@ import { useAuth, PARTNER_LABEL } from "@/lib/auth";
 import { offerReminders, pendingOfferDecision, leadState, useLeads } from "@/lib/leads";
 import { useBuyerProcess } from "@/lib/buyer-process";
 import { usePartnerRequests } from "@/lib/partner-requests";
+import { partnerCoversState } from "@/lib/licence-verification";
 import { useRealtors } from "@/lib/realtors";
 import { useLenderTeam } from "@/lib/lender-team";
 import { useMortgageDrafts } from "@/lib/mortgage-draft";
@@ -893,12 +894,15 @@ function useDerivedNotifications() {
   useEffect(() => {
     if (!user || !leadsReady) return;
     if (user.role !== "partner" || user.partnerType !== "lender") return;
+    const myPartnerRequest = requests.find((r) => r.email.toLowerCase() === email);
     const list: Draft[] = [];
     for (const lead of leads) {
       if (lead.status === "annulled") continue;
       /* Deleted client — the inquiry is no longer an open lender task. */
       if (isProfileDeleted(lead.clientEmail)) continue;
       if (scopedStates && !scopedStates.includes(leadState(lead))) continue;
+      /* Licence not verified by Loqal for that state — no cases are assigned. */
+      if (myPartnerRequest && !partnerCoversState(myPartnerRequest, leadState(lead))) continue;
       const assigned = Boolean(lead.assignedToId);
       list.push({
         id: `lenderinq-${lead.id}`,
@@ -916,7 +920,7 @@ function useDerivedNotifications() {
     if (list.length) syncNotifications(list);
     pruneDerived(email, ["lenderinq-"], list.map((n) => n.id));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.email, user?.role, user?.partnerType, leads, leadsReady, scopedStates, email]);
+  }, [user?.email, user?.role, user?.partnerType, leads, leadsReady, scopedStates, requests, email]);
 }
 
 

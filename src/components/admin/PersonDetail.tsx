@@ -35,6 +35,7 @@ import { isValidPhone } from "@/lib/phone";
 import { DeleteAccountControls } from "@/components/admin/DeleteAccountControls";
 import { useMyPermissions } from "@/lib/staff";
 import { fullName, useAuth } from "@/lib/auth";
+import { LicenceVerificationPanel } from "@/components/admin/LicenceVerificationPanel";
 
 type Tab =
   | "profile"
@@ -374,6 +375,9 @@ function ProfileTab({ person }: { person: AdminPerson }) {
               }
             />
           </dl>
+          {req.partnerType === "lender" || req.partnerType === "realtor" ? (
+            <LicenceVerificationPanel request={req} />
+          ) : null}
           {req.agreementSignedAt && !req.agreementCountersignedAt ? (
             <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-md border border-success/40 bg-success/5 p-3">
               <p className="text-xs text-muted-foreground">

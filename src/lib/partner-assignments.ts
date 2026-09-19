@@ -10,6 +10,7 @@
 import { useCallback, useSyncExternalStore } from "react";
 import type { MortgageLead } from "@/lib/leads";
 import type { PartnerRequest } from "@/lib/partner-requests";
+import { partnerCoversState } from "@/lib/licence-verification";
 
 export type PartnerRole = "lender" | "realtor";
 
@@ -157,7 +158,10 @@ export function currentPartner(
   }
   if (lead.lenderPartnerId) return pool.find((r) => r.id === lead.lenderPartnerId);
   const st = stateOf(lead);
-  return pool.find((r) => r.allStates || r.states.includes(st));
+  /* Only lenders whose licence for that state is verified by Loqal. */
+  return pool.find(
+    (r) => (r.allStates || r.states.includes(st)) && partnerCoversState(r, st),
+  );
 }
 
 /** Everything a receiving partner should know before accepting the client. */

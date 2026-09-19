@@ -16,6 +16,8 @@ import {
   type RealtorLicenseEvent,
 } from "@/lib/partner-requests";
 import { useRealtors } from "@/lib/realtors";
+import { notify } from "@/lib/notifications";
+import { awaitsVerification, isLicenceVerified } from "@/lib/licence-verification";
 import { logActivity } from "@/lib/activity";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import {
@@ -59,23 +61,30 @@ export function describeLicence(l: { number: string; validUntil: string }) {
   return `${l.number} · valid till ${formatDate(l.validUntil)}`;
 }
 
-export type VerificationState = "verified" | "in_progress" | "missing";
+export type VerificationState =
+  | "verified"
+  | "in_progress"
+  | "info_requested"
+  | "missing";
 
 export function verificationState(l: RealtorLicenseDoc): VerificationState {
-  if (l.verifiedAt) return "verified";
-  if (l.doc) return "in_progress";
+  if (isLicenceVerified(l)) return "verified";
+  if (l.infoRequestedAt) return "info_requested";
+  if (awaitsVerification(l) || l.doc) return "in_progress";
   return "missing";
 }
 
 const VERIFICATION_LABEL: Record<VerificationState, string> = {
   verified: "Yes — verified",
-  in_progress: "In progress",
+  in_progress: "Awaiting Loqal verification",
+  info_requested: "Loqal asked for information",
   missing: "No — copy missing",
 };
 
 const VERIFICATION_TONE: Record<VerificationState, string> = {
   verified: "bg-success/10 text-success",
   in_progress: "bg-brand-tint text-brand",
+  info_requested: "bg-destructive/10 text-destructive",
   missing: "bg-gold-tint text-gold",
 };
 
@@ -134,6 +143,27 @@ export function useRealtorLicences(user: LoqalUser, seed: LicenceSeed[] = []) {
         })),
       });
     logActivity(fullName(user), note, request.companyName);
+
+    /* Anything the partner changed or uploaded has to be verified by Loqal —
+       tell the Loqal team so they can check it and confirm. */
+    const submitted = stamped.filter(
+      (e) => e.action === "added" || e.action === "updated" || e.action === "copy_uploaded",
+    );
+    for (const e of submitted) {
+      notify({
+        id: `licverif-${request.id}-${e.state}`,
+        to: "admins",
+        title: `Licence verification needed — ${e.state}`,
+        body: `${request.companyName || fullName(user)} ${
+          e.action === "copy_uploaded"
+            ? `uploaded a new ${e.state} licence copy`
+            : `${e.action === "added" ? "added" : "updated"} the ${e.state} licence details`
+        }. Verify it so the partner can work in ${e.state}.`,
+        href: `/admin-people/${request.kind}-${request.id}`,
+        severity: "warning",
+        createdAt: e.at,
+      });
+    }
   }
 
   return { request, licenses, persist };
@@ -189,11 +219,25 @@ export function LicenceCoverageTable({
       number,
       validUntil: edit.validUntil,
       ...(changed
-        ? { recopyRequestedAt: new Date().toISOString() }
+        ? {
+            recopyRequestedAt: new Date().toISOString(),
+            /* New details need Loqal verification before cases are assigned. */
+            pendingSince: new Date().toISOString(),
+          }
         : {
             ...(previous.doc ? { doc: previous.doc } : {}),
             ...(previous.uploadedAt ? { uploadedAt: previous.uploadedAt } : {}),
             ...(previous.verifiedAt ? { verifiedAt: previous.verifiedAt } : {}),
+            ...(previous.verifiedBy ? { verifiedBy: previous.verifiedBy } : {}),
+            ...(previous.pendingSince ? { pendingSince: previous.pendingSince } : {}),
+            ...(previous.infoRequestedAt
+              ? {
+                  infoRequestedAt: previous.infoRequestedAt,
+                  ...(previous.infoRequestNote
+                    ? { infoRequestNote: previous.infoRequestNote }
+                    : {}),
+                }
+              : {}),
           }),
     };
     const next = editState
@@ -541,6 +585,8 @@ const HISTORY_LABEL: Record<RealtorLicenseEvent["action"], string> = {
   updated: "Details updated",
   removed: "Licence removed",
   copy_uploaded: "Copy uploaded",
+  verified: "Verified by Loqal",
+  info_requested: "Loqal asked for information",
 };
 
 const HISTORY_TONE: Record<RealtorLicenseEvent["action"], string> = {
@@ -548,6 +594,8 @@ const HISTORY_TONE: Record<RealtorLicenseEvent["action"], string> = {
   updated: "bg-brand-tint text-brand",
   removed: "bg-destructive/10 text-destructive",
   copy_uploaded: "bg-gold-tint text-gold",
+  verified: "bg-success/10 text-success",
+  info_requested: "bg-destructive/10 text-destructive",
 };
 
 /**

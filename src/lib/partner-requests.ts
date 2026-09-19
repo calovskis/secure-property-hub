@@ -87,6 +87,16 @@ export type RealtorLicenseDoc = {
   recopyRequestedAt?: string;
   /** Set once a Loqal admin confirmed the copy matches the declared details. */
   verifiedAt?: string;
+  /** Loqal employee who confirmed it. */
+  verifiedBy?: string;
+  /**
+   * Set when the partner changed the details or uploaded a copy: a Loqal admin
+   * has to verify it. While set, the state is not used for case assignment.
+   */
+  pendingSince?: string;
+  /** Loqal admin asked the partner for more information about this licence. */
+  infoRequestedAt?: string;
+  infoRequestNote?: string;
 };
 
 /** An extra company contact person a partner adds to their profile. */
@@ -103,7 +113,13 @@ export type AdditionalContact = {
 export type RealtorLicenseEvent = {
   id: string;
   state: string;
-  action: "added" | "updated" | "removed" | "copy_uploaded";
+  action:
+    | "added"
+    | "updated"
+    | "removed"
+    | "copy_uploaded"
+    | "verified"
+    | "info_requested";
   /** Human readable before → after, e.g. "FL-1234 · valid till 01/01/2030". */
   before?: string;
   after?: string;
