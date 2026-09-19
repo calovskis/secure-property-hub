@@ -131,6 +131,7 @@ function adminGroupOf(id: string): GroupId {
   if (id.startsWith("preq-")) return "registrations";
   if (id.startsWith("countersign-")) return "agreements";
   if (id.startsWith("kyc-")) return "registrations";
+  if (id.startsWith("licverif-")) return "licences";
   if (id.startsWith("areq-")) return "correspondence";
   if (id.startsWith("entitysetup-")) return "companySetup";
   return "other";

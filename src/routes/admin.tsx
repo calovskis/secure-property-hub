@@ -29,6 +29,8 @@ import { useMyPermissions } from "@/lib/staff";
 import { useGreeting } from "@/lib/greeting";
 import { useAdminPeople } from "@/components/admin/people-model";
 import { useDeletions } from "@/lib/deletions";
+import { pendingVerifications } from "@/lib/licence-verification";
+import { LicenceChecksCard } from "@/components/admin/LicenceChecksCard";
 
 
 export const Route = createFileRoute("/admin")({
@@ -79,6 +81,10 @@ function AdminPage() {
   const openMortgages = leads.filter((l) => l.status === "new" || l.status === "info_required");
   const unassignedMortgages = openMortgages.filter((l) => !l.assignedToId && !l.terms);
   const kybPending = approved.filter((r) => !r.kyc);
+  /* State licences a partner submitted that Loqal still has to verify. */
+  const licenceChecks = requests
+    .filter((r) => r.status !== "declined" && !deletedEmails.has(r.email.trim().toLowerCase()))
+    .flatMap((r) => pendingVerifications(r).map((l) => ({ request: r, licence: l })));
   const oldestPending = pendingRequests
     .map((r) => r.submittedAt)
     .sort()[0];
@@ -117,6 +123,13 @@ function AdminPage() {
       "Partner KYB",
       String(kybPending.length),
       kybPending.length ? "Beneficial-owner checks outstanding" : "All partners verified",
+    ],
+    [
+      "Licences to verify",
+      String(licenceChecks.length),
+      licenceChecks.length
+        ? `${licenceChecks.map((c) => c.licence.state).join(", ")} — partners cannot work there yet`
+        : "All partner licences verified",
     ],
     [
       "Deletion requests",
@@ -195,8 +208,9 @@ function AdminPage() {
         </div>
 
         {tab === "overview" ? (
-          <div className="mb-6">
+          <div className="mb-6 space-y-6">
             <TaskTracker />
+            <LicenceChecksCard />
           </div>
         ) : null}
 
