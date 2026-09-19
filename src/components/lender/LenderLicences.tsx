@@ -115,8 +115,29 @@ function LenderLicencesInner({ user }: { user: LoqalUser }) {
       <p className="mt-1 text-xs text-muted-foreground">
         These are the states and licence details you declared when registering with Loqal. Keep the
         numbers and validity dates up to date and add any new state you become licensed in —
-        changing a number or a validity date asks for a fresh copy so Loqal can verify it.
+        changing a number or a validity date asks for a fresh copy so Loqal can verify it. Every
+        change and every copy is checked by Loqal before the state is cleared — you are notified as
+        soon as it is verified, or if Loqal needs anything else.
       </p>
+      {notCleared.length ? (
+        <p className="mt-3 rounded-md border border-gold/40 bg-gold-tint/50 px-3 py-2 text-[11px] font-semibold text-gold">
+          Not cleared by Loqal yet: {notCleared.map((l) => l.state).join(", ")}. No cases are
+          assigned to you in those states until the licence is verified.
+        </p>
+      ) : null}
+      {asked.length ? (
+        <div className="mt-3 space-y-2">
+          {asked.map((l) => (
+            <p
+              key={`asked-${l.state}`}
+              className="rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-[11px] text-foreground"
+            >
+              <span className="font-semibold">Loqal needs more on {l.state}:</span>{" "}
+              {l.infoRequestNote || "please re-check the details and the copy on file."}
+            </p>
+          ))}
+        </div>
+      ) : null}
       {registration.allStates ? (
         <p className="mt-3 rounded-md bg-brand-tint/40 px-3 py-2 text-[11px] font-semibold text-brand">
           Your registration says you work in all states — add each state licence below so inquiries
