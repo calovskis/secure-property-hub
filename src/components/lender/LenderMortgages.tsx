@@ -131,7 +131,7 @@ function FileDetail({ lead }: { lead: MortgageLead }) {
             value={`${PURCHASE_STAGE_LABEL[progress.stage]} — ${PURCHASE_STAGE_NOTE[progress.stage]}`}
           />
           <Row
-            label="Hard check"
+            label="Loan submission"
             value={
               lead.clientDecision === "accepted"
                 ? "Authorised — work the file in Mortgages"
@@ -200,7 +200,7 @@ function HardCheckSection({ lead, progress }: { lead: MortgageLead; progress: Pu
   return (
     <section className="rounded-lg border border-gold/50 bg-gold-tint/40 p-4">
       <h3 className="text-sm font-semibold text-foreground">
-        Hard check — reconfirm the mortgage terms
+        Loan submission — reconfirm the mortgage terms
       </h3>
       <p className="mt-1 text-xs text-muted-foreground">
         The purchase agreement was signed
@@ -399,7 +399,7 @@ export function LenderMortgages({ canManage }: { canManage: boolean }) {
                       </span>
                       {prog.hardCheckOpen ? (
                         <span className="text-[11px] font-semibold text-destructive">
-                          Hard check due{" "}
+                          Loan submission due{" "}
                           {prog.approvalDueDate ? formatDate(prog.approvalDueDate) : "now"}
                         </span>
                       ) : null}
