@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { ClientHandoverCard } from "@/components/partner/ClientHandoverCard";
-import { LenderPortal, useLenderTabs, type LenderTabId } from "@/components/lender/LenderPortal";
+import { LenderPortal, OTHER_TABS, useLenderTabs, type LenderTabId } from "@/components/lender/LenderPortal";
 import { RealtorPortal, type RealtorTabId } from "@/components/realtor/RealtorPortal";
 import { PointOfContactCard } from "@/components/partner/PointOfContactCard";
 import { TaskTracker } from "@/components/tasks/TaskTracker";
