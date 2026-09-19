@@ -132,10 +132,46 @@ export function AgreementTermsPanel({
       ) : null}
 
       {confirmed ? (
-        <p className="mt-2 text-success">
-          Confirmed {formatDateTime(plan!.termsConfirmedAt!)} — these terms can now be presented to
-          the seller.
-        </p>
+        <>
+          <p className="mt-2 text-success">
+            Confirmed {formatDateTime(plan!.termsConfirmedAt!)} — these terms can now be presented to
+            the seller.
+          </p>
+          <div className="mt-3 rounded-md border border-border bg-background p-3">
+            <p className="font-semibold text-foreground">Purchase agreement</p>
+            {plan?.agreementSignedAt ? (
+              <p className="mt-1 text-success">
+                Signed by {plan.agreementSignedBy} on {formatDateTime(plan.agreementSignedAt)}
+                {plan.agreementDoc ? ` · ${plan.agreementDoc}` : ""}. The mortgage company received
+                the signed copy and the buyer's Loqal number.
+              </p>
+            ) : (
+              <>
+                <p className="mt-1 text-muted-foreground">
+                  {plan?.agreementDoc
+                    ? `${plan.agreementDoc} uploaded ${
+                        plan.agreementUploadedAt ? formatDateTime(plan.agreementUploadedAt) : ""
+                      } — waiting for ${buyerName} to sign.`
+                    : `Once the seller agrees the terms, upload the agreement here for ${buyerName} to review and sign.`}
+                </p>
+                <label className={`${btnGhost} mt-2 inline-flex cursor-pointer items-center gap-1.5`}>
+                  <Upload className="h-3.5 w-3.5" aria-hidden />
+                  {plan?.agreementDoc ? "Replace the agreement" : "Upload the purchase agreement"}
+                  <input
+                    type="file"
+                    accept=".pdf,.doc,.docx"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) uploadAgreement(file.name);
+                      e.target.value = "";
+                    }}
+                  />
+                </label>
+              </>
+            )}
+          </div>
+        </>
       ) : null}
 
       {!showForm ? (
