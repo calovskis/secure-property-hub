@@ -34,8 +34,15 @@ const inputClass =
 const labelClass =
   "mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground";
 
-/** The licences on file, seeded from what was declared at registration. */
-export function licenseDocsOf(request: PartnerRequest): RealtorLicenseDoc[] {
+/**
+ * The licences on file, seeded from what was declared at registration.
+ * `seed` lets other partner types (mortgage lenders) pass the states they
+ * declared at registration so those rows show up before anything was edited.
+ */
+export function licenseDocsOf(
+  request: PartnerRequest,
+  seed: { state: string; number: string; validUntil: string }[] = [],
+): RealtorLicenseDoc[] {
   const stored = request.realtorVerification?.licenseDocs ?? [];
   const declared = request.realtorLicenses ?? [];
   const merged = declared.map((l) => {
@@ -43,8 +50,10 @@ export function licenseDocsOf(request: PartnerRequest): RealtorLicenseDoc[] {
     return hit ?? { state: l.state, number: l.number, validUntil: l.validUntil };
   });
   for (const s of stored) if (!merged.some((m) => m.state === s.state)) merged.push(s);
+  for (const s of seed) if (!merged.some((m) => m.state === s.state)) merged.push({ ...s });
   return merged;
 }
+
 
 export function describeLicence(l: { number: string; validUntil: string }) {
   return `${l.number} · valid till ${formatDate(l.validUntil)}`;
