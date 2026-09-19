@@ -842,6 +842,7 @@ export function LenderPortal({
             setFocusLeadId(leadId ?? null);
             setTab("requests");
           }}
+          onOpenMortgages={() => setTab("mortgages")}
         />
       ) : null}
       {current === "home" ? (
