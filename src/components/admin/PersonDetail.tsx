@@ -37,6 +37,8 @@ import { useMyPermissions } from "@/lib/staff";
 import { fullName, useAuth } from "@/lib/auth";
 import { LicenceVerificationDialog } from "@/components/admin/LicenceVerificationPanel";
 import { pendingVerifications } from "@/lib/licence-verification";
+import { PartnerCountersignDialog } from "@/components/admin/PartnerCountersignDialog";
+import { notify } from "@/lib/notifications";
 
 type Tab =
   | "profile"
