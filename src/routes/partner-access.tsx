@@ -106,6 +106,7 @@ function PartnerAccessPage() {
 
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
+  const [sending, setSending] = useState(false);
   const { submit } = usePartnerRequests();
 
   const isRealtor = kind === "partner" && partnerType === "realtor";
@@ -121,6 +122,18 @@ function PartnerAccessPage() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    // A second click (or a slow first one) must never create a second
+    // registration — admins would then see the same request twice.
+    if (sending) return;
+    setSending(true);
+    try {
+      await runSubmit();
+    } finally {
+      setSending(false);
+    }
+  }
+
+  async function runSubmit() {
     if (!companyName.trim()) return setError("Company name is required.");
     if (!companyType.trim()) return setError("Company type is required.");
     if (!registrationNumber.trim()) return setError("Registration number is required.");
@@ -676,9 +689,10 @@ function PartnerAccessPage() {
 
               <button
                 type="submit"
-                className="w-full rounded-md bg-brand py-3 text-sm font-semibold text-background transition-colors hover:bg-brand-soft"
+                disabled={sending}
+                className="w-full rounded-md bg-brand py-3 text-sm font-semibold text-background transition-colors hover:bg-brand-soft disabled:opacity-60"
               >
-                Submit request
+                {sending ? "Submitting…" : "Submit request"}
               </button>
               <p className="text-center text-[11px] text-muted-foreground">
                 Your request goes to the Loqal admin team — access opens once it is approved.
