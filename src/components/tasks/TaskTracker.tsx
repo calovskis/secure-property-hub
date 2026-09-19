@@ -15,7 +15,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { useNotifications, type AppNotification } from "@/lib/notifications";
 import { openDeepLink } from "@/lib/deep-link";
-import { useLeads, useActiveLeads } from "@/lib/leads";
+import { useActiveLeads } from "@/lib/leads";
 
 type GroupId =
   | "documents"
