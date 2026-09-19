@@ -252,6 +252,9 @@ export type PartnerRequest = {
   agreementSignedBy?: string;
   /** Countersigned by Loqal — the partnership is fully active. */
   agreementCountersignedAt?: string;
+  /** The Loqal signatory who countersigned, and their title at signing. */
+  agreementCountersignedBy?: string;
+  agreementCountersignedTitle?: string;
   submittedAt: string;
   status: PartnerRequestStatus;
   decidedAt?: string;
