@@ -322,6 +322,19 @@ export function LicenceCoverageTable({
                     </td>
                     <td className="py-2 text-right">
                       <div className="inline-flex gap-2">
+                        {onUploadCopy ? (
+                          <button
+                            type="button"
+                            onClick={() => onUploadCopy(l.state)}
+                            className={`rounded-md border px-2.5 py-1 text-xs font-semibold ${
+                              l.doc && !l.recopyRequestedAt
+                                ? "border-border text-muted-foreground hover:text-foreground"
+                                : "border-brand/40 bg-brand-tint text-brand hover:bg-brand-tint/70"
+                            }`}
+                          >
+                            {l.doc ? (l.recopyRequestedAt ? "Upload new copy" : "Replace copy") : "Upload copy"}
+                          </button>
+                        ) : null}
                         <button
                           type="button"
                           onClick={() => {
