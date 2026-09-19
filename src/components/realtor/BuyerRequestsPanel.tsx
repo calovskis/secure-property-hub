@@ -47,6 +47,7 @@ export function BuyerRequestsPanel({
   propertyLabel,
   buyerName,
   buyerEmail,
+  agentName,
 }: {
   leadId: string;
   propertyId: number;
@@ -54,6 +55,7 @@ export function BuyerRequestsPanel({
   /** First name + internal number — agents never see buyers' family names. */
   buyerName: string;
   buyerEmail?: string | undefined;
+  agentName: string;
 }) {
   const { purchases, changes, supportPrice, suggestHigherPrice, acknowledgeChange } =
     useFileRequests(leadId);

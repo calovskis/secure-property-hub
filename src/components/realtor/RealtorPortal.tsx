@@ -609,6 +609,7 @@ function BuyerFile({ lead, me }: { lead: MortgageLead; me: Realtor }) {
             propertyLabel={lead.propertyLabel}
             buyerName={clientDisplayForPartner(lead.clientName, lead.clientEmail)}
             buyerEmail={lead.clientEmail}
+            agentName={`${me.firstName} ${me.lastName}`.trim()}
           />
 
           <FileChatPanel
