@@ -135,6 +135,35 @@ function FileDetail({ lead }: { lead: MortgageLead }) {
       </section>
 
       <HardCheckSection lead={lead} progress={progress} />
+
+      <section className="rounded-lg border border-border bg-card p-4">
+        <h3 className="text-sm font-semibold text-foreground">Pre-approval information</h3>
+        <div className="mt-2 divide-y divide-border">
+          <Row
+            label="Step 2 affordability"
+            value={
+              lead.debts
+                ? `${money(totalMonthlyObligations(lead.debts))} /mo obligations`
+                : "Not submitted"
+            }
+          />
+          <Row
+            label="Information requests"
+            value={`${answered} answered of ${lead.infoRequests.length}`}
+          />
+          {lead.lenderNote ? <Row label="Lender note" value={lead.lenderNote} /> : null}
+        </div>
+        <details className="mt-4">
+          <summary className="cursor-pointer text-xs font-semibold text-brand">
+            Open the full pre-approval file
+          </summary>
+          <div className="mt-4">
+            <ApplicantFile lead={lead} />
+          </div>
+        </details>
+      </section>
+
+      <ClientQuestions lead={lead} />
     </div>
   );
 }
