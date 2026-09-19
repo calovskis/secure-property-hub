@@ -9,6 +9,7 @@
  */
 import { useState } from "react";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { uid } from "@/lib/mortgage-form";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import { logActivity } from "@/lib/activity";
@@ -25,7 +26,7 @@ import {
   licenceRows,
 } from "@/lib/licence-verification";
 
-export function LicenceVerificationPanel({ request }: { request: PartnerRequest }) {
+function LicenceVerificationBody({ request }: { request: PartnerRequest }) {
   const { updateRequest } = usePartnerRequests();
   const [noteFor, setNoteFor] = useState<string | null>(null);
   const [note, setNote] = useState("");
@@ -231,5 +232,37 @@ export function LicenceVerificationPanel({ request }: { request: PartnerRequest 
         })}
       </ul>
     </div>
+  );
+}
+
+/** Inline panel (kept for compatibility) — renders the same body. */
+export function LicenceVerificationPanel({ request }: { request: PartnerRequest }) {
+  return <LicenceVerificationBody request={request} />;
+}
+
+/**
+ * Pop-up version of the licence verification: opened from the admin
+ * dashboard card and from the partner profile, so the profile page itself
+ * stays compact.
+ */
+export function LicenceVerificationDialog({
+  request,
+  open,
+  onOpenChange,
+}: {
+  request: PartnerRequest;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const name = request.companyName || `${request.firstName} ${request.lastName}`;
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>State licence verification — {name}</DialogTitle>
+        </DialogHeader>
+        <LicenceVerificationBody request={request} />
+      </DialogContent>
+    </Dialog>
   );
 }
