@@ -23,6 +23,9 @@ import { AdminSupport } from "@/components/admin/AdminSupport";
 import { AdminPeople } from "@/components/admin/AdminPeople";
 import { AdminSettings } from "@/components/admin/AdminSettings";
 import { AdminNav, type AdminTab } from "@/components/admin/AdminNav";
+import { EmployeeDirectory } from "@/components/admin/EmployeeDirectory";
+import { DeletionQueue } from "@/components/admin/DeletionQueue";
+import { useMyPermissions } from "@/lib/staff";
 import { useGreeting } from "@/lib/greeting";
 
 export const Route = createFileRoute("/admin")({
@@ -166,7 +169,20 @@ function AdminPage() {
         {tab === "people_partners" ? (
           <AdminPeople scope="partners" onMessage={messagePerson} />
         ) : null}
-        {tab === "employees" ? <EmployeeTracking /> : null}
+        {tab === "employees" ? (
+          <div className="space-y-6">
+            <EmployeeDirectory
+              canManage={can("employees.manage")}
+              actor={fullName(user) || user.email}
+            />
+            <DeletionQueue
+              actor={fullName(user) || user.email}
+              canConfirm={can("users.delete.confirm")}
+              canRestore={can("users.restore")}
+            />
+            <EmployeeTracking />
+          </div>
+        ) : null}
         {tab === "activity" ? <ActivityFeed /> : null}
         {tab === "settings" ? <AdminSettings /> : null}
 
