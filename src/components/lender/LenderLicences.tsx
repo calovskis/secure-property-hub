@@ -18,6 +18,8 @@ import {
 } from "@/components/profile/realtor-licences";
 import { LicenceUploadDialog } from "@/components/profile/LicenceUploadDialog";
 import { useUploadDrafts } from "@/lib/upload-drafts";
+import { unverifiedStates } from "@/lib/licence-verification";
+import { formatDate } from "@/lib/dates";
 
 export function LenderLicences() {
   const { user } = useAuth();
@@ -81,9 +83,12 @@ function LenderLicencesInner({ user }: { user: LoqalUser }) {
       })),
     );
     toast("Licence copies submitted", {
-      description: `${Object.keys(copies).length} state(s) sent to Loqal for verification.`,
+      description: `${Object.keys(copies).length} state(s) sent to Loqal for verification — you will be notified once verified.`,
     });
   }
+
+  const notCleared = unverifiedStates(registration);
+  const asked = licenses.filter((l) => l.infoRequestedAt);
 
   return (
     <section className="mb-6 rounded-lg border border-border bg-card p-6">
