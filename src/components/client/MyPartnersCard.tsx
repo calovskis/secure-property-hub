@@ -17,7 +17,7 @@ import { useLeads, type MortgageLead } from "@/lib/leads";
 import { usePartnerRequests, type PartnerRequest } from "@/lib/partner-requests";
 import {
   PARTNER_ROLE_LABEL,
-  currentPartner,
+  assignedPartner,
   useHandovers,
   type PartnerRole,
 } from "@/lib/partner-assignments";
@@ -63,7 +63,7 @@ export function MyPartnersCard() {
     const out: Seat[] = [];
     for (const lead of mine) {
       for (const role of ["lender", "realtor"] as PartnerRole[]) {
-        const partner = currentPartner(lead, role, requests);
+        const partner = assignedPartner(lead, role, requests);
         if (!partner) continue;
         out.push({ key: `${lead.id}-${role}`, role, lead, partner });
       }

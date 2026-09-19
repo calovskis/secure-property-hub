@@ -164,6 +164,27 @@ export function currentPartner(
   );
 }
 
+/**
+ * The partner shown to the client on their dashboard. Licence verification
+ * gates *new assignments*, never the display of an existing relationship —
+ * a client whose file is already with a partner must always see their
+ * contact, even while that partner's licence copy awaits Loqal review.
+ */
+export function assignedPartner(
+  lead: MortgageLead,
+  role: PartnerRole,
+  requests: PartnerRequest[],
+): PartnerRequest | undefined {
+  const pool = approvedPartners(requests, role);
+  if (role === "realtor") {
+    const id = lead.buyerAgent?.agentId;
+    return id ? pool.find((r) => r.id === id) : undefined;
+  }
+  if (lead.lenderPartnerId) return pool.find((r) => r.id === lead.lenderPartnerId);
+  const st = stateOf(lead);
+  return pool.find((r) => r.allStates || r.states.includes(st));
+}
+
 /** Everything a receiving partner should know before accepting the client. */
 export function buildBriefing(lead: MortgageLead, role: PartnerRole) {
   const lines: string[] = [];
