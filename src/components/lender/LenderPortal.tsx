@@ -28,6 +28,8 @@ import { LenderAnalytics } from "@/components/lender/LenderAnalytics";
 import { LenderAccounting } from "@/components/lender/LenderAccounting";
 import { LenderMortgages } from "@/components/lender/LenderMortgages";
 import { LenderTeam } from "@/components/lender/LenderTeam";
+import { LenderLicences } from "@/components/lender/LenderLicences";
+
 import { LenderEmployees } from "@/components/lender/LenderEmployees";
 import { InfoRequestDialog } from "@/components/lender/InfoRequestDialog";
 import { PaymentScheduleButton } from "@/components/mortgage/PaymentScheduleDialog";
@@ -847,7 +849,13 @@ export function LenderPortal({
       {current === "employees" ? <LenderEmployees /> : null}
       {current === "analytics" ? <LenderAnalytics /> : null}
       {current === "accounting" ? <LenderAccounting lenderName={lenderName} /> : null}
-      {current === "other" ? <LenderTeam /> : null}
+      {current === "other" ? (
+        <>
+          <LenderLicences />
+          <LenderTeam />
+        </>
+      ) : null}
+
     </main>
   );
 }

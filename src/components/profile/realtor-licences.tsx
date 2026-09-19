@@ -34,8 +34,15 @@ const inputClass =
 const labelClass =
   "mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground";
 
-/** The licences on file, seeded from what was declared at registration. */
-export function licenseDocsOf(request: PartnerRequest): RealtorLicenseDoc[] {
+/**
+ * The licences on file, seeded from what was declared at registration.
+ * `seed` lets other partner types (mortgage lenders) pass the states they
+ * declared at registration so those rows show up before anything was edited.
+ */
+export function licenseDocsOf(
+  request: PartnerRequest,
+  seed: { state: string; number: string; validUntil: string }[] = [],
+): RealtorLicenseDoc[] {
   const stored = request.realtorVerification?.licenseDocs ?? [];
   const declared = request.realtorLicenses ?? [];
   const merged = declared.map((l) => {
@@ -43,8 +50,10 @@ export function licenseDocsOf(request: PartnerRequest): RealtorLicenseDoc[] {
     return hit ?? { state: l.state, number: l.number, validUntil: l.validUntil };
   });
   for (const s of stored) if (!merged.some((m) => m.state === s.state)) merged.push(s);
+  for (const s of seed) if (!merged.some((m) => m.state === s.state)) merged.push({ ...s });
   return merged;
 }
+
 
 export function describeLicence(l: { number: string; validUntil: string }) {
   return `${l.number} · valid till ${formatDate(l.validUntil)}`;
@@ -81,12 +90,15 @@ export function VerificationBadge({ license }: { license: RealtorLicenseDoc }) {
   );
 }
 
-/** Read/write access to the realtor's licences, kept in sync with the seat. */
-export function useRealtorLicences(user: LoqalUser) {
+export type LicenceSeed = { state: string; number: string; validUntil: string };
+
+/** Read/write access to the partner's licences, kept in sync with the seat. */
+export function useRealtorLicences(user: LoqalUser, seed: LicenceSeed[] = []) {
   const { requests, updateRequest } = usePartnerRequests();
   const { realtors, updateRealtor } = useRealtors();
   const request = requests.find((r) => r.email.toLowerCase() === user.email.toLowerCase());
-  const licenses = request ? licenseDocsOf(request) : [];
+  const licenses = request ? licenseDocsOf(request, seed) : [];
+
 
   function persist(
     next: RealtorLicenseDoc[],
@@ -133,8 +145,17 @@ type EditForm = { state: string; number: string; validUntil: string };
  * Coverage & licences table — one row per state with the licence number, the
  * validity date and whether Loqal verified the copy on file.
  */
-export function LicenceCoverageTable({ user }: { user: LoqalUser }) {
-  const { request, licenses, persist } = useRealtorLicences(user);
+export function LicenceCoverageTable({
+  user,
+  seed = [],
+  hint = "Licence copies are uploaded from the identity & licence verification card.",
+}: {
+  user: LoqalUser;
+  seed?: LicenceSeed[];
+  hint?: string;
+}) {
+  const { request, licenses, persist } = useRealtorLicences(user, seed);
+
   const [edit, setEdit] = useState<EditForm | null>(null);
   const [editState, setEditState] = useState<string | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -201,9 +222,8 @@ export function LicenceCoverageTable({ user }: { user: LoqalUser }) {
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-xs text-muted-foreground">
-          Licence copies are uploaded from the identity &amp; licence verification card.
-        </p>
+        <p className="text-xs text-muted-foreground">{hint}</p>
+
         <div className="flex items-center gap-2">
           <button
             type="button"
