@@ -615,6 +615,17 @@ function AdminPartnerRequestsPage() {
           }
         />
       ) : null}
+
+      {countersignFor ? (
+        <PartnerCountersignDialog
+          request={countersignFor}
+          open
+          onOpenChange={(next) => {
+            if (!next) setCountersignFor(null);
+          }}
+          onCountersign={(signatory) => countersign(countersignFor, signatory)}
+        />
+      ) : null}
     </div>
   );
 }
