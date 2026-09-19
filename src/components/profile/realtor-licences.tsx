@@ -149,10 +149,13 @@ export function LicenceCoverageTable({
   user,
   seed = [],
   hint = "Licence copies are uploaded from the identity & licence verification card.",
+  onUploadCopy,
 }: {
   user: LoqalUser;
   seed?: LicenceSeed[];
   hint?: string;
+  /** When provided, each row shows an "Upload copy" action that calls this. */
+  onUploadCopy?: (state: string) => void;
 }) {
   const { request, licenses, persist } = useRealtorLicences(user, seed);
 
