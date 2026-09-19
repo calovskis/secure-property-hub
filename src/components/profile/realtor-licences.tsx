@@ -492,6 +492,29 @@ function LicenceEditPanel({
         Changing the number or the validity date requires a new copy of the licence so Loqal can
         verify the update.
       </p>
+      {editingState && onUploadCopy ? (
+        <div className="rounded-md border border-border bg-card px-3 py-2.5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="text-xs">
+              <p className="font-semibold text-foreground">Licence copy</p>
+              <p className="text-muted-foreground">
+                {previous?.doc
+                  ? previous.recopyRequestedAt
+                    ? "A fresh copy is required for the updated details."
+                    : `Copy on file${previous.uploadedAt ? ` since ${formatDate(previous.uploadedAt)}` : ""} — you can replace it here.`
+                  : "No copy on file yet — attach one to verify this licence."}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => onUploadCopy(editingState)}
+              className="rounded-md border border-brand/40 bg-brand-tint px-3 py-1.5 text-xs font-semibold text-brand hover:bg-brand-tint/70"
+            >
+              {previous?.doc ? (previous.recopyRequestedAt ? "Upload new copy" : "Replace copy") : "Upload copy"}
+            </button>
+          </div>
+        </div>
+      ) : null}
       {error ? <p className="text-xs font-semibold text-destructive">{error}</p> : null}
       <div className="flex gap-2">
         <button
