@@ -82,7 +82,7 @@ export function AdminPeople({
     if (scope === "partners" && activeSub !== "all")
       list = list.filter((p) => p.partnerType === (activeSub as PartnerType));
     return list;
-  }, [all, scope, activeSub]);
+  }, [all, scope, activeSub, deletedEmails]);
 
   const states = useMemo(
     () => [...new Set(scoped.flatMap(coverageStates).filter((s) => s && s !== "ALL"))].sort(),
