@@ -651,7 +651,7 @@ function useDerivedNotifications() {
             createdAt: r.submittedAt,
           });
         }
-        if (r.status === "approved" && r.agreementSignedAt && !r.agreementCountersignedAt) {
+        if (!partnerDeleted && r.status === "approved" && r.agreementSignedAt && !r.agreementCountersignedAt) {
           list.push({
             id: `countersign-${r.id}`,
             to: "admins",
@@ -662,7 +662,7 @@ function useDerivedNotifications() {
             createdAt: r.agreementSignedAt,
           });
         }
-        if (r.kyc) {
+        if (!partnerDeleted && r.kyc) {
           list.push({
             id: `kyc-${r.id}`,
             to: "admins",
