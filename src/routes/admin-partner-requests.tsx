@@ -150,6 +150,7 @@ function AdminPartnerRequestsPage() {
   const { user, ready } = useAuth();
   const { requests, setStatus, updateRequest } = usePartnerRequests();
   const [ask, setAsk] = useState<{ request: PartnerRequest; kind: "info" | "call" } | null>(null);
+  const [countersignFor, setCountersignFor] = useState<PartnerRequest | null>(null);
   const { addRealtor } = useRealtors();
   const [filter, setFilter] = useState<TypeFilter>("all");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("unassigned");
