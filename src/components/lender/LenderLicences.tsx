@@ -18,8 +18,7 @@ import {
 } from "@/components/profile/realtor-licences";
 import { LicenceUploadDialog } from "@/components/profile/LicenceUploadDialog";
 import { useUploadDrafts } from "@/lib/upload-drafts";
-import { unverifiedStates } from "@/lib/licence-verification";
-import { formatDate } from "@/lib/dates";
+import { isLicenceVerified } from "@/lib/licence-verification";
 
 export function LenderLicences() {
   const { user } = useAuth();
@@ -87,7 +86,7 @@ function LenderLicencesInner({ user }: { user: LoqalUser }) {
     });
   }
 
-  const notCleared = unverifiedStates(registration);
+  const notCleared = licenses.filter((l) => !isLicenceVerified(l));
   const asked = licenses.filter((l) => l.infoRequestedAt);
 
   return (
