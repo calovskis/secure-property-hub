@@ -16,7 +16,6 @@ import {
   PartnerMetrics,
 } from "@/components/admin/AdminSections";
 import { TaskTracker } from "@/components/tasks/TaskTracker";
-import { GetStartedCard } from "@/components/onboarding/GetStartedCard";
 import { TeamAvailabilityCard } from "@/components/admin/TeamAvailabilityCard";
 import { AdminCases } from "@/components/admin/AdminCases";
 import { AdminAccounting } from "@/components/admin/AdminAccounting";
@@ -153,12 +152,9 @@ function AdminPage() {
         </div>
 
         <div className="mb-6">
-          <GetStartedCard />
-        </div>
-
-        <div className="mb-6">
           <TaskTracker />
         </div>
+
 
         {tab === "cases" ? <AdminCases /> : null}
         {tab === "accounting" ? <AdminAccounting /> : null}
