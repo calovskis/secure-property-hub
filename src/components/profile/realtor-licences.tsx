@@ -226,6 +226,16 @@ export function LicenceCoverageTable({
             ...(previous.doc ? { doc: previous.doc } : {}),
             ...(previous.uploadedAt ? { uploadedAt: previous.uploadedAt } : {}),
             ...(previous.verifiedAt ? { verifiedAt: previous.verifiedAt } : {}),
+            ...(previous.verifiedBy ? { verifiedBy: previous.verifiedBy } : {}),
+            ...(previous.pendingSince ? { pendingSince: previous.pendingSince } : {}),
+            ...(previous.infoRequestedAt
+              ? {
+                  infoRequestedAt: previous.infoRequestedAt,
+                  ...(previous.infoRequestNote
+                    ? { infoRequestNote: previous.infoRequestNote }
+                    : {}),
+                }
+              : {}),
           }),
     };
     const next = editState
