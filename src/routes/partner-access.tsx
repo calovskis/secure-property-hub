@@ -109,6 +109,7 @@ function PartnerAccessPage() {
   const { submit } = usePartnerRequests();
 
   const isRealtor = kind === "partner" && partnerType === "realtor";
+  const isLender = kind === "partner" && partnerType === "lender";
 
   function toggleAllStates() {
     setAllStates((v) => {
@@ -156,13 +157,20 @@ function PartnerAccessPage() {
       return setError(`Your password needs: ${pwIssues.join(", ").toLowerCase()}.`);
     if (kind === "partner") {
       if (partnerType === "lender" && !licenceNumber.trim())
-        return setError("Licence number is required for mortgage lenders.");
+        return setError("The general NMLS number is required for mortgage lenders.");
       if (states.length === 0)
         return setError(
           isRealtor
             ? "Realtor licenses are issued per state — select the states you are licensed in, or choose all states."
             : "Select the states you are active in, or choose all states.",
         );
+      if (isLender) {
+        for (const s of states) {
+          const lic = licenses[s];
+          if (!lic?.number.trim() || !lic.validUntil)
+            return setError(`Enter the state NMLS number and its validity for ${s}.`);
+        }
+      }
       if (isRealtor) {
         for (const s of states) {
           const lic = licenses[s];
@@ -218,8 +226,11 @@ function PartnerAccessPage() {
       phone: phone.trim(),
       allStates,
       states,
-      ...(kind === "partner" && partnerType === "lender"
-        ? { lenderLicence: licenceNumber.trim() }
+      ...(isLender
+        ? {
+            lenderLicence: licenceNumber.trim(),
+            lenderLicenses: states.map((st) => ({ state: st, ...licenses[st]! })),
+          }
         : {}),
       ...(isRealtor
         ? {
@@ -512,9 +523,9 @@ function PartnerAccessPage() {
 
                   {partnerType === "lender" ? (
                     <label className="block">
-                      <Label required>Licence number</Label>
+                      <Label required>General NMLS number</Label>
                       <input
-                        placeholder="NMLS or state licence number"
+                        placeholder="Company / individual NMLS number"
                         value={licenceNumber}
                         onChange={(e) => setLicenceNumber(e.target.value)}
                         className={inputClass}
@@ -561,6 +572,47 @@ function PartnerAccessPage() {
                       />
                     ) : null}
                   </div>
+
+                  {isLender && states.length > 0 ? (
+                    <div className="space-y-3 rounded-lg border border-border bg-brand-tint/30 p-4">
+                      <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        State NMLS number per state
+                      </span>
+                      <p className="text-[11px] text-muted-foreground">
+                        Lending licences are issued per state — add the state-specific NMLS number
+                        and how long it is valid. We remind you 30 and 15 days before one expires.
+                      </p>
+                      {states.map((s) => {
+                        const lic = licenses[s] ?? { number: "", validUntil: "" };
+                        const setLic = (patch: Partial<LicenseForm>) =>
+                          setLicenses({ ...licenses, [s]: { ...lic, ...patch } });
+                        return (
+                          <div
+                            key={s}
+                            className="grid grid-cols-1 gap-3 sm:grid-cols-[48px_1fr_1fr] sm:items-end"
+                          >
+                            <span className="pt-2 text-sm font-semibold text-foreground">{s}</span>
+                            <label>
+                              <Label required>State NMLS №</Label>
+                              <input
+                                value={lic.number}
+                                onChange={(e) => setLic({ number: e.target.value })}
+                                className={inputClass}
+                              />
+                            </label>
+                            <label>
+                              <Label required>Valid until</Label>
+                              <DateInput
+                                value={lic.validUntil}
+                                onChange={(v) => setLic({ validUntil: v })}
+                                className={inputClass}
+                              />
+                            </label>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : null}
 
                   {isRealtor && states.length > 0 ? (
                     <div className="space-y-3 rounded-lg border border-border bg-brand-tint/30 p-4">
