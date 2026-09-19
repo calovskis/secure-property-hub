@@ -360,6 +360,7 @@ export function LenderMortgages({ canManage }: { canManage: boolean }) {
             const loan = l.propertyPrice * (1 - t.downPaymentPct / 100);
             const st = mortgageStage(l);
             const open = openId === l.id;
+            const prog = progressOf(l.id);
             return (
               <li key={l.id} className="overflow-hidden rounded-lg border border-border bg-card">
                 <button
