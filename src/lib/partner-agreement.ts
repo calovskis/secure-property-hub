@@ -409,13 +409,94 @@ export function executedAgreementText(
   return lines.join("\n");
 }
 
-/** Download the agreement as a .doc file (opens in Word / Pages / Docs). */
+function esc(s: string) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+/**
+ * Turn the plain agreement text into a properly typeset document: the title as
+ * a centred heading, ALL-CAPS lines as numbered section headings, "1.1 …"
+ * paragraphs justified with the clause number in bold, dashed lines as bullet
+ * lists and the execution record as a framed block.
+ */
+function agreementHtmlBody(text: string): string {
+  const lines = text.replace(/\r/g, "").split("\n");
+  const out: string[] = [];
+  let bullets: string[] = [];
+  let titleDone = false;
+
+  const flush = () => {
+    if (!bullets.length) return;
+    out.push(`<ul class="b">${bullets.map((b) => `<li>${b}</li>`).join("")}</ul>`);
+    bullets = [];
+  };
+
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line) {
+      flush();
+      continue;
+    }
+    if (/^[-•]\s+/.test(line)) {
+      bullets.push(esc(line.replace(/^[-•]\s+/, "")));
+      continue;
+    }
+    flush();
+    if (!titleDone) {
+      out.push(`<h1>${esc(line)}</h1>`);
+      titleDone = true;
+      continue;
+    }
+    if (/^—.*—$/.test(line)) {
+      out.push(`<p class="exec">${esc(line.replace(/—/g, "").trim())}</p>`);
+      continue;
+    }
+    const section = line.match(/^(\d+)\.\s+(.+)$/);
+    if (section && line === line.toUpperCase()) {
+      out.push(`<h2>${esc(section[1]!)}. ${esc(section[2]!)}</h2>`);
+      continue;
+    }
+    if (line === line.toUpperCase() && /[A-Z]/.test(line) && line.length < 90) {
+      out.push(`<h2>${esc(line)}</h2>`);
+      continue;
+    }
+    const clause = line.match(/^(\d+\.\d+)\s+(.+)$/);
+    if (clause) {
+      out.push(`<p class="c"><span class="n">${esc(clause[1]!)}</span> ${esc(clause[2]!)}</p>`);
+      continue;
+    }
+    out.push(`<p>${esc(line)}</p>`);
+  }
+  flush();
+  return out.join("\n");
+}
+
+/** Download the agreement as a formatted .doc file (Word / Pages / Docs). */
 export function downloadAgreementDoc(name: string, text: string) {
-  const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>${name}</title></head><body><div style="font-family:Georgia,serif;font-size:11pt;white-space:pre-wrap">${text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")}</div></body></html>`;
-  const blob = new Blob([html], { type: "application/msword" });
+  const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>${esc(
+    name,
+  )}</title><style>
+@page { size: 8.5in 11in; margin: 1in 1in 1in 1in; }
+body { font-family: Georgia, "Times New Roman", serif; font-size: 11pt; line-height: 1.5; color: #14213d; }
+h1 { font-size: 15pt; text-align: center; text-transform: uppercase; letter-spacing: .06em; margin: 0 0 6pt; }
+.sub { text-align: center; font-size: 9.5pt; color: #6b7280; letter-spacing: .12em; text-transform: uppercase; margin: 0 0 18pt; }
+hr { border: none; border-top: 1.5pt solid #14213d; margin: 0 0 18pt; }
+h2 { font-size: 11.5pt; text-transform: uppercase; letter-spacing: .04em; margin: 16pt 0 6pt; page-break-after: avoid; }
+p { margin: 0 0 8pt; text-align: justify; }
+p.c { margin: 0 0 8pt; }
+p.c .n { font-weight: bold; }
+ul.b { margin: 0 0 8pt 18pt; padding: 0; }
+ul.b li { margin: 0 0 4pt; text-align: justify; }
+p.exec { margin: 18pt 0 8pt; font-weight: bold; text-transform: uppercase; letter-spacing: .04em; text-align: center; }
+.foot { margin-top: 22pt; border-top: .75pt solid #c8ccd6; padding-top: 6pt; font-size: 8.5pt; color: #6b7280; text-align: center; }
+</style></head><body>
+<p class="sub">Loqal Platform · Partner agreement</p>
+${agreementHtmlBody(text)}
+<p class="foot">Loqal Inc. · Confidential partner document · Generated ${esc(
+    new Date().toLocaleDateString("en-US"),
+  )}</p>
+</body></html>`;
+  const blob = new Blob(["\ufeff", html], { type: "application/msword" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -423,3 +504,4 @@ export function downloadAgreementDoc(name: string, text: string) {
   a.click();
   URL.revokeObjectURL(url);
 }
+
