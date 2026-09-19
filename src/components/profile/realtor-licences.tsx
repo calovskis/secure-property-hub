@@ -415,7 +415,7 @@ function LicenceEditPanel({
   onBack: () => void;
   onSave: () => void;
   /** Optional per-edit upload — opens the copy upload for the state being edited. */
-  onUploadCopy?: (state: string) => void;
+  onUploadCopy?: ((state: string) => void) | undefined;
 }) {
   if (confirming) {
     return (
