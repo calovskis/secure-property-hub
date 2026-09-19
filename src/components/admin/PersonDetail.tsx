@@ -35,7 +35,7 @@ import { isValidPhone } from "@/lib/phone";
 import { DeleteAccountControls } from "@/components/admin/DeleteAccountControls";
 import { useMyPermissions } from "@/lib/staff";
 import { fullName, useAuth } from "@/lib/auth";
-import { LicenceVerificationPanel } from "@/components/admin/LicenceVerificationPanel";
+import { LicenceVerificationDialog } from "@/components/admin/LicenceVerificationPanel";
 import { pendingVerifications } from "@/lib/licence-verification";
 
 type Tab =
@@ -233,6 +233,7 @@ function ProfileTab({ person }: { person: AdminPerson }) {
   const [company, setCompany] = useState(person.company ?? "");
   const [note, setNote] = useState(person.note ?? "");
   const [reg, setReg] = useState<Partial<PartnerRequest>>({});
+  const [licenceDialogOpen, setLicenceDialogOpen] = useState(false);
 
   const regValue = <K extends keyof PartnerRequest>(key: K): PartnerRequest[K] | undefined =>
     (reg[key] ?? req?.[key]) as PartnerRequest[K] | undefined;
@@ -276,12 +277,13 @@ function ProfileTab({ person }: { person: AdminPerson }) {
             {licencesToVerify.map((l) => l.state).join(", ")} — the partner submitted licence
             details or copies. Until you verify them, no cases are assigned in those states.
           </p>
-          <a
-            href="#licence-verification"
+          <button
+            type="button"
+            onClick={() => setLicenceDialogOpen(true)}
             className="mt-2 inline-flex rounded-md bg-brand px-3 py-1.5 text-xs font-semibold text-background hover:bg-brand-soft"
           >
             Review the licences
-          </a>
+          </button>
         </div>
       ) : null}
       <Card title="Contact & display data">
@@ -398,8 +400,31 @@ function ProfileTab({ person }: { person: AdminPerson }) {
             />
           </dl>
           {req.partnerType === "lender" || req.partnerType === "realtor" ? (
-            <div id="licence-verification" className="scroll-mt-20">
-                <LicenceVerificationPanel request={req} />
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-border p-3">
+              <div>
+                <p className="text-sm font-semibold text-foreground">State licence verification</p>
+                <p className="text-xs text-muted-foreground">
+                  {licencesToVerify.length
+                    ? `${licencesToVerify.length} state${licencesToVerify.length === 1 ? "" : "s"} awaiting verification: ${licencesToVerify.map((l) => l.state).join(", ")}`
+                    : "All submitted licences are verified."}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setLicenceDialogOpen(true)}
+                className={`rounded-md px-3 py-1.5 text-xs font-semibold ${
+                  licencesToVerify.length
+                    ? "bg-brand text-background hover:bg-brand-soft"
+                    : "border border-border text-muted-foreground hover:bg-brand-tint"
+                }`}
+              >
+                Open verification
+              </button>
+              <LicenceVerificationDialog
+                request={req}
+                open={licenceDialogOpen}
+                onOpenChange={setLicenceDialogOpen}
+              />
             </div>
           ) : null}
           {req.agreementSignedAt && !req.agreementCountersignedAt ? (
