@@ -27,6 +27,9 @@ import { EmployeeDirectory } from "@/components/admin/EmployeeDirectory";
 import { DeletionQueue } from "@/components/admin/DeletionQueue";
 import { useMyPermissions } from "@/lib/staff";
 import { useGreeting } from "@/lib/greeting";
+import { useAdminPeople } from "@/components/admin/people-model";
+import { useDeletions } from "@/lib/deletions";
+
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
@@ -59,14 +62,6 @@ const METRICS: [string, string, string][] = [
   ["Mortgage requests", "31", "6 need a lender assigned"],
 ];
 
-const ACCOUNTS = [
-  ["A. Novak", "Client", "Verified", "US person"],
-  ["Harbour Holdings Ltd.", "Corporate", "Pending KYB", "Non-US"],
-  ["M. Ferreira", "Partner · Realtor", "Verified", "US person"],
-  ["Sunrise Lending", "Partner · Mortgage lender", "Verified", "US person"],
-  ["BrightClean Co.", "Partner · Cleaning", "Onboarding", "US person"],
-  ["K. Andersson", "Client", "Awaiting mortgage profile", "Non-US"],
-];
 
 const QUEUES: [string, string, string][] = [
   ["Mortgage profiles to review", "6", "SSN provided on 4 of 6"],
@@ -86,6 +81,14 @@ function AdminPage() {
   const { leads } = useActiveLeads();
   const proc = useBuyerProcess();
   const { can } = useMyPermissions(user?.email, ready && user?.role === "admin");
+  /* Accounts panel: real platform accounts only (deleted profiles excluded). */
+  const allPeople = useAdminPeople();
+  const { deleted } = useDeletions();
+  const deletedEmails = new Set(deleted.map((r) => r.email.trim().toLowerCase()));
+  const accounts = allPeople
+    .filter((p) => !deletedEmails.has(p.email.trim().toLowerCase()))
+    .slice(0, 8);
+
 
   useEffect(() => {
     if (search.tab) setTab(search.tab);
@@ -400,8 +403,11 @@ function AdminPage() {
                 <div className="rounded-lg border border-border bg-card p-6">
                 <h2 className="text-base font-semibold text-foreground">Accounts</h2>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Every access type across the platform.
+                  {accounts.length
+                    ? `Registered accounts across the platform — showing ${accounts.length} of ${allPeople.length - deletedEmails.size}.`
+                    : "No accounts registered yet."}
                 </p>
+                {accounts.length ? (
                 <div className="mt-4 overflow-x-auto">
                   <table className="w-full text-left text-sm">
                     <thead>
@@ -413,21 +419,31 @@ function AdminPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
-                      {ACCOUNTS.map(([name, access, status, residency]) => (
-                        <tr key={name}>
-                          <td className="py-3 pr-4 font-semibold text-foreground">{name}</td>
-                          <td className="py-3 pr-4 text-muted-foreground">{access}</td>
+                      {accounts.map((p) => (
+                        <tr key={p.key}>
+                          <td className="py-3 pr-4 font-semibold text-foreground">
+                            {p.company || p.name}
+                          </td>
+                          <td className="py-3 pr-4 text-muted-foreground">{p.roleLabel}</td>
                           <td className="py-3 pr-4">
                             <span className="rounded-full bg-brand-tint px-2.5 py-1 text-[11px] font-semibold text-brand">
-                              {status}
+                              {p.status}
                             </span>
                           </td>
-                          <td className="py-3 text-muted-foreground">{residency}</td>
+                          <td className="py-3 text-muted-foreground">
+                            {p.usPerson === true
+                              ? "US person"
+                              : p.usPerson === false
+                                ? "Non-US"
+                                : "—"}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
+                ) : null}
+
                 </div>
               </div>
 
