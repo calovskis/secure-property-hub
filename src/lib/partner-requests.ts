@@ -446,6 +446,31 @@ export function usePartnerRequests() {
       const { data: userData } = await supabase.auth.getUser();
       const userId = userData.user?.id;
       if (!userId) throw new Error("You must be signed in to submit a registration.");
+
+      /* One account holds one registration. A repeated submit (double click,
+         re-mounted form, retried network call) must reuse the existing row
+         instead of creating a second request for the admin desk to review. */
+      const { data: existingRows } = await supabase
+        .from("partner_requests")
+        .select("*")
+        .eq("user_id", userId)
+        .neq("status", "declined")
+        .order("created_at", { ascending: true })
+        .limit(1);
+      const existing = (existingRows as Row[] | null)?.[0];
+      if (existing) {
+        const { data: updated, error: updateError } = await supabase
+          .from("partner_requests")
+          .update(toRow(input) as never)
+          .eq("id", existing.id)
+          .select("*")
+          .single();
+        if (updateError) throw new Error(updateError.message);
+        const row = fromRow((updated ?? existing) as Row);
+        setRequests([row, ...requests.filter((r) => r.id !== row.id)]);
+        return;
+      }
+
       const { data, error } = await supabase
         .from("partner_requests")
         .insert({ ...toRow(input), user_id: userId, status: "pending" } as never)
