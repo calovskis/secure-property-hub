@@ -149,7 +149,12 @@ export function GetStartedCard({ className = "" }: { className?: string }) {
     // Clients and corporate clients
     const leads = leadsForClient(user.email);
     const mp = user.mortgageProfile;
-    const idDone = (mp?.idDocuments?.length ?? 0) > 0 || (mp?.visaDocuments?.length ?? 0) > 0;
+    /* An identity document may have been attached to the profile itself or to a
+     * submitted pre-approval application — both count. A visa copy is a
+     * separate requirement and never completes the identity item. */
+    const idDone =
+      (mp?.idDocuments?.length ?? 0) > 0 ||
+      leads.some((l) => (l.profile?.idDocuments?.length ?? 0) > 0);
     const clientItems: Item[] = [
       {
         id: "c-details",
