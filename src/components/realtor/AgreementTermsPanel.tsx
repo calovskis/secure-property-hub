@@ -8,7 +8,7 @@
  * here for the agent to adjust and send again.
  */
 import { useState } from "react";
-import { AlertCircle, CheckCircle2, Send } from "lucide-react";
+import { AlertCircle, CheckCircle2, Send, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { formatDateTime } from "@/lib/dates";
 import { notify } from "@/lib/notifications";
