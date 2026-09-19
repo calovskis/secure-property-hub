@@ -37,6 +37,11 @@ export type KybDraft = {
   creatorAuthorized: boolean;
   creatorIdDoc: string;
   authorizationDoc: string;
+  /** The person filling the form is also a 25%+ shareholder. */
+  creatorIsShareholder: boolean;
+  creatorSharePct: number | undefined;
+  /** Creator details when the creator is a shareholder but NOT the director. */
+  creatorShareholder: KycPerson;
 };
 
 export const emptyKycPerson = (): KycPerson => ({
@@ -53,6 +58,9 @@ const emptyDraft = (): KybDraft => ({
   creatorAuthorized: false,
   creatorIdDoc: "",
   authorizationDoc: "",
+  creatorIsShareholder: false,
+  creatorSharePct: undefined,
+  creatorShareholder: emptyKycPerson(),
 });
 
 const draftKey = (requestId: string) => `loqal-kyb-draft-${requestId}`;
@@ -303,6 +311,25 @@ export function KybQuestionnaireDialog({
     ? { ...data.director, fullName: fullName(user) }
     : data.director;
 
+  /**
+   * The creator as a shareholder. When the creator is also the director, their
+   * details are already collected in step 2 — only the share % is asked again.
+   * Otherwise the creator fills their own details once (name locked).
+   */
+  const creatorAsShareholder: KycPerson | null = (() => {
+    if (!data.creatorIsShareholder) return null;
+    const base: KycPerson = data.directorIsCreator
+      ? { ...director }
+      : { ...data.creatorShareholder, fullName: fullName(user) };
+    if (data.creatorSharePct !== undefined) base.sharePct = data.creatorSharePct;
+    if (data.directorIsCreator && director.idDoc) base.idDoc = director.idDoc;
+    return base;
+  })();
+
+  const allShareholders: KycPerson[] = creatorAsShareholder
+    ? [creatorAsShareholder, ...data.shareholders]
+    : data.shareholders;
+
   function validate(s: number): string | null {
     if (s === 1) {
       if (!data.directorIsCreator) {
@@ -324,10 +351,14 @@ export function KybQuestionnaireDialog({
         return "Upload the director's ID document.";
     }
     if (s === 3) {
-      for (const sh of data.shareholders) {
+      for (const [idx, sh] of allShareholders.entries()) {
         if (!sh.fullName.trim() || !sh.sharePct || sh.sharePct <= 0)
           return "Every declared shareholder needs a name and an ownership share.";
-        if (!sh.idDoc)
+        if (!sh.address.trim() || !sh.citizenship || !sh.countryOfResidence)
+          return `Complete the address, citizenship and residence for ${sh.fullName || "the shareholder"}.`;
+        // The director-creator's ID is already on file from their registration.
+        const idOnFile = idx === 0 && creatorAsShareholder !== null && data.directorIsCreator;
+        if (!idOnFile && !sh.idDoc)
           return `Upload the ID document for ${sh.fullName || "the shareholder"}.`;
       }
     }
@@ -358,7 +389,7 @@ export function KybQuestionnaireDialog({
       }
     }
     setError(null);
-    onSubmit({ ...data, director });
+    onSubmit({ ...data, director, shareholders: allShareholders });
     try {
       localStorage.removeItem(draftKey(request.id));
     } catch {
@@ -461,9 +492,65 @@ export function KybQuestionnaireDialog({
 
           {step === 3 ? (
             <div>
+              <div className="mb-3 rounded-md border border-border p-3">
+                <label className="flex items-start gap-2 text-sm text-foreground">
+                  <input
+                    type="checkbox"
+                    checked={data.creatorIsShareholder}
+                    onChange={(e) => update({ creatorIsShareholder: e.target.checked })}
+                    className="mt-0.5"
+                  />
+                  I am also a shareholder with 25% or more
+                </label>
+                {data.creatorIsShareholder ? (
+                  <div className="mt-3 space-y-3">
+                    <p className="text-xs text-muted-foreground">
+                      {data.directorIsCreator
+                        ? "Your details are already on file from step 2 — only your ownership share is needed."
+                        : "Tell us your ownership share and your details."}
+                    </p>
+                    <label className="block sm:max-w-xs">
+                      <span className={labelClass}>Your ownership share, %</span>
+                      <input
+                        type="number"
+                        min={0}
+                        max={100}
+                        value={data.creatorSharePct ?? ""}
+                        onChange={(e) =>
+                          update(
+                            e.target.value === ""
+                              ? (() => {
+                                  const patch: Partial<KybDraft> = {};
+                                  delete patch.creatorSharePct;
+                                  return patch;
+                                })()
+                              : { creatorSharePct: Number(e.target.value) },
+                          )
+                        }
+                        className={inputClass}
+                      />
+                    </label>
+                    {!data.directorIsCreator ? (
+                      <PersonFields
+                        person={{ ...data.creatorShareholder, fullName: fullName(user) }}
+                        lockName
+                        onChange={(p) =>
+                          update({
+                            creatorShareholder: (() => {
+                              const next = { ...p };
+                              delete next.sharePct;
+                              return next;
+                            })(),
+                          })
+                        }
+                      />
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
               <div className="mb-2 flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-foreground">
-                  Shareholders with 25% or more
+                  Other shareholders with 25% or more
                 </h3>
                 <button
                   type="button"
@@ -533,13 +620,15 @@ export function KybQuestionnaireDialog({
                 <h3 className="text-sm font-semibold text-foreground">
                   Shareholders with 25% or more
                 </h3>
-                {data.shareholders.length === 0 ? (
+                {allShareholders.length === 0 ? (
                   <p className="mt-1 text-muted-foreground">None declared.</p>
                 ) : (
                   <ul className="mt-1 space-y-1 text-muted-foreground">
-                    {data.shareholders.map((s, i) => (
+                    {allShareholders.map((s, i) => (
                       <li key={i}>
-                        {s.fullName} — {s.sharePct}% · ID: {s.idDoc || "—"}
+                        {s.fullName}
+                        {i === 0 && creatorAsShareholder ? " (you)" : ""} — {s.sharePct}% · ID:{" "}
+                        {s.idDoc || (i === 0 && creatorAsShareholder && data.directorIsCreator ? "on file" : "—")}
                       </li>
                     ))}
                   </ul>
