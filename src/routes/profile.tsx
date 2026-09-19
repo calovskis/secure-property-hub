@@ -684,10 +684,15 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
    * information behind it was actually provided — through this page, through a
    * notification pop-up or anywhere else on the platform.
    */
+  /* Lender licence copies live in the lender portal's own upload window. Once
+     every declared state has a copy, the request is Loqal's to verify — the
+     partner has nothing left to do, so the pre-saved upload disappears. */
+  const lenderCopiesComplete = licenses.length > 0 && licenses.every((l) => l.doc);
   const satisfiedDrafts = drafts
     .filter((d) => {
       if (d.id === "realtor-identity") return identityDone;
       if (d.id === "realtor-licences") return realtor && !missingLicences.length;
+      if (d.id === "lender-licences") return lenderCopiesComplete;
       if (d.id.startsWith("licence-renewal-")) {
         const state = d.id.slice("licence-renewal-".length);
         return !expiringLicences.some((l) => l.state === state);
@@ -695,6 +700,7 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
       return false;
     })
     .map((d) => d.id);
+
   const satisfiedKey = satisfiedDrafts.join(",");
   useEffect(() => {
     for (const id of satisfiedKey ? satisfiedKey.split(",") : []) clearUploadDraft(id);
