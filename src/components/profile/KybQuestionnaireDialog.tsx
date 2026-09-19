@@ -330,6 +330,17 @@ export function KybQuestionnaireDialog({
     ? [creatorAsShareholder, ...data.shareholders]
     : data.shareholders;
 
+  /**
+   * Only shareholders with 25%+ ownership are declared. Once the shares
+   * already declared leave less than 25% unallocated, no other 25%+
+   * shareholder can exist — so adding more shareholders is hidden.
+   */
+  const declaredTotal =
+    (data.creatorIsShareholder ? (data.creatorSharePct ?? 0) : 0) +
+    data.shareholders.reduce((sum, s) => sum + (s.sharePct ?? 0), 0);
+  const noOtherShareholderPossible = declaredTotal >= 75;
+  const remainingPct = Math.max(0, 100 - declaredTotal);
+
   function validate(s: number): string | null {
     if (s === 1) {
       if (!data.directorIsCreator) {
@@ -552,17 +563,24 @@ export function KybQuestionnaireDialog({
                 <h3 className="text-sm font-semibold text-foreground">
                   Other shareholders with 25% or more
                 </h3>
-                <button
-                  type="button"
-                  onClick={() =>
-                    update({ shareholders: [...data.shareholders, emptyKycPerson()] })
-                  }
-                  className="rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-brand-tint"
-                >
-                  + Add shareholder
-                </button>
+                {!noOtherShareholderPossible ? (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      update({ shareholders: [...data.shareholders, emptyKycPerson()] })
+                    }
+                    className="rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-brand-tint"
+                  >
+                    + Add shareholder
+                  </button>
+                ) : null}
               </div>
-              {data.shareholders.length === 0 ? (
+              {noOtherShareholderPossible ? (
+                <p className="mb-2 text-xs text-muted-foreground">
+                  You have declared {declaredTotal}% of shares in total. The remaining {remainingPct}%
+                  cannot hold 25% or more, so no other shareholder needs to be declared.
+                </p>
+              ) : data.shareholders.length === 0 ? (
                 <p className="text-xs text-muted-foreground">
                   No shareholders with 25%+ ownership — or add them here.
                 </p>
