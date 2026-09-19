@@ -66,6 +66,8 @@ function LenderLicencesInner({ user }: { user: LoqalUser }) {
             validUntil: l.validUntil,
             doc: copies[l.state]!,
             uploadedAt: at,
+            /* A new copy always goes back to Loqal for verification. */
+            pendingSince: at,
           } as RealtorLicenseDoc)
         : l,
     );
