@@ -48,13 +48,22 @@ export type EntityPlan = {
   feesAcknowledgedAt?: string | undefined;
   /** Client opened the corporate-structure guide. */
   guideSeenAt?: string | undefined;
-  /** Purchase agreement signed by the buyer. */
-  agreementSignedAt?: string | undefined;
-  /** Typed e-signature used to sign. */
-  agreementSignedBy?: string | undefined;
-  /** Buyer's choices inside the agreement template (deposit, contingencies…). */
-  agreementChoices?: unknown;
-  /** Furthest step the buyer reached in the signing window (1–3). */
+  /** Purchase terms the buyer's agent proposes (AgreementTerms). */
+  proposedTerms?: unknown;
+  /** When the agent sent the terms to the buyer for confirmation. */
+  termsProposedAt?: string | undefined;
+  termsProposedBy?: string | undefined;
+  /** The agent's note alongside the proposed terms. */
+  termsNote?: string | undefined;
+  /** How many times the terms have been proposed (each buyer change request bumps it). */
+  termsRound?: number | undefined;
+  /** Buyer confirmed the terms — the agent may put them to the seller. */
+  termsConfirmedAt?: string | undefined;
+  termsConfirmedBy?: string | undefined;
+  /** Buyer asked the agent to change something before confirming. */
+  termsChangeRequestedAt?: string | undefined;
+  termsChangeNote?: string | undefined;
+  /** Furthest step the buyer reached in the window (1–2). */
   wizardStep?: number | undefined;
   /** Client asked Loqal to handle the company set-up. */
   loqalSetupRequestedAt?: string | undefined;
