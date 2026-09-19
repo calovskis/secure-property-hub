@@ -762,7 +762,8 @@ export function useLenderTabs() {
     employees: true,
     analytics: can("analytics.view"),
     accounting: can("accounting.view"),
-    other: true,
+    licences: true,
+    team: true,
   };
   return TABS.filter((t) => allowed[t.id]);
 }
@@ -795,7 +796,8 @@ export function LenderPortal({
     employees: true,
     analytics: can("analytics.view"),
     accounting: can("accounting.view"),
-    other: true,
+    licences: true,
+    team: true,
   };
   const current = allowed[tab] ? tab : "home";
 
@@ -853,12 +855,8 @@ export function LenderPortal({
       {current === "employees" ? <LenderEmployees /> : null}
       {current === "analytics" ? <LenderAnalytics /> : null}
       {current === "accounting" ? <LenderAccounting lenderName={lenderName} /> : null}
-      {current === "other" ? (
-        <>
-          <LenderLicences />
-          <LenderTeam />
-        </>
-      ) : null}
+      {current === "licences" ? <LenderLicences /> : null}
+      {current === "team" ? <LenderTeam /> : null}
 
     </main>
   );
