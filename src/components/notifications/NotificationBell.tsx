@@ -18,6 +18,7 @@ import { partnerCoversState, pendingVerifications } from "@/lib/licence-verifica
 import { useRealtors } from "@/lib/realtors";
 import { useLenderTeam } from "@/lib/lender-team";
 import { useMortgageDrafts } from "@/lib/mortgage-draft";
+import { useHandovers } from "@/lib/partner-assignments";
 import { usePropertyRequests } from "@/lib/property-requests";
 import { useEntityPlans } from "@/lib/entity-structure";
 import { formatPrice } from "@/data/properties";
@@ -62,6 +63,7 @@ function useDerivedNotifications() {
   const { scopedStates } = useLenderTeam();
   const { purchases, changes } = usePropertyRequests();
   const { plans: entityPlans } = useEntityPlans();
+  const { handovers } = useHandovers();
 
   const email = user?.email.toLowerCase() ?? "";
   const isAdmin = user?.role === "admin";
