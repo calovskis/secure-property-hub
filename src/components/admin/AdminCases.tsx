@@ -209,7 +209,7 @@ function CaseDetail({ lead, onClose }: { lead: MortgageLead; onClose: () => void
 function OwnershipTask({ lead }: { lead: MortgageLead }) {
   const { plans } = useEntityPlans();
   const plan = plans.find((p) => p.leadId === lead.id);
-  if (!plan?.path && !plan?.agreementSignedAt) return null;
+  if (!plan?.path && !plan?.termsProposedAt) return null;
 
   const setupOpen = Boolean(plan.loqalSetupRequestedAt) && !plan.loqalSetupHandledAt;
 
