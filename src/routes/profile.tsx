@@ -688,6 +688,8 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
      every declared state has a copy, the request is Loqal's to verify — the
      partner has nothing left to do, so the pre-saved upload disappears. */
   const lenderCopiesComplete = licenses.length > 0 && licenses.every((l) => l.doc);
+  const awaitingVerification = licenses.filter((l) => l.doc && !isLicenceVerified(l));
+
   const satisfiedDrafts = drafts
     .filter((d) => {
       if (d.id === "realtor-identity") return identityDone;
