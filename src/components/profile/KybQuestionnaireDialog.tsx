@@ -491,9 +491,54 @@ export function KybQuestionnaireDialog({
 
           {step === 3 ? (
             <div>
+              <div className="mb-3 rounded-md border border-border p-3">
+                <label className="flex items-start gap-2 text-sm text-foreground">
+                  <input
+                    type="checkbox"
+                    checked={data.creatorIsShareholder}
+                    onChange={(e) => update({ creatorIsShareholder: e.target.checked })}
+                    className="mt-0.5"
+                  />
+                  I am also a shareholder with 25% or more
+                </label>
+                {data.creatorIsShareholder ? (
+                  <div className="mt-3 space-y-3">
+                    <p className="text-xs text-muted-foreground">
+                      {data.directorIsCreator
+                        ? "Your details are already on file from step 2 — only your ownership share is needed."
+                        : "Tell us your ownership share and your details."}
+                    </p>
+                    <label className="block sm:max-w-xs">
+                      <span className={labelClass}>Your ownership share, %</span>
+                      <input
+                        type="number"
+                        min={0}
+                        max={100}
+                        value={data.creatorSharePct ?? ""}
+                        onChange={(e) =>
+                          update({
+                            creatorSharePct:
+                              e.target.value === "" ? undefined : Number(e.target.value),
+                          })
+                        }
+                        className={inputClass}
+                      />
+                    </label>
+                    {!data.directorIsCreator ? (
+                      <PersonFields
+                        person={{ ...data.creatorShareholder, fullName: fullName(user) }}
+                        lockName
+                        onChange={(p) =>
+                          update({ creatorShareholder: { ...p, sharePct: undefined } })
+                        }
+                      />
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
               <div className="mb-2 flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-foreground">
-                  Shareholders with 25% or more
+                  Other shareholders with 25% or more
                 </h3>
                 <button
                   type="button"
