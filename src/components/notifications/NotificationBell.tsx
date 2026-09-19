@@ -949,7 +949,18 @@ function useDerivedNotifications() {
     if (list.length) syncNotifications(list);
     pruneDerived(email, ["lenderinq-", "hardcheck-"], list.map((n) => n.id));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.email, user?.role, user?.partnerType, leads, leadsReady, scopedStates, requests, email]);
+  }, [
+    user?.email,
+    user?.role,
+    user?.partnerType,
+    leads,
+    leadsReady,
+    scopedStates,
+    requests,
+    email,
+    purchases,
+    entityPlans,
+  ]);
 }
 
 
