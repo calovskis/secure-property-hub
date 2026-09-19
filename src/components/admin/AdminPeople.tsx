@@ -391,9 +391,115 @@ export function AdminPeople({
       {open ? (
         <PersonDetail person={open} onClose={() => setOpen(null)} onMessage={onMessage} />
       ) : null}
+        </>
+      )}
     </section>
   );
 }
+
+function DeletedPanel({
+  deleted,
+  history,
+}: {
+  deleted: DeletionRecord[];
+  history: DeletionRecord[];
+}) {
+  const inRecovery = deleted.filter((r) => daysLeft(r) > 0);
+  const elapsed = deleted.filter((r) => daysLeft(r) === 0);
+  const past = [...elapsed, ...history].sort(
+    (a, b) =>
+      new Date(b.closedAt ?? b.recoverableUntil ?? b.requestedAt).getTime() -
+      new Date(a.closedAt ?? a.recoverableUntil ?? a.requestedAt).getTime(),
+  );
+
+  return (
+    <div className="mt-5 space-y-6">
+      <div>
+        <h3 className="text-sm font-semibold text-foreground">In the 90-day recovery window</h3>
+        {inRecovery.length === 0 ? (
+          <p className="mt-2 text-sm text-muted-foreground">No profiles are awaiting recovery.</p>
+        ) : (
+          <ul className="mt-3 space-y-2">
+            {inRecovery.map((r) => (
+              <li
+                key={r.id}
+                className="rounded-md border border-border bg-background p-3 text-sm"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <span className="font-semibold text-foreground">{r.name}</span>{" "}
+                    <span className="text-xs text-muted-foreground">
+                      {loqalNumber(r.email)} · {r.roleLabel}
+                    </span>
+                  </div>
+                  <span className="rounded-full bg-gold/15 px-3 py-1 text-[11px] font-semibold text-gold">
+                    {daysLeft(r)} days left to recover
+                  </span>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">{r.email}</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Deletion requested {formatDateTime(r.requestedAt)} by{" "}
+                  {r.selfRequested ? `${r.name} (own profile)` : r.requestedBy}
+                  {r.confirmedAt ? ` · confirmed ${formatDateTime(r.confirmedAt)}` : ""}
+                  {r.recoverableUntil
+                    ? ` · permanently removed ${formatDate(r.recoverableUntil)}`
+                    : ""}
+                </p>
+                {r.reason ? (
+                  <p className="mt-1 text-xs italic text-muted-foreground">Reason: {r.reason}</p>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <div>
+        <h3 className="text-sm font-semibold text-foreground">History</h3>
+        {past.length === 0 ? (
+          <p className="mt-2 text-sm text-muted-foreground">Nothing in the history yet.</p>
+        ) : (
+          <div className="mt-3 overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-b border-border text-[11px] uppercase tracking-wide text-muted-foreground">
+                  <th className="py-2 pr-4 font-semibold">Name</th>
+                  <th className="py-2 pr-4 font-semibold">Role</th>
+                  <th className="py-2 pr-4 font-semibold">Deletion requested</th>
+                  <th className="py-2 pr-4 font-semibold">Outcome</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {past.map((r) => (
+                  <tr key={r.id}>
+                    <td className="py-2.5 pr-4">
+                      <div className="font-semibold text-foreground">{r.name}</div>
+                      <div className="text-xs text-muted-foreground">{r.email}</div>
+                    </td>
+                    <td className="py-2.5 pr-4 text-muted-foreground">{r.roleLabel}</td>
+                    <td className="py-2.5 pr-4 text-muted-foreground">
+                      {formatDateTime(r.requestedAt)}
+                    </td>
+                    <td className="py-2.5 pr-4 text-muted-foreground">
+                      {r.status === "restored"
+                        ? `Restored ${r.closedAt ? formatDateTime(r.closedAt) : ""}`
+                        : r.status === "cancelled"
+                          ? `Request declined ${r.closedAt ? formatDateTime(r.closedAt) : ""}`
+                          : `90 days passed ${
+                              r.recoverableUntil ? formatDate(r.recoverableUntil) : ""
+                            } — permanently removed`}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 
 function FilterBox({ label, children }: { label: string; children: React.ReactNode }) {
   return (
