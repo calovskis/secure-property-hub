@@ -309,6 +309,7 @@ export function LicenceCoverageTable({
                         onCancel={closeEdit}
                         onBack={() => setConfirming(false)}
                         onSave={save}
+                        onUploadCopy={onUploadCopy}
                       />
                     </td>
                   </tr>
