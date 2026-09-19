@@ -403,6 +403,7 @@ function LicenceEditPanel({
   onCancel,
   onBack,
   onSave,
+  onUploadCopy,
 }: {
   edit: EditForm;
   setEdit: (v: EditForm) => void;
@@ -413,6 +414,8 @@ function LicenceEditPanel({
   onCancel: () => void;
   onBack: () => void;
   onSave: () => void;
+  /** Optional per-edit upload — opens the copy upload for the state being edited. */
+  onUploadCopy?: (state: string) => void;
 }) {
   if (confirming) {
     return (
