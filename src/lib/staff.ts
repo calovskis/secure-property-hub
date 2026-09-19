@@ -4,6 +4,12 @@
  * (Settings → Access matrix). Persisted in localStorage.
  */
 import { useCallback, useSyncExternalStore } from "react";
+import {
+  PERMISSION_ORDER,
+  permissionsOfRoles,
+  type LoqalRoleId,
+  type Permission,
+} from "@/lib/roles";
 
 export type AdminSectionId =
   | "overview"
@@ -46,6 +52,8 @@ export type StaffMember = {
   /** Superadmins always have full access and cannot be edited down. */
   superadmin: boolean;
   access: Partial<Record<AdminSectionId, AccessLevel>>;
+  /** Loqal roles assigned by a Full Admin; permissions are their union. */
+  roles?: LoqalRoleId[];
   /** Time off: ISO yyyy-mm-dd the member is away until (inclusive). */
   awayUntil?: string;
   /** Kind of absence shown on the dashboard ("Out of office", "Sick leave"…). */
