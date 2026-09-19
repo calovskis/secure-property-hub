@@ -255,31 +255,66 @@ function LenderWorkspace({ lenderName }: { lenderName: string }) {
   const { tab: tabParam, focus } = Route.useSearch();
   const [tab, setTab] = useState<LenderTabId>("home");
   useEffect(() => {
-    if (tabParam) setTab(tabParam as LenderTabId);
+    if (tabParam) setTab((tabParam === "other" ? "team" : tabParam) as LenderTabId);
   }, [tabParam]);
+  const [menu, setMenu] = useState<"other" | null>(null);
+  useEffect(() => {
+    function onDocClick(e: MouseEvent) {
+      if (!(e.target as HTMLElement | null)?.closest?.("[data-lender-menu]")) setMenu(null);
+    }
+    document.addEventListener("click", onDocClick);
+    return () => document.removeEventListener("click", onDocClick);
+  }, []);
   const tabs = useLenderTabs();
   const current = tabs.some((t) => t.id === tab) ? tab : "home";
+  const otherTabs = tabs.filter((t) => (OTHER_TABS as string[]).includes(t.id));
+  const mainTabs = tabs.filter((t) => !(OTHER_TABS as string[]).includes(t.id));
+
+  const itemCls = (active: boolean) =>
+    `flex items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+      active ? "bg-brand-tint text-brand" : "text-muted-foreground hover:bg-brand-tint hover:text-brand"
+    }`;
 
   return (
     <div className="min-h-screen bg-background">
       <AppHeader
         navSlot={
           <>
-            {tabs.map((t) => (
-              <button
-                key={t.id}
-                type="button"
-                onClick={() => setTab(t.id)}
-                className={`flex items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                  current === t.id
-                    ? "bg-brand-tint text-brand"
-                    : "text-muted-foreground hover:bg-brand-tint hover:text-brand"
-                }`}
-              >
+            {mainTabs.map((t) => (
+              <button key={t.id} type="button" onClick={() => setTab(t.id)} className={itemCls(current === t.id)}>
                 <span aria-hidden>{t.icon}</span>
                 {t.label}
               </button>
             ))}
+            <div className="relative" data-lender-menu>
+              <button
+                type="button"
+                onClick={() => setMenu(menu === "other" ? null : "other")}
+                className={itemCls((OTHER_TABS as string[]).includes(current))}
+              >
+                <span aria-hidden>⚙️</span> Other
+                <span className="text-[9px] opacity-60">▼</span>
+              </button>
+              {menu === "other" ? (
+                <div className="absolute left-0 top-[calc(100%+8px)] w-52 rounded-lg border border-border bg-popover p-1.5 shadow-lg">
+                  {otherTabs.map((t) => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => {
+                        setTab(t.id);
+                        setMenu(null);
+                      }}
+                      className={`flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-brand-tint hover:text-brand ${
+                        current === t.id ? "font-semibold text-brand" : "text-foreground"
+                      }`}
+                    >
+                      <span aria-hidden>{t.icon}</span> {t.label}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
           </>
         }
       />
