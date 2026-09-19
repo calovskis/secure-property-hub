@@ -395,7 +395,13 @@ function ProfileTab({ person }: { person: AdminPerson }) {
             <Row
               label="Countersigned by Loqal"
               value={
-                req.agreementCountersignedAt ? formatDateTime(req.agreementCountersignedAt) : "—"
+                req.agreementCountersignedAt
+                  ? `${formatDateTime(req.agreementCountersignedAt)} by ${req.agreementCountersignedBy ?? "Loqal"}${
+                      req.agreementCountersignedTitle
+                        ? `, ${req.agreementCountersignedTitle}`
+                        : ""
+                    }`
+                  : "—"
               }
             />
           </dl>
