@@ -689,9 +689,10 @@ function PartnerAccessPage() {
 
               <button
                 type="submit"
-                className="w-full rounded-md bg-brand py-3 text-sm font-semibold text-background transition-colors hover:bg-brand-soft"
+                disabled={sending}
+                className="w-full rounded-md bg-brand py-3 text-sm font-semibold text-background transition-colors hover:bg-brand-soft disabled:opacity-60"
               >
-                Submit request
+                {sending ? "Submitting…" : "Submit request"}
               </button>
               <p className="text-center text-[11px] text-muted-foreground">
                 Your request goes to the Loqal admin team — access opens once it is approved.
