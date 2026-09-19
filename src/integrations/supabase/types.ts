@@ -122,6 +122,7 @@ export type Database = {
           languages: string[]
           last_name: string
           lender_licence: string | null
+          lender_licenses: Json
           partner_type: string | null
           phone: string
           position: string
@@ -168,6 +169,7 @@ export type Database = {
           languages?: string[]
           last_name?: string
           lender_licence?: string | null
+          lender_licenses?: Json
           partner_type?: string | null
           phone?: string
           position?: string
@@ -214,6 +216,7 @@ export type Database = {
           languages?: string[]
           last_name?: string
           lender_licence?: string | null
+          lender_licenses?: Json
           partner_type?: string | null
           phone?: string
           position?: string
