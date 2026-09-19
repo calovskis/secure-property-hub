@@ -180,7 +180,18 @@ export function PersonDetailContent({
       </header>
 
       <div className="flex-1 overflow-y-auto px-6 py-5">
-        {tab === "profile" ? <ProfileTab person={person} /> : null}
+        {tab === "profile" ? (
+          <>
+            <DeleteAccountControls
+              email={person.email}
+              name={person.name}
+              roleLabel={person.roleLabel}
+              actor={fullName(user) || user?.email || "Loqal admin"}
+              can={can}
+            />
+            <ProfileTab person={person} />
+          </>
+        ) : null}
         {tab === "documents" ? <DocumentsTab person={person} /> : null}
         {tab === "correspondence" ? (
           person.request ? (
