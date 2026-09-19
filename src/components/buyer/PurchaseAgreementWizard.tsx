@@ -82,6 +82,7 @@ export function PurchaseAgreementWizard({
   const [entityEin, setEntityEin] = useState(plan?.entityEin ?? "");
   const [changeNote, setChangeNote] = useState("");
   const [askingChange, setAskingChange] = useState(false);
+  const [signature, setSignature] = useState("");
 
   const path = plan?.path;
   const decided = Boolean(path);
