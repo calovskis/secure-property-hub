@@ -132,7 +132,7 @@ export function LenderHome({
         <div className="rounded-lg border border-border bg-card px-4 py-3 text-xs text-muted-foreground">
           {s.hiddenByScope} {s.hiddenByScope === 1 ? "request is" : "requests are"} outside your
           licensed state coverage and hidden from this seat. A portal admin can widen your state
-          scope in Other → Team.
+          scope in Other → Team & Access.
         </div>
       ) : null}
 

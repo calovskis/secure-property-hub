@@ -483,7 +483,7 @@ function RequestsInbox({
         <div className="mb-4 rounded-lg border border-border bg-card px-4 py-3 text-xs text-muted-foreground">
           {hiddenByScope} {hiddenByScope === 1 ? "request is" : "requests are"} outside your
           licensed state coverage and hidden from this seat. A portal admin can widen your state
-          scope in Other → Team.
+          scope in Other → Team & Access.
         </div>
       ) : null}
 
@@ -743,8 +743,12 @@ export const TABS = [
   { id: "employees", label: "Employees", icon: "👥" },
   { id: "analytics", label: "Analytics", icon: "📈" },
   { id: "accounting", label: "Accounting", icon: "💵" },
-  { id: "other", label: "Other", icon: "⚙️" },
+  { id: "licences", label: "Licences", icon: "🪪" },
+  { id: "team", label: "Team & Access", icon: "🔑" },
 ] as const;
+
+/** Tab ids grouped under the "Other" dropdown in the lender navigation. */
+export const OTHER_TABS: LenderTabId[] = ["licences", "team"];
 
 export type LenderTabId = (typeof TABS)[number]["id"];
 type TabId = LenderTabId;
@@ -758,7 +762,8 @@ export function useLenderTabs() {
     employees: true,
     analytics: can("analytics.view"),
     accounting: can("accounting.view"),
-    other: true,
+    licences: true,
+    team: true,
   };
   return TABS.filter((t) => allowed[t.id]);
 }
@@ -791,7 +796,8 @@ export function LenderPortal({
     employees: true,
     analytics: can("analytics.view"),
     accounting: can("accounting.view"),
-    other: true,
+    licences: true,
+    team: true,
   };
   const current = allowed[tab] ? tab : "home";
 
@@ -849,12 +855,8 @@ export function LenderPortal({
       {current === "employees" ? <LenderEmployees /> : null}
       {current === "analytics" ? <LenderAnalytics /> : null}
       {current === "accounting" ? <LenderAccounting lenderName={lenderName} /> : null}
-      {current === "other" ? (
-        <>
-          <LenderLicences />
-          <LenderTeam />
-        </>
-      ) : null}
+      {current === "licences" ? <LenderLicences /> : null}
+      {current === "team" ? <LenderTeam /> : null}
 
     </main>
   );
