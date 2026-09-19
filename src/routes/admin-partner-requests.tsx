@@ -556,7 +556,7 @@ function AdminPartnerRequestsPage() {
                     {awaitsCountersign(r) ? (
                       <button
                         type="button"
-                        onClick={() => countersign(r)}
+                        onClick={() => setCountersignFor(r)}
                         className="rounded-md bg-success px-4 py-2 text-xs font-semibold text-background hover:opacity-90"
                       >
                         Countersign agreement
