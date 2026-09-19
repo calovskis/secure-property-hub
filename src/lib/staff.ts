@@ -82,6 +82,7 @@ const SEED: StaffMember[] = [
     title: "Founder · Superadmin",
     superadmin: true,
     access: fullAccess(),
+    roles: ["full_admin"],
   },
   {
     id: "st-daniel",
@@ -99,6 +100,7 @@ const SEED: StaffMember[] = [
       activity: "view",
       settings: "hidden",
     },
+    roles: ["ops_manager", "mortgage_coordinator"],
   },
   {
     id: "st-anna",
@@ -116,6 +118,7 @@ const SEED: StaffMember[] = [
       activity: "view",
       settings: "hidden",
     },
+    roles: ["support_specialist"],
   },
 ];
 
