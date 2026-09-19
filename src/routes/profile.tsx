@@ -876,6 +876,15 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
         </p>
       )}
 
+      {lenderCopiesComplete && awaitingVerification.length ? (
+        <p className="mt-3 rounded-md border border-border bg-brand-tint/40 px-3 py-2 text-[11px] font-semibold text-brand">
+          All licence copies are provided — {awaitingVerification.map((l) => l.state).join(", ")}{" "}
+          {awaitingVerification.length === 1 ? "is" : "are"} awaiting Loqal verification. Nothing
+          else is needed from you.
+        </p>
+      ) : null}
+
+
       {/* Written information / document requests Loqal raised, plus their history. */}
       <InfoRequestsList user={user} />
 
