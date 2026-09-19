@@ -181,6 +181,36 @@ export function PurchaseAgreementWizard({
     toast("Terms confirmed", { description: `${agentName} will put them to the seller.` });
   }
 
+  /** The buyer signs the agreement the agent uploaded. */
+  function signAgreement() {
+    const expected = fullName(user ?? ({} as never)).trim().toLowerCase();
+    const typed = signature.trim();
+    if (typed.length < 4 || (expected && typed.toLowerCase() !== expected)) {
+      toast("Type your full name exactly as it is on your profile to sign.");
+      return;
+    }
+    const now = new Date().toISOString();
+    savePlan({ agreementSignedAt: now, agreementSignedBy: typed });
+    if (agentEmail) {
+      notify({
+        id: `agreement-signed-agent-${leadId}`,
+        to: agentEmail.toLowerCase(),
+        title: "Your buyer signed the purchase agreement",
+        body: `${purchase.propertyLabel} — ${formatPrice(purchase.offerPrice)} with ${clientLabel}.`,
+        href: `/partner?tab=buyers&focus=${leadId}`,
+        severity: "info",
+      });
+    }
+    tellLoqal(
+      `agreement-signed-admin-${leadId}`,
+      "Purchase agreement signed",
+      `${clientLabel} — ${purchase.propertyLabel} at ${formatPrice(purchase.offerPrice)}. The mortgage company has the signed copy for the hard check.`,
+    );
+    toast("Agreement signed", {
+      description: "Your mortgage company has been notified and receives the signed copy.",
+    });
+  }
+
   function askChange() {
     if (!changeNote.trim()) {
       toast("Tell your agent what should be different.");
