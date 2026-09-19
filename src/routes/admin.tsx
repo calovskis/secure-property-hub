@@ -55,13 +55,6 @@ export const Route = createFileRoute("/admin")({
   }),
 });
 
-const METRICS: [string, string, string][] = [
-  ["Total accounts", "1,284", "↑ 46 this month"],
-  ["Pending verifications", "23", "9 flagged for review"],
-  ["Active partners", "87", "12 awaiting onboarding"],
-  ["Mortgage requests", "31", "6 need a lender assigned"],
-];
-
 function AdminPage() {
   const { user, ready } = useAuth();
   const greeting = useGreeting(user?.firstName ?? "", user?.email);
