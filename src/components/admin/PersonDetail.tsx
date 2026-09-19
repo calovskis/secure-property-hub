@@ -234,6 +234,7 @@ function ProfileTab({ person }: { person: AdminPerson }) {
   const [note, setNote] = useState(person.note ?? "");
   const [reg, setReg] = useState<Partial<PartnerRequest>>({});
   const [licenceDialogOpen, setLicenceDialogOpen] = useState(false);
+  const [countersignOpen, setCountersignOpen] = useState(false);
 
   const regValue = <K extends keyof PartnerRequest>(key: K): PartnerRequest[K] | undefined =>
     (reg[key] ?? req?.[key]) as PartnerRequest[K] | undefined;
