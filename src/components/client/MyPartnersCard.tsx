@@ -63,7 +63,7 @@ export function MyPartnersCard() {
     const out: Seat[] = [];
     for (const lead of mine) {
       for (const role of ["lender", "realtor"] as PartnerRole[]) {
-        const partner = currentPartner(lead, role, requests);
+        const partner = assignedPartner(lead, role, requests);
         if (!partner) continue;
         out.push({ key: `${lead.id}-${role}`, role, lead, partner });
       }
