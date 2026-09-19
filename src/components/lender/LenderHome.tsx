@@ -114,11 +114,25 @@ export function StatCard({
 export function LenderHome({
   lenderName,
   onOpenRequests,
+  onOpenMortgages,
 }: {
   lenderName: string;
   onOpenRequests: (leadId?: string) => void;
+  onOpenMortgages?: (() => void) | undefined;
 }) {
   const s = useLenderStats();
+  const { progressOf } = usePurchaseProgress();
+
+  /* Signed purchase agreements carry two hard dates: the mortgage approval the
+     agreement is conditioned on, and the closing date itself. */
+  const approvals = useMemo(
+    () =>
+      s.leads
+        .map((lead) => ({ lead, p: progressOf(lead.id) }))
+        .filter((x) => x.p.stage === "agreement_signed" && x.p.approvalDueDate)
+        .sort((a, b) => (a.p.approvalDueDate! < b.p.approvalDueDate! ? -1 : 1)),
+    [s.leads, progressOf],
+  );
 
   return (
     <div className="space-y-6">
