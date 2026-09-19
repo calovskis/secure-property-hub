@@ -217,6 +217,55 @@ export function LenderHome({
         />
       </section>
 
+      {approvals.length > 0 ? (
+        <section className="rounded-lg border border-gold/50 bg-gold-tint/40 p-6">
+          <h2 className="text-base font-semibold text-foreground">
+            Signed purchase agreements — mortgage approval deadlines
+          </h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            The agreement is conditioned on your approval. Reconfirm the terms in Mortgages before
+            the approval date.
+          </p>
+          <ul className="mt-3 divide-y divide-border">
+            {approvals.map(({ lead, p }) => {
+              const late = new Date(p.approvalDueDate!) < new Date();
+              return (
+                <li key={lead.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+                  <div>
+                    <div className="text-sm font-semibold text-foreground">{lead.clientName}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {lead.propertyLabel} · {PURCHASE_STAGE_LABEL[p.stage]}
+                      {p.hardCheckConfirmedAt ? " · terms reconfirmed" : " · hard check open"}
+                    </div>
+                  </div>
+                  <div className="text-right text-xs">
+                    <div
+                      className={`font-semibold underline decoration-2 ${
+                        late ? "text-destructive" : "text-foreground"
+                      }`}
+                    >
+                      Approval due {formatDate(p.approvalDueDate!)}
+                    </div>
+                    <div className="text-muted-foreground underline decoration-2">
+                      Closing {p.closingDate ? formatDate(p.closingDate) : "—"}
+                    </div>
+                  </div>
+                  {onOpenMortgages ? (
+                    <button
+                      type="button"
+                      onClick={onOpenMortgages}
+                      className="rounded-md bg-brand px-4 py-1.5 text-xs font-semibold text-background"
+                    >
+                      Open the file
+                    </button>
+                  ) : null}
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      ) : null}
+
       <section className="grid grid-cols-1 gap-6 lg:grid-cols-[1.4fr_1fr]">
         <div className="rounded-lg border border-border bg-card p-6">
           <div className="flex items-center justify-between">
