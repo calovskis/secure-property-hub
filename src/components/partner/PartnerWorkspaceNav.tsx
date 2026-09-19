@@ -38,6 +38,13 @@ function LenderLinks() {
                 <span aria-hidden>{t.icon}</span> {t.label}
               </Link>
             ))}
+            <Link
+              to="/profile"
+              onClick={() => setOpen(false)}
+              className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm text-foreground transition-colors hover:bg-brand-tint hover:text-brand"
+            >
+              <span aria-hidden>👤</span> My profile
+            </Link>
           </div>
         ) : null}
       </div>
