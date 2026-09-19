@@ -86,7 +86,10 @@ export function LicenceVerificationPanel({ request }: { request: PartnerRequest 
 
   function requestInfo(l: RealtorLicenseDoc) {
     const text = note.trim();
-    if (!text) return toast("Add a short note", { description: "Tell the partner what is missing." });
+    if (!text) {
+      toast("Add a short note", { description: "Tell the partner what is missing." });
+      return;
+    }
     const at = new Date().toISOString();
     const entry: RealtorLicenseDoc = {
       ...l,
