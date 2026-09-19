@@ -929,7 +929,7 @@ function useDerivedNotifications() {
     if (list.length) syncNotifications(list);
     pruneDerived(
       email,
-      ["sign-", "pdoc-", "preq-", "active-", "handoveroffer-"],
+      ["sign-", "pdoc-", "preq-", "active-", "handoveroffer-", "handover-offer-"],
       [...list.map((n) => n.id), ...answered],
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
