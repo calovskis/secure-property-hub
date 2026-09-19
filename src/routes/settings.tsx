@@ -2,6 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { PartnerAccountCard } from "@/components/profile/PartnerAccountCard";
 import { PARTNER_LABEL, ROLE_LABEL, fullName, useAuth } from "@/lib/auth";
+import { AdminNav } from "@/components/admin/AdminNav";
+
 
 export const Route = createFileRoute("/settings")({
   head: () => ({
@@ -36,11 +38,17 @@ function Row({ label, value }: { label: string; value?: string | null }) {
 }
 
 function SettingsPage() {
-  const { user } = useAuth();
+  const { user, ready } = useAuth();
+  // Admins keep the admin console headings on the settings page too.
+  const isAdmin = ready && user?.role === "admin";
 
   return (
     <div className="min-h-screen bg-background">
-      <AppHeader active="Settings" />
+      <AppHeader
+        active="Settings"
+        navSlot={isAdmin ? <AdminNav tab="settings" /> : undefined}
+      />
+
       <main className="mx-auto max-w-[900px] px-4 py-8 md:px-7">
         <header>
           <h1 className="text-2xl font-bold text-foreground">Settings</h1>
