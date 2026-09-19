@@ -27,6 +27,9 @@ import { EmployeeDirectory } from "@/components/admin/EmployeeDirectory";
 import { DeletionQueue } from "@/components/admin/DeletionQueue";
 import { useMyPermissions } from "@/lib/staff";
 import { useGreeting } from "@/lib/greeting";
+import { useAdminPeople } from "@/components/admin/people-model";
+import { useDeletions } from "@/lib/deletions";
+
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
