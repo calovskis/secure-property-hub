@@ -383,11 +383,27 @@ export function LenderMortgages({ canManage }: { canManage: boolean }) {
                   <span className="rounded bg-brand-tint px-2 py-1 text-[11px] font-semibold text-brand">
                     {leadState(l)}
                   </span>
-                  <span
-                    className={`rounded-full px-3 py-1 text-[11px] font-semibold ${STAGE_TONE[st]}`}
-                  >
-                    {MORTGAGE_STAGE_LABEL[st]}
-                  </span>
+                  {st === "in_underwriting" ? (
+                    <span className="flex flex-col items-end gap-1">
+                      <span
+                        className={`rounded-full px-3 py-1 text-[11px] font-semibold ${PURCHASE_STAGE_TONE[prog.stage]}`}
+                      >
+                        {PURCHASE_STAGE_LABEL[prog.stage]}
+                      </span>
+                      {prog.hardCheckOpen ? (
+                        <span className="text-[11px] font-semibold text-destructive">
+                          Hard check due{" "}
+                          {prog.approvalDueDate ? formatDate(prog.approvalDueDate) : "now"}
+                        </span>
+                      ) : null}
+                    </span>
+                  ) : (
+                    <span
+                      className={`rounded-full px-3 py-1 text-[11px] font-semibold ${STAGE_TONE[st]}`}
+                    >
+                      {MORTGAGE_STAGE_LABEL[st]}
+                    </span>
+                  )}
                   <span className="text-xs text-muted-foreground">{open ? "▲" : "▼"}</span>
                 </button>
                 {open ? <FileDetail lead={l} /> : null}
