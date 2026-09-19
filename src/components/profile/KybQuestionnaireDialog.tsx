@@ -529,7 +529,13 @@ export function KybQuestionnaireDialog({
                         person={{ ...data.creatorShareholder, fullName: fullName(user) }}
                         lockName
                         onChange={(p) =>
-                          update({ creatorShareholder: { ...p, sharePct: undefined } })
+                          update({
+                            creatorShareholder: (() => {
+                              const next = { ...p };
+                              delete next.sharePct;
+                              return next;
+                            })(),
+                          })
                         }
                       />
                     ) : null}
