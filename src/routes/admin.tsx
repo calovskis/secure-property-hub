@@ -5,7 +5,7 @@ import { PARTNER_LABEL, fullName, useAuth } from "@/lib/auth";
 import { formatDate } from "@/lib/dates";
 import { usePartnerRequests, type PartnerRequest } from "@/lib/partner-requests";
 import { useRealtors } from "@/lib/realtors";
-import { KICKOFF_LABEL, useLeads } from "@/lib/leads";
+import { KICKOFF_LABEL, useActiveLeads } from "@/lib/leads";
 import { buyerAgentSummary, useBuyerProcess } from "@/lib/buyer-process";
 import { logActivity } from "@/lib/activity";
 import { openSupportThread } from "@/lib/chat";
@@ -83,7 +83,7 @@ function AdminPage() {
   const [focusThread, setFocusThread] = useState<string | null>(null);
   const { requests, setStatus } = usePartnerRequests();
   const { addRealtor } = useRealtors();
-  const { leads } = useLeads();
+  const { leads } = useActiveLeads();
   const proc = useBuyerProcess();
   const { can } = useMyPermissions(user?.email, ready && user?.role === "admin");
 

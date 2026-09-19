@@ -12,7 +12,7 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import { useAuth } from "@/lib/auth";
-import { useLeads, type MortgageLead } from "@/lib/leads";
+import { useActiveLeads, type MortgageLead } from "@/lib/leads";
 import { usePartnerRequests } from "@/lib/partner-requests";
 import { CLIENT_ACTION_LABEL, useBuyerProcess } from "@/lib/buyer-process";
 import { logActivity } from "@/lib/activity";
@@ -114,7 +114,7 @@ function activityFor(
 /* ------------------------------------------------------------------ */
 
 export function ClientPartnersTab({ person }: { person: AdminPerson }) {
-  const { leads } = useLeads();
+  const { leads } = useActiveLeads();
   const { requests } = usePartnerRequests();
   const proc = useBuyerProcess();
   const { handovers } = useHandovers();
@@ -401,7 +401,7 @@ function ChangePartnerDialog({
 /* ------------------------------------------------------------------ */
 
 export function PartnerClientsTab({ person }: { person: AdminPerson }) {
-  const { leads } = useLeads();
+  const { leads } = useActiveLeads();
   const { requests } = usePartnerRequests();
   const proc = useBuyerProcess();
   const { handovers } = useHandovers();
