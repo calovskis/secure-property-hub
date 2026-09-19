@@ -388,7 +388,7 @@ export function KybQuestionnaireDialog({
       }
     }
     setError(null);
-    onSubmit({ ...data, director });
+    onSubmit({ ...data, director, shareholders: allShareholders });
     try {
       localStorage.removeItem(draftKey(request.id));
     } catch {
@@ -608,13 +608,15 @@ export function KybQuestionnaireDialog({
                 <h3 className="text-sm font-semibold text-foreground">
                   Shareholders with 25% or more
                 </h3>
-                {data.shareholders.length === 0 ? (
+                {allShareholders.length === 0 ? (
                   <p className="mt-1 text-muted-foreground">None declared.</p>
                 ) : (
                   <ul className="mt-1 space-y-1 text-muted-foreground">
-                    {data.shareholders.map((s, i) => (
+                    {allShareholders.map((s, i) => (
                       <li key={i}>
-                        {s.fullName} — {s.sharePct}% · ID: {s.idDoc || "—"}
+                        {s.fullName}
+                        {i === 0 && creatorAsShareholder ? " (you)" : ""} — {s.sharePct}% · ID:{" "}
+                        {s.idDoc || (i === 0 && creatorAsShareholder && data.directorIsCreator ? "on file" : "—")}
                       </li>
                     ))}
                   </ul>
