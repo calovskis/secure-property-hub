@@ -35,6 +35,7 @@ import {
   type AppNotification,
 } from "@/lib/notifications";
 import { clientDisplayForPartner } from "@/lib/user-id";
+import { isProfileDeleted } from "@/lib/deletions";
 import { formatDateTime, usDateToIso } from "@/lib/dates";
 
 type Draft = Omit<AppNotification, "createdAt"> & { createdAt?: string | undefined };
@@ -445,7 +446,11 @@ function useDerivedNotifications() {
           );
         }
       }
-      const myFiles = leads.filter((l) => l.buyerAgent?.agentId === seat.id);
+      /* Files whose buyer was deleted stop producing open tasks — anything
+         still open is pruned below; completed entries stay as history. */
+      const myFiles = leads.filter(
+        (l) => l.buyerAgent?.agentId === seat.id && !isProfileDeleted(l.clientEmail),
+      );
       for (const lead of myFiles) {
         /* Every step of the buyer's journey reaches the agent as its own
            notification — starting with the moment the file was assigned. */
@@ -631,6 +636,8 @@ function useDerivedNotifications() {
     const list: Draft[] = [];
     {
       for (const r of requests) {
+        /* A deleted partner's registrations no longer need admin action. */
+        if (isProfileDeleted(r.email)) continue;
         if (r.status === "pending") {
           list.push({
             id: `preq-${r.id}`,
@@ -879,6 +886,8 @@ function useDerivedNotifications() {
     const list: Draft[] = [];
     for (const lead of leads) {
       if (lead.status === "annulled") continue;
+      /* Deleted client — the inquiry is no longer an open lender task. */
+      if (isProfileDeleted(lead.clientEmail)) continue;
       if (scopedStates && !scopedStates.includes(leadState(lead))) continue;
       const assigned = Boolean(lead.assignedToId);
       list.push({
