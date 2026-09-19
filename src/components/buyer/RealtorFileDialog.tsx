@@ -90,9 +90,9 @@ export function RealtorFileDialog({
   const [price, setPrice] = useState<PricePreference>("same_range");
   const [pickedId, setPickedId] = useState("");
 
-  const openPurchase = purchases.find(
-    (p) => p.status !== "withdrawn" && p.status !== "price_supported",
-  );
+  /* One purchase request per property file — once sent (and not withdrawn),
+     the buyer negotiates on that request instead of starting a new one. */
+  const openPurchase = purchases.find((p) => p.status !== "withdrawn");
   const lastPurchase = purchases[0];
   const lastChange = changes[0];
   const otherProperties = useMemo(
