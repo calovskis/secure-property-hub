@@ -334,7 +334,7 @@ function AdminPage() {
         {tab === "overview" ? (
           <>
             <section className="mb-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
-              {METRICS.map(([label, value, note]) => (
+              {metrics.map(([label, value, note]) => (
                 <div key={label} className="rounded-lg border border-border bg-card p-6">
                   <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     {label}
@@ -486,7 +486,7 @@ function AdminPage() {
               <div className="rounded-lg border border-border bg-card p-6">
                 <h2 className="text-base font-semibold text-foreground">Review queues</h2>
                 <div className="mt-4 space-y-3">
-                  {QUEUES.map(([label, count, note]) => (
+                  {queues.map(([label, count, note]) => (
                     <div key={label} className="rounded-lg bg-brand-tint/50 p-4">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-semibold text-foreground">{label}</span>
