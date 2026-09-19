@@ -298,16 +298,16 @@ function buildActivity(
         detail: `${money(p.offerPrice)}${p.agentNote ? ` — ${p.agentNote}` : ""}`,
         tone: "done",
       });
-      if (!plan?.agreementSignedAt) {
+      if (!plan?.path) {
         awaiting += 1;
         push(items, {
           at: p.respondedAt,
-          label: "Sign the purchase agreement and tell us how the property will be held",
+          label: "Tell us how the property will be held",
           detail: "Directly, or through a US company holding the property.",
           tone: "pending",
           action: {
             href: `/property/${lead.propertyId}?open=agreement`,
-            cta: "Continue to the purchase agreement",
+            cta: "Continue",
           },
         });
       }
@@ -330,10 +330,32 @@ function buildActivity(
         tone: "done",
       });
     }
-    if (plan.agreementSignedAt) {
+    if (plan.termsProposedAt && !plan.termsConfirmedAt && !plan.termsChangeRequestedAt) {
+      awaiting += 1;
       push(items, {
-        at: plan.agreementSignedAt,
-        label: "You signed the purchase agreement",
+        at: plan.termsProposedAt,
+        label: "Your agent proposed the purchase terms — your confirmation is needed",
+        detail:
+          "These terms go to the seller, who can confirm them or suggest changes. Once agreed, your agent uploads the agreement for signing.",
+        tone: "pending",
+        action: {
+          href: `/property/${lead.propertyId}?open=agreement`,
+          cta: "Review and confirm the terms",
+        },
+      });
+    }
+    if (plan.termsChangeRequestedAt && !plan.termsConfirmedAt) {
+      push(items, {
+        at: plan.termsChangeRequestedAt,
+        label: "You asked your agent to change the proposed terms",
+        detail: plan.termsChangeNote || undefined,
+        tone: "update",
+      });
+    }
+    if (plan.termsConfirmedAt) {
+      push(items, {
+        at: plan.termsConfirmedAt,
+        label: "You confirmed the purchase terms — they go to the seller",
         tone: "done",
       });
     }
