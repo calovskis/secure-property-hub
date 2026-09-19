@@ -85,6 +85,7 @@ function AdminPage() {
   const { addRealtor } = useRealtors();
   const { leads } = useLeads();
   const proc = useBuyerProcess();
+  const { can } = useMyPermissions(user?.email, ready && user?.role === "admin");
 
   useEffect(() => {
     if (search.tab) setTab(search.tab);

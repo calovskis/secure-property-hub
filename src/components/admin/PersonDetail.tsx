@@ -32,6 +32,9 @@ import {
 } from "@/components/admin/PartnerAssignments";
 import { PhoneField } from "@/components/form/PhoneField";
 import { isValidPhone } from "@/lib/phone";
+import { DeleteAccountControls } from "@/components/admin/DeleteAccountControls";
+import { useMyPermissions } from "@/lib/staff";
+import { fullName, useAuth } from "@/lib/auth";
 
 type Tab =
   | "profile"
