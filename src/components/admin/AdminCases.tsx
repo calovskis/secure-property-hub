@@ -11,7 +11,7 @@ import {
   MORTGAGE_STAGE_LABEL,
   isMortgageFile,
   mortgageStage,
-  useLeads,
+  useActiveLeads,
   type MortgageLead,
 } from "@/lib/leads";
 import { formatDate, formatDateTime } from "@/lib/dates";
@@ -296,7 +296,7 @@ function Mini({ label, value }: { label: string; value: string }) {
 }
 
 export function AdminCases() {
-  const { leads } = useLeads();
+  const { leads } = useActiveLeads();
   const [openId, setOpenId] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | "open" | "mortgages">("all");
 

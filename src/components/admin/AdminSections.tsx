@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { useActivity } from "@/lib/activity";
 import { usePartnerRequests } from "@/lib/partner-requests";
 import { useRealtors } from "@/lib/realtors";
-import { useLeads } from "@/lib/leads";
+import { useActiveLeads } from "@/lib/leads";
 import {
   LENDER_PLATFORM_FEE_USD,
   REALTOR_COMMISSION_PCT,
@@ -113,7 +113,7 @@ export function EmployeeTracking() {
 export function PartnerComparison() {
   const { requests, updateRequest } = usePartnerRequests();
   const { realtors } = useRealtors();
-  const { leads } = useLeads();
+  const { leads } = useActiveLeads();
   const { issueInvoice } = useAccounting();
 
   const approved = requests.filter((r) => r.status === "approved");
@@ -327,7 +327,7 @@ function avgResponseHours(items: { submittedAt: string; decidedAt?: string }[]) 
  */
 export function PartnerMetrics() {
   const { realtors } = useRealtors();
-  const { leads } = useLeads();
+  const { leads } = useActiveLeads();
   const snapshot = getTeamSnapshot();
 
   const approved = realtors.filter((r) => r.approvedAt);
