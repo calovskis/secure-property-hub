@@ -289,14 +289,9 @@ function ChangePartnerDialog({
       briefing,
       requestedBy: user?.email ?? "Loqal admin",
     });
-    notify({
-      id: `handover-offer-${lead.id}-${role}-${target.id}`,
-      to: target.email.toLowerCase(),
-      title: `New client offered to you — ${lead.clientName}`,
-      body: `${lead.propertyLabel}. Review the briefing and confirm before the file moves to you.`,
-      href: "/partner?tab=home&open=handover",
-      severity: "warning",
-    });
+    /* The partner's own notification is derived from the pending handover
+       itself (see NotificationBell), so it can never be sent twice and it
+       disappears the moment they accept or decline. */
     logActivity(
       user?.email ?? "Loqal admin",
       `changed the ${PARTNER_ROLE_LABEL[role].toLowerCase()} on a client file`,
