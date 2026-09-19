@@ -636,9 +636,11 @@ function useDerivedNotifications() {
     const list: Draft[] = [];
     {
       for (const r of requests) {
-        /* A deleted partner's registrations no longer need admin action. */
-        if (isProfileDeleted(r.email)) continue;
-        if (r.status === "pending") {
+        /* A deleted partner's registration stops being an open admin task
+           (approval, countersignature, KYB review). Correspondence history
+           below still derives, so the record of past exchanges remains. */
+        const partnerDeleted = isProfileDeleted(r.email);
+        if (!partnerDeleted && r.status === "pending") {
           list.push({
             id: `preq-${r.id}`,
             to: "admins",
