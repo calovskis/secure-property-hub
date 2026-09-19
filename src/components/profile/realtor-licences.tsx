@@ -16,6 +16,8 @@ import {
   type RealtorLicenseEvent,
 } from "@/lib/partner-requests";
 import { useRealtors } from "@/lib/realtors";
+import { notify } from "@/lib/notifications";
+import { awaitsVerification, isLicenceVerified } from "@/lib/licence-verification";
 import { logActivity } from "@/lib/activity";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import {
@@ -583,6 +585,8 @@ const HISTORY_LABEL: Record<RealtorLicenseEvent["action"], string> = {
   updated: "Details updated",
   removed: "Licence removed",
   copy_uploaded: "Copy uploaded",
+  verified: "Verified by Loqal",
+  info_requested: "Loqal asked for information",
 };
 
 const HISTORY_TONE: Record<RealtorLicenseEvent["action"], string> = {
