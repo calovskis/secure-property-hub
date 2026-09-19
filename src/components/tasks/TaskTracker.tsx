@@ -15,7 +15,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { useNotifications, type AppNotification } from "@/lib/notifications";
 import { openDeepLink } from "@/lib/deep-link";
-import { useLeads } from "@/lib/leads";
+import { useActiveLeads } from "@/lib/leads";
 
 type GroupId =
   | "documents"
@@ -173,7 +173,7 @@ export function TaskTracker({ className = "" }: { className?: string }) {
   const isAdmin = user?.role === "admin";
   const { notifications } = useNotifications(user?.email);
   const { notifications: adminItems } = useNotifications(isAdmin ? "admins" : undefined);
-  const { leads } = useLeads();
+  const { leads } = useActiveLeads();
 
   const rows = useMemo<Row[]>(() => {
     const email = user?.email.toLowerCase() ?? "";

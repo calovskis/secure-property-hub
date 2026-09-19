@@ -1,3 +1,4 @@
+import { useActiveLeads } from "@/lib/leads";
 import { useMemo } from "react";
 import { useLeads, hasPricedOffer, leadState, type MortgageLead } from "@/lib/leads";
 import { useLenderTeam } from "@/lib/lender-team";
@@ -18,7 +19,7 @@ function isSameDay(a: Date, b: Date) {
 }
 
 export function useLenderStats() {
-  const { leads: allLeads } = useLeads();
+  const { leads: allLeads } = useActiveLeads();
   const { scopedStates } = useLenderTeam();
   return useMemo(() => {
     // Seats limited to specific states only ever count work located there.

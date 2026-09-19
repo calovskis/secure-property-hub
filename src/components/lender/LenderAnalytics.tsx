@@ -1,3 +1,4 @@
+import { useActiveLeads } from "@/lib/leads";
 import { useMemo, useState } from "react";
 import {
   isOpenRequest,
@@ -108,7 +109,7 @@ function deltaText(current: number, previous: number) {
 }
 
 export function LenderAnalytics() {
-  const { leads: allLeads } = useLeads();
+  const { leads: allLeads } = useActiveLeads();
   const { members, active, scopedStates } = useLenderTeam();
   const [period, setPeriod] = useState<PeriodId>("month");
   const [compare, setCompare] = useState(true);

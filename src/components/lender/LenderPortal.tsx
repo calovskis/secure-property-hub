@@ -1,3 +1,4 @@
+import { useActiveLeads } from "@/lib/leads";
 import { useEffect, useMemo, useState } from "react";
 import {
   computeDti,
@@ -417,7 +418,7 @@ function RequestsInbox({
   canDecide: boolean;
   focusLeadId?: string | null;
 }) {
-  const { leads: allLeads } = useLeads();
+  const { leads: allLeads } = useActiveLeads();
   const { scopedStates } = useLenderTeam();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [view, setView] = useState<"open" | "past">("open");

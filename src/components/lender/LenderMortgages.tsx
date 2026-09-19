@@ -1,3 +1,4 @@
+import { useActiveLeads } from "@/lib/leads";
 import { useMemo, useState } from "react";
 import {
   CLIENT_DECISION_LABEL,
@@ -162,7 +163,7 @@ function FileDetail({ lead }: { lead: MortgageLead }) {
 }
 
 export function LenderMortgages({ canManage }: { canManage: boolean }) {
-  const { leads } = useLeads();
+  const { leads } = useActiveLeads();
   const { scopedStates } = useLenderTeam();
   const [openId, setOpenId] = useState<string | null>(null);
   const [state, setState] = useState("all");

@@ -1,3 +1,4 @@
+import { useActiveLeads } from "@/lib/leads";
 import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { isMemberOnVacation, LENDER_ROLE_LABEL, useLenderTeam, type LenderMember } from "@/lib/lender-team";
@@ -146,7 +147,7 @@ function MemberDetail({
 
 export function LenderEmployees() {
   const { members, active } = useLenderTeam();
-  const { leads } = useLeads();
+  const { leads } = useActiveLeads();
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const isAdmin = active?.role === "admin";
