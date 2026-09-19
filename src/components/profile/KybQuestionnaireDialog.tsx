@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { fullName, type LoqalUser } from "@/lib/auth";
 import type { KycPerson, PartnerRequest } from "@/lib/partner-requests";
 import { CountryCombobox } from "@/components/form/CountryCombobox";
-import { countryName } from "@/data/countries";
+import { countryLabel } from "@/data/countries";
 
 const inputClass =
   "w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-brand";
@@ -439,8 +439,8 @@ export function KybQuestionnaireDialog({
                 <p className="mt-1 text-muted-foreground">
                   {director.fullName || "—"}
                   {data.directorIsCreator ? " (you)" : ""} · {director.address || "—"} ·{" "}
-                  {director.citizenship ? countryName(director.citizenship) : "—"} / residing in{" "}
-                  {director.countryOfResidence ? countryName(director.countryOfResidence) : "—"}
+                  {director.citizenship ? countryLabel(director.citizenship) : "—"} / residing in{" "}
+                  {director.countryOfResidence ? countryLabel(director.countryOfResidence) : "—"}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
                   ID document: {director.idDoc || (data.directorIsCreator ? "on file" : "—")}
