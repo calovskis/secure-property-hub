@@ -86,6 +86,87 @@ function FilePick({
   );
 }
 
+/**
+ * Home-address field with worldwide autocomplete — the same address search the
+ * client mortgage questionnaire uses. Suggestions are scoped to the person's
+ * country of residence when it's picked; typing free text always works.
+ */
+function HomeAddressField({
+  value,
+  country,
+  onChange,
+}: {
+  value: string;
+  /** ISO country code used to bias suggestions ("" = worldwide). */
+  country: string;
+  onChange: (address: string) => void;
+}) {
+  const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    function onDocClick(e: MouseEvent) {
+      if (!wrapRef.current?.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, []);
+
+  useEffect(() => {
+    const q = value.trim();
+    if (q.length < 3) {
+      setSuggestions([]);
+      return;
+    }
+    const t = window.setTimeout(() => {
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
+      void searchAddress(q, country || undefined, controller.signal).then((list) => {
+        if (!controller.signal.aborted) {
+          setSuggestions(list);
+          setOpen(list.length > 0);
+        }
+      });
+    }, ADDRESS_DEBOUNCE_MS);
+    return () => window.clearTimeout(t);
+  }, [value, country]);
+
+  return (
+    <div ref={wrapRef} className="relative">
+      <span className={labelClass}>Home address</span>
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onFocus={() => suggestions.length > 0 && setOpen(true)}
+        placeholder="Start typing the street address…"
+        autoComplete="off"
+        className={inputClass}
+      />
+      {open && suggestions.length > 0 ? (
+        <ul className="absolute z-30 mt-1 max-h-56 w-full overflow-auto rounded-md border border-border bg-background shadow-lg">
+          {suggestions.map((s) => (
+            <li key={s.label}>
+              <button
+                type="button"
+                className="block w-full px-3 py-2 text-left text-sm hover:bg-brand-tint"
+                onClick={() => {
+                  onChange(s.label);
+                  setOpen(false);
+                }}
+              >
+                {s.label}
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
+
 function PersonFields({
   person,
   onChange,
