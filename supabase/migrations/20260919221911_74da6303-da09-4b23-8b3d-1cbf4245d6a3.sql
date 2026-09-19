@@ -1,0 +1,1 @@
+ALTER TABLE public.partner_requests ADD COLUMN IF NOT EXISTS lender_licenses jsonb NOT NULL DEFAULT '[]'::jsonb;
