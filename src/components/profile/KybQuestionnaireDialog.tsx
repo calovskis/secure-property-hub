@@ -516,10 +516,15 @@ export function KybQuestionnaireDialog({
                         max={100}
                         value={data.creatorSharePct ?? ""}
                         onChange={(e) =>
-                          update({
-                            creatorSharePct:
-                              e.target.value === "" ? undefined : Number(e.target.value),
-                          })
+                          update(
+                            e.target.value === ""
+                              ? (() => {
+                                  const patch: Partial<KybDraft> = {};
+                                  delete patch.creatorSharePct;
+                                  return patch;
+                                })()
+                              : { creatorSharePct: Number(e.target.value) },
+                          )
                         }
                         className={inputClass}
                       />
