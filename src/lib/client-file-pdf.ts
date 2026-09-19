@@ -299,7 +299,7 @@ function sections(lead: MortgageLead, progress?: PurchaseProgress): Section[] {
   return out;
 }
 
-export async function downloadClientFilePdf(lead: MortgageLead, progress?: PurchaseProgress) {
+export async function buildClientFilePdf(lead: MortgageLead, progress?: PurchaseProgress) {
   const { jsPDF } = await import("jspdf");
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const pageW = doc.internal.pageSize.getWidth();
@@ -379,5 +379,10 @@ export async function downloadClientFilePdf(lead: MortgageLead, progress?: Purch
   }
 
   footer();
+  return doc;
+}
+
+export async function downloadClientFilePdf(lead: MortgageLead, progress?: PurchaseProgress) {
+  const doc = await buildClientFilePdf(lead, progress);
   doc.save(exportFileName(lead, "pdf"));
 }
