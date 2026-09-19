@@ -222,9 +222,8 @@ export function LicenceCoverageTable({
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-xs text-muted-foreground">
-          Licence copies are uploaded from the identity &amp; licence verification card.
-        </p>
+        <p className="text-xs text-muted-foreground">{hint}</p>
+
         <div className="flex items-center gap-2">
           <button
             type="button"
