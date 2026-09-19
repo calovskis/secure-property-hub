@@ -198,8 +198,10 @@ export type PartnerRequest = {
   phone: string;
   allStates: boolean;
   states: string[];
-  /** Mortgage lenders: NMLS / state licence number. */
+  /** Mortgage lenders: general company NMLS number. */
   lenderLicence?: string;
+  /** Mortgage lenders: state-specific NMLS number + validity, one per state. */
+  lenderLicenses?: RealtorLicense[];
   /** Realtors: one license per licensed state. */
   realtorLicenses?: RealtorLicense[];
   /** Realtors: languages they work in. */
