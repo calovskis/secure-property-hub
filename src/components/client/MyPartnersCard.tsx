@@ -17,7 +17,7 @@ import { useLeads, type MortgageLead } from "@/lib/leads";
 import { usePartnerRequests, type PartnerRequest } from "@/lib/partner-requests";
 import {
   PARTNER_ROLE_LABEL,
-  currentPartner,
+  assignedPartner,
   useHandovers,
   type PartnerRole,
 } from "@/lib/partner-assignments";
