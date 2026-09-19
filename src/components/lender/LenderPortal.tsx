@@ -847,7 +847,13 @@ export function LenderPortal({
       {current === "employees" ? <LenderEmployees /> : null}
       {current === "analytics" ? <LenderAnalytics /> : null}
       {current === "accounting" ? <LenderAccounting lenderName={lenderName} /> : null}
-      {current === "other" ? <LenderTeam /> : null}
+      {current === "other" ? (
+        <>
+          <LenderLicences />
+          <LenderTeam />
+        </>
+      ) : null}
+
     </main>
   );
 }
