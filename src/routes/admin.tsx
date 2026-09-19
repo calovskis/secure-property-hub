@@ -155,9 +155,12 @@ function AdminPage() {
           </p>
         </div>
 
-        <div className="mb-6">
-          <TaskTracker />
-        </div>
+        {tab === "overview" ? (
+          <div className="mb-6">
+            <TaskTracker />
+          </div>
+        ) : null}
+
 
 
         {tab === "cases" ? <AdminCases /> : null}
