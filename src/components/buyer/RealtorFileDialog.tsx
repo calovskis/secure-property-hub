@@ -338,8 +338,19 @@ export function RealtorFileDialog({
           <div className="space-y-3">
             {openPurchase ? (
               <p className="rounded-md border border-border bg-background p-3 text-sm text-muted-foreground">
-                You already have a request with {agentName} —{" "}
-                {PURCHASE_STATUS_LABEL[openPurchase.status].toLowerCase()}. Check the Status tab.
+                {openPurchase.status === "price_supported" ? (
+                  <>
+                    The price is already agreed with {agentName} —{" "}
+                    {formatPrice(openPurchase.offerPrice)} is being put to the seller. Everything
+                    continues on the Status tab and in the purchase terms below.
+                  </>
+                ) : (
+                  <>
+                    You already have a request with {agentName} —{" "}
+                    {PURCHASE_STATUS_LABEL[openPurchase.status].toLowerCase()}. Check the Status
+                    tab.
+                  </>
+                )}
               </p>
             ) : (
               <>
