@@ -194,6 +194,22 @@ export function GetStartedCard({ className = "" }: { className?: string }) {
       },
     ];
 
+    /* Visa is its own requirement, and only for a declared US visa or status. */
+    const visaProfile = mp ?? leads.find((l) => l.profile)?.profile;
+    if (!user.usPerson && visaProfile?.usVisaActive) {
+      clientItems.push({
+        id: "c-visa",
+        title: "Upload your US visa or status document",
+        desc: "A copy of the visa or status you declared — kept separate from your photo ID.",
+        icon: "🛂",
+        done:
+          (mp?.visaDocuments?.length ?? 0) > 0 ||
+          leads.some((l) => (l.profile?.visaDocuments?.length ?? 0) > 0),
+        to: "/profile",
+        actionLabel: "Upload",
+      });
+    }
+
     if (!user.usPerson) {
       clientItems.push({
         id: "c-entity",
