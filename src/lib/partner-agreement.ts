@@ -399,8 +399,10 @@ export function executedAgreementText(
     );
   }
   if (r.agreementCountersignedAt) {
+    const by = r.agreementCountersignedBy || LOQAL_PARTY.signatoryName;
+    const title = r.agreementCountersignedTitle || LOQAL_PARTY.signatoryTitle;
     lines.push(
-      `Countersigned by ${LOQAL_PARTY.legalName} (${LOQAL_PARTY.signatoryName}, ${LOQAL_PARTY.signatoryTitle}) on ${formatDate(r.agreementCountersignedAt)}.`,
+      `Countersigned electronically by ${by}, ${title}, for and on behalf of ${LOQAL_PARTY.legalName} (${LOQAL_PARTY.state} corporation, ${LOQAL_PARTY.address}) on ${formatDate(r.agreementCountersignedAt)} (${r.agreementCountersignedAt}).`,
     );
   } else {
     lines.push("Awaiting Loqal countersignature.");

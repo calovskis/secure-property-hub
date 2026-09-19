@@ -11,6 +11,7 @@ import {
 import { PartnerReviewBar, ReviewerMark } from "@/components/admin/PartnerReviewBar";
 
 import { PartnerRequestDialog } from "@/components/admin/PartnerRequestDialog";
+import { PartnerCountersignDialog } from "@/components/admin/PartnerCountersignDialog";
 import { PartnerCorrespondence } from "@/components/admin/PartnerCorrespondence";
 import { PersonDetail } from "@/components/admin/PersonDetail";
 import { useAdminPeople } from "@/components/admin/people-model";
@@ -150,6 +151,7 @@ function AdminPartnerRequestsPage() {
   const { user, ready } = useAuth();
   const { requests, setStatus, updateRequest } = usePartnerRequests();
   const [ask, setAsk] = useState<{ request: PartnerRequest; kind: "info" | "call" } | null>(null);
+  const [countersignFor, setCountersignFor] = useState<PartnerRequest | null>(null);
   const { addRealtor } = useRealtors();
   const [filter, setFilter] = useState<TypeFilter>("all");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("unassigned");
@@ -229,9 +231,21 @@ function AdminPartnerRequestsPage() {
   }
 
   /** Loqal's side of the partnership agreement — completes the signing flow. */
-  function countersign(r: PartnerRequest) {
-    updateRequest(r.id, { agreementCountersignedAt: new Date().toISOString() });
-    logActivity("Loqal admin", "countersigned a partnership agreement", r.companyName);
+  function countersign(r: PartnerRequest, signatory: { name: string; title: string }) {
+    updateRequest(r.id, {
+      agreementCountersignedAt: new Date().toISOString(),
+      agreementCountersignedBy: signatory.name,
+      agreementCountersignedTitle: signatory.title,
+    });
+    notify({
+      id: `countersigned-${r.id}`,
+      to: r.email.toLowerCase(),
+      title: "Loqal countersigned your partnership agreement",
+      body: `${signatory.name}, ${signatory.title}, signed for Loqal — your partnership is fully active.`,
+      href: "/profile",
+      severity: "info",
+    });
+    logActivity(signatory.name, "countersigned a partnership agreement", r.companyName);
     toast("Agreement countersigned", { description: `${r.companyName} is now fully active.` });
   }
 
@@ -544,7 +558,7 @@ function AdminPartnerRequestsPage() {
                     {awaitsCountersign(r) ? (
                       <button
                         type="button"
-                        onClick={() => countersign(r)}
+                        onClick={() => setCountersignFor(r)}
                         className="rounded-md bg-success px-4 py-2 text-xs font-semibold text-background hover:opacity-90"
                       >
                         Countersign agreement
@@ -601,6 +615,17 @@ function AdminPartnerRequestsPage() {
           onSend={(message, requiresDocument) =>
             sendAdminRequest(ask.request, ask.kind, message, requiresDocument)
           }
+        />
+      ) : null}
+
+      {countersignFor ? (
+        <PartnerCountersignDialog
+          request={countersignFor}
+          open
+          onOpenChange={(next) => {
+            if (!next) setCountersignFor(null);
+          }}
+          onCountersign={(signatory) => countersign(countersignFor, signatory)}
         />
       ) : null}
     </div>

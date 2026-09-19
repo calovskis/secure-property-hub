@@ -252,6 +252,9 @@ export type PartnerRequest = {
   agreementSignedBy?: string;
   /** Countersigned by Loqal — the partnership is fully active. */
   agreementCountersignedAt?: string;
+  /** The Loqal signatory who countersigned, and their title at signing. */
+  agreementCountersignedBy?: string;
+  agreementCountersignedTitle?: string;
   submittedAt: string;
   status: PartnerRequestStatus;
   decidedAt?: string;
@@ -300,6 +303,8 @@ function fromRow(r: Row): PartnerRequest {
     agreementSignedAt: s(r["agreement_signed_at"]),
     agreementSignedBy: s(r["agreement_signed_by"]),
     agreementCountersignedAt: s(r["agreement_countersigned_at"]),
+    agreementCountersignedBy: s(r["agreement_countersigned_by"]),
+    agreementCountersignedTitle: s(r["agreement_countersigned_title"]),
     reviewerId: s(r["reviewer_id"]),
     reviewerName: s(r["reviewer_name"]),
     reviewStage: (s(r["review_stage"]) as ReviewStage) ?? "unassigned",
@@ -346,6 +351,8 @@ const COLUMN: Record<string, string> = {
   agreementSignedAt: "agreement_signed_at",
   agreementSignedBy: "agreement_signed_by",
   agreementCountersignedAt: "agreement_countersigned_at",
+  agreementCountersignedBy: "agreement_countersigned_by",
+  agreementCountersignedTitle: "agreement_countersigned_title",
   reviewerId: "reviewer_id",
   reviewerName: "reviewer_name",
   reviewStage: "review_stage",

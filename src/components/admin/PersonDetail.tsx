@@ -37,6 +37,8 @@ import { useMyPermissions } from "@/lib/staff";
 import { fullName, useAuth } from "@/lib/auth";
 import { LicenceVerificationDialog } from "@/components/admin/LicenceVerificationPanel";
 import { pendingVerifications } from "@/lib/licence-verification";
+import { PartnerCountersignDialog } from "@/components/admin/PartnerCountersignDialog";
+import { notify } from "@/lib/notifications";
 
 type Tab =
   | "profile"
@@ -234,6 +236,7 @@ function ProfileTab({ person }: { person: AdminPerson }) {
   const [note, setNote] = useState(person.note ?? "");
   const [reg, setReg] = useState<Partial<PartnerRequest>>({});
   const [licenceDialogOpen, setLicenceDialogOpen] = useState(false);
+  const [countersignOpen, setCountersignOpen] = useState(false);
 
   const regValue = <K extends keyof PartnerRequest>(key: K): PartnerRequest[K] | undefined =>
     (reg[key] ?? req?.[key]) as PartnerRequest[K] | undefined;
@@ -395,7 +398,13 @@ function ProfileTab({ person }: { person: AdminPerson }) {
             <Row
               label="Countersigned by Loqal"
               value={
-                req.agreementCountersignedAt ? formatDateTime(req.agreementCountersignedAt) : "—"
+                req.agreementCountersignedAt
+                  ? `${formatDateTime(req.agreementCountersignedAt)} by ${req.agreementCountersignedBy ?? "Loqal"}${
+                      req.agreementCountersignedTitle
+                        ? `, ${req.agreementCountersignedTitle}`
+                        : ""
+                    }`
+                  : "—"
               }
             />
           </dl>
@@ -434,22 +443,40 @@ function ProfileTab({ person }: { person: AdminPerson }) {
               </p>
               <button
                 type="button"
-                onClick={() => {
-                  updateRequest(req.id, {
-                    agreementCountersignedAt: new Date().toISOString(),
-                  });
-                  logActivity(
-                    "Loqal admin",
-                    "countersigned a partnership agreement",
-                    req.companyName,
-                  );
-                  toast("Agreement countersigned", { description: req.companyName });
-                }}
+                onClick={() => setCountersignOpen(true)}
                 className="rounded-md bg-success px-3.5 py-2 text-xs font-semibold text-background hover:opacity-90"
               >
                 Countersign agreement
               </button>
             </div>
+          ) : null}
+          {req.agreementSignedAt ? (
+            <PartnerCountersignDialog
+              request={req}
+              open={countersignOpen}
+              onOpenChange={setCountersignOpen}
+              onCountersign={(signatory) => {
+                updateRequest(req.id, {
+                  agreementCountersignedAt: new Date().toISOString(),
+                  agreementCountersignedBy: signatory.name,
+                  agreementCountersignedTitle: signatory.title,
+                });
+                notify({
+                  id: `countersigned-${req.id}`,
+                  to: req.email.toLowerCase(),
+                  title: "Loqal countersigned your partnership agreement",
+                  body: `${signatory.name}, ${signatory.title}, signed for Loqal — your partnership is fully active.`,
+                  href: "/profile",
+                  severity: "info",
+                });
+                logActivity(
+                  signatory.name,
+                  "countersigned a partnership agreement",
+                  req.companyName,
+                );
+                toast("Agreement countersigned", { description: req.companyName });
+              }}
+            />
           ) : null}
           {req.realtorLicenses?.length ? (
             <div className="mt-3 flex flex-wrap gap-1.5">

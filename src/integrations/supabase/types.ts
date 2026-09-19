@@ -103,6 +103,8 @@ export type Database = {
           additional_contacts: Json
           admin_requests: Json
           agreement_countersigned_at: string | null
+          agreement_countersigned_by: string | null
+          agreement_countersigned_title: string | null
           agreement_signed_at: string | null
           agreement_signed_by: string | null
           all_states: boolean
@@ -150,6 +152,8 @@ export type Database = {
           additional_contacts?: Json
           admin_requests?: Json
           agreement_countersigned_at?: string | null
+          agreement_countersigned_by?: string | null
+          agreement_countersigned_title?: string | null
           agreement_signed_at?: string | null
           agreement_signed_by?: string | null
           all_states?: boolean
@@ -197,6 +201,8 @@ export type Database = {
           additional_contacts?: Json
           admin_requests?: Json
           agreement_countersigned_at?: string | null
+          agreement_countersigned_by?: string | null
+          agreement_countersigned_title?: string | null
           agreement_signed_at?: string | null
           agreement_signed_by?: string | null
           all_states?: boolean
