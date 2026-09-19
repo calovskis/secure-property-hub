@@ -149,7 +149,12 @@ export function GetStartedCard({ className = "" }: { className?: string }) {
     // Clients and corporate clients
     const leads = leadsForClient(user.email);
     const mp = user.mortgageProfile;
-    const idDone = (mp?.idDocuments?.length ?? 0) > 0 || (mp?.visaDocuments?.length ?? 0) > 0;
+    /* An identity document may have been attached to the profile itself or to a
+     * submitted pre-approval application — both count. A visa copy is a
+     * separate requirement and never completes the identity item. */
+    const idDone =
+      (mp?.idDocuments?.length ?? 0) > 0 ||
+      leads.some((l) => (l.profile?.idDocuments?.length ?? 0) > 0);
     const clientItems: Item[] = [
       {
         id: "c-details",
@@ -172,7 +177,7 @@ export function GetStartedCard({ className = "" }: { className?: string }) {
       {
         id: "c-identity",
         title: "Upload your identity document",
-        desc: "Passport or ID card (plus a visa copy where it applies).",
+        desc: "Passport or ID card — a clear copy or scan of both sides.",
         icon: "🪪",
         done: idDone,
         to: "/profile",
@@ -188,6 +193,22 @@ export function GetStartedCard({ className = "" }: { className?: string }) {
         actionLabel: "Find a property",
       },
     ];
+
+    /* Visa is its own requirement, and only for a declared US visa or status. */
+    const visaProfile = mp ?? leads.find((l) => l.profile)?.profile;
+    if (!user.usPerson && visaProfile?.usVisaActive) {
+      clientItems.push({
+        id: "c-visa",
+        title: "Upload your US visa or status document",
+        desc: "A copy of the visa or status you declared — kept separate from your photo ID.",
+        icon: "🛂",
+        done:
+          (mp?.visaDocuments?.length ?? 0) > 0 ||
+          leads.some((l) => (l.profile?.visaDocuments?.length ?? 0) > 0),
+        to: "/profile",
+        actionLabel: "Upload",
+      });
+    }
 
     if (!user.usPerson) {
       clientItems.push({
