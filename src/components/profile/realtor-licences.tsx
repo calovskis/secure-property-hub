@@ -160,13 +160,23 @@ export function LicenceCoverageTable({
   const [editState, setEditState] = useState<string | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** Save is two-step: Save shows a summary, Confirm persists it. */
+  const [confirming, setConfirming] = useState(false);
   const history = request?.realtorVerification?.licenseHistory ?? [];
+
+  function closeEdit() {
+    setEdit(null);
+    setEditState(null);
+    setError(null);
+    setConfirming(false);
+  }
 
   function save() {
     if (!edit) return;
     if (!edit.state || !edit.number.trim() || !edit.validUntil)
       return setError("State, licence number and validity date are all required.");
     setError(null);
+    if (!confirming) return setConfirming(true);
     const number = edit.number.trim();
     const previous = licenses.find((l) => l.state === editState);
     const changed =
@@ -200,8 +210,7 @@ export function LicenceCoverageTable({
           : { state: entry.state, action: "added", after: describeLicence(entry) },
       ],
     );
-    setEdit(null);
-    setEditState(null);
+    closeEdit();
     toast(changed ? "New licence copy required" : "Licence saved", {
       description: changed
         ? "The details changed, so please upload a fresh copy of the licence."
