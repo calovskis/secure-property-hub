@@ -77,7 +77,7 @@ function sections(lead: MortgageLead, progress?: PurchaseProgress): Section[] {
             [
               "US visa",
               p.usVisaActive
-                ? `Active · ${formatDate(p.visaIssued)} → ${formatDate(p.visaValidUntil)}`
+                ? `Active · ${formatDate(p.visaIssued)} - ${formatDate(p.visaValidUntil)}`
                 : "Not active",
             ],
             ["US bank account", yesNo(p.usBankAccount)],
@@ -141,7 +141,7 @@ function sections(lead: MortgageLead, progress?: PurchaseProgress): Section[] {
       ? p.addresses.map(
           (a) =>
             [
-              `${isoToUsMonth(a.from) || "—"} → ${a.present ? "Present" : isoToUsMonth(a.to) || "—"}`,
+              `${isoToUsMonth(a.from) || "—"} - ${a.present ? "Present" : isoToUsMonth(a.to) || "—"}`,
               [a.street, a.city, a.state, a.zip, a.country ? countryLabel(a.country) : ""]
                 .filter(Boolean)
                 .join(", "),
@@ -161,7 +161,7 @@ function sections(lead: MortgageLead, progress?: PurchaseProgress): Section[] {
           ];
           const period: Row = [
             "Period",
-            `${isoToUsMonth(s.from) || "—"} → ${s.current ? "Present" : isoToUsMonth(s.to) || "—"}`,
+            `${isoToUsMonth(s.from) || "—"} - ${s.current ? "Present" : isoToUsMonth(s.to) || "—"}`,
           ];
           const addr: Row = [
             "Employer address",
@@ -201,7 +201,7 @@ function sections(lead: MortgageLead, progress?: PurchaseProgress): Section[] {
             (e) =>
               [
                 `${e.title} — ${e.employer}`,
-                `${isoToUsMonth(e.from) || "—"} → ${e.current ? "Present" : isoToUsMonth(e.to) || "—"}`,
+                `${isoToUsMonth(e.from) || "—"} - ${e.current ? "Present" : isoToUsMonth(e.to) || "—"}`,
               ] as Row,
           )
         : [["—", "No income or employment on file"]],
