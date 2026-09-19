@@ -3,6 +3,7 @@ import { AppHeader } from "@/components/layout/AppHeader";
 import { PartnerAccountCard } from "@/components/profile/PartnerAccountCard";
 import { PARTNER_LABEL, ROLE_LABEL, fullName, useAuth } from "@/lib/auth";
 import { AdminNav } from "@/components/admin/AdminNav";
+import { PartnerWorkspaceNav } from "@/components/partner/PartnerWorkspaceNav";
 import { DeleteMyAccountCard } from "@/components/profile/DeleteMyAccountCard";
 
 
