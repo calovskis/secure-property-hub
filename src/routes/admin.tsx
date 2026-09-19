@@ -62,14 +62,6 @@ const METRICS: [string, string, string][] = [
   ["Mortgage requests", "31", "6 need a lender assigned"],
 ];
 
-const ACCOUNTS = [
-  ["A. Novak", "Client", "Verified", "US person"],
-  ["Harbour Holdings Ltd.", "Corporate", "Pending KYB", "Non-US"],
-  ["M. Ferreira", "Partner · Realtor", "Verified", "US person"],
-  ["Sunrise Lending", "Partner · Mortgage lender", "Verified", "US person"],
-  ["BrightClean Co.", "Partner · Cleaning", "Onboarding", "US person"],
-  ["K. Andersson", "Client", "Awaiting mortgage profile", "Non-US"],
-];
 
 const QUEUES: [string, string, string][] = [
   ["Mortgage profiles to review", "6", "SSN provided on 4 of 6"],
