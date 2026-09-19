@@ -11,6 +11,7 @@ import {
 import { PartnerReviewBar, ReviewerMark } from "@/components/admin/PartnerReviewBar";
 
 import { PartnerRequestDialog } from "@/components/admin/PartnerRequestDialog";
+import { PartnerCountersignDialog } from "@/components/admin/PartnerCountersignDialog";
 import { PartnerCorrespondence } from "@/components/admin/PartnerCorrespondence";
 import { PersonDetail } from "@/components/admin/PersonDetail";
 import { useAdminPeople } from "@/components/admin/people-model";
