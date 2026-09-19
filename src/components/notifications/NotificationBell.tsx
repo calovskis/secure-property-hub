@@ -14,7 +14,7 @@ import { useAuth, PARTNER_LABEL } from "@/lib/auth";
 import { offerReminders, pendingOfferDecision, leadState, useLeads } from "@/lib/leads";
 import { useBuyerProcess } from "@/lib/buyer-process";
 import { usePartnerRequests } from "@/lib/partner-requests";
-import { partnerCoversState } from "@/lib/licence-verification";
+import { partnerCoversState, pendingVerifications } from "@/lib/licence-verification";
 import { useRealtors } from "@/lib/realtors";
 import { useLenderTeam } from "@/lib/lender-team";
 import { useMortgageDrafts } from "@/lib/mortgage-draft";
@@ -664,6 +664,26 @@ function useDerivedNotifications() {
             createdAt: r.agreementSignedAt,
           });
         }
+        /* Every licence detail or copy the partner submitted waits for Loqal
+           to verify it — derived from the licence rows themselves, so the task
+           is always there until an admin verifies or asks for information. */
+        if (!partnerDeleted && r.status !== "declined") {
+          for (const l of pendingVerifications(r)) {
+            list.push({
+              id: `licverif-${r.id}-${l.state}`,
+              to: "admins",
+              title: `Verify the ${l.state} licence — ${r.companyName}`,
+              body: `${r.firstName} ${r.lastName} submitted ${l.state} licence ${l.number}${
+                l.validUntil ? ` (valid till ${formatDate(l.validUntil)})` : ""
+              }${l.doc ? " with a copy" : " without a copy yet"}. Verify it to clear ${
+                r.companyName
+              } for cases in ${l.state}.`,
+              href: `/admin-people/${r.kind}-${r.id}`,
+              severity: "warning",
+              createdAt: l.pendingSince ?? l.uploadedAt ?? r.submittedAt,
+            });
+          }
+        }
         if (!partnerDeleted && r.kyc) {
           list.push({
             id: `kyc-${r.id}`,
@@ -720,7 +740,7 @@ function useDerivedNotifications() {
        stays as history. */
     pruneDerived(
       "admins",
-      ["preq-", "countersign-", "kyc-"],
+      ["preq-", "countersign-", "kyc-", "licverif-"],
       list.map((n) => n.id),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
