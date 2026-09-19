@@ -292,41 +292,61 @@ export function LicenceCoverageTable({
               </tr>
             </thead>
             <tbody>
-              {licenses.map((l) => (
-                <tr key={l.state} className="border-b border-border/60 last:border-b-0">
-                  <td className="py-2 pr-3 font-semibold text-foreground">{l.state}</td>
-                  <td className="py-2 pr-3 text-foreground">{l.number}</td>
-                  <td className="py-2 pr-3 text-muted-foreground">{formatDate(l.validUntil)}</td>
-                  <td className="py-2 pr-3">
-                    <VerificationBadge license={l} />
-                  </td>
-                  <td className="py-2 text-right">
-                    <div className="inline-flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEdit({
-                            state: l.state,
-                            number: l.number,
-                            validUntil: l.validUntil,
-                          });
-                          setEditState(l.state);
-                        }}
-                        className="rounded-md border border-border px-2.5 py-1 text-xs font-semibold text-brand hover:bg-brand-tint"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => remove(l)}
-                        className="rounded-md border border-border px-2.5 py-1 text-xs font-semibold text-muted-foreground hover:text-destructive"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              {licenses.map((l) =>
+                edit !== null && editState === l.state ? (
+                  <tr key={l.state} className="border-b border-border/60 last:border-b-0">
+                    <td colSpan={5} className="py-3">
+                      <LicenceEditPanel
+                        edit={edit}
+                        setEdit={setEdit}
+                        editingState={editState}
+                        previous={l}
+                        error={error}
+                        confirming={confirming}
+                        onCancel={closeEdit}
+                        onBack={() => setConfirming(false)}
+                        onSave={save}
+                      />
+                    </td>
+                  </tr>
+                ) : (
+                  <tr key={l.state} className="border-b border-border/60 last:border-b-0">
+                    <td className="py-2 pr-3 font-semibold text-foreground">{l.state}</td>
+                    <td className="py-2 pr-3 text-foreground">{l.number}</td>
+                    <td className="py-2 pr-3 text-muted-foreground">{formatDate(l.validUntil)}</td>
+                    <td className="py-2 pr-3">
+                      <VerificationBadge license={l} />
+                    </td>
+                    <td className="py-2 text-right">
+                      <div className="inline-flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEdit({
+                              state: l.state,
+                              number: l.number,
+                              validUntil: l.validUntil,
+                            });
+                            setEditState(l.state);
+                            setError(null);
+                            setConfirming(false);
+                          }}
+                          className="rounded-md border border-border px-2.5 py-1 text-xs font-semibold text-brand hover:bg-brand-tint"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => remove(l)}
+                          className="rounded-md border border-border px-2.5 py-1 text-xs font-semibold text-muted-foreground hover:text-destructive"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ),
+              )}
             </tbody>
           </table>
         </div>
