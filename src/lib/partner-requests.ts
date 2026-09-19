@@ -351,6 +351,8 @@ const COLUMN: Record<string, string> = {
   agreementSignedAt: "agreement_signed_at",
   agreementSignedBy: "agreement_signed_by",
   agreementCountersignedAt: "agreement_countersigned_at",
+  agreementCountersignedBy: "agreement_countersigned_by",
+  agreementCountersignedTitle: "agreement_countersigned_title",
   reviewerId: "reviewer_id",
   reviewerName: "reviewer_name",
   reviewStage: "review_stage",
