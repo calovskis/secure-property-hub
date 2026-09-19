@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import { useLeads, hasPricedOffer, leadState, type MortgageLead } from "@/lib/leads";
 import { useLenderTeam } from "@/lib/lender-team";
 import { formatDate, formatDateTime } from "@/lib/dates";
+import { usePurchaseProgress, PURCHASE_STAGE_LABEL } from "@/lib/purchase-stage";
 
 const money = (n: number) => `$${Math.round(n).toLocaleString()}`;
 
