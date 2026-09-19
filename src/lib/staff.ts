@@ -184,7 +184,13 @@ export function useStaff() {
     commit({
       members: [
         ...cur.members,
-        { ...input, id: uid(), superadmin: false, access: { overview: "view" } },
+        {
+          roles: [],
+          ...input,
+          id: uid(),
+          superadmin: false,
+          access: { overview: "view" },
+        },
       ],
     });
   }, []);
@@ -202,5 +208,50 @@ export function useStaff() {
     });
   }, []);
 
-  return { members: snapshot.members, setAccess, addMember, setAway };
+  /** Assign or remove one Loqal role for an employee. */
+  const setRole = useCallback((id: string, role: LoqalRoleId, on: boolean) => {
+    const cur = load();
+    commit({
+      members: cur.members.map((m) => {
+        if (m.id !== id || m.superadmin) return m;
+        const have = new Set(m.roles ?? []);
+        if (on) have.add(role);
+        else have.delete(role);
+        return { ...m, roles: [...have] };
+      }),
+    });
+  }, []);
+
+  /** Edit an employee's own details (name, e-mail, job title). */
+  const updateMember = useCallback(
+    (id: string, patch: Partial<Pick<StaffMember, "name" | "email" | "title">>) => {
+      const cur = load();
+      commit({ members: cur.members.map((m) => (m.id === id ? { ...m, ...patch } : m)) });
+    },
+    [],
+  );
+
+  return { members: snapshot.members, setAccess, addMember, setAway, setRole, updateMember };
+}
+
+/** Effective permissions of an employee (superadmins hold everything). */
+export function permissionsOf(member: StaffMember): Permission[] {
+  if (member.superadmin) return [...PERMISSION_ORDER];
+  return permissionsOfRoles(member.roles ?? []);
+}
+
+/**
+ * What the signed-in Loqal employee may do. Admin accounts that are not (yet)
+ * on the employee roster are treated as Full Admins so the console is never
+ * locked out.
+ */
+export function useMyPermissions(email: string | undefined, isAdmin: boolean) {
+  const { members } = useStaff();
+  const me = email ? members.find((m) => m.email.toLowerCase() === email.toLowerCase()) : undefined;
+  const list = me ? permissionsOf(me) : isAdmin ? [...PERMISSION_ORDER] : [];
+  return {
+    member: me,
+    permissions: list,
+    can: (p: Permission) => list.includes(p),
+  };
 }
