@@ -35,7 +35,8 @@ import {
   useNotifications,
   type AppNotification,
 } from "@/lib/notifications";
-import { clientDisplayForPartner } from "@/lib/user-id";
+import { clientDisplayForPartner, loqalNumber } from "@/lib/user-id";
+import { purchaseProgress } from "@/lib/purchase-stage";
 import { isProfileDeleted } from "@/lib/deletions";
 import { formatDateTime, usDateToIso } from "@/lib/dates";
 
