@@ -177,7 +177,7 @@ export function GetStartedCard({ className = "" }: { className?: string }) {
       {
         id: "c-identity",
         title: "Upload your identity document",
-        desc: "Passport or ID card (plus a visa copy where it applies).",
+        desc: "Passport or ID card — a clear copy or scan of both sides.",
         icon: "🪪",
         done: idDone,
         to: "/profile",
