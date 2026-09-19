@@ -80,6 +80,8 @@ function FileDetail({ lead }: { lead: MortgageLead }) {
   const answered = lead.infoRequests.filter((r) => r.answeredAt).length;
   const proc = useBuyerProcess();
   const agentProgress = buyerAgentSummary(lead, proc);
+  const { progressOf } = usePurchaseProgress();
+  const progress = progressOf(lead.id);
 
   return (
     <div className="space-y-6 border-t border-border bg-background/50 p-6">
