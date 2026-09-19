@@ -6,7 +6,7 @@
  * accept it before the client is onboarded to them. The client is informed
  * about the change only after that confirmation.
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { formatDateTime } from "@/lib/dates";
 import { useAuth } from "@/lib/auth";
@@ -14,6 +14,7 @@ import { useLeads, type PartnerChangeRecord } from "@/lib/leads";
 import { usePartnerRequests } from "@/lib/partner-requests";
 import { notify } from "@/lib/notifications";
 import { logActivity } from "@/lib/activity";
+import { useDeepLink, useDeepLinkAction } from "@/lib/deep-link";
 import {
   PARTNER_ROLE_LABEL,
   pendingFor,
@@ -29,10 +30,22 @@ export function ClientHandoverCard() {
   const { leads, updateLead } = useLeads();
   const { handovers, respond } = useHandovers();
   const [openId, setOpenId] = useState<string | null>(null);
+  const { focus } = useDeepLink();
+  const ref = useRef<HTMLDivElement | null>(null);
 
   const email = user?.email.toLowerCase() ?? "";
   const mine = requests.find((r) => r.email.toLowerCase() === email);
   const pending = useMemo(() => pendingFor(handovers, mine?.id), [handovers, mine?.id]);
+
+  /* Opened from the notification: expand the offer it points at (or the first
+     one waiting) and bring the confirmation into view. */
+  useDeepLinkAction("handover", (id) => {
+    setOpenId(id && pending.some((h) => h.id === id) ? id : (pending[0]?.id ?? null));
+  });
+  useEffect(() => {
+    if (!openId || !ref.current) return;
+    ref.current.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [openId]);
 
   if (!user || user.role !== "partner" || !pending.length) return null;
 
@@ -108,7 +121,13 @@ export function ClientHandoverCard() {
       </p>
       <div className="mt-3 space-y-3">
         {pending.map((h) => (
-          <div key={h.id} className="rounded-lg border border-border bg-card p-3">
+          <div
+            key={h.id}
+            ref={h.id === openId ? ref : null}
+            className={`rounded-lg border bg-card p-3 ${
+              h.id === focus || h.id === openId ? "border-gold ring-2 ring-gold/30" : "border-border"
+            }`}
+          >
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div className="min-w-0">
                 <div className="text-sm font-semibold text-foreground">

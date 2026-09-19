@@ -18,6 +18,7 @@ import { partnerCoversState, pendingVerifications } from "@/lib/licence-verifica
 import { useRealtors } from "@/lib/realtors";
 import { useLenderTeam } from "@/lib/lender-team";
 import { useMortgageDrafts } from "@/lib/mortgage-draft";
+import { useHandovers } from "@/lib/partner-assignments";
 import { usePropertyRequests } from "@/lib/property-requests";
 import { useEntityPlans } from "@/lib/entity-structure";
 import { formatPrice } from "@/data/properties";
@@ -62,6 +63,7 @@ function useDerivedNotifications() {
   const { scopedStates } = useLenderTeam();
   const { purchases, changes } = usePropertyRequests();
   const { plans: entityPlans } = useEntityPlans();
+  const { handovers } = useHandovers();
 
   const email = user?.email.toLowerCase() ?? "";
   const isAdmin = user?.role === "admin";
@@ -902,10 +904,36 @@ function useDerivedNotifications() {
         });
       }
     }
+    /* A client offered to this partner stays an open notification until they
+       accept or decline it — and the link opens the confirmation itself. */
+    const myIds = new Set(mine.map((r) => r.id));
+    const answered: string[] = [];
+    for (const h of handovers) {
+      if (!myIds.has(h.toId)) continue;
+      const id = `handoveroffer-${h.id}`;
+      if (h.status !== "pending" || isProfileDeleted(h.clientEmail)) {
+        answered.push(id);
+        continue;
+      }
+      list.push({
+        id,
+        to: email,
+        title: `New client offered to you — ${h.clientName}`,
+        body: `${h.propertyLabel}. Read the briefing and confirm the client — the file moves to you only after you accept.`,
+        href: `/partner?tab=home&open=handover&focus=${h.id}`,
+        severity: "warning",
+        createdAt: h.requestedAt,
+      });
+    }
+    if (answered.length) completeNotifications(answered);
     if (list.length) syncNotifications(list);
-    pruneDerived(email, ["sign-", "pdoc-", "preq-", "active-"], list.map((n) => n.id));
+    pruneDerived(
+      email,
+      ["sign-", "pdoc-", "preq-", "active-", "handoveroffer-", "handover-offer-"],
+      [...list.map((n) => n.id), ...answered],
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.email, requests, email]);
+  }, [user?.email, requests, email, handovers]);
 
   /* ------------------------------- lender side ------------------------------
      A mortgage lender partner is told about every pre-approval inquiry routed
