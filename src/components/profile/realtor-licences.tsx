@@ -90,12 +90,15 @@ export function VerificationBadge({ license }: { license: RealtorLicenseDoc }) {
   );
 }
 
-/** Read/write access to the realtor's licences, kept in sync with the seat. */
-export function useRealtorLicences(user: LoqalUser) {
+export type LicenceSeed = { state: string; number: string; validUntil: string };
+
+/** Read/write access to the partner's licences, kept in sync with the seat. */
+export function useRealtorLicences(user: LoqalUser, seed: LicenceSeed[] = []) {
   const { requests, updateRequest } = usePartnerRequests();
   const { realtors, updateRealtor } = useRealtors();
   const request = requests.find((r) => r.email.toLowerCase() === user.email.toLowerCase());
-  const licenses = request ? licenseDocsOf(request) : [];
+  const licenses = request ? licenseDocsOf(request, seed) : [];
+
 
   function persist(
     next: RealtorLicenseDoc[],
