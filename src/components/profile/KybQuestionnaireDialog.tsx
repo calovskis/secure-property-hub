@@ -37,6 +37,11 @@ export type KybDraft = {
   creatorAuthorized: boolean;
   creatorIdDoc: string;
   authorizationDoc: string;
+  /** The person filling the form is also a 25%+ shareholder. */
+  creatorIsShareholder: boolean;
+  creatorSharePct?: number;
+  /** Creator details when the creator is a shareholder but NOT the director. */
+  creatorShareholder: KycPerson;
 };
 
 export const emptyKycPerson = (): KycPerson => ({
@@ -53,6 +58,8 @@ const emptyDraft = (): KybDraft => ({
   creatorAuthorized: false,
   creatorIdDoc: "",
   authorizationDoc: "",
+  creatorIsShareholder: false,
+  creatorShareholder: emptyKycPerson(),
 });
 
 const draftKey = (requestId: string) => `loqal-kyb-draft-${requestId}`;
