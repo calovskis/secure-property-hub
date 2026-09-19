@@ -141,6 +141,27 @@ export function useRealtorLicences(user: LoqalUser, seed: LicenceSeed[] = []) {
         })),
       });
     logActivity(fullName(user), note, request.companyName);
+
+    /* Anything the partner changed or uploaded has to be verified by Loqal —
+       tell the Loqal team so they can check it and confirm. */
+    const submitted = stamped.filter(
+      (e) => e.action === "added" || e.action === "updated" || e.action === "copy_uploaded",
+    );
+    for (const e of submitted) {
+      notify({
+        id: `licverif-${request.id}-${e.state}`,
+        to: "admins",
+        title: `Licence verification needed — ${e.state}`,
+        body: `${request.companyName || fullName(user)} ${
+          e.action === "copy_uploaded"
+            ? `uploaded a new ${e.state} licence copy`
+            : `${e.action === "added" ? "added" : "updated"} the ${e.state} licence details`
+        }. Verify it so the partner can work in ${e.state}.`,
+        href: `/admin-people/${request.kind}-${request.id}`,
+        severity: "warning",
+        createdAt: e.at,
+      });
+    }
   }
 
   return { request, licenses, persist };
