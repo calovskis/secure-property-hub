@@ -10,12 +10,6 @@ import {
   type LoqalRoleId,
   type Permission,
 } from "@/lib/roles";
-import {
-  PERMISSION_ORDER,
-  permissionsOfRoles,
-  type LoqalRoleId,
-  type Permission,
-} from "@/lib/roles";
 
 export type AdminSectionId =
   | "overview"

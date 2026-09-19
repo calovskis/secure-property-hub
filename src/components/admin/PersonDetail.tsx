@@ -186,7 +186,7 @@ export function PersonDetailContent({
               email={person.email}
               name={person.name}
               roleLabel={person.roleLabel}
-              actor={fullName(user) || user?.email || "Loqal admin"}
+              actor={(user ? fullName(user) : "") || user?.email || "Loqal admin"}
               can={can}
             />
             <ProfileTab person={person} />
