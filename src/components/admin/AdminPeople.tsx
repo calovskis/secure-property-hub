@@ -20,6 +20,7 @@ import {
 } from "@/components/admin/people-model";
 import type { PartnerType } from "@/lib/auth";
 import { loqalNumber } from "@/lib/user-id";
+import { daysLeft, useDeletions, type DeletionRecord } from "@/lib/deletions";
 
 type Filters = {
   q: string;
@@ -60,6 +61,12 @@ export function AdminPeople({
   const [sub, setSub] = useState<string>("all");
   const [filters, setFilters] = useState<Filters>(EMPTY);
   const [open, setOpen] = useState<AdminPerson | null>(null);
+  const [view, setView] = useState<"active" | "deleted">("active");
+  const { deleted, history } = useDeletions();
+  const deletedEmails = useMemo(
+    () => new Set(deleted.map((r) => r.email)),
+    [deleted],
+  );
 
   // Reset sub-tab when the scope changes.
   const subs =
@@ -67,7 +74,7 @@ export function AdminPeople({
   const activeSub = subs?.some((s) => s.id === sub) ? sub : "all";
 
   const scoped = useMemo(() => {
-    let list = all;
+    let list = all.filter((p) => !deletedEmails.has(p.email.trim().toLowerCase()));
     if (scope === "clients") list = list.filter((p) => p.group !== "partner");
     if (scope === "partners") list = list.filter((p) => p.group === "partner");
     if (scope === "clients" && activeSub !== "all")
@@ -75,7 +82,7 @@ export function AdminPeople({
     if (scope === "partners" && activeSub !== "all")
       list = list.filter((p) => p.partnerType === (activeSub as PartnerType));
     return list;
-  }, [all, scope, activeSub]);
+  }, [all, scope, activeSub, deletedEmails]);
 
   const states = useMemo(
     () => [...new Set(scoped.flatMap(coverageStates).filter((s) => s && s !== "ALL"))].sort(),
@@ -140,14 +147,33 @@ export function AdminPeople({
         <h2 className="text-base font-semibold text-foreground">
           {scope === "clients" ? "Clients" : scope === "partners" ? "Partners" : "All people"}
         </h2>
-        <span className="rounded-full bg-brand-tint px-3 py-1 text-[11px] font-semibold text-brand">
-          {people.length} of {scoped.length}
-        </span>
+        <div className="flex items-center gap-2">
+          {view === "active" ? (
+            <span className="rounded-full bg-brand-tint px-3 py-1 text-[11px] font-semibold text-brand">
+              {people.length} of {scoped.length}
+            </span>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => setView(view === "deleted" ? "active" : "deleted")}
+            className="rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground"
+          >
+            {view === "deleted" ? "Back to people" : "Show deleted"}
+            {view === "active" && deleted.length ? ` (${deleted.length})` : ""}
+          </button>
+        </div>
       </div>
       <p className="mt-1 text-xs text-muted-foreground">
-        Open any profile to review and edit the full registration and personal data, uploaded
-        documents, property files, activity history and engagement metrics.
+        {view === "deleted"
+          ? "Deleted profiles stay recoverable for 90 days. After that they are permanently removed and only the record of the deletion remains."
+          : "Open any profile to review and edit the full registration and personal data, uploaded documents, property files, activity history and engagement metrics."}
       </p>
+
+      {view === "deleted" ? (
+        <DeletedPanel deleted={deleted} history={history} />
+      ) : (
+        <>
+
 
       {subs ? (
         <div className="mt-4 flex flex-wrap gap-1.5">
@@ -365,9 +391,115 @@ export function AdminPeople({
       {open ? (
         <PersonDetail person={open} onClose={() => setOpen(null)} onMessage={onMessage} />
       ) : null}
+        </>
+      )}
     </section>
   );
 }
+
+function DeletedPanel({
+  deleted,
+  history,
+}: {
+  deleted: DeletionRecord[];
+  history: DeletionRecord[];
+}) {
+  const inRecovery = deleted.filter((r) => daysLeft(r) > 0);
+  const elapsed = deleted.filter((r) => daysLeft(r) === 0);
+  const past = [...elapsed, ...history].sort(
+    (a, b) =>
+      new Date(b.closedAt ?? b.recoverableUntil ?? b.requestedAt).getTime() -
+      new Date(a.closedAt ?? a.recoverableUntil ?? a.requestedAt).getTime(),
+  );
+
+  return (
+    <div className="mt-5 space-y-6">
+      <div>
+        <h3 className="text-sm font-semibold text-foreground">In the 90-day recovery window</h3>
+        {inRecovery.length === 0 ? (
+          <p className="mt-2 text-sm text-muted-foreground">No profiles are awaiting recovery.</p>
+        ) : (
+          <ul className="mt-3 space-y-2">
+            {inRecovery.map((r) => (
+              <li
+                key={r.id}
+                className="rounded-md border border-border bg-background p-3 text-sm"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <span className="font-semibold text-foreground">{r.name}</span>{" "}
+                    <span className="text-xs text-muted-foreground">
+                      {loqalNumber(r.email)} · {r.roleLabel}
+                    </span>
+                  </div>
+                  <span className="rounded-full bg-gold/15 px-3 py-1 text-[11px] font-semibold text-gold">
+                    {daysLeft(r)} days left to recover
+                  </span>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">{r.email}</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Deletion requested {formatDateTime(r.requestedAt)} by{" "}
+                  {r.selfRequested ? `${r.name} (own profile)` : r.requestedBy}
+                  {r.confirmedAt ? ` · confirmed ${formatDateTime(r.confirmedAt)}` : ""}
+                  {r.recoverableUntil
+                    ? ` · permanently removed ${formatDate(r.recoverableUntil)}`
+                    : ""}
+                </p>
+                {r.reason ? (
+                  <p className="mt-1 text-xs italic text-muted-foreground">Reason: {r.reason}</p>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <div>
+        <h3 className="text-sm font-semibold text-foreground">History</h3>
+        {past.length === 0 ? (
+          <p className="mt-2 text-sm text-muted-foreground">Nothing in the history yet.</p>
+        ) : (
+          <div className="mt-3 overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-b border-border text-[11px] uppercase tracking-wide text-muted-foreground">
+                  <th className="py-2 pr-4 font-semibold">Name</th>
+                  <th className="py-2 pr-4 font-semibold">Role</th>
+                  <th className="py-2 pr-4 font-semibold">Deletion requested</th>
+                  <th className="py-2 pr-4 font-semibold">Outcome</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {past.map((r) => (
+                  <tr key={r.id}>
+                    <td className="py-2.5 pr-4">
+                      <div className="font-semibold text-foreground">{r.name}</div>
+                      <div className="text-xs text-muted-foreground">{r.email}</div>
+                    </td>
+                    <td className="py-2.5 pr-4 text-muted-foreground">{r.roleLabel}</td>
+                    <td className="py-2.5 pr-4 text-muted-foreground">
+                      {formatDateTime(r.requestedAt)}
+                    </td>
+                    <td className="py-2.5 pr-4 text-muted-foreground">
+                      {r.status === "restored"
+                        ? `Restored ${r.closedAt ? formatDateTime(r.closedAt) : ""}`
+                        : r.status === "cancelled"
+                          ? `Request declined ${r.closedAt ? formatDateTime(r.closedAt) : ""}`
+                          : `90 days passed ${
+                              r.recoverableUntil ? formatDate(r.recoverableUntil) : ""
+                            } — permanently removed`}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 
 function FilterBox({ label, children }: { label: string; children: React.ReactNode }) {
   return (
