@@ -89,6 +89,14 @@ function AdminPage() {
   const { leads } = useActiveLeads();
   const proc = useBuyerProcess();
   const { can } = useMyPermissions(user?.email, ready && user?.role === "admin");
+  /* Accounts panel: real platform accounts only (deleted profiles excluded). */
+  const allPeople = useAdminPeople();
+  const { deleted } = useDeletions();
+  const deletedEmails = new Set(deleted.map((r) => r.email.trim().toLowerCase()));
+  const accounts = allPeople
+    .filter((p) => !deletedEmails.has(p.email.trim().toLowerCase()))
+    .slice(0, 8);
+
 
   useEffect(() => {
     if (search.tab) setTab(search.tab);
