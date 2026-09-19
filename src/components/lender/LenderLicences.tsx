@@ -9,7 +9,7 @@
  */
 import { useState } from "react";
 import { toast } from "sonner";
-import { useAuth } from "@/lib/auth";
+import { useAuth, type LoqalUser } from "@/lib/auth";
 import { usePartnerRequests, type RealtorLicenseDoc } from "@/lib/partner-requests";
 import {
   LicenceCoverageTable,
@@ -21,15 +21,20 @@ import { useUploadDrafts } from "@/lib/upload-drafts";
 
 export function LenderLicences() {
   const { user } = useAuth();
+  if (!user) return null;
+  return <LenderLicencesInner user={user} />;
+}
+
+function LenderLicencesInner({ user }: { user: LoqalUser }) {
   const { requests } = usePartnerRequests();
   const [uploadOpen, setUploadOpen] = useState(false);
   const drafts = useUploadDrafts();
   const draftId = "lender-licences";
   const draft = drafts.find((d) => d.id === draftId);
 
-  const registration = user
-    ? requests.find((r) => r.email.toLowerCase() === user.email.toLowerCase())
-    : undefined;
+  const registration = requests.find(
+    (r) => r.email.toLowerCase() === user.email.toLowerCase(),
+  );
 
   /** States declared at registration, pre-filled with the licence number given there. */
   const seed: LicenceSeed[] = (registration?.states ?? []).map((state) => ({
@@ -38,9 +43,9 @@ export function LenderLicences() {
     validUntil: "",
   }));
 
-  const { licenses, persist } = useRealtorLicences(user!, seed);
+  const { licenses, persist } = useRealtorLicences(user, seed);
 
-  if (!user || !registration) return null;
+  if (!registration) return null;
 
   const missing = licenses.filter((l) => !l.doc);
 
