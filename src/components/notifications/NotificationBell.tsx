@@ -35,9 +35,10 @@ import {
   useNotifications,
   type AppNotification,
 } from "@/lib/notifications";
-import { clientDisplayForPartner } from "@/lib/user-id";
+import { clientDisplayForPartner, loqalNumber } from "@/lib/user-id";
+import { purchaseProgress } from "@/lib/purchase-stage";
 import { isProfileDeleted } from "@/lib/deletions";
-import { formatDateTime, usDateToIso } from "@/lib/dates";
+import { formatDate, formatDateTime, usDateToIso } from "@/lib/dates";
 
 type Draft = Omit<AppNotification, "createdAt"> & { createdAt?: string | undefined };
 
@@ -916,11 +917,50 @@ function useDerivedNotifications() {
         ...(assigned ? { badge: "Assigned" } : {}),
         createdAt: lead.submittedAt,
       });
+
+      /* The purchase agreement is signed: the mortgage company is told, gets
+         the signed copy and the client's Loqal number, and keeps an open hard
+         check task until the terms are reconfirmed. */
+      const prog = purchaseProgress(lead.id, purchases, entityPlans);
+      if (prog.stage === "agreement_signed") {
+        list.push({
+          id: `hardcheck-${lead.id}`,
+          to: email,
+          title: prog.hardCheckOpen
+            ? "Purchase agreement signed — hard check needed"
+            : "Purchase agreement signed",
+          body:
+            `${clientDisplayForPartner(lead.clientName, lead.clientEmail)} · client ID ${loqalNumber(
+              lead.clientEmail,
+            )} · ${lead.propertyLabel}` +
+            (prog.agreementDoc ? ` · ${prog.agreementDoc}` : "") +
+            (prog.closingDate ? ` · closing ${formatDate(prog.closingDate)}` : "") +
+            (prog.approvalDueDate
+              ? ` · your mortgage approval due ${formatDate(prog.approvalDueDate)}`
+              : "") +
+            (prog.hardCheckOpen ? " — reconfirm the terms in Mortgages." : " — terms reconfirmed."),
+          href: "/partner?tab=mortgages",
+          severity: prog.hardCheckOpen ? "warning" : "info",
+          ...(prog.hardCheckOpen ? {} : { badge: "Done" }),
+          createdAt: prog.signedAt ?? lead.submittedAt,
+        });
+      }
     }
     if (list.length) syncNotifications(list);
-    pruneDerived(email, ["lenderinq-"], list.map((n) => n.id));
+    pruneDerived(email, ["lenderinq-", "hardcheck-"], list.map((n) => n.id));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.email, user?.role, user?.partnerType, leads, leadsReady, scopedStates, requests, email]);
+  }, [
+    user?.email,
+    user?.role,
+    user?.partnerType,
+    leads,
+    leadsReady,
+    scopedStates,
+    requests,
+    email,
+    purchases,
+    entityPlans,
+  ]);
 }
 
 

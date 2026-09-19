@@ -116,7 +116,7 @@ function groupOf(id: string): GroupId {
   if (starts("agentsetup-")) return "buyerAgent";
   if (starts("proposal-", "booking-", "altslots-")) return "viewings";
   if (starts("lic-", "kyc-", "sign-", "pdoc-licences", "pdoc-identity")) return "licences";
-  if (starts("lenderinq-")) return "buyerFiles";
+  if (starts("lenderinq-", "hardcheck-")) return "buyerFiles";
   if (starts("photoreq-", "decision-")) return "buyerFiles";
   if (starts("buyerprice-", "buyerchange-", "filereq-", "filechat-", "pricedecided-"))
     return "buyerFiles";
@@ -160,6 +160,8 @@ function isActionable(n: AppNotification): boolean {
     "agreement-signed-",
   ];
   if (informational.some((p) => id.startsWith(p))) return false;
+  // A hard check already reconfirmed is only a record, not open work.
+  if (id.startsWith("hardcheck-") && n.badge === "Done") return false;
   return true;
 }
 

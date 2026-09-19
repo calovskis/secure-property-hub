@@ -16,7 +16,15 @@ import { ApplicantFile, Row } from "@/components/lender/ApplicantFile";
 import { useLenderTeam } from "@/lib/lender-team";
 import { buyerAgentSummary, useBuyerProcess } from "@/lib/buyer-process";
 import { PaymentScheduleButton } from "@/components/mortgage/PaymentScheduleDialog";
-import { clientDisplayForPartner } from "@/lib/user-id";
+import { clientDisplayForPartner, loqalNumber } from "@/lib/user-id";
+import { updateEntityPlan } from "@/lib/entity-structure";
+import {
+  PURCHASE_STAGE_LABEL,
+  PURCHASE_STAGE_NOTE,
+  PURCHASE_STAGE_TONE,
+  usePurchaseProgress,
+  type PurchaseProgress,
+} from "@/lib/purchase-stage";
 
 const money = (n: number) => `$${Math.round(n).toLocaleString()}`;
 
@@ -80,6 +88,8 @@ function FileDetail({ lead }: { lead: MortgageLead }) {
   const answered = lead.infoRequests.filter((r) => r.answeredAt).length;
   const proc = useBuyerProcess();
   const agentProgress = buyerAgentSummary(lead, proc);
+  const { progressOf } = usePurchaseProgress();
+  const progress = progressOf(lead.id);
 
   return (
     <div className="space-y-6 border-t border-border bg-background/50 p-6">
@@ -117,6 +127,10 @@ function FileDetail({ lead }: { lead: MortgageLead }) {
             }
           />
           <Row
+            label="Purchase status"
+            value={`${PURCHASE_STAGE_LABEL[progress.stage]} — ${PURCHASE_STAGE_NOTE[progress.stage]}`}
+          />
+          <Row
             label="Hard check"
             value={
               lead.clientDecision === "accepted"
@@ -129,6 +143,8 @@ function FileDetail({ lead }: { lead: MortgageLead }) {
           ) : null}
         </div>
       </section>
+
+      <HardCheckSection lead={lead} progress={progress} />
 
       <section className="rounded-lg border border-border bg-card p-4">
         <h3 className="text-sm font-semibold text-foreground">Pre-approval information</h3>
@@ -162,12 +178,88 @@ function FileDetail({ lead }: { lead: MortgageLead }) {
   );
 }
 
+/**
+ * Once the purchase agreement is signed, the mortgage company must reconfirm
+ * its terms and give the mortgage approval before the agreement's deadline.
+ * Both dates are underlined so nothing is missed.
+ */
+function HardCheckSection({ lead, progress }: { lead: MortgageLead; progress: PurchaseProgress }) {
+  const [note, setNote] = useState("");
+  if (progress.stage !== "agreement_signed") return null;
+  const late = (iso?: string) => Boolean(iso && new Date(iso) < new Date());
+
+  function confirm() {
+    updateEntityPlan(lead.id, {
+      hardCheckConfirmedAt: new Date().toISOString(),
+      hardCheckConfirmedBy: "Mortgage company",
+      ...(note.trim() ? { hardCheckNote: note.trim() } : {}),
+    });
+    setNote("");
+  }
+
+  return (
+    <section className="rounded-lg border border-gold/50 bg-gold-tint/40 p-4">
+      <h3 className="text-sm font-semibold text-foreground">
+        Hard check — reconfirm the mortgage terms
+      </h3>
+      <p className="mt-1 text-xs text-muted-foreground">
+        The purchase agreement was signed
+        {progress.signedAt ? ` ${formatDateTime(progress.signedAt)}` : ""}
+        {progress.agreementDoc ? ` · ${progress.agreementDoc}` : ""}. Reconfirm the issued terms and
+        give your mortgage approval for the agreement.
+      </p>
+      <div className="mt-2 divide-y divide-border">
+        <Row label="Client" value={lead.clientName} />
+        <Row label="Client ID" value={loqalNumber(lead.clientEmail)} />
+        <Row
+          label="Closing date"
+          value={
+            <span className={`underline decoration-2 ${late(progress.closingDate) ? "text-destructive" : "text-foreground"} font-semibold`}>
+              {progress.closingDate ? formatDate(progress.closingDate) : "—"}
+            </span>
+          }
+        />
+        <Row
+          label="Mortgage approval due"
+          value={
+            <span className={`underline decoration-2 ${late(progress.approvalDueDate) ? "text-destructive" : "text-foreground"} font-semibold`}>
+              {progress.approvalDueDate ? formatDate(progress.approvalDueDate) : "—"}
+            </span>
+          }
+        />
+      </div>
+      {progress.hardCheckConfirmedAt ? (
+        <p className="mt-3 text-xs font-semibold text-success">
+          Terms reconfirmed {formatDateTime(progress.hardCheckConfirmedAt)}.
+        </p>
+      ) : (
+        <div className="mt-3 flex flex-wrap gap-2">
+          <input
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="Note for the file (optional)"
+            className="min-w-[220px] flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
+          />
+          <button
+            type="button"
+            onClick={confirm}
+            className="rounded-md bg-brand px-4 py-2 text-xs font-semibold text-background hover:bg-brand-soft"
+          >
+            Reconfirm the terms
+          </button>
+        </div>
+      )}
+    </section>
+  );
+}
+
 export function LenderMortgages({ canManage }: { canManage: boolean }) {
   const { leads } = useActiveLeads();
   const { scopedStates } = useLenderTeam();
   const [openId, setOpenId] = useState<string | null>(null);
   const [state, setState] = useState("all");
   const [stage, setStage] = useState<MortgageFileStage | "all">("all");
+  const { progressOf } = usePurchaseProgress();
 
   const files = useMemo(
     () =>
@@ -186,6 +278,8 @@ export function LenderMortgages({ canManage }: { canManage: boolean }) {
     awaiting_client: files.filter((l) => mortgageStage(l) === "awaiting_client").length,
     client_on_hold: files.filter((l) => mortgageStage(l) === "client_on_hold").length,
     client_declined: files.filter((l) => mortgageStage(l) === "client_declined").length,
+    signed: files.filter((l) => progressOf(l.id).stage === "agreement_signed").length,
+    hardCheckOpen: files.filter((l) => progressOf(l.id).hardCheckOpen).length,
   };
 
   return (
@@ -202,9 +296,13 @@ export function LenderMortgages({ canManage }: { canManage: boolean }) {
         {(
           [
             ["Open mortgage files", counts.in_underwriting, "Client confirmed — hard check"],
+            [
+              "Signed purchase agreements",
+              counts.signed,
+              `${counts.hardCheckOpen} awaiting your hard check and approval`,
+            ],
             ["Awaiting client decision", counts.awaiting_client, "Terms delivered — reminders running"],
             ["On hold by client", counts.client_on_hold, "Client paused the process"],
-            ["Qualified, not continuing", counts.client_declined, "Client declined the terms"],
           ] as const
         ).map(([label, value, note]) => (
           <div key={label} className="rounded-lg border border-border bg-card p-5">
@@ -269,6 +367,7 @@ export function LenderMortgages({ canManage }: { canManage: boolean }) {
             const loan = l.propertyPrice * (1 - t.downPaymentPct / 100);
             const st = mortgageStage(l);
             const open = openId === l.id;
+            const prog = progressOf(l.id);
             return (
               <li key={l.id} className="overflow-hidden rounded-lg border border-border bg-card">
                 <button
@@ -291,11 +390,27 @@ export function LenderMortgages({ canManage }: { canManage: boolean }) {
                   <span className="rounded bg-brand-tint px-2 py-1 text-[11px] font-semibold text-brand">
                     {leadState(l)}
                   </span>
-                  <span
-                    className={`rounded-full px-3 py-1 text-[11px] font-semibold ${STAGE_TONE[st]}`}
-                  >
-                    {MORTGAGE_STAGE_LABEL[st]}
-                  </span>
+                  {st === "in_underwriting" ? (
+                    <span className="flex flex-col items-end gap-1">
+                      <span
+                        className={`rounded-full px-3 py-1 text-[11px] font-semibold ${PURCHASE_STAGE_TONE[prog.stage]}`}
+                      >
+                        {PURCHASE_STAGE_LABEL[prog.stage]}
+                      </span>
+                      {prog.hardCheckOpen ? (
+                        <span className="text-[11px] font-semibold text-destructive">
+                          Hard check due{" "}
+                          {prog.approvalDueDate ? formatDate(prog.approvalDueDate) : "now"}
+                        </span>
+                      ) : null}
+                    </span>
+                  ) : (
+                    <span
+                      className={`rounded-full px-3 py-1 text-[11px] font-semibold ${STAGE_TONE[st]}`}
+                    >
+                      {MORTGAGE_STAGE_LABEL[st]}
+                    </span>
+                  )}
                   <span className="text-xs text-muted-foreground">{open ? "▲" : "▼"}</span>
                 </button>
                 {open ? <FileDetail lead={l} /> : null}

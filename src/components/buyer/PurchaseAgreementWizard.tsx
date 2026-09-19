@@ -82,6 +82,7 @@ export function PurchaseAgreementWizard({
   const [entityEin, setEntityEin] = useState(plan?.entityEin ?? "");
   const [changeNote, setChangeNote] = useState("");
   const [askingChange, setAskingChange] = useState(false);
+  const [signature, setSignature] = useState("");
 
   const path = plan?.path;
   const decided = Boolean(path);
@@ -179,6 +180,36 @@ export function PurchaseAgreementWizard({
       `${clientLabel} — ${purchase.propertyLabel} at ${formatPrice(purchase.offerPrice)}. Going to the seller.`,
     );
     toast("Terms confirmed", { description: `${agentName} will put them to the seller.` });
+  }
+
+  /** The buyer signs the agreement the agent uploaded. */
+  function signAgreement() {
+    const expected = fullName(user ?? ({} as never)).trim().toLowerCase();
+    const typed = signature.trim();
+    if (typed.length < 4 || (expected && typed.toLowerCase() !== expected)) {
+      toast("Type your full name exactly as it is on your profile to sign.");
+      return;
+    }
+    const now = new Date().toISOString();
+    savePlan({ agreementSignedAt: now, agreementSignedBy: typed });
+    if (agentEmail) {
+      notify({
+        id: `agreement-signed-agent-${leadId}`,
+        to: agentEmail.toLowerCase(),
+        title: "Your buyer signed the purchase agreement",
+        body: `${purchase.propertyLabel} — ${formatPrice(purchase.offerPrice)} with ${clientLabel}.`,
+        href: `/partner?tab=buyers&focus=${leadId}`,
+        severity: "info",
+      });
+    }
+    tellLoqal(
+      `agreement-signed-admin-${leadId}`,
+      "Purchase agreement signed",
+      `${clientLabel} — ${purchase.propertyLabel} at ${formatPrice(purchase.offerPrice)}. The mortgage company has the signed copy for the hard check.`,
+    );
+    toast("Agreement signed", {
+      description: "Your mortgage company has been notified and receives the signed copy.",
+    });
   }
 
   function askChange() {
@@ -536,19 +567,63 @@ export function PurchaseAgreementWizard({
                 </p>
 
                 {confirmed ? (
-                  <div className="rounded-lg border border-success/30 bg-success/10 p-4">
-                    <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                      <CheckCircle2 className="h-4 w-4 text-success" aria-hidden />
-                      Terms confirmed
+                  <>
+                    <div className="rounded-lg border border-success/30 bg-success/10 p-4">
+                      <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                        <CheckCircle2 className="h-4 w-4 text-success" aria-hidden />
+                        Terms confirmed
+                      </div>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Confirmed by {plan?.termsConfirmedBy} on{" "}
+                        {formatDateTime(plan!.termsConfirmedAt!)}. {agentName} is putting these terms
+                        to the seller. If the seller suggests changes, they come back to you here
+                        before anything is agreed — and once the terms are settled, the signed
+                        agreement is uploaded for you to review and sign.
+                      </p>
                     </div>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Confirmed by {plan?.termsConfirmedBy} on{" "}
-                      {formatDateTime(plan!.termsConfirmedAt!)}. {agentName} is putting these terms
-                      to the seller. If the seller suggests changes, they come back to you here
-                      before anything is agreed — and once the terms are settled, the signed
-                      agreement is uploaded for you to review and sign.
-                    </p>
-                  </div>
+
+                    {plan?.agreementSignedAt ? (
+                      <div className="rounded-lg border border-success/30 bg-success/10 p-4">
+                        <p className="text-sm font-semibold text-foreground">
+                          Purchase agreement signed
+                        </p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Signed by {plan.agreementSignedBy} on{" "}
+                          {formatDateTime(plan.agreementSignedAt)}
+                          {plan.agreementDoc ? ` · ${plan.agreementDoc}` : ""}. Your mortgage company
+                          has the signed copy and is reconfirming the terms of your mortgage
+                          approval.
+                        </p>
+                      </div>
+                    ) : plan?.agreementDoc ? (
+                      <div className="space-y-2 rounded-lg border border-gold/40 bg-gold-tint/30 p-4">
+                        <p className="text-sm font-semibold text-foreground">
+                          The purchase agreement is ready for your signature
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {agentName} uploaded {plan.agreementDoc}
+                          {plan.agreementUploadedAt
+                            ? ` on ${formatDateTime(plan.agreementUploadedAt)}`
+                            : ""}
+                          . Read it, then type your full name to sign.
+                        </p>
+                        <input
+                          value={signature}
+                          onChange={(e) => setSignature(e.target.value)}
+                          placeholder="Type your full name to sign"
+                          className={inputClass}
+                        />
+                        <button type="button" onClick={signAgreement} className={btnPrimary}>
+                          Sign the purchase agreement
+                        </button>
+                      </div>
+                    ) : (
+                      <p className="rounded-md border border-border bg-background p-3 text-xs text-muted-foreground">
+                        Once the seller agrees, {agentName} uploads the purchase agreement here for
+                        your review and signature.
+                      </p>
+                    )}
+                  </>
                 ) : changeAsked ? (
                   <div className="rounded-lg border border-gold/40 bg-gold-tint/30 p-4 text-xs text-foreground">
                     <p className="font-semibold">Your change request is with {agentName}</p>
