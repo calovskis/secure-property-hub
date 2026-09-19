@@ -59,23 +59,30 @@ export function describeLicence(l: { number: string; validUntil: string }) {
   return `${l.number} · valid till ${formatDate(l.validUntil)}`;
 }
 
-export type VerificationState = "verified" | "in_progress" | "missing";
+export type VerificationState =
+  | "verified"
+  | "in_progress"
+  | "info_requested"
+  | "missing";
 
 export function verificationState(l: RealtorLicenseDoc): VerificationState {
-  if (l.verifiedAt) return "verified";
-  if (l.doc) return "in_progress";
+  if (isLicenceVerified(l)) return "verified";
+  if (l.infoRequestedAt) return "info_requested";
+  if (awaitsVerification(l) || l.doc) return "in_progress";
   return "missing";
 }
 
 const VERIFICATION_LABEL: Record<VerificationState, string> = {
   verified: "Yes — verified",
-  in_progress: "In progress",
+  in_progress: "Awaiting Loqal verification",
+  info_requested: "Loqal asked for information",
   missing: "No — copy missing",
 };
 
 const VERIFICATION_TONE: Record<VerificationState, string> = {
   verified: "bg-success/10 text-success",
   in_progress: "bg-brand-tint text-brand",
+  info_requested: "bg-destructive/10 text-destructive",
   missing: "bg-gold-tint text-gold",
 };
 
