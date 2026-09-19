@@ -38,7 +38,7 @@ import {
 import { clientDisplayForPartner, loqalNumber } from "@/lib/user-id";
 import { purchaseProgress } from "@/lib/purchase-stage";
 import { isProfileDeleted } from "@/lib/deletions";
-import { formatDateTime, usDateToIso } from "@/lib/dates";
+import { formatDate, formatDateTime, usDateToIso } from "@/lib/dates";
 
 type Draft = Omit<AppNotification, "createdAt"> & { createdAt?: string | undefined };
 
