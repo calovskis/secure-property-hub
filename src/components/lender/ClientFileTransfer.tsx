@@ -25,6 +25,9 @@ export function ClientFileTransfer({ lead }: { lead: MortgageLead }) {
     setBusy("pdf");
     try {
       await downloadClientFilePdf(lead, progress);
+    } catch (e) {
+      console.error("Client file PDF failed", e);
+      toast.error("The client file could not be prepared — please try again or contact Loqal support.");
     } finally {
       setBusy(null);
     }
