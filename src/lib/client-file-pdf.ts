@@ -135,10 +135,12 @@ function sections(lead: MortgageLead, progress?: PurchaseProgress): Section[] {
     });
   }
 
+  const addresses = p.addresses ?? [];
+  const employment = p.employment ?? [];
   out.push({
     title: "Address history (2 years)",
-    rows: p.addresses.length
-      ? p.addresses.map(
+    rows: addresses.length
+      ? addresses.map(
           (a) =>
             [
               `${isoToUsMonth(a.from) || "—"} - ${a.present ? "Present" : isoToUsMonth(a.to) || "—"}`,
@@ -196,8 +198,8 @@ function sections(lead: MortgageLead, progress?: PurchaseProgress): Section[] {
           rows.push(["Qualifying monthly (USD)", money(monthlyForIncome(s))]);
           return rows;
         })
-      : p.employment.length
-        ? p.employment.map(
+      : employment.length
+        ? employment.map(
             (e) =>
               [
                 `${e.title} — ${e.employer}`,
