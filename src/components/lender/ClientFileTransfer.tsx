@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import type { MortgageLead } from "@/lib/leads";
 import { buildMismoXml, downloadTextFile, exportFileName } from "@/lib/mismo-export";
@@ -25,6 +26,9 @@ export function ClientFileTransfer({ lead }: { lead: MortgageLead }) {
     setBusy("pdf");
     try {
       await downloadClientFilePdf(lead, progress);
+    } catch (e) {
+      console.error("Client file PDF failed", e);
+      toast.error("The client file could not be prepared — please try again or contact Loqal support.");
     } finally {
       setBusy(null);
     }
