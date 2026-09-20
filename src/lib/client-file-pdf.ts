@@ -272,6 +272,7 @@ function sections(lead: MortgageLead, progress?: PurchaseProgress): Section[] {
       : [["—", "Not submitted"]],
   });
 
+  const infoRequests = lead.infoRequests ?? [];
   const documents: Row[] = [];
   for (const doc of p.idDocuments ?? [])
     documents.push([`ID document — ${doc.name}`, formatDateTime(doc.uploadedAt)]);
@@ -279,17 +280,17 @@ function sections(lead: MortgageLead, progress?: PurchaseProgress): Section[] {
     documents.push([`Visa document — ${doc.name}`, formatDateTime(doc.uploadedAt)]);
   for (const doc of p.bankruptcyDocuments ?? [])
     documents.push([`Bankruptcy papers — ${doc.name}`, formatDateTime(doc.uploadedAt)]);
-  for (const r of lead.infoRequests)
-    for (const doc of r.documents) documents.push([doc.name, formatDateTime(doc.uploadedAt)]);
+  for (const r of infoRequests)
+    for (const doc of r.documents ?? []) documents.push([doc.name, formatDateTime(doc.uploadedAt)]);
   out.push({
     title: "Documents on file",
     rows: documents.length ? documents : [["—", "No documents uploaded"]],
   });
 
-  if (lead.infoRequests.length) {
+  if (infoRequests.length) {
     out.push({
       title: "Information requests",
-      rows: lead.infoRequests.map(
+      rows: infoRequests.map(
         (r) =>
           [r.question, r.answeredAt ? `Answered: ${r.answer ?? "see documents"}` : "Open"] as Row,
       ),
