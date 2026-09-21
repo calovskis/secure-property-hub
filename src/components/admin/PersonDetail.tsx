@@ -696,6 +696,99 @@ function AccessCard({ person }: { person: AdminPerson }) {
 /* Documents                                                           */
 /* ------------------------------------------------------------------ */
 
+/* ------------------------------------------------------------------ */
+/* Licences (mortgage lenders and realtors)                            */
+/* ------------------------------------------------------------------ */
+
+const LICENCE_ACTION_LABEL: Record<string, string> = {
+  added: "Licence added",
+  updated: "Licence updated",
+  removed: "Licence removed",
+  copy_uploaded: "Copy uploaded",
+  verified: "Verified by Loqal",
+  info_requested: "Information requested",
+};
+
+function LicencesTab({ person }: { person: AdminPerson }) {
+  const req = person.request;
+  if (!req) {
+    return <p className="text-sm text-muted-foreground">No registration on file for this person.</p>;
+  }
+  const rows = licenceRows(req);
+  const pending = pendingVerifications(req);
+  const verified = rows.filter((l) => isLicenceVerified(l));
+  const history = req.realtorVerification?.licenseHistory ?? [];
+
+  return (
+    <div className="space-y-6">
+      <div className="grid gap-3 sm:grid-cols-4">
+        <Metric label="States on file" value={String(rows.length)} />
+        <Metric label="Verified" value={String(verified.length)} />
+        <Metric label="Awaiting verification" value={String(pending.length)} />
+        <Metric
+          label={req.partnerType === "lender" ? "General NMLS" : "Coverage"}
+          value={
+            req.partnerType === "lender"
+              ? req.lenderLicence || "—"
+              : req.allStates
+                ? "All states"
+                : req.states.join(", ") || "—"
+          }
+        />
+      </div>
+
+      {pending.length ? (
+        <div className="rounded-lg border border-gold/50 bg-gold-tint/50 p-4 text-xs text-muted-foreground">
+          <p className="text-sm font-semibold text-gold">
+            {pending.length} state{pending.length === 1 ? "" : "s"} awaiting your verification
+          </p>
+          <p className="mt-1">
+            {pending.map((l) => l.state).join(", ")} — until you verify them, no cases are assigned
+            in those states.
+          </p>
+        </div>
+      ) : null}
+
+      <section>
+        <h3 className="text-sm font-bold text-foreground">Licences on file</h3>
+        <p className="mt-0.5 mb-3 text-xs text-muted-foreground">
+          Every state with its licence number, validity and uploaded copy. Download a copy to check
+          it, then verify the state or ask the partner for more information.
+        </p>
+        <LicenceVerificationPanel request={req} />
+      </section>
+
+      <section>
+        <h3 className="text-sm font-bold text-foreground">Licence history</h3>
+        {history.length ? (
+          <ul className="mt-2 space-y-2">
+            {[...history]
+              .sort((a, b) => b.at.localeCompare(a.at))
+              .map((e) => (
+                <li key={e.id} className="rounded-md border border-border p-3 text-xs">
+                  <p className="font-semibold text-foreground">
+                    {e.state} · {LICENCE_ACTION_LABEL[e.action] ?? e.action}
+                  </p>
+                  <p className="mt-0.5 text-muted-foreground">
+                    {formatDateTime(e.at)} · {e.by}
+                  </p>
+                  {e.before || e.after ? (
+                    <p className="mt-1 text-muted-foreground">
+                      {e.before ? `${e.before} → ` : ""}
+                      {e.after ?? ""}
+                    </p>
+                  ) : null}
+                </li>
+              ))}
+          </ul>
+        ) : (
+          <p className="mt-2 text-xs text-muted-foreground">No licence changes recorded yet.</p>
+        )}
+      </section>
+    </div>
+  );
+}
+
 function DocumentsTab({ person }: { person: AdminPerson }) {
   const req = person.request;
   const groups: {
