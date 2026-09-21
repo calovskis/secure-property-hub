@@ -7,6 +7,7 @@
  * what each bank would allow.
  */
 import { useMemo, useState } from "react";
+import { Lightbulb } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { MortgageLead } from "@/lib/leads";
 import {
@@ -96,6 +97,20 @@ function MatchCard({
           </li>
         ))}
       </ul>
+
+      {match.eligibility !== "eligible" && match.recommendations.length ? (
+        <div className="mt-3 rounded-md border border-gold/35 bg-gold-tint/30 p-3">
+          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-foreground">
+            <Lightbulb className="h-3.5 w-3.5 text-gold" />
+            What could make this programme eligible
+          </div>
+          <ul className="mt-1.5 list-disc space-y-1 pl-4 text-[11px] leading-5 text-muted-foreground">
+            {match.recommendations.map((recommendation) => (
+              <li key={recommendation}>{recommendation}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <button
@@ -193,10 +208,10 @@ export function BankEligibilitySection({ lead }: { lead: MortgageLead }) {
             </DialogTitle>
           </DialogHeader>
           <p className="text-xs text-muted-foreground">
-            Every matrix we hold, checked against this file. Conventional matrices apply to
-            borrowers with an SSN (US citizens and green card holders); everybody else is matched on
-            the foreign national matrices. Pick the bank you will sell the loan to before you
-            confirm the terms for the loan submission.
+            Only relevant programmes are shown. US citizens and green card holders with an SSN see
+            conventional matrices; other borrowers see foreign-national matrices. Programmes blocked
+            by a permanent borrower or matrix restriction are hidden. Pick the bank before confirming
+            the loan submission.
           </p>
           <ul className="mt-2 space-y-3">
             {matches.map((m) => (

@@ -301,12 +301,18 @@ export type ApplicantSnapshot = {
   state: string;
   /** Declared assets, face value, all currencies added up. */
   totalAssets: number;
+  /** Declared liquid assets used for the reserves test. */
+  liquidAssets: number;
   /** Declared assets held in US or Canadian institutions. */
   usCanadaAssets: number;
   /** Estimated monthly payment used for the reserves test. */
   monthlyPayment: number;
   reservesMonths?: number;
   ownsPropertyAlready: boolean;
+  /** A disclosed bankruptcy, foreclosure, short sale or deed in lieu. */
+  hasCreditEvent: boolean;
+  /** Months since bankruptcy discharge, when the file provides a usable date. */
+  creditEventMonthsAgo?: number;
 };
 
 const num = (v: unknown) => {
@@ -345,6 +351,28 @@ export function applicantSnapshot(lead: MortgageLead): ApplicantSnapshot {
     monthlyPrincipalInterest(loanAmount, terms?.ratePct ?? 7, terms?.termYears ?? 30) +
     taxInsuranceMonthly;
   const liquidTotal = liquid.reduce((s, a) => s + num(a.value), 0);
+  const declarations = p.declarations;
+  const hasCreditEvent = Boolean(
+    declarations?.bankruptcy ||
+      declarations?.propertyForeclosed ||
+      declarations?.preForeclosureOrShortSale ||
+      declarations?.conveyedTitleInLieu,
+  );
+  let creditEventMonthsAgo: number | undefined;
+  if (declarations?.bankruptcy && declarations.bankruptcyDischargeDate) {
+    const parts = declarations.bankruptcyDischargeDate.split("/");
+    const date =
+      parts.length === 3
+        ? new Date(Number(parts[2]), Number(parts[0]) - 1, Number(parts[1]))
+        : new Date(declarations.bankruptcyDischargeDate);
+    if (!Number.isNaN(date.getTime())) {
+      const now = new Date();
+      creditEventMonthsAgo = Math.max(
+        0,
+        (now.getFullYear() - date.getFullYear()) * 12 + now.getMonth() - date.getMonth(),
+      );
+    }
+  }
 
   return {
     clientName: lead.clientName,
@@ -371,6 +399,7 @@ export function applicantSnapshot(lead: MortgageLead): ApplicantSnapshot {
     occupancy: p.propertyUse === "vacation" ? "second" : "investment",
     state: (lead.propertyLabel.match(/\b([A-Z]{2})\b/)?.[1] ?? "").toUpperCase(),
     totalAssets: entries.reduce((s, a) => s + num(a.value), 0),
+    liquidAssets: liquidTotal,
     usCanadaAssets: liquid
       .filter((a) => isUsCanada(a.country))
       .reduce((s, a) => s + num(a.value), 0),
@@ -379,6 +408,8 @@ export function applicantSnapshot(lead: MortgageLead): ApplicantSnapshot {
       ? { reservesMonths: Math.floor(liquidTotal / monthlyPayment) }
       : {}),
     ownsPropertyAlready: entries.some((a) => a.type === "real_estate"),
+    hasCreditEvent,
+    ...(creditEventMonthsAgo !== undefined ? { creditEventMonthsAgo } : {}),
   };
 }
 
@@ -415,6 +446,10 @@ export type ProgramMatch = {
   maxLtv: number;
   /** Largest loan this matrix supports at the file's purchase price. */
   maxLoanForFile: number;
+  /** Practical file changes or documents that could move this programme to eligible. */
+  recommendations: string[];
+  /** A known, non-curable matrix exclusion; these programmes stay out of the UI. */
+  hiddenReason?: string | undefined;
 };
 
 const money = (n: number) => `$${Math.round(n).toLocaleString()}`;
@@ -428,6 +463,7 @@ function ltvForLoan(program: BankProgram, loan: number) {
 /** Match one client file against one bank matrix. */
 export function matchProgram(program: BankProgram, snap: ApplicantSnapshot): ProgramMatch {
   const checks: Check[] = [];
+  const recommendations: string[] = [];
   const add = (label: string, result: CheckResult, detail: string) =>
     checks.push({ label, result, detail });
 
@@ -439,6 +475,11 @@ export function matchProgram(program: BankProgram, snap: ApplicantSnapshot): Pro
       ? `${TRACK_LABEL[program.track]} — matches the borrower`
       : `This matrix is ${TRACK_LABEL[program.track].toLowerCase()}; the borrower is ${TRACK_LABEL[track].toLowerCase()}`,
   );
+  if (!program.occupancy.includes(snap.occupancy)) {
+    recommendations.push(
+      `This programme only supports ${program.occupancy.map((o) => OCCUPANCY_LABEL[o].toLowerCase()).join(" or ")}; only change occupancy if that is the borrower's genuine intended use.`,
+    );
+  }
 
   add(
     "Occupancy",
@@ -447,6 +488,13 @@ export function matchProgram(program: BankProgram, snap: ApplicantSnapshot): Pro
       .map((o) => OCCUPANCY_LABEL[o].toLowerCase())
       .join(", ")}`,
   );
+  if (tooSmall) {
+    recommendations.push(`Increase the requested loan to at least ${money(program.minLoan ?? 0)}, or use a programme with a lower minimum.`);
+  } else if (tooBig) {
+    recommendations.push(`Reduce the loan to ${money(program.maxLoan)} or less by increasing the down payment by at least ${money(snap.loanAmount - program.maxLoan)}.`);
+  } else if (belowBaseline) {
+    recommendations.push(`This high-balance programme starts above ${money(program.minLoanAbove ?? 0)}; use the standard conventional programme at the current loan size.`);
+  }
 
   const maxLtv = ltvForLoan(program, snap.loanAmount);
   const tooSmall = program.minLoan ? snap.loanAmount < program.minLoan : false;
@@ -459,6 +507,10 @@ export function matchProgram(program: BankProgram, snap: ApplicantSnapshot): Pro
       program.minLoanAbove ? ` (only above ${money(program.minLoanAbove)})` : ""
     }`,
   );
+  if (snap.ltv > maxLtv) {
+    const requiredDown = Math.ceil(snap.propertyPrice * (1 - maxLtv / 100));
+    recommendations.push(`Increase the down payment to at least ${money(requiredDown)} (${100 - maxLtv}%) to meet the ${maxLtv}% maximum LTV.`);
+  }
 
   add(
     "LTV",
@@ -483,6 +535,11 @@ export function matchProgram(program: BankProgram, snap: ApplicantSnapshot): Pro
           ? `No US score on file · matrix accepts no score / foreign credit (minimum ${program.minFico} when scored)`
           : `No US score on file · matrix needs a score of at least ${program.minFico}`,
     );
+    if (result === "fail" && snap.fico) {
+      recommendations.push(`Improve or correct the credit file by at least ${program.minFico - snap.fico} points to reach FICO ${program.minFico}.`);
+    } else if (result === "review") {
+      recommendations.push(`Add the borrower's credit report, then confirm a score of at least ${program.minFico}.`);
+    }
   } else {
     add(
       "Credit score",
@@ -491,6 +548,7 @@ export function matchProgram(program: BankProgram, snap: ApplicantSnapshot): Pro
         ? `FICO ${snap.fico} · matrix uses automated underwriting, no hard minimum`
         : "No score on file · automated underwriting decides",
     );
+    if (!snap.fico) recommendations.push("Complete the credit file and run automated underwriting (AUS).");
   }
 
   if (program.incomeNotRequired) {
@@ -499,6 +557,7 @@ export function matchProgram(program: BankProgram, snap: ApplicantSnapshot): Pro
       "review",
       "Borrower income not used — qualify on gross rent divided by the proposed PITIA",
     );
+    recommendations.push("Add the appraiser's market rent and proposed PITIA so the DSCR can be calculated.");
   } else if (program.maxDti !== undefined) {
     const result: CheckResult = snap.dti ? (snap.dti <= program.maxDti ? "pass" : "fail") : "review";
     add(
@@ -508,8 +567,15 @@ export function matchProgram(program: BankProgram, snap: ApplicantSnapshot): Pro
         ? `${snap.dti}% with the proposed payment · matrix maximum ${program.maxDti}%`
         : `No income or obligations on file yet · matrix maximum ${program.maxDti}%`,
     );
+    if (result === "fail" && snap.dti) {
+      const maximumObligations = Math.max(0, (snap.monthlyGross * program.maxDti) / 100 - snap.monthlyPayment);
+      recommendations.push(`Reduce monthly obligations to about ${money(maximumObligations)} or document enough additional qualifying income to bring DTI to ${program.maxDti}% or below.`);
+    } else if (result === "review") {
+      recommendations.push("Complete income and monthly-obligation details so DTI can be calculated.");
+    }
   } else {
     add("DTI", "review", "Per automated underwriting (AUS)");
+    recommendations.push("Complete income and liability documents, then run automated underwriting (AUS).");
   }
 
   if (program.reservesMonths) {
@@ -526,6 +592,12 @@ export function matchProgram(program: BankProgram, snap: ApplicantSnapshot): Pro
         ? `${program.reservesMonths} months required`
         : `${snap.reservesMonths} months of declared liquid assets (payment ${money(snap.monthlyPayment)}) · ${program.reservesMonths} months required`,
     );
+    if (result === "fail") {
+      const needed = Math.max(0, program.reservesMonths * snap.monthlyPayment - snap.liquidAssets);
+      recommendations.push(`Document at least ${money(needed)} more in eligible liquid reserves to reach ${program.reservesMonths} months.`);
+    } else if (result === "review") {
+      recommendations.push(`Add statements proving at least ${program.reservesMonths} months of reserves.`);
+    }
   }
 
   if (program.visaRequired) {
@@ -540,6 +612,7 @@ export function matchProgram(program: BankProgram, snap: ApplicantSnapshot): Pro
           ? `Valid US visa on file${snap.visaValidUntil ? ` until ${snap.visaValidUntil}` : ""}`
           : "No valid, unexpired US visa on file — the matrix requires one",
     );
+    if (result === "fail") recommendations.push("Add valid, unexpired US visa or qualifying I-797/I-94 evidence to the file.");
   }
 
   if (program.assetsUsCanadaOnly) {
@@ -551,6 +624,7 @@ export function matchProgram(program: BankProgram, snap: ApplicantSnapshot): Pro
         ? `${money(snap.usCanadaAssets)} held in US or Canadian institutions · qualifying income = assets / 60 months`
         : "No assets held in US or Canadian institutions — this matrix only counts those",
     );
+    if (result === "fail") recommendations.push("Document sufficient qualifying assets held with US or Canadian financial institutions.");
   }
 
   if (program.sanctionedCountriesExcluded) {
@@ -574,6 +648,7 @@ export function matchProgram(program: BankProgram, snap: ApplicantSnapshot): Pro
         ? "Real estate declared on the file"
         : `Any property ownership within ${program.ownershipHistoryMonths} months required — not evidenced on the file`,
     );
+    if (!snap.ownsPropertyAlready) recommendations.push(`Add evidence of property ownership within the last ${program.ownershipHistoryMonths} months.`);
   }
 
   if (program.ineligibleLocations?.length && snap.state) {
@@ -588,12 +663,22 @@ export function matchProgram(program: BankProgram, snap: ApplicantSnapshot): Pro
   }
 
   if (program.creditEventMonths) {
+    const knownTooRecent =
+      snap.hasCreditEvent &&
+      snap.creditEventMonthsAgo !== undefined &&
+      snap.creditEventMonthsAgo < program.creditEventMonths;
     add(
       "Credit events",
-      "review",
-      `At least ${program.creditEventMonths} months out of any bankruptcy, foreclosure or short sale`,
+      knownTooRecent ? "fail" : "review",
+      knownTooRecent
+        ? `${snap.creditEventMonthsAgo} months since the disclosed bankruptcy discharge · ${program.creditEventMonths} months required`
+        : `At least ${program.creditEventMonths} months out of any bankruptcy, foreclosure or short sale`,
     );
+    if (!knownTooRecent) recommendations.push(`Verify credit-event dates and provide discharge or completion documents showing at least ${program.creditEventMonths} months of seasoning.`);
   }
+
+  const sanctionedFailure = checks.find((c) => c.label === "Sanctions screening" && c.result === "fail");
+  const creditEventFailure = checks.find((c) => c.label === "Credit events" && c.result === "fail");
 
   const eligibility: Eligibility = checks.some((c) => c.result === "fail")
     ? "ineligible"
@@ -607,13 +692,23 @@ export function matchProgram(program: BankProgram, snap: ApplicantSnapshot): Pro
     checks,
     maxLtv,
     maxLoanForFile: Math.round((snap.propertyPrice * maxLtv) / 100),
+    recommendations: Array.from(new Set(recommendations)),
+    ...(sanctionedFailure
+      ? { hiddenReason: sanctionedFailure.detail }
+      : creditEventFailure
+        ? { hiddenReason: creditEventFailure.detail }
+        : {}),
   };
 }
 
-/** Every matrix, best fit first. */
+/** Relevant, potentially usable matrices only, best fit first. */
 export function matchBanks(snap: ApplicantSnapshot): ProgramMatch[] {
   const order: Record<Eligibility, number> = { eligible: 0, review: 1, ineligible: 2 };
-  return BANK_PROGRAMS.map((p) => matchProgram(p, snap)).sort(
+  const track = trackOf(snap);
+  return BANK_PROGRAMS.filter((program) => program.track === track)
+    .map((program) => matchProgram(program, snap))
+    .filter((match) => !match.hiddenReason)
+    .sort(
     (a, b) =>
       order[a.eligibility] - order[b.eligibility] ||
       a.program.bank.localeCompare(b.program.bank),
