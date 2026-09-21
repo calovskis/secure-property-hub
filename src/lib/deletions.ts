@@ -290,6 +290,7 @@ export function useDeletions() {
           : {}),
       };
       commit({ records: [record, ...cur.records] });
+      void pushRecord(record);
     },
     [],
   );
@@ -297,47 +298,50 @@ export function useDeletions() {
   const confirmDeletion = useCallback((id: string, confirmedBy: string) => {
     const cur = load();
     const now = new Date();
-    commit({
-      records: cur.records.map((r) =>
-        r.id === id && r.status === "requested"
-          ? {
-              ...r,
-              status: "deleted",
-              confirmedBy,
-              confirmedAt: now.toISOString(),
-              recoverableUntil: recoveryDeadline(now),
-            }
-          : r,
-      ),
-    });
+    const next = cur.records.map((r) =>
+      r.id === id && r.status === "requested"
+        ? {
+            ...r,
+            status: "deleted" as const,
+            confirmedBy,
+            confirmedAt: now.toISOString(),
+            recoverableUntil: recoveryDeadline(now),
+          }
+        : r,
+    );
+    commit({ records: next });
+    const updated = next.find((r) => r.id === id);
+    if (updated && updated.status === "deleted") void pushRecord(updated);
   }, []);
 
   const cancelRequest = useCallback((id: string, by: string, note?: string) => {
     const cur = load();
-    commit({
-      records: cur.records.map((r) =>
-        r.id === id && r.status === "requested"
-          ? {
-              ...r,
-              status: "cancelled",
-              closedBy: by,
-              closedAt: new Date().toISOString(),
-              ...(note ? { closeNote: note } : {}),
-            }
-          : r,
-      ),
-    });
+    const next = cur.records.map((r) =>
+      r.id === id && r.status === "requested"
+        ? {
+            ...r,
+            status: "cancelled" as const,
+            closedBy: by,
+            closedAt: new Date().toISOString(),
+            ...(note ? { closeNote: note } : {}),
+          }
+        : r,
+    );
+    commit({ records: next });
+    const updated = next.find((r) => r.id === id);
+    if (updated && updated.status === "cancelled") void pushRecord(updated);
   }, []);
 
   const restoreProfile = useCallback((id: string, by: string) => {
     const cur = load();
-    commit({
-      records: cur.records.map((r) =>
-        r.id === id && r.status === "deleted"
-          ? { ...r, status: "restored", closedBy: by, closedAt: new Date().toISOString() }
-          : r,
-      ),
-    });
+    const next = cur.records.map((r) =>
+      r.id === id && r.status === "deleted"
+        ? { ...r, status: "restored" as const, closedBy: by, closedAt: new Date().toISOString() }
+        : r,
+    );
+    commit({ records: next });
+    const updated = next.find((r) => r.id === id);
+    if (updated && updated.status === "restored") void pushRecord(updated);
   }, []);
 
   return {
