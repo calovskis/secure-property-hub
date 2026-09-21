@@ -205,7 +205,7 @@ export function PurchaseAgreementWizard({
     tellLoqal(
       `agreement-signed-admin-${leadId}`,
       "Purchase agreement signed",
-      `${clientLabel} — ${purchase.propertyLabel} at ${formatPrice(purchase.offerPrice)}. The mortgage company has the signed copy for the hard check.`,
+      `${clientLabel} — ${purchase.propertyLabel} at ${formatPrice(purchase.offerPrice)}. The mortgage company has the signed copy for the loan submission.`,
     );
     toast("Agreement signed", {
       description: "Your mortgage company has been notified and receives the signed copy.",
