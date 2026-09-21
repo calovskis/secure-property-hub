@@ -16,6 +16,10 @@ import { useAuth } from "@/lib/auth";
 import { useNotifications, type AppNotification } from "@/lib/notifications";
 import { openDeepLink } from "@/lib/deep-link";
 import { useActiveLeads } from "@/lib/leads";
+import { usePartnerRequests } from "@/lib/partner-requests";
+import { useDeletions } from "@/lib/deletions";
+import { pendingVerifications } from "@/lib/licence-verification";
+import { formatDate, formatDateTime } from "@/lib/dates";
 
 type GroupId =
   | "documents"
@@ -241,7 +245,7 @@ export function TaskTracker({ className = "" }: { className?: string }) {
           r.agreementSignedAt,
         );
 
-      if (r.kyc && !r.kyc.reviewedAt)
+      if (r.kyc)
         add(
           `kyc-${r.id}`,
           "registrations",
@@ -265,7 +269,7 @@ export function TaskTracker({ className = "" }: { className?: string }) {
         );
 
       for (const a of r.adminRequests ?? [])
-        if (a.kind === "info" && a.answeredAt && !a.closedAt)
+        if (a.kind === "info" && a.answeredAt)
           add(
             `areq-answered-${a.id}`,
             "correspondence",
@@ -326,6 +330,11 @@ export function TaskTracker({ className = "" }: { className?: string }) {
        their own side is activity, not a task, and lives in the activity card
        next to this one. */
     if (isAdmin) {
+      for (const t of staffTasks)
+        if (!seen.has(t.notification.id)) {
+          seen.add(t.notification.id);
+          list.push(t);
+        }
       const adminTaskPrefixes = [
         "preq-",
         "countersign-",
@@ -352,7 +361,15 @@ export function TaskTracker({ className = "" }: { className?: string }) {
         weight(a.notification) - weight(b.notification) ||
         new Date(a.notification.createdAt).getTime() - new Date(b.notification.createdAt).getTime(),
     );
-  }, [notifications, adminItems, leads, user?.email, user?.mortgageProfile?.submittedAt]);
+  }, [
+    notifications,
+    adminItems,
+    staffTasks,
+    isAdmin,
+    leads,
+    user?.email,
+    user?.mortgageProfile?.submittedAt,
+  ]);
 
   const [showAll, setShowAll] = useState(false);
 
