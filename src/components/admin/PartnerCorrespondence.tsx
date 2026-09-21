@@ -7,7 +7,11 @@
 import { useEffect, useState } from "react";
 import { UploadedDocLink } from "@/components/profile/UploadedDocLink";
 import { formatDateTime } from "@/lib/dates";
-import type { PartnerAdminRequest, PartnerRequest } from "@/lib/partner-requests";
+import {
+  usePartnerRequests,
+  type PartnerAdminRequest,
+  type PartnerRequest,
+} from "@/lib/partner-requests";
 import {
   Dialog,
   DialogContent,
