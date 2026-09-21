@@ -842,7 +842,10 @@ export function LenderPortal({
             setFocusLeadId(leadId ?? null);
             setTab("requests");
           }}
-          onOpenMortgages={() => setTab("mortgages")}
+          onOpenMortgages={(leadId) => {
+            setFocusLeadId(leadId ?? null);
+            setTab("mortgages");
+          }}
         />
       ) : null}
       {current === "home" ? (
@@ -853,7 +856,13 @@ export function LenderPortal({
       {current === "requests" ? (
         <RequestsInbox canDecide={can("requests.decide")} focusLeadId={focusLeadId} />
       ) : null}
-      {current === "mortgages" ? <LenderMortgages canManage={can("mortgages.manage")} /> : null}
+      {current === "mortgages" ? (
+        <LenderMortgages
+          canManage={can("mortgages.manage")}
+          focusLeadId={focusLeadId}
+          onFocusHandled={() => setFocusLeadId(null)}
+        />
+      ) : null}
       {current === "employees" ? <LenderEmployees /> : null}
       {current === "analytics" ? <LenderAnalytics /> : null}
       {current === "accounting" ? <LenderAccounting lenderName={lenderName} /> : null}

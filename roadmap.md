@@ -7,3 +7,4 @@
 - [x] Add a "Bank eligibility" section per client: match client data against bank matrices (Conventional for SSN/green card, Foreign National otherwise) and show eligibility + matrix terms
 - [x] After closing, keep the client file in the lender portal as pending transfer to the chosen bank
 - [x] Redesign the expanded lender mortgage case as a Premier Gold tabbed workspace while keeping the overview list unchanged
+- [x] Restore detailed Items Requiring Attention in mortgage cases and make dashboard file links open the selected client
