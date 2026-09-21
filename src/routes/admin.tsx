@@ -209,10 +209,14 @@ function AdminPage() {
 
         {tab === "overview" ? (
           <div className="mb-6 space-y-6">
-            <TaskTracker />
+            <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
+              <TaskTracker />
+              <AdminActivityCard />
+            </div>
             <LicenceChecksCard />
           </div>
         ) : null}
+
 
 
 
