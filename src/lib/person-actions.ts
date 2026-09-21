@@ -254,7 +254,7 @@ export function personActions({
           id: `awaiting-docs-${lead.id}-${r.id}`,
           owner: "person",
           title: "Awaiting requested information",
-          detail: `${lead.propertyLabel}: “${r.message}”`,
+          detail: `${lead.propertyLabel}: “${r.question}”`,
           since: r.requestedAt,
           cta: "Open the file",
           handler: "properties",
