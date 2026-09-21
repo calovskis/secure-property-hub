@@ -696,12 +696,20 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
      partner has nothing left to do, so the pre-saved upload disappears. */
   const lenderCopiesComplete = licenses.length > 0 && licenses.every((l) => l.doc);
   const awaitingVerification = licenses.filter((l) => l.doc && !isLicenceVerified(l));
+  /* A licence-copy upload is done as soon as every state on file has a copy —
+     whatever partner type the draft was started under. */
+  const licenceCopiesDone = licenses.length > 0 && !missingLicences.length;
+
+  /** Where a licence-copy upload is continued for this partner type. */
+  const openLicenceUpload = () => {
+    if (lender) window.location.assign("/partner?tab=licences");
+    else setLicDialog(true);
+  };
 
   const satisfiedDrafts = drafts
     .filter((d) => {
       if (d.id === "realtor-identity") return identityDone;
-      if (d.id === "realtor-licences") return realtor && !missingLicences.length;
-      if (d.id === "lender-licences") return lenderCopiesComplete;
+      if (d.id === "realtor-licences" || d.id === "lender-licences") return licenceCopiesDone;
       if (d.id.startsWith("licence-renewal-")) {
         const state = d.id.slice("licence-renewal-".length);
         return !expiringLicences.some((l) => l.state === state);
@@ -709,6 +717,7 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
       return false;
     })
     .map((d) => d.id);
+
 
   const satisfiedKey = satisfiedDrafts.join(",");
   useEffect(() => {
