@@ -326,7 +326,7 @@ export function monthlyPrincipalInterest(loan: number, ratePct: number, years: n
 /** Everything the matrices need, read off the client file. */
 export function applicantSnapshot(lead: MortgageLead): ApplicantSnapshot {
   const p = lead.profile;
-  const status = usStatusOf(p);
+  const status = usStatusOf(p, lead.usPerson);
   const terms = lead.terms;
   const downPaymentPct = terms?.downPaymentPct ?? 20;
   const loanAmount = Math.round(lead.propertyPrice * (1 - downPaymentPct / 100));

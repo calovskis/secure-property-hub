@@ -89,12 +89,12 @@ export function useLoanSubmission(leadId: string) {
         ? { ...existing, ...patch, updatedAt: now }
         : {
             leadId,
-            ratePct: 0,
-            termYears: 30,
-            downPaymentPct: 20,
-            closingCostPct: 0,
-            taxInsuranceAnnual: 0,
             ...patch,
+            ratePct: patch.ratePct ?? 0,
+            termYears: patch.termYears ?? 30,
+            downPaymentPct: patch.downPaymentPct ?? 20,
+            closingCostPct: patch.closingCostPct ?? 0,
+            taxInsuranceAnnual: patch.taxInsuranceAnnual ?? 0,
             createdAt: now,
             updatedAt: now,
           };
