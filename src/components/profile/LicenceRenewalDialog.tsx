@@ -16,6 +16,7 @@ import {
 import { DateInput } from "@/components/form/DateInput";
 import { formatDate } from "@/lib/dates";
 import type { RealtorLicenseDoc } from "@/lib/partner-requests";
+import { storeLicenceFile } from "@/lib/licence-files";
 
 const inputClass =
   "w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-brand";
