@@ -402,23 +402,7 @@ function ProfilePage() {
 
 
 
-  // The registration on file is the source of truth for the partner type —
-  // the sign-in selector can be left on another type by mistake.
-  const myRegistration = partnerRequests.find(
-    (r) => r.email.toLowerCase() === user.email.toLowerCase(),
-  );
   const isRealtor = user.partnerType === "realtor" || myRegistration?.partnerType === "realtor";
-
-  // A "video call booked" notification opens the call details pop-up directly.
-  const bookedCall = (myRegistration?.adminRequests ?? []).find(
-    (r) =>
-      r.kind === "call" &&
-      r.scheduledAt &&
-      (!focusParam || r.id === focusParam),
-  );
-  useEffect(() => {
-    if (openParam === "call-details" && bookedCall) setCallDetailsOpen(true);
-  }, [openParam, bookedCall?.id]);
   // Realtors keep their workspace header everywhere, including My Profile.
   const realtorNav = [
     { label: "Home", icon: "🏠", to: "/partner" },
