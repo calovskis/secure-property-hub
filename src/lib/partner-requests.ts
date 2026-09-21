@@ -64,6 +64,9 @@ export type PartnerAdminRequest = {
   answer?: string;
   answerDocs?: string[];
   answeredAt?: string;
+  /** Set once a Loqal admin has read the answer — clears the open action. */
+  answerReadAt?: string;
+  answerReadBy?: string;
   /** Call requests — the slot the partner booked. */
   scheduledAt?: string;
   meetUrl?: string | null;

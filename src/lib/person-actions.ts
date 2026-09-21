@@ -38,6 +38,11 @@ export type PersonAction = {
   cta: string;
   handler: PersonActionHandler;
   urgent?: boolean;
+  /**
+   * Information request whose answer this action shows: opening it marks the
+   * answer as read, so the item disappears from the open actions.
+   */
+  marksReadRequestId?: string;
 };
 
 const byOldest = (a: PersonAction, b: PersonAction) => a.since.localeCompare(b.since);
@@ -126,15 +131,16 @@ export function personActions({
         });
 
     for (const a of request.adminRequests ?? []) {
-      if (a.kind === "info" && a.answeredAt)
+      if (a.kind === "info" && a.answeredAt && !a.answerReadAt)
         out.push({
           id: `answered-${a.id}`,
           owner: "loqal",
           title: "Read the answer to your information request",
           detail: `${first} replied${a.answerDocs?.length ? " and attached files" : ""}: “${a.message}”`,
           since: a.answeredAt,
-          cta: "Open the correspondence",
+          cta: "Read the answer",
           handler: "correspondence",
+          marksReadRequestId: a.id,
         });
       if (a.kind === "info" && !a.answeredAt)
         out.push({
