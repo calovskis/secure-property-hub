@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppHeader } from "@/components/layout/AppHeader";
+import { LenderNavSlot } from "@/components/lender/LenderNavSlot";
 import { MortgageFileDetail } from "@/components/lender/MortgageFileDetail";
 import { useAuth } from "@/lib/auth";
 import { useActiveLeads } from "@/lib/leads";
@@ -32,15 +33,7 @@ function LenderMortgageCasePage() {
   return (
     <div className="min-h-screen bg-background">
       <AppHeader
-        navSlot={
-          <Link
-            to="/partner"
-            search={{ tab: "mortgages" }}
-            className="flex items-center gap-1.5 whitespace-nowrap rounded-md bg-brand-tint px-3 py-1.5 text-sm font-semibold text-brand"
-          >
-            <span aria-hidden>🏦</span> Lender workspace
-          </Link>
-        }
+        navSlot={<LenderNavSlot current="mortgages" />}
       />
       <main className="mx-auto max-w-[1400px] px-4 py-8 md:px-7">
         <Link
