@@ -413,6 +413,8 @@ export function TaskTracker({ className = "" }: { className?: string }) {
     staffTasks,
     isAdmin,
     leads,
+    requests,
+    gone,
     user?.email,
     user?.mortgageProfile?.submittedAt,
   ]);
