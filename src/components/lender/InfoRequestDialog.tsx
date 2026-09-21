@@ -42,10 +42,10 @@ export function InfoRequestDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSend: (question: string, needsDocument: boolean, type: InfoRequestType) => void;
-  initialQuestion?: string;
-  initialNeedsDocument?: boolean;
-  initialType?: InfoRequestType;
-  contextLabel?: string;
+  initialQuestion?: string | undefined;
+  initialNeedsDocument?: boolean | undefined;
+  initialType?: InfoRequestType | undefined;
+  contextLabel?: string | undefined;
 }) {
   const [step, setStep] = useState<Step>("compose");
   const [question, setQuestion] = useState(initialQuestion);
