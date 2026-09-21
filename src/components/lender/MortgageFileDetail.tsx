@@ -12,12 +12,14 @@
  *     handed over to the chosen bank.
  */
 import { useState, type ReactNode } from "react";
+import { Link } from "@tanstack/react-router";
 import {
   Building2,
   CircleAlert,
   ClipboardCheck,
   FileCheck2,
   FileText,
+  ExternalLink,
   Landmark,
   MessageSquareText,
   SearchCheck,
@@ -710,7 +712,13 @@ function WorkspacePanel({ children }: { children: ReactNode }) {
   return <div className="case-workspace-panel">{children}</div>;
 }
 
-export function MortgageFileDetail({ lead }: { lead: MortgageLead }) {
+export function MortgageFileDetail({
+  lead,
+  standalone = false,
+}: {
+  lead: MortgageLead;
+  standalone?: boolean;
+}) {
   const { progressOf } = usePurchaseProgress();
   const progress = progressOf(lead.id);
   const [tab, setTab] = useState<CaseTab>("overview");
@@ -727,7 +735,7 @@ export function MortgageFileDetail({ lead }: { lead: MortgageLead }) {
     (progress.stage === "agreement_signed" ? 1 : 0);
 
   return (
-    <div className="border-t border-border bg-background/60 p-3 sm:p-5">
+    <div className={cn("bg-background/60", standalone ? "p-0" : "border-t border-border p-3 sm:p-5")}>
       <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
         <div className="bg-brand px-4 py-4 text-primary-foreground sm:px-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
@@ -740,9 +748,24 @@ export function MortgageFileDetail({ lead }: { lead: MortgageLead }) {
                 {lead.propertyLabel} · {purchaseLabel}
               </div>
             </div>
-            <span className="rounded-full border border-primary-foreground/20 bg-primary-foreground/10 px-3 py-1 text-[11px] font-semibold">
-              {MORTGAGE_STAGE_LABEL[mortgageStage(lead)]}
-            </span>
+            <div className="flex flex-wrap items-center gap-2">
+              {!standalone ? (
+                <Link
+                  to="/lender/case/$leadId"
+                  params={{ leadId: lead.id }}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={`Open ${lead.clientName}'s mortgage case in a new tab`}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-primary-foreground/25 bg-primary-foreground/10 px-3 py-1.5 text-[11px] font-semibold text-primary-foreground hover:bg-primary-foreground/20"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  Open in new tab
+                </Link>
+              ) : null}
+              <span className="rounded-full border border-primary-foreground/20 bg-primary-foreground/10 px-3 py-1 text-[11px] font-semibold">
+                {MORTGAGE_STAGE_LABEL[mortgageStage(lead)]}
+              </span>
+            </div>
           </div>
           <div className="mt-4 flex items-center gap-3">
             <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-primary-foreground/20">

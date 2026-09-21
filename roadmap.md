@@ -9,3 +9,4 @@
 - [x] Redesign the expanded lender mortgage case as a Premier Gold tabbed workspace while keeping the overview list unchanged
 - [x] Restore detailed Items Requiring Attention in mortgage cases and make dashboard file links open the selected client
 - [x] Show actionable bank-eligibility improvements and hide fundamentally incompatible matrices
+- [x] Allow lender mortgage cases to open as a full workspace in a new browser tab
