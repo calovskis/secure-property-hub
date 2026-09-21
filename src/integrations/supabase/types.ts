@@ -248,6 +248,54 @@ export type Database = {
         }
         Relationships: []
       }
+      profile_deletions: {
+        Row: {
+          confirmed_at: string | null
+          confirmed_by: string | null
+          created_at: string
+          email: string
+          id: string
+          name: string
+          reason: string
+          recoverable_until: string | null
+          requested_at: string
+          requested_by: string
+          role_label: string
+          self_requested: boolean
+          status: string
+        }
+        Insert: {
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          name?: string
+          reason?: string
+          recoverable_until?: string | null
+          requested_at?: string
+          requested_by?: string
+          role_label?: string
+          self_requested?: boolean
+          status?: string
+        }
+        Update: {
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          reason?: string
+          recoverable_until?: string | null
+          requested_at?: string
+          requested_by?: string
+          role_label?: string
+          self_requested?: boolean
+          status?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
