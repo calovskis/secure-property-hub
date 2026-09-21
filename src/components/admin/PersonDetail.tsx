@@ -39,8 +39,10 @@ import { LicenceVerificationDialog } from "@/components/admin/LicenceVerificatio
 import { pendingVerifications } from "@/lib/licence-verification";
 import { PartnerCountersignDialog } from "@/components/admin/PartnerCountersignDialog";
 import { notify } from "@/lib/notifications";
+import { ActiveActionsList } from "@/components/admin/PersonActions";
 
 type Tab =
+  | "actions"
   | "profile"
   | "documents"
   | "correspondence"
@@ -50,6 +52,7 @@ type Tab =
   | "metrics";
 
 const TABS: [Tab, string, string][] = [
+  ["actions", "⚡", "Active actions"],
   ["profile", "👤", "Profile & registration"],
   ["documents", "📎", "Uploaded documents"],
   ["correspondence", "✉️", "Requests & correspondence"],
@@ -103,7 +106,7 @@ export function PersonDetailContent({
   onClose?: () => void;
   onMessage?: (p: { email: string; name: string; role: string }) => void;
 }) {
-  const [tab, setTab] = useState<Tab>("profile");
+  const [tab, setTab] = useState<Tab>("actions");
   const { user } = useAuth();
   const { can } = useMyPermissions(user?.email, user?.role === "admin");
   const origin = typeof window !== "undefined" ? window.location.origin : "";
@@ -184,6 +187,12 @@ export function PersonDetailContent({
       </header>
 
       <div className="flex-1 overflow-y-auto px-6 py-5">
+        {tab === "actions" ? (
+          <ActiveActionsList
+            person={person}
+            onOpenTab={(t) => setTab(t as Tab)}
+          />
+        ) : null}
         {tab === "profile" ? (
           <>
             <ProfileTab person={person} />
