@@ -18,7 +18,7 @@ import {
 } from "@/components/profile/realtor-licences";
 import { LicenceUploadDialog } from "@/components/profile/LicenceUploadDialog";
 import { useUploadDrafts } from "@/lib/upload-drafts";
-import { isLicenceVerified } from "@/lib/licence-verification";
+import { isLicenceVerified, lenderLicenceSeed } from "@/lib/licence-verification";
 
 export function LenderLicences() {
   const { user } = useAuth();
@@ -42,14 +42,7 @@ function LenderLicencesInner({ user }: { user: LoqalUser }) {
    * number and validity given there (falling back to the general NMLS number
    * for older registrations that only had one).
    */
-  const seed: LicenceSeed[] = (registration?.states ?? []).map((state) => {
-    const declared = (registration?.lenderLicenses ?? []).find((l) => l.state === state);
-    return {
-      state,
-      number: declared?.number ?? registration?.lenderLicence ?? "",
-      validUntil: declared?.validUntil ?? "",
-    };
-  });
+  const seed: LicenceSeed[] = lenderLicenceSeed(registration);
 
   const { licenses, persist } = useRealtorLicences(user, seed);
 
@@ -121,8 +114,14 @@ function LenderLicencesInner({ user }: { user: LoqalUser }) {
       </p>
       {notCleared.length ? (
         <p className="mt-3 rounded-md border border-gold/40 bg-gold-tint/50 px-3 py-2 text-[11px] font-semibold text-gold">
-          Not cleared by Loqal yet: {notCleared.map((l) => l.state).join(", ")}. No cases are
-          assigned to you in those states until the licence is verified.
+          {notCleared.length} state(s) not cleared by Loqal yet
+          {notCleared.length <= 8
+            ? `: ${notCleared.map((l) => l.state).join(", ")}`
+            : ` — including ${notCleared
+                .slice(0, 8)
+                .map((l) => l.state)
+                .join(", ")} (use the status filters below to see them all)`}
+          . No cases are assigned to you in those states until the licence is verified.
         </p>
       ) : null}
       {asked.length ? (

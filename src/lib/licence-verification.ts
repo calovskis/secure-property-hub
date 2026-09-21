@@ -24,6 +24,25 @@ export function licenceRows(request: PartnerRequest | undefined): RealtorLicense
   return merged;
 }
 
+/**
+ * The licence rows a mortgage lender declared at registration: one per state
+ * they selected, with the state-specific NMLS number and validity given there
+ * (older registrations only had one general number).
+ */
+export function lenderLicenceSeed(
+  request: PartnerRequest | undefined,
+): { state: string; number: string; validUntil: string }[] {
+  if (!request) return [];
+  return (request.states ?? []).map((state) => {
+    const declared = (request.lenderLicenses ?? []).find((l) => l.state === state);
+    return {
+      state,
+      number: declared?.number ?? request.lenderLicence ?? "",
+      validUntil: declared?.validUntil ?? "",
+    };
+  });
+}
+
 /** Loqal confirmed this licence and nothing changed since. */
 export function isLicenceVerified(l: RealtorLicenseDoc) {
   return Boolean(l.verifiedAt) && !l.pendingSince;

@@ -59,7 +59,7 @@ import {
 } from "@/lib/document-requests";
 import { usePartnerRequests } from "@/lib/partner-requests";
 import { useRealtorLicences } from "@/components/profile/realtor-licences";
-import { isLicenceVerified } from "@/lib/licence-verification";
+import { isLicenceVerified, lenderLicenceSeed } from "@/lib/licence-verification";
 
 import { UploadRequestDialog } from "@/components/profile/UploadRequestDialog";
 import { LicenceUploadDialog } from "@/components/profile/LicenceUploadDialog";
@@ -356,6 +356,20 @@ function ProfilePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recoveredProfile?.submittedAt]);
 
+  /* The registration on file is the source of truth for the partner type — the
+     sign-in selector can be left on another type by mistake. Computed before
+     the early returns below so every hook runs on every render. */
+  const myRegistration = user
+    ? partnerRequests.find((r) => r.email.toLowerCase() === user.email.toLowerCase())
+    : undefined;
+  // A "video call booked" notification opens the call details pop-up directly.
+  const bookedCall = (myRegistration?.adminRequests ?? []).find(
+    (r) => r.kind === "call" && r.scheduledAt && (!focusParam || r.id === focusParam),
+  );
+  useEffect(() => {
+    if (openParam === "call-details" && bookedCall) setCallDetailsOpen(true);
+  }, [openParam, bookedCall?.id]);
+
   if (!ready) return null;
 
   if (!user) {
@@ -388,23 +402,7 @@ function ProfilePage() {
 
 
 
-  // The registration on file is the source of truth for the partner type —
-  // the sign-in selector can be left on another type by mistake.
-  const myRegistration = partnerRequests.find(
-    (r) => r.email.toLowerCase() === user.email.toLowerCase(),
-  );
   const isRealtor = user.partnerType === "realtor" || myRegistration?.partnerType === "realtor";
-
-  // A "video call booked" notification opens the call details pop-up directly.
-  const bookedCall = (myRegistration?.adminRequests ?? []).find(
-    (r) =>
-      r.kind === "call" &&
-      r.scheduledAt &&
-      (!focusParam || r.id === focusParam),
-  );
-  useEffect(() => {
-    if (openParam === "call-details" && bookedCall) setCallDetailsOpen(true);
-  }, [openParam, bookedCall?.id]);
   // Realtors keep their workspace header everywhere, including My Profile.
   const realtorNav = [
     { label: "Home", icon: "🏠", to: "/partner" },
@@ -650,13 +648,19 @@ function ProfilePage() {
 function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean }) {
   const drafts = useUploadDrafts();
   const { requests, updateRequest } = usePartnerRequests();
-  const { licenses, persist } = useRealtorLicences(user);
   const [idDialog, setIdDialog] = useState(false);
   const [licDialog, setLicDialog] = useState(false);
   const [renewState, setRenewState] = useState<string | null>(null);
   const registration = requests.find(
     (r) => r.email.toLowerCase() === user.email.toLowerCase(),
   );
+
+  const lender = user.partnerType === "lender" || registration?.partnerType === "lender";
+  /* A mortgage lender's licences are the states declared at registration with
+     the state-specific NMLS number (older registrations only had a general
+     one) — the same rows the lender portal's Licences page shows. */
+  const lenderSeed = lender ? lenderLicenceSeed(registration) : [];
+  const { licenses, persist } = useRealtorLicences(user, lenderSeed);
 
   // Notifications deep-link straight into the pop-up they are about.
   useDeepLinkAction("identity", () => setIdDialog(true));
@@ -675,9 +679,10 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
     Math.ceil((new Date(iso).getTime() - Date.now()) / 86_400_000);
   /** Only the state licences whose validity is running out — nothing else. */
   const expiringLicences = realtor ? licenses.filter((l) => daysTo(l.validUntil) <= 30) : [];
-  const missingLicences = realtor
-    ? licenses.filter((l) => !l.doc && !expiringLicences.some((e) => e.state === l.state))
-    : [];
+  const missingLicences =
+    realtor || lender
+      ? licenses.filter((l) => !l.doc && !expiringLicences.some((e) => e.state === l.state))
+      : [];
   const identityDone = Boolean(realtor && registration?.realtorVerification?.identityDoc);
   const needsIdentity = Boolean(realtor && registration && !identityDone);
 
@@ -735,22 +740,33 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
   }
 
   if (missingLicences.length)
+    items.push(
+      lender
+        ? {
+            id: "lender-licences",
+            title: "State licence copies",
+            detail: `${missingLicences.length} of ${licenses.length} state(s) still need a copy — attach them on your Licences page.`,
+            open: () => window.location.assign("/partner?tab=licences"),
+          }
+        : {
+            id: "realtor-licences",
+            title: "State licence copies",
+            detail: `${missingLicences.length} of ${licenses.length} state(s) still need a copy.`,
+            open: () => setLicDialog(true),
+          },
+    );
+
+
+  /* Half-finished uploads that are not already listed above as a request of
+     their own — they are the only thing left to do, so they count too. */
+  const extraDrafts = liveDrafts.filter((d) => !items.some((i) => i.id === d.id));
+  for (const d of extraDrafts)
     items.push({
-      id: "realtor-licences",
-      title: "State licence copies",
-      detail: `${missingLicences.length} of ${licenses.length} state(s) still need a copy.`,
-      open: () => setLicDialog(true),
+      id: d.id,
+      title: d.label,
+      detail: "Pre-saved upload — not submitted yet.",
+      open: () => requestOpenUpload(d.id),
     });
-
-
-  for (const d of liveDrafts)
-    if (!items.some((i) => i.id === d.id))
-      items.push({
-        id: d.id,
-        title: d.label,
-        detail: "Pre-saved upload — not submitted yet.",
-        open: () => requestOpenUpload(d.id),
-      });
 
   // Written information requests are rendered by <InfoRequestsList /> below,
   // so the empty state must account for them too.
@@ -758,7 +774,11 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
     (i) => i.kind === "info" && !i.answeredAt,
   ).length;
   const outstanding =
-    missingLicences.length + expiringLicences.length + (needsIdentity ? 1 : 0) + openInfoRequests;
+    missingLicences.length +
+    expiringLicences.length +
+    (needsIdentity ? 1 : 0) +
+    openInfoRequests +
+    extraDrafts.length;
 
   /** Renews exactly one state licence — the others are left untouched. */
   function renewLicence(state: string, next: { number: string; validUntil: string; doc: string }) {
@@ -852,14 +872,20 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
                 ? Object.keys(draft.states).length
                 : draft.files.length
               : 0;
+            /* Licence drafts are always measured against the states actually on
+               file, so the count can never contradict the licences page. */
+            const total =
+              draft && draft.states
+                ? Math.max(licenses.length || draft.expected || staged, staged)
+                : (draft?.expected ?? 1);
             return (
               <li key={item.id} className="rounded-md border border-border p-3">
                 <div className="text-sm font-semibold text-foreground">{item.title}</div>
                 <div className="mt-0.5 text-xs text-muted-foreground">{item.detail}</div>
                 {draft ? (
                   <div className="mt-1 text-[11px] font-semibold text-gold">
-                    {staged} of {draft.expected ?? 1} attached · saved{" "}
-                    {formatDateTime(draft.updatedAt)}
+                    {staged} of {total} attached · saved {formatDateTime(draft.updatedAt)} · not
+                    submitted yet
                   </div>
                 ) : null}
                 <button
@@ -882,9 +908,13 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
 
       {lenderCopiesComplete && awaitingVerification.length ? (
         <p className="mt-3 rounded-md border border-border bg-brand-tint/40 px-3 py-2 text-[11px] font-semibold text-brand">
-          All licence copies are provided — {awaitingVerification.map((l) => l.state).join(", ")}{" "}
-          {awaitingVerification.length === 1 ? "is" : "are"} awaiting Loqal verification. Nothing
-          else is needed from you.
+          All licence copies are provided —{" "}
+          {awaitingVerification.length <= 8
+            ? `${awaitingVerification.map((l) => l.state).join(", ")} ${
+                awaitingVerification.length === 1 ? "is" : "are"
+              }`
+            : `${awaitingVerification.length} states are`}{" "}
+          awaiting Loqal verification. Nothing else is needed from you.
         </p>
       ) : null}
 
