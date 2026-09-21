@@ -39,11 +39,25 @@ export type LeadDocument = {
   url?: string;
 };
 
+export type InfoRequestType = "information" | "evidence" | "visa_support";
+
+export const INFO_REQUEST_TYPE_LABEL: Record<InfoRequestType, string> = {
+  information: "Information",
+  evidence: "Evidence",
+  visa_support: "Visa support",
+};
+
 export type InfoRequest = {
   id: string;
+  /** Older saved requests have no type and are displayed as Information. */
+  type?: InfoRequestType;
   question: string;
   needsDocument: boolean;
   requestedAt: string;
+  bankProgramId?: string;
+  bankName?: string;
+  programName?: string;
+  recommendation?: string;
   answer?: string;
   documents: LeadDocument[];
   answeredAt?: string;
@@ -322,7 +336,18 @@ type LeadsContextValue = {
   updateLead: (id: string, patch: Partial<MortgageLead>) => void;
   /** Client annuls an untouched application; the lender desk is locked out. */
   cancelLead: (id: string) => void;
-  addInfoRequest: (id: string, question: string, needsDocument: boolean) => void;
+  addInfoRequest: (
+    id: string,
+    question: string,
+    needsDocument: boolean,
+    context?: {
+      type?: InfoRequestType;
+      bankProgramId?: string;
+      bankName?: string;
+      programName?: string;
+      recommendation?: string;
+    },
+  ) => void;
   answerInfoRequest: (
     leadId: string,
     requestId: string,
@@ -490,7 +515,7 @@ export function LeadsProvider({ children }: { children: ReactNode }) {
               }
             : l,
         ),
-      addInfoRequest: (id, question, needsDocument) =>
+      addInfoRequest: (id, question, needsDocument, context) =>
         patchLead(id, (l) => ({
           ...l,
           status: "info_required",
@@ -498,10 +523,15 @@ export function LeadsProvider({ children }: { children: ReactNode }) {
             ...l.infoRequests,
             {
               id: uid(),
+              type: context?.type ?? "information",
               question,
               needsDocument,
               requestedAt: new Date().toISOString(),
               documents: [],
+              ...(context?.bankProgramId ? { bankProgramId: context.bankProgramId } : {}),
+              ...(context?.bankName ? { bankName: context.bankName } : {}),
+              ...(context?.programName ? { programName: context.programName } : {}),
+              ...(context?.recommendation ? { recommendation: context.recommendation } : {}),
             },
           ],
         })),

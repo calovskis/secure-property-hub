@@ -305,7 +305,9 @@ function DecisionPanel({ lead }: { lead: MortgageLead }) {
         lead={lead}
         open={infoOpen}
         onOpenChange={setInfoOpen}
-        onSend={(question, needsDocument) => addInfoRequest(lead.id, question, needsDocument)}
+        onSend={(question, needsDocument, type) =>
+          addInfoRequest(lead.id, question, needsDocument, { type })
+        }
       />
     </div>
   );

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -7,7 +7,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { MortgageLead } from "@/lib/leads";
+import {
+  INFO_REQUEST_TYPE_LABEL,
+  type InfoRequestType,
+  type MortgageLead,
+} from "@/lib/leads";
 
 const inputClass =
   "w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-brand";
@@ -29,20 +33,41 @@ export function InfoRequestDialog({
   open,
   onOpenChange,
   onSend,
+  initialQuestion = "",
+  initialNeedsDocument,
+  initialType = "information",
+  contextLabel,
 }: {
   lead: MortgageLead;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSend: (question: string, needsDocument: boolean) => void;
+  onSend: (question: string, needsDocument: boolean, type: InfoRequestType) => void;
+  initialQuestion?: string;
+  initialNeedsDocument?: boolean;
+  initialType?: InfoRequestType;
+  contextLabel?: string;
 }) {
   const [step, setStep] = useState<Step>("compose");
-  const [question, setQuestion] = useState("");
-  const [docChoice, setDocChoice] = useState<"yes" | "no" | null>(null);
+  const [question, setQuestion] = useState(initialQuestion);
+  const [requestType, setRequestType] = useState<InfoRequestType>(initialType);
+  const [docChoice, setDocChoice] = useState<"yes" | "no" | null>(
+    initialNeedsDocument === undefined ? null : initialNeedsDocument ? "yes" : "no",
+  );
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    setStep("compose");
+    setQuestion(initialQuestion);
+    setRequestType(initialType);
+    setDocChoice(initialNeedsDocument === undefined ? null : initialNeedsDocument ? "yes" : "no");
+    setError(null);
+  }, [initialNeedsDocument, initialQuestion, initialType, open]);
 
   function reset() {
     setStep("compose");
     setQuestion("");
+    setRequestType("information");
     setDocChoice(null);
     setError(null);
   }
@@ -66,7 +91,7 @@ export function InfoRequestDialog({
   }
 
   function send() {
-    onSend(question.trim(), docChoice === "yes");
+    onSend(question.trim(), docChoice === "yes", requestType);
     close();
   }
 
@@ -92,6 +117,25 @@ export function InfoRequestDialog({
 
         {step === "compose" ? (
           <div className="space-y-4">
+            {contextLabel ? (
+              <div className="rounded-md border border-gold/35 bg-gold-tint/30 px-3 py-2 text-xs text-foreground">
+                {contextLabel}
+              </div>
+            ) : null}
+            <label className="block">
+              <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Request type
+              </span>
+              <select
+                value={requestType}
+                onChange={(event) => setRequestType(event.target.value as InfoRequestType)}
+                className={inputClass}
+              >
+                {Object.entries(INFO_REQUEST_TYPE_LABEL).map(([value, label]) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
+              </select>
+            </label>
             <label className="block">
               <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Message to the client
@@ -145,7 +189,7 @@ export function InfoRequestDialog({
           <div className="space-y-4">
             <div className="rounded-md border border-gold/40 bg-gold-tint/40 p-4">
               <span className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Message
+                {INFO_REQUEST_TYPE_LABEL[requestType]} request
               </span>
               <p className="mt-2 whitespace-pre-wrap rounded-md border border-border bg-card p-3 text-sm text-foreground">
                 {question.trim()}
