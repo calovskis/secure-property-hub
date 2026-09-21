@@ -429,33 +429,12 @@ function ProfileTab({ person }: { person: AdminPerson }) {
             />
           </dl>
           {req.partnerType === "lender" || req.partnerType === "realtor" ? (
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-border p-3">
-              <div>
-                <p className="text-sm font-semibold text-foreground">State licence verification</p>
-                <p className="text-xs text-muted-foreground">
-                  {licencesToVerify.length
-                    ? `${licencesToVerify.length} state${licencesToVerify.length === 1 ? "" : "s"} awaiting verification: ${licencesToVerify.map((l) => l.state).join(", ")}`
-                    : "All submitted licences are verified."}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setLicenceDialogOpen(true)}
-                className={`rounded-md px-3 py-1.5 text-xs font-semibold ${
-                  licencesToVerify.length
-                    ? "bg-brand text-background hover:bg-brand-soft"
-                    : "border border-border text-muted-foreground hover:bg-brand-tint"
-                }`}
-              >
-                Open verification
-              </button>
-              <LicenceVerificationDialog
-                request={req}
-                open={licenceDialogOpen}
-                onOpenChange={setLicenceDialogOpen}
-              />
-            </div>
+            <p className="mt-4 rounded-md border border-border p-3 text-xs text-muted-foreground">
+              State licences, copies and verification are in the{" "}
+              <span className="font-semibold text-foreground">Licences</span> tab.
+            </p>
           ) : null}
+
           {req.agreementSignedAt && !req.agreementCountersignedAt ? (
             <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-md border border-success/40 bg-success/5 p-3">
               <p className="text-xs text-muted-foreground">
