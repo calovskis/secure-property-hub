@@ -543,7 +543,7 @@ function AttentionBlock({
         : `Keep the signed agreement, title work, insurance evidence and final closing documents together for ${progress.closingDate ? formatDate(progress.closingDate) : "closing"}.`,
       status: closed ? "Action required" : "Monitor through closing",
       tone: closed ? "urgent" : "planned",
-      tab: closed ? "transfer" : undefined,
+      ...(closed ? { tab: "transfer" as const } : {}),
       icon: closed ? Send : ShieldCheck,
     });
   }
