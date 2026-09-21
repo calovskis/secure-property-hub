@@ -38,6 +38,11 @@ export type PersonAction = {
   cta: string;
   handler: PersonActionHandler;
   urgent?: boolean;
+  /**
+   * Information request whose answer this action shows: opening it marks the
+   * answer as read, so the item disappears from the open actions.
+   */
+  marksReadRequestId?: string;
 };
 
 const byOldest = (a: PersonAction, b: PersonAction) => a.since.localeCompare(b.since);
