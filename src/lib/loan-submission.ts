@@ -98,7 +98,7 @@ export function useLoanSubmission(leadId: string) {
 
         : {
             leadId,
-            ...patch,
+            ...clean(patch),
             ratePct: patch.ratePct ?? 0,
             termYears: patch.termYears ?? 30,
             downPaymentPct: patch.downPaymentPct ?? 20,
@@ -107,6 +107,7 @@ export function useLoanSubmission(leadId: string) {
             createdAt: now,
             updatedAt: now,
           };
+
       commit({
         submissions: existing
           ? cur.submissions.map((s) => (s.leadId === leadId ? next : s))
