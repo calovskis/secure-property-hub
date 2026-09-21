@@ -86,7 +86,8 @@ export function useLoanSubmission(leadId: string) {
       const now = new Date().toISOString();
       const existing = cur.submissions.find((s) => s.leadId === leadId);
       const next: LoanSubmission = existing
-        ? { ...existing, ...patch, updatedAt: now }
+        ? { ...existing, ...clean(patch), updatedAt: now }
+
         : {
             leadId,
             ...patch,
