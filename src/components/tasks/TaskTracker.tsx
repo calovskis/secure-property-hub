@@ -15,7 +15,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { useNotifications, type AppNotification } from "@/lib/notifications";
 import { openDeepLink } from "@/lib/deep-link";
-import { useActiveLeads } from "@/lib/leads";
+import { useActiveLeads, useLeads } from "@/lib/leads";
 import { usePartnerRequests } from "@/lib/partner-requests";
 import { useDeletions } from "@/lib/deletions";
 import { pendingVerifications } from "@/lib/licence-verification";
