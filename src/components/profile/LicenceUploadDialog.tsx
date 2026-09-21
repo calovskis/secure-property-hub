@@ -152,8 +152,11 @@ export function LicenceUploadDialog({
                           type="file"
                           className="hidden"
                           onChange={(e) => {
-                            const name = e.target.files?.[0]?.name;
-                            if (name) setCopy(l.state, name);
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              setCopy(l.state, file.name);
+                              if (ownerEmail) void storeLicenceFile(ownerEmail, l.state, file);
+                            }
                             e.target.value = "";
                           }}
                         />
