@@ -16,6 +16,7 @@ import {
 import { DateInput } from "@/components/form/DateInput";
 import { formatDate } from "@/lib/dates";
 import type { RealtorLicenseDoc } from "@/lib/partner-requests";
+import { storeLicenceFile } from "@/lib/licence-files";
 
 const inputClass =
   "w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-brand";
@@ -28,11 +29,14 @@ export function LicenceRenewalDialog({
   license,
   onSubmit,
   completed = false,
+  ownerEmail,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   license: RealtorLicenseDoc | undefined;
   onSubmit: (next: { number: string; validUntil: string; doc: string }) => void;
+  /** Partner the copy belongs to — keeps the file for Loqal to download. */
+  ownerEmail?: string;
   /** Renewal already provided — show what is on file instead of an empty form. */
   completed?: boolean;
 }) {
@@ -157,8 +161,12 @@ export function LicenceRenewalDialog({
                   type="file"
                   className="hidden"
                   onChange={(e) => {
-                    const name = e.target.files?.[0]?.name;
-                    if (name) setDoc(name);
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setDoc(file.name);
+                      if (ownerEmail && license)
+                        void storeLicenceFile(ownerEmail, license.state, file);
+                    }
                     e.target.value = "";
                   }}
                 />

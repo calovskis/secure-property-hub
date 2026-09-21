@@ -173,6 +173,7 @@ export function RealtorVerificationCard({ user }: { user: LoqalUser }) {
           draftId={licDraftId}
           licenses={licenses}
           onSubmit={uploadCopies}
+          ownerEmail={user.email}
         />
 
         <div className="mt-4 border-t border-border pt-3">

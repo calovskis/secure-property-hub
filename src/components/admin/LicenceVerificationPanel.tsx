@@ -25,6 +25,7 @@ import {
   isLicenceVerified,
   licenceRows,
 } from "@/lib/licence-verification";
+import { downloadLicenceFile, getLicenceFile } from "@/lib/licence-files";
 
 function LicenceVerificationBody({ request }: { request: PartnerRequest }) {
   const { updateRequest } = usePartnerRequests();
@@ -167,8 +168,28 @@ function LicenceVerificationBody({ request }: { request: PartnerRequest }) {
                     </p>
                   )}
                 </div>
-                {!verified ? (
-                  <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2">
+                  {l.doc ? (
+                    getLicenceFile(request.email, l.state) ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!downloadLicenceFile(request.email, l.state))
+                            toast("Copy unavailable", {
+                              description: "Ask the partner to re-upload the licence copy.",
+                            });
+                        }}
+                        className="rounded-md border border-brand px-3 py-1.5 text-xs font-semibold text-brand hover:bg-brand-tint"
+                      >
+                        ⬇ Download copy
+                      </button>
+                    ) : (
+                      <span className="self-center text-[11px] font-semibold text-muted-foreground">
+                        Copy not downloadable — ask for a re-upload
+                      </span>
+                    )
+                  ) : null}
+                  {!verified ? (
                     <button
                       type="button"
                       onClick={() => verify(l)}
@@ -176,29 +197,20 @@ function LicenceVerificationBody({ request }: { request: PartnerRequest }) {
                     >
                       Verify &amp; clear state
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setNoteFor(noteFor === l.state ? null : l.state);
-                        setNote("");
-                      }}
-                      className="rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-brand-tint"
-                    >
-                      Request information
-                    </button>
-                  </div>
-                ) : (
+                  ) : null}
                   <button
                     type="button"
                     onClick={() => {
                       setNoteFor(noteFor === l.state ? null : l.state);
                       setNote("");
                     }}
-                    className="rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-brand-tint"
+                    className={`rounded-md border border-border px-3 py-1.5 text-xs font-semibold hover:bg-brand-tint ${
+                      verified ? "text-muted-foreground" : "text-foreground"
+                    }`}
                   >
                     Request information
                   </button>
-                )}
+                </div>
               </div>
               {noteFor === l.state ? (
                 <div className="mt-3 space-y-2">

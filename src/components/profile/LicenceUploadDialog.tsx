@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { formatDate } from "@/lib/dates";
 import type { RealtorLicenseDoc } from "@/lib/partner-requests";
+import { storeLicenceFile } from "@/lib/licence-files";
 import {
   clearUploadDraft,
   getUploadDraft,
@@ -28,6 +29,7 @@ export function LicenceUploadDialog({
   draftId,
   licenses,
   onSubmit,
+  ownerEmail,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -35,6 +37,8 @@ export function LicenceUploadDialog({
   licenses: RealtorLicenseDoc[];
   /** state code → uploaded file name */
   onSubmit: (copies: Record<string, string>) => void;
+  /** Partner the copies belong to — keeps the file for Loqal to download. */
+  ownerEmail?: string;
 }) {
   const [copies, setCopies] = useState<Record<string, string>>({});
   const [step, setStep] = useState<"upload" | "confirm">("upload");
@@ -149,8 +153,11 @@ export function LicenceUploadDialog({
                           type="file"
                           className="hidden"
                           onChange={(e) => {
-                            const name = e.target.files?.[0]?.name;
-                            if (name) setCopy(l.state, name);
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              setCopy(l.state, file.name);
+                              if (ownerEmail) void storeLicenceFile(ownerEmail, l.state, file);
+                            }
                             e.target.value = "";
                           }}
                         />

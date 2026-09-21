@@ -955,6 +955,7 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
             draftId="realtor-licences"
             licenses={licenses}
             onSubmit={uploadCopies}
+            ownerEmail={user.email}
           />
           <LicenceRenewalDialog
             open={Boolean(renewState)}
@@ -966,6 +967,7 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
             onSubmit={(next) => {
               if (renewState) renewLicence(renewState, next);
             }}
+            ownerEmail={user.email}
           />
 
         </>
