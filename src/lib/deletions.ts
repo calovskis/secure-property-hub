@@ -7,8 +7,9 @@
  * it is their own decision. In every case the profile is only scheduled for
  * removal: for 90 days it can be restored, after which it is purged.
  */
-import { useCallback, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useSyncExternalStore } from "react";
 import { RECOVERY_DAYS } from "@/lib/roles";
+import { supabase } from "@/integrations/supabase/client";
 
 export type DeletionStatus = "requested" | "deleted" | "cancelled" | "restored";
 

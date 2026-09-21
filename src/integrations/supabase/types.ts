@@ -250,6 +250,9 @@ export type Database = {
       }
       profile_deletions: {
         Row: {
+          close_note: string | null
+          closed_at: string | null
+          closed_by: string | null
           confirmed_at: string | null
           confirmed_by: string | null
           created_at: string
@@ -265,6 +268,9 @@ export type Database = {
           status: string
         }
         Insert: {
+          close_note?: string | null
+          closed_at?: string | null
+          closed_by?: string | null
           confirmed_at?: string | null
           confirmed_by?: string | null
           created_at?: string
@@ -280,6 +286,9 @@ export type Database = {
           status?: string
         }
         Update: {
+          close_note?: string | null
+          closed_at?: string | null
+          closed_by?: string | null
           confirmed_at?: string | null
           confirmed_by?: string | null
           created_at?: string
