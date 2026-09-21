@@ -48,9 +48,16 @@ export function isLicenceVerified(l: RealtorLicenseDoc) {
   return Boolean(l.verifiedAt) && !l.pendingSince;
 }
 
-/** The partner submitted something a Loqal admin still has to check. */
+/**
+ * The partner submitted something a Loqal admin still has to check: either the
+ * change was explicitly flagged as pending, or a licence copy is on file that
+ * nobody has verified yet (older uploads carry no pending stamp). Rows the
+ * partner only declared at registration, with no copy at all, are not counted —
+ * there is nothing to check until they attach one.
+ */
 export function awaitsVerification(l: RealtorLicenseDoc) {
-  return Boolean(l.pendingSince) && !l.verifiedAt;
+  if (l.verifiedAt || l.infoRequestedAt) return false;
+  return Boolean(l.pendingSince || l.doc);
 }
 
 /** Rows a Loqal admin still has to verify. */

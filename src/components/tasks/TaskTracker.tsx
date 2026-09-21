@@ -16,6 +16,10 @@ import { useAuth } from "@/lib/auth";
 import { useNotifications, type AppNotification } from "@/lib/notifications";
 import { openDeepLink } from "@/lib/deep-link";
 import { useActiveLeads } from "@/lib/leads";
+import { usePartnerRequests } from "@/lib/partner-requests";
+import { useDeletions } from "@/lib/deletions";
+import { pendingVerifications } from "@/lib/licence-verification";
+import { formatDate, formatDateTime } from "@/lib/dates";
 
 type GroupId =
   | "documents"
@@ -190,6 +194,117 @@ export function TaskTracker({ className = "" }: { className?: string }) {
   const { notifications } = useNotifications(user?.email);
   const { notifications: adminItems } = useNotifications(isAdmin ? "admins" : undefined);
   const { leads } = useActiveLeads();
+  const { requests } = usePartnerRequests();
+  const { deleted } = useDeletions();
+
+  /**
+   * Loqal-side tasks read straight off the live records instead of waiting for
+   * a notification to exist: partner registrations to approve, agreements to
+   * countersign, KYB questionnaires to review and every state licence a partner
+   * submitted that nobody verified yet.
+   */
+  const staffTasks = useMemo<Task[]>(() => {
+    if (!isAdmin) return [];
+    const gone = new Set(deleted.map((d) => d.email.trim().toLowerCase()));
+    const list: Task[] = [];
+    const add = (
+      id: string,
+      gid: GroupId,
+      title: string,
+      body: string,
+      href: string,
+      createdAt: string,
+      severity: AppNotification["severity"] = "warning",
+    ) =>
+      list.push({
+        def: GROUPS[gid],
+        notification: { id, to: "admins", title, body, href, severity, createdAt },
+      });
+
+    for (const r of requests) {
+      if (r.status === "declined" || gone.has(r.email.trim().toLowerCase())) continue;
+      const who = r.companyName || `${r.firstName} ${r.lastName}`.trim();
+
+      if (r.status === "pending")
+        add(
+          `preq-${r.id}`,
+          "registrations",
+          `Approve the ${r.kind === "partner" ? "partner" : "corporate"} registration — ${who}`,
+          "Review the registration details and approve or decline it.",
+          `/admin-partner-requests?focus=${r.id}`,
+          r.submittedAt,
+        );
+
+      if (r.status === "approved" && r.agreementSignedAt && !r.agreementCountersignedAt)
+        add(
+          `countersign-${r.id}`,
+          "agreements",
+          `Countersign the partnership agreement — ${who}`,
+          `Signed by the partner on ${formatDateTime(r.agreementSignedAt)}.`,
+          `/admin-partner-requests?focus=${r.id}&open=profile`,
+          r.agreementSignedAt,
+        );
+
+      if (r.kyc)
+        add(
+          `kyc-${r.id}`,
+          "registrations",
+          `Review the KYB questionnaire — ${who}`,
+          "Director and shareholder information is ready for review.",
+          `/admin-partner-requests?focus=${r.id}&open=profile`,
+          r.kyc.submittedAt,
+          "info",
+        );
+
+      /* One task per partner, however many states they submitted — the
+         verification pop-up handles them all in one go. */
+      const pendingLic = pendingVerifications(r);
+      if (pendingLic.length === 1) {
+        const l = pendingLic[0]!;
+        add(
+          `licverif-${r.id}-${l.state}`,
+          "licences",
+          `Verify the ${l.state} licence — ${who}`,
+          `${l.number || "Licence"}${l.validUntil ? ` · valid till ${formatDate(l.validUntil)}` : ""} · ${
+            l.doc ? "copy uploaded" : "no copy attached yet"
+          }. Verify it to clear ${who} for cases in ${l.state}.`,
+          `/admin-people/${r.kind}-${r.id}`,
+          l.pendingSince ?? l.uploadedAt ?? r.submittedAt,
+        );
+      } else if (pendingLic.length > 1) {
+        const oldest = pendingLic
+          .map((l) => l.pendingSince ?? l.uploadedAt ?? r.submittedAt)
+          .sort()[0]!;
+        add(
+          `licverif-${r.id}-all`,
+          "licences",
+          `Verify ${pendingLic.length} state licences — ${who}`,
+          `${pendingLic
+            .slice(0, 6)
+            .map((l) => l.state)
+            .join(", ")}${pendingLic.length > 6 ? ` and ${pendingLic.length - 6} more` : ""} — ${
+            pendingLic.filter((l) => l.doc).length
+          } with a copy on file. Verify them to clear ${who} for cases in those states.`,
+          `/admin-people/${r.kind}-${r.id}`,
+          oldest,
+        );
+      }
+
+      for (const a of r.adminRequests ?? [])
+        if (a.kind === "info" && a.answeredAt)
+          add(
+            `areq-answered-${a.id}`,
+            "correspondence",
+            `Read the answer from ${who}`,
+            "The partner answered an information request from Loqal.",
+            `/admin-partner-requests?focus=${r.id}&open=correspondence&item=${a.id}`,
+            a.answeredAt,
+            "info",
+          );
+    }
+    return list;
+  }, [isAdmin, requests, deleted]);
+
 
   const tasks = useMemo<Task[]>(() => {
     const email = user?.email.toLowerCase() ?? "";
@@ -237,6 +352,11 @@ export function TaskTracker({ className = "" }: { className?: string }) {
        their own side is activity, not a task, and lives in the activity card
        next to this one. */
     if (isAdmin) {
+      for (const t of staffTasks)
+        if (!seen.has(t.notification.id)) {
+          seen.add(t.notification.id);
+          list.push(t);
+        }
       const adminTaskPrefixes = [
         "preq-",
         "countersign-",
@@ -247,7 +367,15 @@ export function TaskTracker({ className = "" }: { className?: string }) {
         "deletion-",
       ];
       for (const n of adminItems.filter(isStillOpen))
-        if (adminTaskPrefixes.some((p) => n.id.startsWith(p))) push(n, adminGroupOf(n.id));
+        /* Licence, registration, countersignature and KYB work is derived from
+           the live records above, so stored copies must not double-count. */
+        if (
+          adminTaskPrefixes.some((p) => n.id.startsWith(p)) &&
+          !["licverif-", "preq-", "countersign-", "kyc-", "areq-answered-"].some((p) =>
+            n.id.startsWith(p),
+          )
+        )
+          push(n, adminGroupOf(n.id));
     } else {
       for (const n of notifications.filter(isStillOpen)) push(n, groupOf(n.id));
       for (const n of adminItems.filter(isStillOpen)) push(n, adminGroupOf(n.id));
@@ -263,7 +391,15 @@ export function TaskTracker({ className = "" }: { className?: string }) {
         weight(a.notification) - weight(b.notification) ||
         new Date(a.notification.createdAt).getTime() - new Date(b.notification.createdAt).getTime(),
     );
-  }, [notifications, adminItems, leads, user?.email, user?.mortgageProfile?.submittedAt]);
+  }, [
+    notifications,
+    adminItems,
+    staffTasks,
+    isAdmin,
+    leads,
+    user?.email,
+    user?.mortgageProfile?.submittedAt,
+  ]);
 
   const [showAll, setShowAll] = useState(false);
 

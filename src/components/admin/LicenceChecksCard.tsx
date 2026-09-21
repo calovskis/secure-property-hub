@@ -8,7 +8,7 @@
  * pop-up window instead of sending the admin to a separate page.
  */
 import { useState } from "react";
-import { formatDate, formatDateTime } from "@/lib/dates";
+import { formatDateTime } from "@/lib/dates";
 import { usePartnerRequests, type PartnerRequest } from "@/lib/partner-requests";
 import { pendingVerifications } from "@/lib/licence-verification";
 import { useDeletions } from "@/lib/deletions";
@@ -20,14 +20,19 @@ export function LicenceChecksCard() {
   const deletedEmails = new Set(deleted.map((r) => r.email.trim().toLowerCase()));
   const [openFor, setOpenFor] = useState<PartnerRequest | null>(null);
 
+  /* One row per partner — a lender can submit dozens of states at once and the
+     verification pop-up handles them all together. */
   const items = requests
     .filter((r) => r.status !== "declined" && !deletedEmails.has(r.email.trim().toLowerCase()))
-    .flatMap((r) => pendingVerifications(r).map((licence) => ({ request: r, licence })))
-    .sort(
-      (a, b) =>
-        new Date(a.licence.pendingSince ?? a.licence.uploadedAt ?? 0).getTime() -
-        new Date(b.licence.pendingSince ?? b.licence.uploadedAt ?? 0).getTime(),
-    );
+    .map((request) => ({ request, licences: pendingVerifications(request) }))
+    .filter((i) => i.licences.length > 0)
+    .map((i) => ({
+      ...i,
+      since: i.licences
+        .map((l) => l.pendingSince ?? l.uploadedAt ?? i.request.submittedAt)
+        .sort()[0]!,
+    }))
+    .sort((a, b) => new Date(a.since).getTime() - new Date(b.since).getTime());
 
   if (items.length === 0) return null;
 
@@ -36,7 +41,7 @@ export function LicenceChecksCard() {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-base font-semibold text-foreground">Partner licences to verify</h2>
         <span className="rounded-full bg-gold-tint px-3 py-1 text-[11px] font-semibold text-gold">
-          {items.length} awaiting verification
+          {items.reduce((n, i) => n + i.licences.length, 0)} awaiting verification
         </span>
       </div>
       <p className="mt-1 text-xs text-muted-foreground">
@@ -45,28 +50,28 @@ export function LicenceChecksCard() {
       </p>
 
       <ul className="mt-3 space-y-2">
-        {items.map(({ request, licence }) => (
+        {items.map(({ request, licences, since }) => (
           <li
-            key={`${request.id}-${licence.state}`}
+            key={request.id}
             className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card p-3"
           >
             <div className="min-w-0 text-xs">
               <p className="text-sm font-semibold text-foreground">
-                {request.companyName || `${request.firstName} ${request.lastName}`} · {licence.state}
+                {request.companyName || `${request.firstName} ${request.lastName}`} ·{" "}
+                {licences.length === 1 ? licences[0]!.state : `${licences.length} states`}
               </p>
               <p className="text-muted-foreground">
-                Licence {licence.number || "—"}
-                {licence.validUntil ? ` · valid till ${formatDate(licence.validUntil)}` : ""} ·{" "}
-                {licence.doc ? "copy on file" : "no copy uploaded yet"}
+                {licences
+                  .slice(0, 8)
+                  .map((l) => l.state)
+                  .join(", ")}
+                {licences.length > 8 ? ` and ${licences.length - 8} more` : ""} ·{" "}
+                {licences.filter((l) => l.doc).length} with a copy on file
               </p>
               <p className="mt-0.5 text-[11px] font-semibold text-gold">
-                {licence.infoRequestedAt
+                {licences.some((l) => l.infoRequestedAt)
                   ? "Information requested from the partner"
-                  : `Submitted ${
-                      licence.pendingSince || licence.uploadedAt
-                        ? formatDateTime((licence.pendingSince ?? licence.uploadedAt)!)
-                        : ""
-                    }`}
+                  : `Submitted ${formatDateTime(since)}`}
               </p>
             </div>
             <button
@@ -74,7 +79,7 @@ export function LicenceChecksCard() {
               onClick={() => setOpenFor(request)}
               className="rounded-md bg-brand px-3 py-1.5 text-xs font-semibold text-background hover:bg-brand-soft"
             >
-              Verify {licence.state}
+              Review the licences
             </button>
           </li>
         ))}

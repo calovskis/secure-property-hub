@@ -667,25 +667,37 @@ function useDerivedNotifications() {
           });
         }
         /* Every licence detail or copy the partner submitted waits for Loqal
-           to verify it — derived from the licence rows themselves, so the task
-           is always there until an admin verifies or asks for information. */
+           to verify it — derived from the licence rows themselves, grouped into
+           one notice per partner however many states they sent. */
         if (!partnerDeleted && r.status !== "declined") {
-          for (const l of pendingVerifications(r)) {
+          const pendingLic = pendingVerifications(r);
+          if (pendingLic.length) {
+            const oldest = pendingLic
+              .map((l) => l.pendingSince ?? l.uploadedAt ?? r.submittedAt)
+              .sort()[0]!;
+            const states = pendingLic.map((l) => l.state);
             list.push({
-              id: `licverif-${r.id}-${l.state}`,
+              id:
+                pendingLic.length === 1
+                  ? `licverif-${r.id}-${states[0]}`
+                  : `licverif-${r.id}-all`,
               to: "admins",
-              title: `Verify the ${l.state} licence — ${r.companyName}`,
-              body: `${r.firstName} ${r.lastName} submitted ${l.state} licence ${l.number}${
-                l.validUntil ? ` (valid till ${formatDate(l.validUntil)})` : ""
-              }${l.doc ? " with a copy" : " without a copy yet"}. Verify it to clear ${
+              title:
+                pendingLic.length === 1
+                  ? `Verify the ${states[0]} licence — ${r.companyName}`
+                  : `Verify ${pendingLic.length} state licences — ${r.companyName}`,
+              body: `${r.firstName} ${r.lastName} submitted ${states
+                .slice(0, 6)
+                .join(", ")}${states.length > 6 ? ` and ${states.length - 6} more` : ""}. Verify to clear ${
                 r.companyName
-              } for cases in ${l.state}.`,
+              } for cases in those states.`,
               href: `/admin-people/${r.kind}-${r.id}`,
               severity: "warning",
-              createdAt: l.pendingSince ?? l.uploadedAt ?? r.submittedAt,
+              createdAt: oldest,
             });
           }
         }
+
         if (!partnerDeleted && r.kyc) {
           list.push({
             id: `kyc-${r.id}`,
