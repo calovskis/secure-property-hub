@@ -256,7 +256,11 @@ export function TaskTracker({ className = "" }: { className?: string }) {
           "info",
         );
 
-      for (const l of pendingVerifications(r))
+      /* One task per partner, however many states they submitted — the
+         verification pop-up handles them all in one go. */
+      const pendingLic = pendingVerifications(r);
+      if (pendingLic.length === 1) {
+        const l = pendingLic[0]!;
         add(
           `licverif-${r.id}-${l.state}`,
           "licences",
@@ -267,6 +271,24 @@ export function TaskTracker({ className = "" }: { className?: string }) {
           `/admin-people/${r.kind}-${r.id}`,
           l.pendingSince ?? l.uploadedAt ?? r.submittedAt,
         );
+      } else if (pendingLic.length > 1) {
+        const oldest = pendingLic
+          .map((l) => l.pendingSince ?? l.uploadedAt ?? r.submittedAt)
+          .sort()[0]!;
+        add(
+          `licverif-${r.id}-all`,
+          "licences",
+          `Verify ${pendingLic.length} state licences — ${who}`,
+          `${pendingLic
+            .slice(0, 6)
+            .map((l) => l.state)
+            .join(", ")}${pendingLic.length > 6 ? ` and ${pendingLic.length - 6} more` : ""} — ${
+            pendingLic.filter((l) => l.doc).length
+          } with a copy on file. Verify them to clear ${who} for cases in those states.`,
+          `/admin-people/${r.kind}-${r.id}`,
+          oldest,
+        );
+      }
 
       for (const a of r.adminRequests ?? [])
         if (a.kind === "info" && a.answeredAt)
@@ -345,7 +367,15 @@ export function TaskTracker({ className = "" }: { className?: string }) {
         "deletion-",
       ];
       for (const n of adminItems.filter(isStillOpen))
-        if (adminTaskPrefixes.some((p) => n.id.startsWith(p))) push(n, adminGroupOf(n.id));
+        /* Licence, registration, countersignature and KYB work is derived from
+           the live records above, so stored copies must not double-count. */
+        if (
+          adminTaskPrefixes.some((p) => n.id.startsWith(p)) &&
+          !["licverif-", "preq-", "countersign-", "kyc-", "areq-answered-"].some((p) =>
+            n.id.startsWith(p),
+          )
+        )
+          push(n, adminGroupOf(n.id));
     } else {
       for (const n of notifications.filter(isStillOpen)) push(n, groupOf(n.id));
       for (const n of adminItems.filter(isStillOpen)) push(n, adminGroupOf(n.id));
