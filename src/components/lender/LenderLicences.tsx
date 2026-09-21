@@ -165,6 +165,7 @@ function LenderLicencesInner({ user }: { user: LoqalUser }) {
         draftId={draftId}
         licenses={licenses}
         onSubmit={uploadCopies}
+        ownerEmail={user.email}
       />
     </section>
   );
