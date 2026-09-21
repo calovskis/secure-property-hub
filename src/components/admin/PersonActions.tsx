@@ -53,9 +53,23 @@ export function ActiveActionsList({
   const waiting = actions.filter((a) => a.owner === "person");
   const profileHref = `/admin-people/${encodeURIComponent(person.key)}`;
 
+  const markAnswerRead = (a: PersonAction) => {
+    const req = person.request;
+    if (!a.marksReadRequestId || !req) return;
+    const at = new Date().toISOString();
+    updateRequest(req.id, {
+      adminRequests: (req.adminRequests ?? []).map((r) =>
+        r.id === a.marksReadRequestId && !r.answerReadAt
+          ? { ...r, answerReadAt: at, answerReadBy: "Loqal admin" }
+          : r,
+      ),
+    });
+  };
+
   const run = (a: PersonAction) => {
     if (a.handler === "licences" && person.request) return setLicencesOpen(true);
     if (a.handler === "countersign" && person.request) return setCountersignOpen(true);
+    markAnswerRead(a);
     const tab =
       a.handler === "correspondence"
         ? "correspondence"
@@ -65,6 +79,7 @@ export function ActiveActionsList({
     if (onOpenTab) return onOpenTab(tab);
     window.open(profileHref, "_blank", "noopener");
   };
+
 
   const group = (title: string, items: PersonAction[], tone: "gold" | "muted") =>
     items.length ? (
