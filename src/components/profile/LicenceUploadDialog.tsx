@@ -28,6 +28,7 @@ export function LicenceUploadDialog({
   draftId,
   licenses,
   onSubmit,
+  ownerEmail,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -35,6 +36,8 @@ export function LicenceUploadDialog({
   licenses: RealtorLicenseDoc[];
   /** state code → uploaded file name */
   onSubmit: (copies: Record<string, string>) => void;
+  /** Partner the copies belong to — keeps the file for Loqal to download. */
+  ownerEmail?: string;
 }) {
   const [copies, setCopies] = useState<Record<string, string>>({});
   const [step, setStep] = useState<"upload" | "confirm">("upload");
