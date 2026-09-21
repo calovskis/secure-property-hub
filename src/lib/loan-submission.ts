@@ -62,11 +62,9 @@ function commit(next: State) {
   listeners.forEach((l) => l());
 }
 
-export type LoanSubmissionPatch = {
-  [K in keyof Omit<LoanSubmission, "leadId" | "createdAt" | "updatedAt">]?:
-    | LoanSubmission[K]
-    | undefined;
-};
+export type LoanSubmissionPatch = Partial<
+  Omit<LoanSubmission, "leadId" | "createdAt" | "updatedAt">
+>;
 
 function subscribe(cb: () => void) {
   listeners.add(cb);
