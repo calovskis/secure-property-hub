@@ -307,7 +307,7 @@ export function TaskTracker({ className = "" }: { className?: string }) {
           );
     }
     return list;
-  }, [isAdmin, requests, deleted]);
+  }, [isAdmin, requests, gone]);
 
 
   const tasks = useMemo<Task[]>(() => {
