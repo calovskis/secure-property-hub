@@ -126,15 +126,16 @@ export function personActions({
         });
 
     for (const a of request.adminRequests ?? []) {
-      if (a.kind === "info" && a.answeredAt)
+      if (a.kind === "info" && a.answeredAt && !a.answerReadAt)
         out.push({
           id: `answered-${a.id}`,
           owner: "loqal",
           title: "Read the answer to your information request",
           detail: `${first} replied${a.answerDocs?.length ? " and attached files" : ""}: “${a.message}”`,
           since: a.answeredAt,
-          cta: "Open the correspondence",
+          cta: "Read the answer",
           handler: "correspondence",
+          marksReadRequestId: a.id,
         });
       if (a.kind === "info" && !a.answeredAt)
         out.push({
