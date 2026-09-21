@@ -515,7 +515,7 @@ const CASE_TABS: Array<{ id: CaseTab; label: string; icon: typeof FileText }> = 
 
 function SummaryTile({ label, value, note }: { label: string; value: string; note?: string }) {
   return (
-    <div className="min-w-0 border-r border-border px-3 py-3 last:border-r-0 sm:px-4">
+    <div className="min-w-0 rounded-lg border border-border bg-card px-3 py-3 shadow-sm sm:px-4">
       <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</div>
       <div className="mt-1 truncate text-base font-bold text-brand">{value}</div>
       {note ? <div className="mt-0.5 truncate text-[11px] text-muted-foreground">{note}</div> : null}
@@ -566,14 +566,14 @@ export function MortgageFileDetail({ lead }: { lead: MortgageLead }) {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 border-b border-border bg-card sm:grid-cols-4">
+        <div className="relative z-10 mx-3 -mt-3 grid grid-cols-2 gap-2 sm:mx-4 sm:grid-cols-4">
           <SummaryTile label="Loan amount" value={money(loan)} note={`${terms.downPaymentPct}% down`} />
           <SummaryTile label="Rate & term" value={`${terms.ratePct}% · ${terms.termYears}y`} note="Current terms" />
           <SummaryTile label="Purchase price" value={money(price)} note={progress.agreedPrice ? "Agreed" : "Requested"} />
           <SummaryTile label="Open requests" value={String(openRequests)} note={openRequests ? "Awaiting client" : "File is current"} />
         </div>
 
-        <nav className="flex gap-1 overflow-x-auto border-b border-border bg-muted/35 px-2 py-2" aria-label="Mortgage case sections">
+        <nav className="mt-3 flex gap-1 overflow-x-auto border-y border-border bg-muted/35 px-2 py-2" aria-label="Mortgage case sections">
           {CASE_TABS.map(({ id, label, icon: Icon }) => (
             <Button
               key={id}
