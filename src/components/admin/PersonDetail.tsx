@@ -44,6 +44,7 @@ import { ActiveActionsList } from "@/components/admin/PersonActions";
 type Tab =
   | "actions"
   | "profile"
+  | "licences"
   | "documents"
   | "correspondence"
   | "partners"
@@ -51,9 +52,10 @@ type Tab =
   | "activity"
   | "metrics";
 
-const TABS: [Tab, string, string][] = [
+const ALL_TABS: [Tab, string, string][] = [
   ["actions", "⚡", "Active actions"],
   ["profile", "👤", "Profile & registration"],
+  ["licences", "🎫", "Licences"],
   ["documents", "📎", "Uploaded documents"],
   ["correspondence", "✉️", "Requests & correspondence"],
   ["partners", "🤝", "Partners & clients"],
@@ -61,6 +63,14 @@ const TABS: [Tab, string, string][] = [
   ["activity", "🕘", "Activity history"],
   ["metrics", "📊", "Engagement metrics"],
 ];
+
+/** The Licences tab only exists for partners who hold state licences. */
+function tabsFor(person: AdminPerson) {
+  const type = person.request?.partnerType;
+  const licensed = type === "lender" || type === "realtor";
+  return ALL_TABS.filter(([id]) => id !== "licences" || licensed);
+}
+
 
 
 export function PersonDetail({
