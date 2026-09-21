@@ -1,5 +1,5 @@
 import { useActiveLeads } from "@/lib/leads";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   MORTGAGE_STAGE_LABEL,
   hasPricedOffer,
@@ -26,7 +26,15 @@ const STAGE_TONE: Record<MortgageFileStage, string> = {
   in_underwriting: "bg-success/10 text-success",
 };
 
-export function LenderMortgages({ canManage }: { canManage: boolean }) {
+export function LenderMortgages({
+  canManage,
+  focusLeadId,
+  onFocusHandled,
+}: {
+  canManage: boolean;
+  focusLeadId?: string | null;
+  onFocusHandled?: (() => void) | undefined;
+}) {
   const { leads } = useActiveLeads();
   const { scopedStates } = useLenderTeam();
   const [openId, setOpenId] = useState<string | null>(null);
@@ -54,6 +62,14 @@ export function LenderMortgages({ canManage }: { canManage: boolean }) {
     signed: files.filter((l) => progressOf(l.id).stage === "agreement_signed").length,
     hardCheckOpen: files.filter((l) => progressOf(l.id).hardCheckOpen).length,
   };
+
+  useEffect(() => {
+    if (!focusLeadId || !files.some((lead) => lead.id === focusLeadId)) return;
+    setState("all");
+    setStage("all");
+    setOpenId(focusLeadId);
+    onFocusHandled?.();
+  }, [files, focusLeadId, onFocusHandled]);
 
   return (
     <div className="space-y-6">

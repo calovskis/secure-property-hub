@@ -119,7 +119,7 @@ export function LenderHome({
 }: {
   lenderName: string;
   onOpenRequests: (leadId?: string) => void;
-  onOpenMortgages?: (() => void) | undefined;
+  onOpenMortgages?: ((leadId?: string) => void) | undefined;
 }) {
   const s = useLenderStats();
   const { progressOf } = usePurchaseProgress();
@@ -253,7 +253,7 @@ export function LenderHome({
                   {onOpenMortgages ? (
                     <button
                       type="button"
-                      onClick={onOpenMortgages}
+                      onClick={() => onOpenMortgages(lead.id)}
                       className="rounded-md bg-brand px-4 py-1.5 text-xs font-semibold text-background"
                     >
                       Open the file

@@ -12,7 +12,19 @@
  *     handed over to the chosen bank.
  */
 import { useState, type ReactNode } from "react";
-import { Building2, FileCheck2, FileText, Landmark, MessageSquareText, Send, UserRound } from "lucide-react";
+import {
+  Building2,
+  CircleAlert,
+  ClipboardCheck,
+  FileCheck2,
+  FileText,
+  Landmark,
+  MessageSquareText,
+  SearchCheck,
+  Send,
+  ShieldCheck,
+  UserRound,
+} from "lucide-react";
 import { toast } from "sonner";
 import {
   CLIENT_DECISION_LABEL,
@@ -427,6 +439,176 @@ function RequestsBlock({ lead }: { lead: MortgageLead }) {
   );
 }
 
+type AttentionItem = {
+  id: string;
+  title: string;
+  detail: string;
+  status: string;
+  tone: "urgent" | "waiting" | "planned";
+  tab?: CaseTab;
+  icon: typeof CircleAlert;
+};
+
+function AttentionBlock({
+  lead,
+  progress,
+  onOpenTab,
+}: {
+  lead: MortgageLead;
+  progress: PurchaseProgress;
+  onOpenTab: (tab: CaseTab) => void;
+}) {
+  const proc = useBuyerProcess();
+  const { submission } = useLoanSubmission(lead.id);
+  const openRequests = (lead.infoRequests ?? []).filter((request) => !request.answeredAt);
+  const photo = proc.photos[lead.id];
+  const inspections = Array.from(
+    new Set([
+      ...(photo?.inspectionsSuggested ?? []),
+      ...((proc.actions[lead.id] ?? []).flatMap((action) => action.extraInspections ?? [])),
+    ]),
+  );
+  const terms = progress.terms;
+  const items: AttentionItem[] = [];
+
+  if (openRequests.length) {
+    items.push({
+      id: "requests",
+      title: `${openRequests.length} client ${openRequests.length === 1 ? "item" : "items"} outstanding`,
+      detail: openRequests.map((request) => request.question).join(" · "),
+      status: "Awaiting client",
+      tone: "waiting",
+      tab: "requests",
+      icon: MessageSquareText,
+    });
+  }
+
+  if (terms?.inspection) {
+    items.push({
+      id: "inspection",
+      title: "Inspection contingency",
+      detail: inspections.length
+        ? `${inspections.join(", ")} · ${terms.inspectionDays}-day protection window.`
+        : `Inspection protection is included for ${terms.inspectionDays} days. Coordinate reports with the buyer's agent.`,
+      status: photo?.status === "delivered" ? "Reports available with agent" : "To coordinate",
+      tone: photo?.status === "delivered" ? "planned" : "waiting",
+      icon: SearchCheck,
+    });
+  }
+
+  if (terms?.appraisal) {
+    items.push({
+      id: "appraisal",
+      title: "Appraisal",
+      detail: photo?.appraisalNote
+        ? photo.appraisalNote
+        : "Appraisal protection is included. Confirm the order and valuation before the contingency expires.",
+      status: photo?.appraisalNote ? "Agent guidance received" : "Order or confirm",
+      tone: photo?.appraisalNote ? "planned" : "waiting",
+      icon: ClipboardCheck,
+    });
+  }
+
+  if (progress.stage === "agreement_signed" && !submission?.bankProgramId) {
+    items.push({
+      id: "bank",
+      title: "Select the bank programme",
+      detail: "Choose the eligible bank programme before confirming the loan submission.",
+      status: "Action required",
+      tone: "urgent",
+      tab: "eligibility",
+      icon: Landmark,
+    });
+  }
+
+  if (progress.hardCheckOpen) {
+    items.push({
+      id: "submission",
+      title: "Confirm the loan submission",
+      detail: `Mortgage approval is due ${progress.approvalDueDate ? formatDate(progress.approvalDueDate) : "now"}. Closing is ${progress.closingDate ? formatDate(progress.closingDate) : "not set"}.`,
+      status: "Action required",
+      tone: "urgent",
+      tab: "submission",
+      icon: FileCheck2,
+    });
+  }
+
+  if (progress.stage === "agreement_signed" && !submission?.transferredAt) {
+    const closed = Boolean(progress.closingDate && new Date(progress.closingDate) <= new Date());
+    items.push({
+      id: "closing",
+      title: closed ? "Transfer the closed loan" : "Closing package",
+      detail: closed
+        ? "Closing has passed. Complete the handover to the selected bank and record its reference."
+        : `Keep the signed agreement, title work, insurance evidence and final closing documents together for ${progress.closingDate ? formatDate(progress.closingDate) : "closing"}.`,
+      status: closed ? "Action required" : "Monitor through closing",
+      tone: closed ? "urgent" : "planned",
+      ...(closed ? { tab: "transfer" as const } : {}),
+      icon: closed ? Send : ShieldCheck,
+    });
+  }
+
+  if (!items.length) {
+    return (
+      <section className="rounded-lg border border-success/30 bg-success/5 p-4">
+        <div className="flex items-center gap-3">
+          <ShieldCheck className="h-5 w-5 text-success" />
+          <div>
+            <h3 className="text-sm font-semibold text-foreground">Items requiring attention</h3>
+            <p className="mt-0.5 text-xs text-muted-foreground">No outstanding case items at this stage.</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  const toneClass = {
+    urgent: "border-destructive/30 bg-destructive/5 text-destructive",
+    waiting: "border-gold/40 bg-gold-tint/35 text-gold",
+    planned: "border-brand/25 bg-brand-tint/35 text-brand",
+  } as const;
+
+  return (
+    <section className="rounded-lg border border-border bg-card p-4">
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <div>
+          <h3 className="text-sm font-semibold text-foreground">Items requiring attention</h3>
+          <p className="mt-0.5 text-xs text-muted-foreground">Live milestones and outstanding work for this case.</p>
+        </div>
+        <span className="rounded-full bg-gold-tint px-2.5 py-1 text-[10px] font-bold text-gold">
+          {items.length} {items.length === 1 ? "item" : "items"}
+        </span>
+      </div>
+      <div className="mt-3 grid gap-2 md:grid-cols-2">
+        {items.map((item) => {
+          const Icon = item.icon;
+          return (
+            <div key={item.id} className="flex min-w-0 gap-3 rounded-md border border-border bg-background p-3">
+              <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-full border", toneClass[item.tone])}>
+                <Icon className="h-4 w-4" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h4 className="text-sm font-semibold text-foreground">{item.title}</h4>
+                  <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold", toneClass[item.tone])}>
+                    {item.status}
+                  </span>
+                </div>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">{item.detail}</p>
+                {item.tab ? (
+                  <Button type="button" size="sm" variant="outline" className="mt-2 h-7 text-[11px]" onClick={() => onOpenTab(item.tab ?? "overview")}>
+                    Open section
+                  </Button>
+                ) : null}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 /**
  * Block 6 — after the mortgage is given and the purchase closes, the file waits
  * in the portal until it is transferred to the bank that buys the loan.
@@ -502,10 +684,11 @@ function TransferBlock({ lead, progress }: { lead: MortgageLead; progress: Purch
   );
 }
 
-type CaseTab = "overview" | "preapproval" | "eligibility" | "submission" | "requests" | "transfer";
+type CaseTab = "overview" | "attention" | "preapproval" | "eligibility" | "submission" | "requests" | "transfer";
 
 const CASE_TABS: Array<{ id: CaseTab; label: string; icon: typeof FileText }> = [
   { id: "overview", label: "Overview", icon: UserRound },
+  { id: "attention", label: "Attention", icon: CircleAlert },
   { id: "preapproval", label: "Pre-approval", icon: FileText },
   { id: "eligibility", label: "Bank eligibility", icon: Landmark },
   { id: "submission", label: "Loan submission", icon: FileCheck2 },
@@ -537,6 +720,11 @@ export function MortgageFileDetail({ lead }: { lead: MortgageLead }) {
   const requests = lead.infoRequests ?? [];
   const openRequests = requests.filter((request) => !request.answeredAt).length;
   const purchaseLabel = PURCHASE_STAGE_LABEL[progress.stage];
+  const attentionCount =
+    openRequests +
+    (progress.terms?.inspection ? 1 : 0) +
+    (progress.terms?.appraisal ? 1 : 0) +
+    (progress.stage === "agreement_signed" ? 1 : 0);
 
   return (
     <div className="border-t border-border bg-background/60 p-3 sm:p-5">
@@ -588,6 +776,9 @@ export function MortgageFileDetail({ lead }: { lead: MortgageLead }) {
               {id === "requests" && openRequests ? (
                 <span className="ml-0.5 rounded-full bg-gold px-1.5 py-0.5 text-[9px] font-bold text-foreground">{openRequests}</span>
               ) : null}
+              {id === "attention" && attentionCount ? (
+                <span className="ml-0.5 rounded-full bg-gold px-1.5 py-0.5 text-[9px] font-bold text-foreground">{attentionCount}</span>
+              ) : null}
             </Button>
           ))}
         </nav>
@@ -595,6 +786,7 @@ export function MortgageFileDetail({ lead }: { lead: MortgageLead }) {
         <div className="bg-background/45 p-3 sm:p-4">
           {tab === "overview" ? (
             <div className="grid gap-4 xl:grid-cols-[1.05fr_.95fr]">
+              <div className="xl:col-span-2"><WorkspacePanel><AttentionBlock lead={lead} progress={progress} onOpenTab={setTab} /></WorkspacePanel></div>
               <WorkspacePanel><StatusBlock lead={lead} progress={progress} /></WorkspacePanel>
               <WorkspacePanel><BankEligibilitySection lead={lead} /></WorkspacePanel>
               {progress.stage === "agreement_signed" ? (
@@ -603,6 +795,7 @@ export function MortgageFileDetail({ lead }: { lead: MortgageLead }) {
               <WorkspacePanel><RequestsBlock lead={lead} /></WorkspacePanel>
             </div>
           ) : null}
+          {tab === "attention" ? <WorkspacePanel><AttentionBlock lead={lead} progress={progress} onOpenTab={setTab} /></WorkspacePanel> : null}
           {tab === "preapproval" ? (
             <div className="space-y-4">
               <WorkspacePanel><PreApprovalBlock lead={lead} /></WorkspacePanel>
