@@ -190,6 +190,95 @@ export function TaskTracker({ className = "" }: { className?: string }) {
   const { notifications } = useNotifications(user?.email);
   const { notifications: adminItems } = useNotifications(isAdmin ? "admins" : undefined);
   const { leads } = useActiveLeads();
+  const { requests } = usePartnerRequests();
+  const { deleted } = useDeletions();
+
+  /**
+   * Loqal-side tasks read straight off the live records instead of waiting for
+   * a notification to exist: partner registrations to approve, agreements to
+   * countersign, KYB questionnaires to review and every state licence a partner
+   * submitted that nobody verified yet.
+   */
+  const staffTasks = useMemo<Task[]>(() => {
+    if (!isAdmin) return [];
+    const gone = new Set(deleted.map((d) => d.email.trim().toLowerCase()));
+    const list: Task[] = [];
+    const add = (
+      id: string,
+      gid: GroupId,
+      title: string,
+      body: string,
+      href: string,
+      createdAt: string,
+      severity: AppNotification["severity"] = "warning",
+    ) =>
+      list.push({
+        def: GROUPS[gid],
+        notification: { id, to: "admins", title, body, href, severity, createdAt },
+      });
+
+    for (const r of requests) {
+      if (r.status === "declined" || gone.has(r.email.trim().toLowerCase())) continue;
+      const who = r.companyName || `${r.firstName} ${r.lastName}`.trim();
+
+      if (r.status === "pending")
+        add(
+          `preq-${r.id}`,
+          "registrations",
+          `Approve the ${r.kind === "partner" ? "partner" : "corporate"} registration — ${who}`,
+          "Review the registration details and approve or decline it.",
+          `/admin-partner-requests?focus=${r.id}`,
+          r.submittedAt,
+        );
+
+      if (r.status === "approved" && r.agreementSignedAt && !r.agreementCountersignedAt)
+        add(
+          `countersign-${r.id}`,
+          "agreements",
+          `Countersign the partnership agreement — ${who}`,
+          `Signed by the partner on ${formatDateTime(r.agreementSignedAt)}.`,
+          `/admin-partner-requests?focus=${r.id}&open=profile`,
+          r.agreementSignedAt,
+        );
+
+      if (r.kyc && !r.kyc.reviewedAt)
+        add(
+          `kyc-${r.id}`,
+          "registrations",
+          `Review the KYB questionnaire — ${who}`,
+          "Director and shareholder information is ready for review.",
+          `/admin-partner-requests?focus=${r.id}&open=profile`,
+          r.kyc.submittedAt,
+          "info",
+        );
+
+      for (const l of pendingVerifications(r))
+        add(
+          `licverif-${r.id}-${l.state}`,
+          "licences",
+          `Verify the ${l.state} licence — ${who}`,
+          `${l.number || "Licence"}${l.validUntil ? ` · valid till ${formatDate(l.validUntil)}` : ""} · ${
+            l.doc ? "copy uploaded" : "no copy attached yet"
+          }. Verify it to clear ${who} for cases in ${l.state}.`,
+          `/admin-people/${r.kind}-${r.id}`,
+          l.pendingSince ?? l.uploadedAt ?? r.submittedAt,
+        );
+
+      for (const a of r.adminRequests ?? [])
+        if (a.kind === "info" && a.answeredAt && !a.closedAt)
+          add(
+            `areq-answered-${a.id}`,
+            "correspondence",
+            `Read the answer from ${who}`,
+            "The partner answered an information request from Loqal.",
+            `/admin-partner-requests?focus=${r.id}&open=correspondence&item=${a.id}`,
+            a.answeredAt,
+            "info",
+          );
+    }
+    return list;
+  }, [isAdmin, requests, deleted]);
+
 
   const tasks = useMemo<Task[]>(() => {
     const email = user?.email.toLowerCase() ?? "";
