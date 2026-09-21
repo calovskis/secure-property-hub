@@ -35,8 +35,11 @@ import { isValidPhone } from "@/lib/phone";
 import { DeleteAccountControls } from "@/components/admin/DeleteAccountControls";
 import { useMyPermissions } from "@/lib/staff";
 import { fullName, useAuth } from "@/lib/auth";
-import { LicenceVerificationDialog } from "@/components/admin/LicenceVerificationPanel";
-import { pendingVerifications } from "@/lib/licence-verification";
+import {
+  LicenceVerificationDialog,
+  LicenceVerificationPanel,
+} from "@/components/admin/LicenceVerificationPanel";
+import { licenceRows, isLicenceVerified, pendingVerifications } from "@/lib/licence-verification";
 import { PartnerCountersignDialog } from "@/components/admin/PartnerCountersignDialog";
 import { notify } from "@/lib/notifications";
 import { ActiveActionsList } from "@/components/admin/PersonActions";
