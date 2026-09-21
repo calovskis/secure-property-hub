@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppHeader } from "@/components/layout/AppHeader";
+import { LenderNavSlot } from "@/components/lender/LenderNavSlot";
 import { MortgageFileDetail } from "@/components/lender/MortgageFileDetail";
 import { useAuth } from "@/lib/auth";
 import { useActiveLeads } from "@/lib/leads";
