@@ -377,7 +377,7 @@ export function TaskTracker({ className = "" }: { className?: string }) {
         /* A stored notification can outlive the user it concerns — once the
            user is deleted, any task about them stops being actionable. Match
            by lead id or request id embedded in the id/href. */
-        const lead = leads.find(
+        const lead = allLeads.find(
           (l) => n.id.includes(l.id) || (n.href?.includes(l.id) ?? false),
         );
         if (lead && gone.has(lead.clientEmail.trim().toLowerCase())) continue;
