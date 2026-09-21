@@ -15,7 +15,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { useNotifications, type AppNotification } from "@/lib/notifications";
 import { openDeepLink } from "@/lib/deep-link";
-import { useActiveLeads } from "@/lib/leads";
+import { useActiveLeads, useLeads } from "@/lib/leads";
 import { usePartnerRequests } from "@/lib/partner-requests";
 import { useDeletions } from "@/lib/deletions";
 import { pendingVerifications } from "@/lib/licence-verification";
@@ -194,6 +194,9 @@ export function TaskTracker({ className = "" }: { className?: string }) {
   const { notifications } = useNotifications(user?.email);
   const { notifications: adminItems } = useNotifications(isAdmin ? "admins" : undefined);
   const { leads } = useActiveLeads();
+  /* Full list including deleted clients' files — needed so stored admin
+     notifications about a deleted user can still be matched and hidden. */
+  const { leads: allLeads } = useLeads();
   const { requests } = usePartnerRequests();
   const { deleted } = useDeletions();
 
@@ -203,9 +206,13 @@ export function TaskTracker({ className = "" }: { className?: string }) {
    * countersign, KYB questionnaires to review and every state licence a partner
    * submitted that nobody verified yet.
    */
+  const gone = useMemo(
+    () => new Set(deleted.map((d) => d.email.trim().toLowerCase())),
+    [deleted],
+  );
+
   const staffTasks = useMemo<Task[]>(() => {
     if (!isAdmin) return [];
-    const gone = new Set(deleted.map((d) => d.email.trim().toLowerCase()));
     const list: Task[] = [];
     const add = (
       id: string,
@@ -303,7 +310,7 @@ export function TaskTracker({ className = "" }: { className?: string }) {
           );
     }
     return list;
-  }, [isAdmin, requests, deleted]);
+  }, [isAdmin, requests, gone]);
 
 
   const tasks = useMemo<Task[]>(() => {
@@ -366,7 +373,18 @@ export function TaskTracker({ className = "" }: { className?: string }) {
         "entitysetup-",
         "deletion-",
       ];
-      for (const n of adminItems.filter(isStillOpen))
+      for (const n of adminItems.filter(isStillOpen)) {
+        /* A stored notification can outlive the user it concerns — once the
+           user is deleted, any task about them stops being actionable. Match
+           by lead id or request id embedded in the id/href. */
+        const lead = allLeads.find(
+          (l) => n.id.includes(l.id) || (n.href?.includes(l.id) ?? false),
+        );
+        if (lead && gone.has(lead.clientEmail.trim().toLowerCase())) continue;
+        const request = requests.find(
+          (r) => n.id.includes(r.id) || (n.href?.includes(r.id) ?? false),
+        );
+        if (request && gone.has(request.email.trim().toLowerCase())) continue;
         /* Licence, registration, countersignature and KYB work is derived from
            the live records above, so stored copies must not double-count. */
         if (
@@ -376,6 +394,7 @@ export function TaskTracker({ className = "" }: { className?: string }) {
           )
         )
           push(n, adminGroupOf(n.id));
+      }
     } else {
       for (const n of notifications.filter(isStillOpen)) push(n, groupOf(n.id));
       for (const n of adminItems.filter(isStillOpen)) push(n, adminGroupOf(n.id));
@@ -397,6 +416,9 @@ export function TaskTracker({ className = "" }: { className?: string }) {
     staffTasks,
     isAdmin,
     leads,
+    allLeads,
+    requests,
+    gone,
     user?.email,
     user?.mortgageProfile?.submittedAt,
   ]);
