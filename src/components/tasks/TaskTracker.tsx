@@ -416,6 +416,7 @@ export function TaskTracker({ className = "" }: { className?: string }) {
     staffTasks,
     isAdmin,
     leads,
+    allLeads,
     requests,
     gone,
     user?.email,
