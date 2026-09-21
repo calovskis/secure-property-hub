@@ -215,6 +215,7 @@ export function PersonDetailContent({
             />
           </>
         ) : null}
+        {tab === "licences" ? <LicencesTab person={person} /> : null}
         {tab === "documents" ? <DocumentsTab person={person} /> : null}
         {tab === "correspondence" ? (
           person.request ? (
