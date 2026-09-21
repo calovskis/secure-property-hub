@@ -29,11 +29,14 @@ export function LicenceRenewalDialog({
   license,
   onSubmit,
   completed = false,
+  ownerEmail,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   license: RealtorLicenseDoc | undefined;
   onSubmit: (next: { number: string; validUntil: string; doc: string }) => void;
+  /** Partner the copy belongs to — keeps the file for Loqal to download. */
+  ownerEmail?: string;
   /** Renewal already provided — show what is on file instead of an empty form. */
   completed?: boolean;
 }) {
