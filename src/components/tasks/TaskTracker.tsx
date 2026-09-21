@@ -291,7 +291,7 @@ export function TaskTracker({ className = "" }: { className?: string }) {
       }
 
       for (const a of r.adminRequests ?? [])
-        if (a.kind === "info" && a.answeredAt)
+        if (a.kind === "info" && a.answeredAt && !a.answerReadAt)
           add(
             `areq-answered-${a.id}`,
             "correspondence",
