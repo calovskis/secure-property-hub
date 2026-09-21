@@ -194,6 +194,9 @@ export function TaskTracker({ className = "" }: { className?: string }) {
   const { notifications } = useNotifications(user?.email);
   const { notifications: adminItems } = useNotifications(isAdmin ? "admins" : undefined);
   const { leads } = useActiveLeads();
+  /* Full list including deleted clients' files — needed so stored admin
+     notifications about a deleted user can still be matched and hidden. */
+  const { leads: allLeads } = useLeads();
   const { requests } = usePartnerRequests();
   const { deleted } = useDeletions();
 
