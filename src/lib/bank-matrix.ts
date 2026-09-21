@@ -662,7 +662,6 @@ export function matchProgram(program: BankProgram, snap: ApplicantSnapshot): Pro
   }
 
   if (program.creditEventMonths) {
-    const declarationsComplete = Boolean(snap.hasCreditEvent || snap.creditEventMonthsAgo !== undefined);
     const knownTooRecent =
       snap.hasCreditEvent &&
       snap.creditEventMonthsAgo !== undefined &&
