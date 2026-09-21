@@ -25,6 +25,7 @@ import {
   isLicenceVerified,
   licenceRows,
 } from "@/lib/licence-verification";
+import { downloadLicenceFile, getLicenceFile } from "@/lib/licence-files";
 
 function LicenceVerificationBody({ request }: { request: PartnerRequest }) {
   const { updateRequest } = usePartnerRequests();
