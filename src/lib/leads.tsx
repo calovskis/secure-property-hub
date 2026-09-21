@@ -251,7 +251,7 @@ export const MORTGAGE_STAGE_LABEL: Record<MortgageFileStage, string> = {
   awaiting_client: "Awaiting client decision",
   client_on_hold: "On hold by client",
   client_declined: "Qualified — client not continuing",
-  in_underwriting: "Open mortgage file (hard check)",
+  in_underwriting: "Open mortgage file",
 };
 
 /* ----------------------------------------------------- decision reminders */

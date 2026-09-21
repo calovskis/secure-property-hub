@@ -61,18 +61,18 @@ export function LenderMortgages({ canManage }: { canManage: boolean }) {
         <h1 className="text-2xl font-bold text-foreground md:text-[30px]">Mortgages</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Every qualified pre-approval opens a mortgage file here. Files move into active work once
-          the client confirms the issued terms for a hard check.
+          the client confirms the issued terms, and are submitted to the bank after the purchase agreement is signed.
         </p>
       </div>
 
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {(
           [
-            ["Open mortgage files", counts.in_underwriting, "Client confirmed — hard check"],
+            ["Open mortgage files", counts.in_underwriting, "Client confirmed — in work"],
             [
               "Signed purchase agreements",
               counts.signed,
-              `${counts.hardCheckOpen} awaiting your hard check and approval`,
+              `${counts.hardCheckOpen} awaiting your loan submission and approval`,
             ],
             ["Awaiting client decision", counts.awaiting_client, "Terms delivered — reminders running"],
             ["On hold by client", counts.client_on_hold, "Client paused the process"],

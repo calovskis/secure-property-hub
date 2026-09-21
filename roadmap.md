@@ -2,7 +2,7 @@
 - [x] Remove stale mortgage questionnaire tasks after a pre-approval has been submitted
 - [x] Clear generic mortgage drafts after any completed pre-approval
 - [x] Make dashboard tasks validate mortgage completion instead of trusting stale notifications
-- [ ] Fix confusing "State licence copies" open request for lenders (Bob Dick, Oleg Bychkin) and the broken Other > Licences page
-- [ ] Redesign the lender mortgage file into sections: brief pre-approval block (full view in new tab + download), loan-submission block prefilled from pre-approval and editable, information-request block
-- [ ] Add a "Bank eligibility" section per client: match client data against bank matrices (Conventional for SSN/green card, Foreign National otherwise) and show eligibility + matrix terms
-- [ ] After closing, keep the client file in the lender portal as pending transfer to the chosen bank
+- [x] Fix confusing "State licence copies" open request for lenders (Bob Dick, Oleg Bychkin) and the broken Other > Licences page
+- [x] Redesign the lender mortgage file into sections: brief pre-approval block (full view in new tab + download), loan-submission block prefilled from pre-approval and editable, information-request block
+- [x] Add a "Bank eligibility" section per client: match client data against bank matrices (Conventional for SSN/green card, Foreign National otherwise) and show eligibility + matrix terms
+- [x] After closing, keep the client file in the lender portal as pending transfer to the chosen bank
