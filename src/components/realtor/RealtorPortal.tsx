@@ -22,6 +22,21 @@ import { CallScheduler } from "@/components/buyer/CallScheduler";
 import { TourProposalPanel } from "@/components/buyer/TourProposalPanel";
 import { FileChatPanel } from "@/components/messaging/FileChatPanel";
 import { BuyerRequestsPanel } from "@/components/realtor/BuyerRequestsPanel";
+import { Button } from "@/components/ui/button";
+import {
+  ArrowUpRight,
+  CalendarDays,
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  ClipboardCheck,
+  FileText,
+  Home,
+  MessageSquare,
+  UserRound,
+} from "lucide-react";
+import { useFileRequests } from "@/lib/property-requests";
+import { useFileChat } from "@/lib/file-chat";
 
 import { GoogleCalendarCard } from "@/components/google/GoogleCalendarCard";
 import { RealtorAnalytics } from "@/components/realtor/RealtorAnalytics";
@@ -409,13 +424,80 @@ function ClientDecisions({ lead }: { lead: MortgageLead }) {
  */
 function BuyerFile({ lead, me }: { lead: MortgageLead; me: Realtor }) {
   const [open, setOpen] = useState(false);
+  const [workspaceTab, setWorkspaceTab] = useState<
+    "overview" | "requests" | "visits" | "messages" | "activity"
+  >("overview");
   const { bookings, bookCall } = useBuyerProcess();
+  const process = useBuyerProcess();
+  const fileRequests = useFileRequests(lead.id);
+  const fileChat = useFileChat(lead.id, "agent");
   const [tourSlot, setTourSlot] = useState<string | null>(null);
   const t = lead.terms;
   const ba = lead.buyerAgent!;
   const loqalManaged = ba.representation === "loqal_rep";
   const introCall = bookings.find((b) => b.leadId === lead.id && b.kind === "intro_call");
   const videoTour = bookings.find((b) => b.leadId === lead.id && b.kind === "video_tour");
+  const photo = process.photos[lead.id];
+  const decisions = process.actions[lead.id] ?? [];
+  const purchase = fileRequests.purchases[0];
+  const change = fileRequests.changes[0];
+  const openRequestCount =
+    (purchase && (purchase.status === "pending" || purchase.status === "buyer_raised") ? 1 : 0) +
+    (change?.status === "pending" ? 1 : 0);
+  const displayName = clientDisplayForPartner(lead.clientName, lead.clientEmail);
+  const initials = displayName
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
+  const stage = purchase
+    ? purchase.status === "price_supported"
+      ? "Price confirmed"
+      : "Purchase negotiation"
+    : photo?.status === "delivered"
+      ? "Buyer reviewing property"
+      : ba.kickoff
+        ? "Property due diligence"
+        : "Active buyer";
+  const stageStep = purchase?.status === "price_supported" ? 4 : purchase ? 3 : photo ? 2 : 1;
+  const nextAction = openRequestCount
+    ? {
+        title: `Review ${openRequestCount === 1 ? "buyer request" : `${openRequestCount} buyer requests`}`,
+        detail: "A response is needed before the purchase can move forward.",
+        tab: "requests" as const,
+      }
+    : photo && photo.status !== "delivered"
+      ? {
+          title: "Complete the property visit",
+          detail: `Updated photos are due ${formatDate(photo.etaAt ?? photo.dueAt)}.`,
+          tab: "visits" as const,
+        }
+      : ba.kickoff === "video_showcase" && !videoTour
+        ? {
+            title: "Arrange the video tour",
+            detail: "Choose a suitable time and share it with the buyer.",
+            tab: "visits" as const,
+          }
+        : {
+            title: "Keep the buyer updated",
+            detail: "Send an update or request anything needed for the next step.",
+            tab: "messages" as const,
+          };
+
+  const tabs: {
+    id: "overview" | "requests" | "visits" | "messages" | "activity";
+    label: string;
+    icon: typeof Home;
+    count?: number;
+  }[] = [
+    { id: "overview", label: "Overview", icon: Home },
+    { id: "requests", label: "Purchase process", icon: ClipboardCheck, count: openRequestCount },
+    { id: "visits", label: "Visits & media", icon: CalendarDays },
+    { id: "messages", label: "Messages", icon: MessageSquare, count: fileChat.unread },
+    { id: "activity", label: "Activity", icon: FileText, count: decisions.length },
+  ];
 
   return (
     <li className="overflow-hidden rounded-lg border border-border bg-card">
@@ -433,197 +515,252 @@ function BuyerFile({ lead, me }: { lead: MortgageLead; me: Realtor }) {
           </div>
         </div>
         <RepresentationBadge lead={lead} />
-        <span className="text-xs text-muted-foreground">{open ? "▲" : "▼"}</span>
+        {open ? (
+          <ChevronUp className="h-4 w-4 text-muted-foreground" aria-hidden />
+        ) : (
+          <ChevronDown className="h-4 w-4 text-muted-foreground" aria-hidden />
+        )}
       </button>
 
       {open ? (
-        <div className="space-y-4 border-t border-border bg-background/50 p-5">
-          <div className="grid gap-4 lg:grid-cols-2">
-            <section className="rounded-lg border border-border bg-card p-4">
-              <h3 className="text-sm font-semibold text-foreground">Property</h3>
-              <div className="mt-2">
-                <Row label="Property" value={lead.propertyLabel} />
-                <Row label="Purchase price" value={money(lead.propertyPrice)} />
-                {t ? (
-                  <>
-                    <Row label="Rate / term" value={`${t.ratePct}% · ${t.termYears} years`} />
-                    <Row label="Down payment" value={`${t.downPaymentPct}%`} />
-                  </>
-                ) : null}
-                <Row label="Your fee" value={`${ba.feePct}% at closing`} />
-                <Row label="Assigned" value={formatDateTime(ba.assignedAt)} />
+        <div className="border-t border-border bg-background/50">
+          <div className="border-b border-border bg-card px-4 py-5 md:px-6">
+            <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand text-sm font-bold text-background">
+                  {initials || "LQ"}
+                </div>
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="text-lg font-bold text-foreground">{displayName}</h3>
+                    <span className="rounded-full bg-success/10 px-2.5 py-1 text-[11px] font-semibold text-success">
+                      {stage}
+                    </span>
+                  </div>
+                  <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                    {lead.propertyLabel} · {money(lead.propertyPrice)}
+                  </p>
+                </div>
               </div>
-              <Link
-                to="/property/$propertyId"
-                params={{ propertyId: String(lead.propertyId) }}
-                className="mt-3 inline-flex rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-brand hover:bg-brand-tint"
-              >
-                Open property page ↗
-              </Link>
-            </section>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                <Button variant="outline" size="sm" onClick={() => setWorkspaceTab("messages")}>
+                  <MessageSquare /> Message
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setWorkspaceTab("requests")}>
+                  <ClipboardCheck /> Requests
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setWorkspaceTab("visits")}>
+                  <CalendarDays /> Visits
+                </Button>
+                <Button asChild size="sm">
+                  <Link to="/property/$propertyId" params={{ propertyId: String(lead.propertyId) }}>
+                    <ArrowUpRight /> Property
+                  </Link>
+                </Button>
+              </div>
+            </div>
 
-            <section className="rounded-lg border border-border bg-card p-4">
-              <h3 className="text-sm font-semibold text-foreground">Buyer</h3>
-              <div className="mt-2">
-                <Row label="Buyer" value={clientDisplayForPartner(lead.clientName, lead.clientEmail)} />
-                <Row
-                  label="US status"
-                  value={lead.usPerson ? "US citizen / green card" : "Non-US person"}
-                />
-                <Row
-                  label="Representation"
-                  value={
-                    loqalManaged
-                      ? "A Loqal personal advocate steers the buyer"
-                      : "Buyer works with you directly"
-                  }
-                />
-                {ba.kickoff ? <Row label="Kickoff" value={KICKOFF_LABEL[ba.kickoff]} /> : null}
+            <div className="mt-5">
+              <div className="grid grid-cols-4 gap-1.5" aria-label={`Purchase stage: ${stage}`}>
+                {[1, 2, 3, 4].map((step) => (
+                  <div
+                    key={step}
+                    className={`h-1.5 rounded-full ${step <= stageStep ? "bg-brand" : "bg-muted"}`}
+                  />
+                ))}
               </div>
-              {ba.kickoffNotes ? (
-                <p className="mt-2 rounded-md bg-brand-tint/50 p-2.5 text-[11px] text-muted-foreground">
-                  Buyer's notes: {ba.kickoffNotes}
-                </p>
-              ) : null}
-              <p className="mt-3 rounded-md bg-brand-tint/50 p-2.5 text-[11px] leading-relaxed text-muted-foreground">
-                Not shared with buyer's agents: SSN, uploaded documents and the client's mortgage
-                questionnaire answers.
-              </p>
-            </section>
+              <div className="mt-2 flex justify-between text-[10px] font-medium text-muted-foreground">
+                <span>Assigned</span>
+                <span>Due diligence</span>
+                <span>Negotiation</span>
+                <span>Terms agreed</span>
+              </div>
+            </div>
           </div>
 
-          {loqalManaged ? (
-            <section className="rounded-lg border border-gold/40 bg-gold-tint/40 p-4">
-              <h3 className="text-sm font-semibold text-foreground">
-                🛡 Steered by a Loqal personal advocate
-              </h3>
-              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                The buyer assigned a Loqal personal advocate to represent their interests (+1% fee).
-                The manager directs inspections, negotiations and next steps with you — you keep
-                your buyer's agent fee and stay informed here.
-              </p>
-            </section>
-          ) : (
-            <>
-              {ba.kickoff === "live_call" ? (
-                <section className="rounded-lg border border-border bg-card p-4">
-                  <h3 className="text-sm font-semibold text-foreground">📞 Intro call</h3>
-                  {introCall ? (
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      Booked for{" "}
-                      <strong className="text-foreground">
-                        {formatDateTime(introCall.startAt)}
-                      </strong>{" "}
-                      (1 hour) — it is on your calendar below.
-                    </p>
-                  ) : (
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      The buyer requested a live call but has not picked a slot yet.
-                    </p>
-                  )}
-                </section>
-              ) : null}
+          <div className="overflow-x-auto border-b border-border bg-card px-3 md:px-5">
+            <div className="flex min-w-max gap-1">
+              {tabs.map(({ id, label, icon: Icon, count }) => (
+                <Button
+                  key={id}
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setWorkspaceTab(id)}
+                  className={`h-11 rounded-none border-b-2 px-3 text-xs ${
+                    workspaceTab === id
+                      ? "border-brand text-brand"
+                      : "border-transparent text-muted-foreground"
+                  }`}
+                >
+                  <Icon />
+                  {label}
+                  {count ? (
+                    <span className="min-w-5 rounded-full bg-brand-tint px-1.5 py-0.5 text-[10px] font-bold text-brand">
+                      {count}
+                    </span>
+                  ) : null}
+                </Button>
+              ))}
+            </div>
+          </div>
 
-              {ba.kickoff === "video_showcase" ? (
-                <section className="rounded-lg border border-border bg-card p-4">
-                  <h3 className="text-sm font-semibold text-foreground">
-                    🎥 Real-time video showcasing requested
-                  </h3>
-                  {videoTour && videoTour.status === "proposed" ? (
-                    <div className="mt-3">
-                      <TourProposalPanel
-                        booking={videoTour}
-                        side="agent"
-                        realtorId={me.id}
-                        agentEmail={me.email}
-                      />
-                    </div>
-                  ) : videoTour ? (
-                    <div className="mt-1 text-sm text-muted-foreground">
-                      Video tour scheduled for{" "}
-                      <strong className="text-foreground">
-                        {formatDateTime(videoTour.startAt)}
-                      </strong>{" "}
-                      (1 hour) on Google Meet.
-                      {videoTour.meetUrl ? (
-                        <div className="mt-2">
-                          <a
-                            href={videoTour.meetUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex rounded-md bg-brand px-3 py-1.5 text-xs font-semibold text-background hover:bg-brand-soft"
-                          >
-                            Join Google Meet
-                          </a>
-                          <div className="mt-1 break-all text-[11px]">{videoTour.meetUrl}</div>
+          <div className="p-4 md:p-6">
+            {workspaceTab === "overview" ? (
+              <div className="grid gap-5 lg:grid-cols-[1.35fr_0.65fr]">
+                <div className="space-y-5">
+                  <section className="overflow-hidden rounded-lg border border-brand/25 bg-card">
+                    <div className="border-l-4 border-brand p-4 md:p-5">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <p className="text-[11px] font-semibold uppercase tracking-wide text-brand">
+                            Next action
+                          </p>
+                          <h4 className="mt-1 text-base font-bold text-foreground">{nextAction.title}</h4>
+                          <p className="mt-1 text-xs text-muted-foreground">{nextAction.detail}</p>
                         </div>
-                      ) : (
-                        <div className="mt-2 text-[11px]">
-                          No Meet link yet — connect your Google Calendar below and the link is
-                          created for you.
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-
-                    <>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        Visit the property and showcase it to the buyer live on video. Pick a slot
-                        on your calendar — the buyer is informed automatically.
-                      </p>
-                      <div className="mt-3">
-                        <CallScheduler
-                          realtorId={me.id}
-                          {...(tourSlot ? { booked: tourSlot } : {})}
-                          agentEmail={me.email}
-                          summary={`Loqal video walkthrough — ${lead.propertyLabel}`}
-                          description={`Live video walkthrough of ${lead.propertyLabel} with your Loqal buyer's agent.`}
-                          onBook={(startAt, meeting) => {
-                            bookCall({
-                              leadId: lead.id,
-                              realtorId: me.id,
-                              clientName: lead.clientName,
-                          clientEmail: lead.clientEmail,
-                              propertyLabel: lead.propertyLabel,
-                              kind: "video_tour",
-                              startAt,
-                              ...(meeting?.eventId ? { googleEventId: meeting.eventId } : {}),
-                              ...(meeting?.meetUrl ? { meetUrl: meeting.meetUrl } : {}),
-                              ...(meeting?.htmlLink ? { calendarLink: meeting.htmlLink } : {}),
-                            });
-                            setTourSlot(startAt);
-                          }}
-                        />
+                        <Button size="sm" onClick={() => setWorkspaceTab(nextAction.tab)}>
+                          Open task <ArrowUpRight />
+                        </Button>
                       </div>
-                    </>
-                  )}
-                </section>
-              ) : null}
+                    </div>
+                  </section>
 
-              <PhotoPanel lead={lead} />
-            </>
-          )}
+                  <section>
+                    <div className="mb-3 flex items-center justify-between">
+                      <h4 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                        Deal snapshot
+                      </h4>
+                      <span className="text-[11px] text-muted-foreground">
+                        Assigned {formatDate(ba.assignedAt)}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                      {[
+                        ["Purchase price", money(lead.propertyPrice)],
+                        ["Down payment", t ? `${t.downPaymentPct}%` : "—"],
+                        ["Loan", t ? `${t.ratePct}% · ${t.termYears} years` : "Pending"],
+                        ["Your fee", `${ba.feePct}% at closing`],
+                      ].map(([label, value]) => (
+                        <div key={label} className="rounded-lg border border-border bg-card p-3">
+                          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                            {label}
+                          </p>
+                          <p className="mt-1.5 text-sm font-bold text-foreground">{value}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
 
-          <BuyerRequestsPanel
-            leadId={lead.id}
-            propertyId={lead.propertyId}
-            propertyLabel={lead.propertyLabel}
-            buyerName={clientDisplayForPartner(lead.clientName, lead.clientEmail)}
-            buyerEmail={lead.clientEmail}
-            agentName={`${me.firstName} ${me.lastName}`.trim()}
-          />
+                  <section className="rounded-lg border border-border bg-card p-4">
+                    <div className="flex items-center gap-2">
+                      <UserRound className="h-4 w-4 text-brand" aria-hidden />
+                      <h4 className="text-sm font-semibold text-foreground">Buyer context</h4>
+                    </div>
+                    <div className="mt-2 grid gap-x-6 sm:grid-cols-2">
+                      <Row label="Buyer" value={displayName} />
+                      <Row label="US status" value={lead.usPerson ? "US citizen / green card" : "Non-US person"} />
+                      <Row label="Representation" value={loqalManaged ? "Loqal personal advocate" : "Works with you directly"} />
+                      <Row label="Starting point" value={ba.kickoff ? KICKOFF_LABEL[ba.kickoff] : "Active file"} />
+                    </div>
+                    {ba.kickoffNotes ? (
+                      <p className="mt-3 border-l-2 border-gold bg-gold-tint/40 px-3 py-2 text-xs text-muted-foreground">
+                        {ba.kickoffNotes}
+                      </p>
+                    ) : null}
+                  </section>
+                </div>
 
-          <FileChatPanel
-            leadId={lead.id}
-            side="agent"
-            myName={`${me.firstName} ${me.lastName}`.trim()}
-            otherName={clientDisplayForPartner(lead.clientName, lead.clientEmail)}
-            otherEmail={lead.clientEmail}
-            propertyId={lead.propertyId}
-            propertyLabel={lead.propertyLabel}
-          />
+                <aside className="space-y-4">
+                  <section className="rounded-lg border border-border bg-card p-4">
+                    <h4 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                      At a glance
+                    </h4>
+                    <div className="mt-3 space-y-3">
+                      <button type="button" onClick={() => setWorkspaceTab("requests")} className="flex w-full items-center justify-between gap-3 text-left">
+                        <span className="text-xs text-foreground">Open buyer requests</span>
+                        <span className={`text-xs font-bold ${openRequestCount ? "text-brand" : "text-success"}`}>{openRequestCount || "None"}</span>
+                      </button>
+                      <button type="button" onClick={() => setWorkspaceTab("messages")} className="flex w-full items-center justify-between gap-3 text-left">
+                        <span className="text-xs text-foreground">Unread messages</span>
+                        <span className={`text-xs font-bold ${fileChat.unread ? "text-brand" : "text-success"}`}>{fileChat.unread || "None"}</span>
+                      </button>
+                      <button type="button" onClick={() => setWorkspaceTab("visits")} className="flex w-full items-center justify-between gap-3 text-left">
+                        <span className="text-xs text-foreground">Photos / visit</span>
+                        <span className="text-right text-xs font-bold text-foreground">{photo ? photo.status : ba.kickoff ? KICKOFF_LABEL[ba.kickoff] : "Not requested"}</span>
+                      </button>
+                    </div>
+                  </section>
+                  {loqalManaged ? (
+                    <section className="rounded-lg border border-gold/40 bg-gold-tint/40 p-4">
+                      <h4 className="text-sm font-semibold text-foreground">Loqal advocate assigned</h4>
+                      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                        The advocate directs inspections, negotiations and the next steps with you.
+                      </p>
+                    </section>
+                  ) : null}
+                  <section className="rounded-lg border border-border bg-muted/30 p-4">
+                    <div className="flex items-start gap-2">
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden />
+                      <p className="text-[11px] leading-relaxed text-muted-foreground">
+                        Private identity documents and mortgage questionnaire answers remain visible only to Loqal and authorized lending partners.
+                      </p>
+                    </div>
+                  </section>
+                </aside>
+              </div>
+            ) : null}
 
-          <ClientDecisions lead={lead} />
+            {workspaceTab === "requests" ? (
+              <BuyerRequestsPanel
+                leadId={lead.id}
+                propertyId={lead.propertyId}
+                propertyLabel={lead.propertyLabel}
+                buyerName={displayName}
+                buyerEmail={lead.clientEmail}
+                agentName={`${me.firstName} ${me.lastName}`.trim()}
+              />
+            ) : null}
+
+            {workspaceTab === "visits" ? (
+              <div className="space-y-4">
+                {!loqalManaged && ba.kickoff === "live_call" ? (
+                  <section className="rounded-lg border border-border bg-card p-4">
+                    <h3 className="text-sm font-semibold text-foreground">Intro call</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {introCall ? `Booked for ${formatDateTime(introCall.startAt)}.` : "The buyer requested a live call but has not picked a slot yet."}
+                    </p>
+                  </section>
+                ) : null}
+                {!loqalManaged && ba.kickoff === "video_showcase" ? (
+                  <section className="rounded-lg border border-border bg-card p-4">
+                    <h3 className="text-sm font-semibold text-foreground">Real-time video showcasing</h3>
+                    {videoTour?.status === "proposed" ? (
+                      <div className="mt-3"><TourProposalPanel booking={videoTour} side="agent" realtorId={me.id} agentEmail={me.email} /></div>
+                    ) : videoTour ? (
+                      <div className="mt-2 text-sm text-muted-foreground">
+                        Scheduled for <strong className="text-foreground">{formatDateTime(videoTour.startAt)}</strong>.
+                        {videoTour.meetUrl ? <a href={videoTour.meetUrl} target="_blank" rel="noreferrer" className="mt-3 inline-flex rounded-md bg-brand px-3 py-2 text-xs font-semibold text-background">Join Google Meet</a> : null}
+                      </div>
+                    ) : (
+                      <div className="mt-3"><CallScheduler realtorId={me.id} {...(tourSlot ? { booked: tourSlot } : {})} agentEmail={me.email} summary={`Loqal video walkthrough — ${lead.propertyLabel}`} description={`Live video walkthrough of ${lead.propertyLabel} with your Loqal buyer's agent.`} onBook={(startAt, meeting) => { bookCall({ leadId: lead.id, realtorId: me.id, clientName: lead.clientName, clientEmail: lead.clientEmail, propertyLabel: lead.propertyLabel, kind: "video_tour", startAt, ...(meeting?.eventId ? { googleEventId: meeting.eventId } : {}), ...(meeting?.meetUrl ? { meetUrl: meeting.meetUrl } : {}), ...(meeting?.htmlLink ? { calendarLink: meeting.htmlLink } : {}) }); setTourSlot(startAt); }} /></div>
+                    )}
+                  </section>
+                ) : null}
+                {!loqalManaged ? <PhotoPanel lead={lead} /> : null}
+                {!photo && ba.kickoff !== "video_showcase" && ba.kickoff !== "live_call" ? (
+                  <div className="rounded-lg border border-border bg-card p-8 text-center text-sm text-muted-foreground">No visit or media work is open for this file.</div>
+                ) : null}
+              </div>
+            ) : null}
+
+            {workspaceTab === "messages" ? (
+              <FileChatPanel leadId={lead.id} side="agent" myName={`${me.firstName} ${me.lastName}`.trim()} otherName={displayName} otherEmail={lead.clientEmail} propertyId={lead.propertyId} propertyLabel={lead.propertyLabel} />
+            ) : null}
+
+            {workspaceTab === "activity" ? (
+              decisions.length ? <ClientDecisions lead={lead} /> : <div className="rounded-lg border border-border bg-card p-8 text-center text-sm text-muted-foreground">No buyer decisions have been recorded yet.</div>
+            ) : null}
+          </div>
         </div>
       ) : null}
     </li>
