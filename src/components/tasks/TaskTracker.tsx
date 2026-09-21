@@ -231,8 +231,28 @@ export function TaskTracker({ className = "" }: { className?: string }) {
       list.push({ def: GROUPS[gid], notification: n });
     };
 
-    for (const n of notifications.filter(isStillOpen)) push(n, groupOf(n.id));
-    for (const n of adminItems.filter(isStillOpen)) push(n, adminGroupOf(n.id));
+    /* Loqal staff see only work that is theirs to do — approve a partner
+       registration, countersign an agreement, verify a licence, answer a
+       partner's request, set up a company structure. Everything a user did on
+       their own side is activity, not a task, and lives in the activity card
+       next to this one. */
+    if (isAdmin) {
+      const adminTaskPrefixes = [
+        "preq-",
+        "countersign-",
+        "kyc-",
+        "licverif-",
+        "areq-",
+        "entitysetup-",
+        "deletion-",
+      ];
+      for (const n of adminItems.filter(isStillOpen))
+        if (adminTaskPrefixes.some((p) => n.id.startsWith(p))) push(n, adminGroupOf(n.id));
+    } else {
+      for (const n of notifications.filter(isStillOpen)) push(n, groupOf(n.id));
+      for (const n of adminItems.filter(isStillOpen)) push(n, adminGroupOf(n.id));
+    }
+
 
     // Urgent first, then oldest waiting first — the longest-open task is the
     // one that needs attention.
