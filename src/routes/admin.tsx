@@ -459,7 +459,7 @@ function AdminPage() {
                 <h2 className="text-base font-semibold text-foreground">Accounts</h2>
                 <p className="mt-1 text-xs text-muted-foreground">
                   {accounts.length
-                    ? `Registered accounts across the platform — showing ${accounts.length} of ${allPeople.length - deletedEmails.size}.`
+                    ? `Registered accounts across the platform — showing ${accounts.length} of ${livePeople.length}.`
                     : "No accounts registered yet."}
                 </p>
                 {accounts.length ? (
