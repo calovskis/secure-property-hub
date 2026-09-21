@@ -65,6 +65,142 @@ function commit(next: State) {
   listeners.forEach((l) => l());
 }
 
+// ---------------------------------------------------------------------------
+// Backend sync — deletions are mirrored to the `profile_deletions` table so a
+// deletion made in one browser/session hides the account everywhere (accounts
+// and partner registrations themselves are database-backed). localStorage
+// stays the fast render cache; the server copy wins on conflicts.
+// ---------------------------------------------------------------------------
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+type DeletionRow = {
+  id: string;
+  email: string;
+  name: string | null;
+  role_label: string | null;
+  reason: string | null;
+  requested_by: string | null;
+  requested_at: string | null;
+  self_requested: boolean | null;
+  status: DeletionStatus;
+  confirmed_by: string | null;
+  confirmed_at: string | null;
+  recoverable_until: string | null;
+  closed_by: string | null;
+  closed_at: string | null;
+  close_note: string | null;
+};
+
+function fromRow(row: DeletionRow): DeletionRecord {
+  return {
+    id: row.id,
+    email: row.email.trim().toLowerCase(),
+    name: row.name ?? "",
+    roleLabel: row.role_label ?? "",
+    reason: row.reason ?? "",
+    requestedBy: row.requested_by ?? "",
+    requestedAt: row.requested_at ?? new Date().toISOString(),
+    selfRequested: Boolean(row.self_requested),
+    status: row.status,
+    ...(row.confirmed_by ? { confirmedBy: row.confirmed_by } : {}),
+    ...(row.confirmed_at ? { confirmedAt: row.confirmed_at } : {}),
+    ...(row.recoverable_until ? { recoverableUntil: row.recoverable_until } : {}),
+    ...(row.closed_by ? { closedBy: row.closed_by } : {}),
+    ...(row.closed_at ? { closedAt: row.closed_at } : {}),
+    ...(row.close_note ? { closeNote: row.close_note } : {}),
+  };
+}
+
+function toRow(r: DeletionRecord) {
+  return {
+    ...(UUID_RE.test(r.id) ? { id: r.id } : {}),
+    email: r.email,
+    name: r.name,
+    role_label: r.roleLabel,
+    reason: r.reason,
+    requested_by: r.requestedBy,
+    requested_at: r.requestedAt,
+    self_requested: r.selfRequested,
+    status: r.status,
+    confirmed_by: r.confirmedBy ?? null,
+    confirmed_at: r.confirmedAt ?? null,
+    recoverable_until: r.recoverableUntil ?? null,
+    closed_by: r.closedBy ?? null,
+    closed_at: r.closedAt ?? null,
+    close_note: r.closeNote ?? null,
+  };
+}
+
+/** Best-effort mirror of one record to the backend; failures stay local. */
+async function pushRecord(record: DeletionRecord) {
+  try {
+    if (UUID_RE.test(record.id)) {
+      const { error } = await supabase.from("profile_deletions").upsert(toRow(record));
+      if (!error) return;
+    }
+    if (isLive(record)) {
+      // A live row for this e-mail may already exist under another id.
+      const { data } = await supabase
+        .from("profile_deletions")
+        .select("id")
+        .ilike("email", record.email)
+        .in("status", ["requested", "deleted"])
+        .limit(1);
+      const existing = data?.[0] as { id: string } | undefined;
+      if (existing) {
+        await supabase.from("profile_deletions").update(toRow(record)).eq("id", existing.id);
+        return;
+      }
+    }
+    const { data: inserted, error } = await supabase
+      .from("profile_deletions")
+      .insert(toRow(record))
+      .select("id")
+      .maybeSingle();
+    const newId = (inserted as { id?: string } | null)?.id;
+    if (!error && newId && newId !== record.id) {
+      // Adopt the server id so future updates hit the same row.
+      const cur = load();
+      commit({
+        records: cur.records.map((r) => (r.id === record.id ? { ...r, id: newId } : r)),
+      });
+    }
+  } catch {
+    /* offline or no session — stays local */
+  }
+}
+
+let syncing = false;
+
+/** Merge server-side deletion records into the local store (server wins). */
+async function syncFromServer() {
+  if (syncing || typeof window === "undefined") return;
+  syncing = true;
+  try {
+    const { data, error } = await supabase.from("profile_deletions").select("*");
+    if (error || !data) return;
+    const server = (data as DeletionRow[]).map(fromRow);
+    const cur = load();
+    const byId = new Map(cur.records.map((r) => [r.id, r] as const));
+    for (const sr of server) byId.set(sr.id, sr);
+    // One live record per e-mail — the server copy wins over local duplicates.
+    const liveKeeper = new Map<string, string>();
+    for (const sr of server) if (isLive(sr)) liveKeeper.set(sr.email, sr.id);
+    const merged = [...byId.values()].filter(
+      (r) => !isLive(r) || !liveKeeper.has(r.email) || liveKeeper.get(r.email) === r.id,
+    );
+    const serverIds = new Set(server.map((s) => s.id));
+    const localOnly = merged.filter((r) => !serverIds.has(r.id));
+    commit({ records: merged });
+    for (const r of localOnly) void pushRecord(r);
+  } catch {
+    /* no session yet — retry on the next tick */
+  } finally {
+    syncing = false;
+  }
+}
+
 const SERVER_SNAPSHOT: State = { records: [] };
 
 function recoveryDeadline(from: Date) {
