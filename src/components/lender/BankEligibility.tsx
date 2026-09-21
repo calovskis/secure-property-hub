@@ -7,9 +7,9 @@
  * what each bank would allow.
  */
 import { useMemo, useState } from "react";
-import { Lightbulb } from "lucide-react";
+import { FileQuestion, Lightbulb } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import type { MortgageLead } from "@/lib/leads";
+import { useLeads, type InfoRequestType, type MortgageLead } from "@/lib/leads";
 import {
   ELIGIBILITY_LABEL,
   ELIGIBILITY_TONE,
@@ -21,6 +21,8 @@ import {
   type ProgramMatch,
 } from "@/lib/bank-matrix";
 import { useLoanSubmission } from "@/lib/loan-submission";
+import { InfoRequestDialog } from "@/components/lender/InfoRequestDialog";
+import { Button } from "@/components/ui/button";
 
 const money = (n: number) => `$${Math.round(n).toLocaleString()}`;
 
@@ -35,10 +37,14 @@ function MatchCard({
   match,
   chosen,
   onChoose,
+  onRequest,
+  openRequestKeys,
 }: {
   match: ProgramMatch;
   chosen: boolean;
   onChoose: () => void;
+  onRequest: (match: ProgramMatch, recommendation: string) => void;
+  openRequestKeys: Set<string>;
 }) {
   const [open, setOpen] = useState(false);
   const p = match.program;
@@ -106,7 +112,20 @@ function MatchCard({
           </div>
           <ul className="mt-1.5 list-disc space-y-1 pl-4 text-[11px] leading-5 text-muted-foreground">
             {match.recommendations.map((recommendation) => (
-              <li key={recommendation}>{recommendation}</li>
+              <li key={recommendation} className="flex items-start justify-between gap-3">
+                <span>{recommendation}</span>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={openRequestKeys.has(`${p.id}:${recommendation}`)}
+                  onClick={() => onRequest(match, recommendation)}
+                  className="h-7 shrink-0 gap-1 px-2 text-[10px]"
+                >
+                  <FileQuestion className="h-3 w-3" />
+                  {openRequestKeys.has(`${p.id}:${recommendation}`) ? "Requested" : "Request"}
+                </Button>
+              </li>
             ))}
           </ul>
         </div>
@@ -149,12 +168,39 @@ function MatchCard({
 
 export function BankEligibilitySection({ lead }: { lead: MortgageLead }) {
   const [open, setOpen] = useState(false);
+  const [requestDraft, setRequestDraft] = useState<{
+    match: ProgramMatch;
+    recommendation: string;
+    type: InfoRequestType;
+    wording: string;
+    needsDocument: boolean;
+  } | null>(null);
+  const { addInfoRequest } = useLeads();
   const { submission, save } = useLoanSubmission(lead.id);
   const snap = useMemo(() => applicantSnapshot(lead), [lead]);
   const matches = useMemo(() => matchBanks(snap), [snap]);
   const track = trackOf(snap);
   const eligible = matches.filter((m) => m.eligibility === "eligible");
   const conditional = matches.filter((m) => m.eligibility === "review");
+  const openRequestKeys = new Set(
+    (lead.infoRequests ?? [])
+      .filter((request) => !request.answeredAt && request.bankProgramId && request.recommendation)
+      .map((request) => `${request.bankProgramId}:${request.recommendation}`),
+  );
+
+  const prepareRequest = (match: ProgramMatch, recommendation: string) => {
+    const lower = recommendation.toLowerCase();
+    const visa = lower.includes("visa") || lower.includes("i-797") || lower.includes("i-94");
+    const evidence = /document|statement|report|evidence|proof|discharge|completion/.test(lower);
+    const type: InfoRequestType = visa ? "visa_support" : evidence ? "evidence" : "information";
+    const intro = visa
+      ? "To continue checking your eligibility, please provide a valid, unexpired US visa or qualifying I-797/I-94 evidence. If you need Loqal visa support, please say so in your reply."
+      : evidence
+        ? `To continue checking your eligibility for ${match.program.bank} — ${match.program.program}, please provide the following evidence: ${recommendation}`
+        : `To continue checking your eligibility for ${match.program.bank} — ${match.program.program}, please confirm the following: ${recommendation}`;
+    setOpen(false);
+    setRequestDraft({ match, recommendation, type, wording: intro, needsDocument: visa || evidence });
+  };
 
   const choose = (m: ProgramMatch) =>
     save({
@@ -220,11 +266,35 @@ export function BankEligibilitySection({ lead }: { lead: MortgageLead }) {
                 match={m}
                 chosen={submission?.bankProgramId === m.program.id}
                 onChoose={() => choose(m)}
+                onRequest={prepareRequest}
+                openRequestKeys={openRequestKeys}
               />
             ))}
           </ul>
         </DialogContent>
       </Dialog>
+      <InfoRequestDialog
+        lead={lead}
+        open={Boolean(requestDraft)}
+        onOpenChange={(next) => {
+          if (!next) setRequestDraft(null);
+        }}
+        initialQuestion={requestDraft?.wording ?? ""}
+        initialNeedsDocument={requestDraft?.needsDocument}
+        initialType={requestDraft?.type ?? "information"}
+        contextLabel={requestDraft ? `${requestDraft.match.program.bank} — ${requestDraft.match.program.program}` : undefined}
+        onSend={(question, needsDocument, type) => {
+          if (!requestDraft) return;
+          addInfoRequest(lead.id, question, needsDocument, {
+            type,
+            bankProgramId: requestDraft.match.program.id,
+            bankName: requestDraft.match.program.bank,
+            programName: requestDraft.match.program.program,
+            recommendation: requestDraft.recommendation,
+          });
+          setRequestDraft(null);
+        }}
+      />
     </section>
   );
 }

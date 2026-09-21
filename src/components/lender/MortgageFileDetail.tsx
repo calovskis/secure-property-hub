@@ -34,6 +34,9 @@ import {
   mortgageStage,
   totalMonthlyObligations,
   useLeads,
+  INFO_REQUEST_TYPE_LABEL,
+  type InfoRequest,
+  type InfoRequestType,
   type MortgageLead,
 } from "@/lib/leads";
 import { formatDate, formatDateTime } from "@/lib/dates";
@@ -54,6 +57,14 @@ import {
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { InfoRequestDialog } from "@/components/lender/InfoRequestDialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const money = (n: number) => `$${Math.round(n).toLocaleString()}`;
 const inputClass =
@@ -355,41 +366,49 @@ function LoanSubmissionBlock({
 
 /** Block 5 — information requests raised on the file and client questions. */
 function RequestsBlock({ lead }: { lead: MortgageLead }) {
-  const { answerClientQuestion } = useLeads();
+  const { addInfoRequest, answerClientQuestion } = useLeads();
   const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [requestOpen, setRequestOpen] = useState(false);
+  const [thread, setThread] = useState<InfoRequest | null>(null);
   const requests = lead.infoRequests ?? [];
   const questions = lead.clientQuestions ?? [];
   const answered = requests.filter((r) => r.answeredAt).length;
 
   return (
     <section className="rounded-lg border border-border bg-card p-4">
-      <h3 className="text-sm font-semibold text-foreground">Information requests</h3>
-      <p className="mt-1 text-xs text-muted-foreground">
-        {requests.length
-          ? `${answered} answered of ${requests.length} raised on this file.`
-          : "Nothing requested from the client on this file."}
-        {lead.lenderNote ? ` Lender note: ${lead.lenderNote}` : ""}
-      </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h3 className="text-sm font-semibold text-foreground">Information requests</h3>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {requests.length
+              ? `${answered} answered of ${requests.length} raised on this file.`
+              : "Nothing requested from the client on this file."}
+            {lead.lenderNote ? ` Lender note: ${lead.lenderNote}` : ""}
+          </p>
+        </div>
+        <Button type="button" size="sm" onClick={() => setRequestOpen(true)} className="gap-1.5">
+          <MessageSquareText className="h-3.5 w-3.5" />
+          New information request
+        </Button>
+      </div>
 
       {requests.length ? (
         <ul className="mt-3 space-y-2">
           {requests.map((r) => (
             <li key={r.id} className="rounded-md border border-border p-3">
-              <div className="text-sm font-medium text-foreground">{r.question}</div>
-              <div className="mt-0.5 text-[11px] text-muted-foreground">
-                Requested {formatDateTime(r.requestedAt)}
-                {r.answeredAt ? ` · answered ${formatDateTime(r.answeredAt)}` : " · awaiting the client"}
-              </div>
-              {r.answer ? (
-                <p className="mt-2 rounded-md bg-brand-tint/40 p-2 text-sm text-muted-foreground">
-                  {r.answer}
-                </p>
-              ) : null}
-              {r.documents.length ? (
-                <div className="mt-1 text-[11px] text-muted-foreground">
-                  {r.documents.map((d) => d.name).join(", ")}
+              <button type="button" onClick={() => setThread(r)} className="w-full text-left">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-full bg-brand-tint px-2 py-0.5 text-[10px] font-semibold text-brand">
+                    {INFO_REQUEST_TYPE_LABEL[r.type ?? "information"]}
+                  </span>
+                  <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold", r.answeredAt ? "bg-success/10 text-success" : "bg-gold-tint text-gold")}> 
+                    {r.answeredAt ? "Answered" : "Awaiting client"}
+                  </span>
+                  {r.bankName ? <span className="text-[10px] text-muted-foreground">{r.bankName} · {r.programName}</span> : null}
                 </div>
-              ) : null}
+                <div className="mt-2 line-clamp-2 text-sm font-medium text-foreground">{r.question}</div>
+                <div className="mt-1 text-[11px] text-muted-foreground">Requested {formatDateTime(r.requestedAt)} · Open communication</div>
+              </button>
             </li>
           ))}
         </ul>
@@ -437,7 +456,68 @@ function RequestsBlock({ lead }: { lead: MortgageLead }) {
           </div>
         </div>
       ) : null}
+      <InfoRequestDialog
+        lead={lead}
+        open={requestOpen}
+        onOpenChange={setRequestOpen}
+        onSend={(question, needsDocument, type) =>
+          addInfoRequest(lead.id, question, needsDocument, { type })
+        }
+      />
+      <RequestCommunicationDialog request={thread} onOpenChange={(open) => !open && setThread(null)} />
     </section>
+  );
+}
+
+function RequestCommunicationDialog({
+  request,
+  onOpenChange,
+}: {
+  request: InfoRequest | null;
+  onOpenChange: (open: boolean) => void;
+}) {
+  return (
+    <Dialog open={Boolean(request)} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[85vh] max-w-xl overflow-y-auto">
+        {request ? (
+          <>
+            <DialogHeader>
+              <DialogTitle>{INFO_REQUEST_TYPE_LABEL[request.type ?? "information"]} request</DialogTitle>
+              <DialogDescription>
+                Sent {formatDateTime(request.requestedAt)}
+                {request.bankName ? ` · ${request.bankName} — ${request.programName}` : ""}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3">
+              {request.recommendation ? (
+                <div className="rounded-md border border-gold/35 bg-gold-tint/30 p-3 text-xs text-muted-foreground">
+                  <strong className="text-foreground">Eligibility suggestion: </strong>{request.recommendation}
+                </div>
+              ) : null}
+              <div className="rounded-md border border-border p-3">
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Mortgage company requested</div>
+                <p className="mt-2 whitespace-pre-wrap text-sm text-foreground">{request.question}</p>
+              </div>
+              {request.answeredAt ? (
+                <div className="rounded-md border border-success/30 bg-success/5 p-3">
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-success">Client replied · {formatDateTime(request.answeredAt)}</div>
+                  <p className="mt-2 whitespace-pre-wrap text-sm text-foreground">{request.answer || "No written response."}</p>
+                  {request.documents.length ? (
+                    <div className="mt-3 space-y-1">
+                      {request.documents.map((document) => (
+                        <div key={document.id} className="rounded-md border border-border bg-background px-3 py-2 text-xs text-brand">{document.name}</div>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              ) : (
+                <div className="rounded-md border border-gold/35 bg-gold-tint/30 p-3 text-sm font-medium text-gold">Awaiting the client’s response</div>
+              )}
+            </div>
+          </>
+        ) : null}
+      </DialogContent>
+    </Dialog>
   );
 }
 

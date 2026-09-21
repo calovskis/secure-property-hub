@@ -2,6 +2,7 @@ import { useState } from "react";
 import {
   canCancelLead,
   computeDti,
+  INFO_REQUEST_TYPE_LABEL,
   offerReminders,
   totalMonthlyObligations,
   useLeads,
@@ -69,6 +70,12 @@ function InfoRequests({ lead }: { lead: MortgageLead }) {
     <div className="space-y-4">
       {open.map((r) => (
         <div key={r.id} className="rounded-lg border border-gold/40 bg-gold-tint/60 p-4">
+          <div className="mb-2 flex flex-wrap items-center gap-2">
+            <span className="rounded-full bg-brand-tint px-2 py-0.5 text-[10px] font-semibold text-brand">
+              {INFO_REQUEST_TYPE_LABEL[r.type ?? "information"]}
+            </span>
+            <span className="text-[11px] text-muted-foreground">Requested {formatDateTime(r.requestedAt)}</span>
+          </div>
           <div className="text-sm font-semibold text-foreground">
             Your lender needs more information
           </div>
