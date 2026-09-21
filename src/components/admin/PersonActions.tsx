@@ -12,6 +12,10 @@ import { useActiveLeads } from "@/lib/leads";
 import type { AdminPerson } from "@/components/admin/people-model";
 import { LicenceVerificationDialog } from "@/components/admin/LicenceVerificationPanel";
 import { PartnerCountersignDialog } from "@/components/admin/PartnerCountersignDialog";
+import { usePartnerRequests } from "@/lib/partner-requests";
+import { notify } from "@/lib/notifications";
+import { logActivity } from "@/lib/activity";
+import { toast } from "sonner";
 
 export function usePersonActions(person: AdminPerson): PersonAction[] {
   const { leads } = useActiveLeads();
@@ -41,6 +45,7 @@ export function ActiveActionsList({
   onOpenTab?: (tab: "profile" | "correspondence" | "properties") => void;
 }) {
   const actions = usePersonActions(person);
+  const { updateRequest } = usePartnerRequests();
   const [licencesOpen, setLicencesOpen] = useState(false);
   const [countersignOpen, setCountersignOpen] = useState(false);
 
@@ -126,6 +131,24 @@ export function ActiveActionsList({
             request={person.request}
             open={countersignOpen}
             onOpenChange={setCountersignOpen}
+            onCountersign={(signatory) => {
+              const req = person.request!;
+              updateRequest(req.id, {
+                agreementCountersignedAt: new Date().toISOString(),
+                agreementCountersignedBy: signatory.name,
+                agreementCountersignedTitle: signatory.title,
+              });
+              notify({
+                id: `countersigned-${req.id}`,
+                to: req.email.toLowerCase(),
+                title: "Loqal countersigned your partnership agreement",
+                body: `${signatory.name}, ${signatory.title}, signed for Loqal — your partnership is fully active.`,
+                href: "/profile",
+                severity: "info",
+              });
+              logActivity(signatory.name, "countersigned a partnership agreement", req.companyName);
+              toast("Agreement countersigned", { description: req.companyName });
+            }}
           />
         </>
       ) : null}
