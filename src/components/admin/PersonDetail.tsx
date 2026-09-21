@@ -179,7 +179,7 @@ export function PersonDetailContent({
           </div>
         </div>
         <nav className="mt-3 flex gap-1 overflow-x-auto">
-          {TABS.map(([id, icon, label]) => (
+          {tabsFor(person).map(([id, icon, label]) => (
             <button
               key={id}
               type="button"
