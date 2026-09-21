@@ -81,7 +81,7 @@ export function PartnerCorrespondence({
             <li key={a.id}>
               <button
                 type="button"
-                onClick={() => setDetail(a)}
+                onClick={() => open(a)}
                 className={`flex w-full flex-wrap items-center justify-between gap-2 text-left ${
                   compact
                     ? "rounded-md border border-border bg-background px-3 py-2 hover:bg-muted/40"
