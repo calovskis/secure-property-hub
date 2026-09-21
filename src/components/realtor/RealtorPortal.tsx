@@ -486,13 +486,18 @@ function BuyerFile({ lead, me }: { lead: MortgageLead; me: Realtor }) {
             tab: "messages" as const,
           };
 
-  const tabs = [
+  const tabs: {
+    id: "overview" | "requests" | "visits" | "messages" | "activity";
+    label: string;
+    icon: typeof Home;
+    count?: number;
+  }[] = [
     { id: "overview", label: "Overview", icon: Home },
     { id: "requests", label: "Purchase process", icon: ClipboardCheck, count: openRequestCount },
     { id: "visits", label: "Visits & media", icon: CalendarDays },
     { id: "messages", label: "Messages", icon: MessageSquare, count: fileChat.unread },
     { id: "activity", label: "Activity", icon: FileText, count: decisions.length },
-  ] as const;
+  ];
 
   return (
     <li className="overflow-hidden rounded-lg border border-border bg-card">
