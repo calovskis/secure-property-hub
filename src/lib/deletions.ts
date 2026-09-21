@@ -241,6 +241,14 @@ export function useDeletions() {
     () => SERVER_SNAPSHOT,
   );
 
+  // Pull backend deletion records once mounted, then keep them fresh — this is
+  // what hides accounts deleted in another browser or session.
+  useEffect(() => {
+    void syncFromServer();
+    const t = window.setInterval(() => void syncFromServer(), 30_000);
+    return () => window.clearInterval(t);
+  }, []);
+
   /** The open request or active deletion for a profile, if any. */
   const recordFor = useCallback(
     (email: string) =>
