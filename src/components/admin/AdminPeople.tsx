@@ -21,6 +21,9 @@ import {
 import type { PartnerType } from "@/lib/auth";
 import { loqalNumber } from "@/lib/user-id";
 import { daysLeft, useDeletions, type DeletionRecord } from "@/lib/deletions";
+import { useActiveLeads } from "@/lib/leads";
+import { personActions } from "@/lib/person-actions";
+import { PersonActionsDialog } from "@/components/admin/PersonActions";
 
 type Filters = {
   q: string;
@@ -61,6 +64,8 @@ export function AdminPeople({
   const [sub, setSub] = useState<string>("all");
   const [filters, setFilters] = useState<Filters>(EMPTY);
   const [open, setOpen] = useState<AdminPerson | null>(null);
+  const [actionsFor, setActionsFor] = useState<AdminPerson | null>(null);
+  const { leads: activeLeads } = useActiveLeads();
   const [view, setView] = useState<"active" | "deleted">("active");
   const { deleted, history } = useDeletions();
   const deletedEmails = useMemo(
@@ -138,6 +143,20 @@ export function AdminPeople({
       return true;
     });
   }, [scoped, filters, scope]);
+
+  /* Open items per person — rows with work waiting are highlighted and get
+     their own Actions button opening the pop-up. */
+  const actionsByKey = useMemo(() => {
+    const map = new Map<string, ReturnType<typeof personActions>>();
+    for (const p of people) {
+      const own = activeLeads.filter(
+        (l) => l.clientEmail.trim().toLowerCase() === p.email.trim().toLowerCase(),
+      );
+      const list = personActions({ request: p.request, leads: own, name: p.name });
+      if (list.length) map.set(p.key, list);
+    }
+    return map;
+  }, [people, activeLeads]);
 
   const set = (patch: Partial<Filters>) => setFilters({ ...filters, ...patch });
 
@@ -333,9 +352,19 @@ export function AdminPeople({
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {people.map((p) => (
-                <tr key={p.key}>
-                  <td className="py-2.5 pr-4">
+              {people.map((p) => {
+                const acts = actionsByKey.get(p.key) ?? [];
+                const forLoqal = acts.filter((a) => a.owner === "loqal");
+                return (
+                <tr
+                  key={p.key}
+                  className={
+                    forLoqal.length
+                      ? "bg-gold-tint/40 [&>td:first-child]:border-l-2 [&>td:first-child]:border-gold"
+                      : ""
+                  }
+                >
+                  <td className="py-2.5 pr-4 pl-2">
                     <div className="font-semibold text-foreground">{p.name}</div>
                     <div className="text-[11px] font-semibold text-muted-foreground">
                       {loqalNumber(p.email)}
@@ -362,7 +391,22 @@ export function AdminPeople({
                     {p.lastSeen ? formatDateTime(p.lastSeen) : "—"}
                   </td>
                   <td className="py-2.5">
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
+                      {acts.length ? (
+                        <button
+                          type="button"
+                          onClick={() => setActionsFor(p)}
+                          className={`rounded-md px-3 py-1.5 text-xs font-semibold ${
+                            forLoqal.length
+                              ? "bg-gold text-background hover:opacity-90"
+                              : "border border-gold/50 text-gold hover:bg-gold-tint"
+                          }`}
+                        >
+                          {forLoqal.length
+                            ? `${forLoqal.length} action${forLoqal.length === 1 ? "" : "s"} for Loqal`
+                            : `Awaiting ${acts.length} item${acts.length === 1 ? "" : "s"}`}
+                        </button>
+                      ) : null}
                       <button
                         type="button"
                         onClick={() => setOpen(p)}
@@ -382,7 +426,8 @@ export function AdminPeople({
                     </div>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -390,6 +435,15 @@ export function AdminPeople({
 
       {open ? (
         <PersonDetail person={open} onClose={() => setOpen(null)} onMessage={onMessage} />
+      ) : null}
+      {actionsFor ? (
+        <PersonActionsDialog
+          person={actionsFor}
+          open={Boolean(actionsFor)}
+          onOpenChange={(v) => {
+            if (!v) setActionsFor(null);
+          }}
+        />
       ) : null}
         </>
       )}
