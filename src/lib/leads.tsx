@@ -518,7 +518,7 @@ export function LeadsProvider({ children }: { children: ReactNode }) {
       addInfoRequest: (id, question, needsDocument, context) =>
         patchLead(id, (l) => ({
           ...l,
-          status: "info_required",
+          status: l.status === "qualified" ? "qualified" : "info_required",
           infoRequests: [
             ...l.infoRequests,
             {

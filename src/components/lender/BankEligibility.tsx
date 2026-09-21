@@ -198,6 +198,7 @@ export function BankEligibilitySection({ lead }: { lead: MortgageLead }) {
       : evidence
         ? `To continue checking your eligibility for ${match.program.bank} — ${match.program.program}, please provide the following evidence: ${recommendation}`
         : `To continue checking your eligibility for ${match.program.bank} — ${match.program.program}, please confirm the following: ${recommendation}`;
+    setOpen(false);
     setRequestDraft({ match, recommendation, type, wording: intro, needsDocument: visa || evidence });
   };
 
