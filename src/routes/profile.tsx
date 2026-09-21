@@ -356,6 +356,20 @@ function ProfilePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recoveredProfile?.submittedAt]);
 
+  /* The registration on file is the source of truth for the partner type — the
+     sign-in selector can be left on another type by mistake. Computed before
+     the early returns below so every hook runs on every render. */
+  const myRegistration = user
+    ? partnerRequests.find((r) => r.email.toLowerCase() === user.email.toLowerCase())
+    : undefined;
+  // A "video call booked" notification opens the call details pop-up directly.
+  const bookedCall = (myRegistration?.adminRequests ?? []).find(
+    (r) => r.kind === "call" && r.scheduledAt && (!focusParam || r.id === focusParam),
+  );
+  useEffect(() => {
+    if (openParam === "call-details" && bookedCall) setCallDetailsOpen(true);
+  }, [openParam, bookedCall?.id]);
+
   if (!ready) return null;
 
   if (!user) {
