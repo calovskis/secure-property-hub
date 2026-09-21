@@ -1,29 +1,20 @@
 import { useActiveLeads } from "@/lib/leads";
 import { useMemo, useState } from "react";
 import {
-  CLIENT_DECISION_LABEL,
   MORTGAGE_STAGE_LABEL,
   hasPricedOffer,
   leadState,
   mortgageStage,
-  totalMonthlyObligations,
-  useLeads,
   type MortgageFileStage,
-  type MortgageLead,
 } from "@/lib/leads";
-import { formatDate, formatDateTime } from "@/lib/dates";
-import { ApplicantFile, Row } from "@/components/lender/ApplicantFile";
+import { formatDate } from "@/lib/dates";
+import { MortgageFileDetail } from "@/components/lender/MortgageFileDetail";
 import { useLenderTeam } from "@/lib/lender-team";
-import { buyerAgentSummary, useBuyerProcess } from "@/lib/buyer-process";
-import { PaymentScheduleButton } from "@/components/mortgage/PaymentScheduleDialog";
-import { clientDisplayForPartner, loqalNumber } from "@/lib/user-id";
-import { updateEntityPlan } from "@/lib/entity-structure";
+import { clientDisplayForPartner } from "@/lib/user-id";
 import {
   PURCHASE_STAGE_LABEL,
-  PURCHASE_STAGE_NOTE,
   PURCHASE_STAGE_TONE,
   usePurchaseProgress,
-  type PurchaseProgress,
 } from "@/lib/purchase-stage";
 
 const money = (n: number) => `$${Math.round(n).toLocaleString()}`;
@@ -34,6 +25,7 @@ const STAGE_TONE: Record<MortgageFileStage, string> = {
   client_declined: "bg-destructive/10 text-destructive",
   in_underwriting: "bg-success/10 text-success",
 };
+
 
 /** Questions the client asked about the issued terms, with an answer box. */
 function ClientQuestions({ lead }: { lead: MortgageLead }) {
