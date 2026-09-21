@@ -37,14 +37,30 @@ export function PartnerCorrespondence({
   compact?: boolean;
 }) {
   const items = request.adminRequests ?? [];
+  const { updateRequest } = usePartnerRequests();
   const [detail, setDetail] = useState<PartnerAdminRequest | null>(null);
+
+  /** Opening an answered information request marks the answer as read. */
+  const open = (item: PartnerAdminRequest) => {
+    setDetail(item);
+    if (item.kind === "info" && item.answeredAt && !item.answerReadAt) {
+      updateRequest(request.id, {
+        adminRequests: items.map((r) =>
+          r.id === item.id
+            ? { ...r, answerReadAt: new Date().toISOString(), answerReadBy: "Loqal admin" }
+            : r,
+        ),
+      });
+    }
+  };
 
   useEffect(() => {
     if (!focusItem) return;
     const found = items.find((i) => i.id === focusItem);
-    if (found) setDetail(found);
+    if (found) open(found);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusItem, request.id]);
+
 
   if (!items.length) {
     return compact ? null : (
