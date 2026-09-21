@@ -195,6 +195,11 @@ export function LicenceCoverageTable({
   const [error, setError] = useState<string | null>(null);
   /** Save is two-step: Save shows a summary, Confirm persists it. */
   const [confirming, setConfirming] = useState(false);
+  /* A partner licensed in every state has 50+ rows, so the table is searchable
+     and filtered by status, and only the first rows are shown by default. */
+  const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | VerificationState>("all");
+  const [showAll, setShowAll] = useState(false);
   const history = request?.realtorVerification?.licenseHistory ?? [];
 
   function closeEdit() {
@@ -275,6 +280,30 @@ export function LicenceCoverageTable({
     toast("Licence removed", { description: `${l.state} is no longer part of your coverage.` });
   }
 
+  const counts = {
+    verified: licenses.filter((l) => verificationState(l) === "verified").length,
+    in_progress: licenses.filter((l) => verificationState(l) === "in_progress").length,
+    info_requested: licenses.filter((l) => verificationState(l) === "info_requested").length,
+    missing: licenses.filter((l) => verificationState(l) === "missing").length,
+  };
+  const filters: { id: "all" | VerificationState; label: string; count: number }[] = [
+    { id: "all", label: "All states", count: licenses.length },
+    { id: "missing", label: "Copy missing", count: counts.missing },
+    { id: "in_progress", label: "Awaiting Loqal", count: counts.in_progress },
+    { id: "info_requested", label: "Loqal needs more", count: counts.info_requested },
+    { id: "verified", label: "Verified", count: counts.verified },
+  ];
+  const needle = query.trim().toUpperCase();
+  const filtered = licenses.filter(
+    (l) =>
+      (statusFilter === "all" || verificationState(l) === statusFilter) &&
+      (!needle || l.state.includes(needle) || l.number.toUpperCase().includes(needle)),
+  );
+  const PAGE = 12;
+  const visible = showAll ? filtered : filtered.slice(0, PAGE);
+
+
+
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -317,6 +346,34 @@ export function LicenceCoverageTable({
           No licences declared yet — add the states you are licensed in.
         </p>
       ) : (
+        <>
+        {licenses.length > PAGE ? (
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Find a state or licence number"
+              className="w-56 rounded-md border border-border bg-background px-3 py-1.5 text-xs text-foreground"
+            />
+            {filters.map((f) => (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => {
+                  setStatusFilter(f.id);
+                  setShowAll(false);
+                }}
+                className={`rounded-full px-3 py-1 text-[11px] font-semibold ${
+                  statusFilter === f.id
+                    ? "bg-brand text-background"
+                    : "border border-border text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {f.label} ({f.count})
+              </button>
+            ))}
+          </div>
+        ) : null}
         <div className="mt-3 overflow-x-auto">
           <table className="w-full min-w-[520px] border-collapse text-sm">
             <thead>
@@ -339,7 +396,7 @@ export function LicenceCoverageTable({
               </tr>
             </thead>
             <tbody>
-              {licenses.map((l) =>
+              {visible.map((l) =>
                 edit !== null && editState === l.state ? (
                   <tr key={l.state} className="border-b border-border/60 last:border-b-0">
                     <td colSpan={5} className="py-3">
@@ -411,6 +468,29 @@ export function LicenceCoverageTable({
             </tbody>
           </table>
         </div>
+        {filtered.length === 0 ? (
+          <p className="mt-3 text-xs text-muted-foreground">
+            No state matches what you are looking for.
+          </p>
+        ) : null}
+        {filtered.length > visible.length ? (
+          <button
+            type="button"
+            onClick={() => setShowAll(true)}
+            className="mt-3 rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-brand hover:bg-brand-tint"
+          >
+            Show all {filtered.length} states
+          </button>
+        ) : showAll && filtered.length > PAGE ? (
+          <button
+            type="button"
+            onClick={() => setShowAll(false)}
+            className="mt-3 rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground"
+          >
+            Show fewer
+          </button>
+        ) : null}
+        </>
       )}
 
       {edit !== null && editState === null ? (

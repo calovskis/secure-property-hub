@@ -18,7 +18,7 @@ import {
 } from "@/components/profile/realtor-licences";
 import { LicenceUploadDialog } from "@/components/profile/LicenceUploadDialog";
 import { useUploadDrafts } from "@/lib/upload-drafts";
-import { isLicenceVerified } from "@/lib/licence-verification";
+import { isLicenceVerified, lenderLicenceSeed } from "@/lib/licence-verification";
 
 export function LenderLicences() {
   const { user } = useAuth();
@@ -42,14 +42,7 @@ function LenderLicencesInner({ user }: { user: LoqalUser }) {
    * number and validity given there (falling back to the general NMLS number
    * for older registrations that only had one).
    */
-  const seed: LicenceSeed[] = (registration?.states ?? []).map((state) => {
-    const declared = (registration?.lenderLicenses ?? []).find((l) => l.state === state);
-    return {
-      state,
-      number: declared?.number ?? registration?.lenderLicence ?? "",
-      validUntil: declared?.validUntil ?? "",
-    };
-  });
+  const seed: LicenceSeed[] = lenderLicenceSeed(registration);
 
   const { licenses, persist } = useRealtorLicences(user, seed);
 
