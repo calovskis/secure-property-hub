@@ -161,8 +161,12 @@ export function LicenceRenewalDialog({
                   type="file"
                   className="hidden"
                   onChange={(e) => {
-                    const name = e.target.files?.[0]?.name;
-                    if (name) setDoc(name);
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setDoc(file.name);
+                      if (ownerEmail && license)
+                        void storeLicenceFile(ownerEmail, license.state, file);
+                    }
                     e.target.value = "";
                   }}
                 />
