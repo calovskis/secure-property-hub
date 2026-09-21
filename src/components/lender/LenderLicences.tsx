@@ -114,8 +114,14 @@ function LenderLicencesInner({ user }: { user: LoqalUser }) {
       </p>
       {notCleared.length ? (
         <p className="mt-3 rounded-md border border-gold/40 bg-gold-tint/50 px-3 py-2 text-[11px] font-semibold text-gold">
-          Not cleared by Loqal yet: {notCleared.map((l) => l.state).join(", ")}. No cases are
-          assigned to you in those states until the licence is verified.
+          {notCleared.length} state(s) not cleared by Loqal yet
+          {notCleared.length <= 8
+            ? `: ${notCleared.map((l) => l.state).join(", ")}`
+            : ` — including ${notCleared
+                .slice(0, 8)
+                .map((l) => l.state)
+                .join(", ")} (use the status filters below to see them all)`}
+          . No cases are assigned to you in those states until the licence is verified.
         </p>
       ) : null}
       {asked.length ? (
