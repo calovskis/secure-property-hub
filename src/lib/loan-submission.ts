@@ -73,6 +73,14 @@ function subscribe(cb: () => void) {
   return () => listeners.delete(cb);
 }
 
+/** Drops keys explicitly set to undefined so they never overwrite a value. */
+function clean(patch: LoanSubmissionPatch): LoanSubmissionPatch {
+  return Object.fromEntries(
+    Object.entries(patch).filter(([, v]) => v !== undefined),
+  ) as LoanSubmissionPatch;
+}
+
+
 export function useLoanSubmission(leadId: string) {
   const snapshot = useSyncExternalStore(subscribe, () => load(), () => EMPTY);
   const submission = useMemo(
