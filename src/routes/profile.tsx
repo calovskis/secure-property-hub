@@ -696,12 +696,20 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
      partner has nothing left to do, so the pre-saved upload disappears. */
   const lenderCopiesComplete = licenses.length > 0 && licenses.every((l) => l.doc);
   const awaitingVerification = licenses.filter((l) => l.doc && !isLicenceVerified(l));
+  /* A licence-copy upload is done as soon as every state on file has a copy —
+     whatever partner type the draft was started under. */
+  const licenceCopiesDone = licenses.length > 0 && !missingLicences.length;
+
+  /** Where a licence-copy upload is continued for this partner type. */
+  const openLicenceUpload = () => {
+    if (lender) window.location.assign("/partner?tab=licences");
+    else setLicDialog(true);
+  };
 
   const satisfiedDrafts = drafts
     .filter((d) => {
       if (d.id === "realtor-identity") return identityDone;
-      if (d.id === "realtor-licences") return realtor && !missingLicences.length;
-      if (d.id === "lender-licences") return lenderCopiesComplete;
+      if (d.id === "realtor-licences" || d.id === "lender-licences") return licenceCopiesDone;
       if (d.id.startsWith("licence-renewal-")) {
         const state = d.id.slice("licence-renewal-".length);
         return !expiringLicences.some((l) => l.state === state);
@@ -709,6 +717,7 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
       return false;
     })
     .map((d) => d.id);
+
 
   const satisfiedKey = satisfiedDrafts.join(",");
   useEffect(() => {
@@ -740,33 +749,30 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
   }
 
   if (missingLicences.length)
-    items.push(
-      lender
-        ? {
-            id: "lender-licences",
-            title: "State licence copies",
-            detail: `${missingLicences.length} of ${licenses.length} state(s) still need a copy — attach them on your Licences page.`,
-            open: () => window.location.assign("/partner?tab=licences"),
-          }
-        : {
-            id: "realtor-licences",
-            title: "State licence copies",
-            detail: `${missingLicences.length} of ${licenses.length} state(s) still need a copy.`,
-            open: () => setLicDialog(true),
-          },
-    );
+    items.push({
+      id: lender ? "lender-licences" : "realtor-licences",
+      title: "State licence copies",
+      detail: lender
+        ? `${missingLicences.length} of ${licenses.length} state(s) still need a copy — attach them on your Licences page.`
+        : `${missingLicences.length} of ${licenses.length} state(s) still need a copy.`,
+      open: openLicenceUpload,
+    });
 
 
   /* Half-finished uploads that are not already listed above as a request of
      their own — they are the only thing left to do, so they count too. */
   const extraDrafts = liveDrafts.filter((d) => !items.some((i) => i.id === d.id));
+  const licenceDraftIds = ["realtor-licences", "lender-licences"];
   for (const d of extraDrafts)
     items.push({
       id: d.id,
       title: d.label,
       detail: "Pre-saved upload — not submitted yet.",
-      open: () => requestOpenUpload(d.id),
+      open: licenceDraftIds.includes(d.id)
+        ? openLicenceUpload
+        : () => requestOpenUpload(d.id),
     });
+
 
   // Written information requests are rendered by <InfoRequestsList /> below,
   // so the empty state must account for them too.
