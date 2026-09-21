@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { formatDate } from "@/lib/dates";
 import type { RealtorLicenseDoc } from "@/lib/partner-requests";
+import { storeLicenceFile } from "@/lib/licence-files";
 import {
   clearUploadDraft,
   getUploadDraft,
