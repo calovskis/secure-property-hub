@@ -30,6 +30,7 @@ import { Route as SsnTermsRouteImport } from './routes/ssn-terms'
 import { Route as AdminPeoplePersonIdRouteImport } from './routes/admin-people.$personId'
 import { Route as ApplicationLeadIdRouteImport } from './routes/application.$leadId'
 import { Route as PropertyPropertyIdRouteImport } from './routes/property.$propertyId'
+import { Route as LenderCaseLeadIdRouteImport } from './routes/lender.case.$leadId'
 import { Route as LenderFileLeadIdRouteImport } from './routes/lender.file.$leadId'
 import { Route as OauthGoogleReturnRouteImport } from './routes/oauth.google.return'
 
@@ -138,6 +139,11 @@ const PropertyPropertyIdRoute = PropertyPropertyIdRouteImport.update({
   path: '/property/$propertyId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LenderCaseLeadIdRoute = LenderCaseLeadIdRouteImport.update({
+  id: '/lender/case/$leadId',
+  path: '/lender/case/$leadId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LenderFileLeadIdRoute = LenderFileLeadIdRouteImport.update({
   id: '/lender/file/$leadId',
   path: '/lender/file/$leadId',
@@ -171,6 +177,7 @@ export interface FileRoutesByFullPath {
   '/admin-people/$personId': typeof AdminPeoplePersonIdRoute
   '/application/$leadId': typeof ApplicationLeadIdRoute
   '/property/$propertyId': typeof PropertyPropertyIdRoute
+  '/lender/case/$leadId': typeof LenderCaseLeadIdRoute
   '/lender/file/$leadId': typeof LenderFileLeadIdRoute
   '/oauth/google/return': typeof OauthGoogleReturnRoute
 }
@@ -196,6 +203,7 @@ export interface FileRoutesByTo {
   '/admin-people/$personId': typeof AdminPeoplePersonIdRoute
   '/application/$leadId': typeof ApplicationLeadIdRoute
   '/property/$propertyId': typeof PropertyPropertyIdRoute
+  '/lender/case/$leadId': typeof LenderCaseLeadIdRoute
   '/lender/file/$leadId': typeof LenderFileLeadIdRoute
   '/oauth/google/return': typeof OauthGoogleReturnRoute
 }
@@ -222,6 +230,7 @@ export interface FileRoutesById {
   '/admin-people/$personId': typeof AdminPeoplePersonIdRoute
   '/application/$leadId': typeof ApplicationLeadIdRoute
   '/property/$propertyId': typeof PropertyPropertyIdRoute
+  '/lender/case/$leadId': typeof LenderCaseLeadIdRoute
   '/lender/file/$leadId': typeof LenderFileLeadIdRoute
   '/oauth/google/return': typeof OauthGoogleReturnRoute
 }
@@ -249,6 +258,7 @@ export interface FileRouteTypes {
     | '/admin-people/$personId'
     | '/application/$leadId'
     | '/property/$propertyId'
+    | '/lender/case/$leadId'
     | '/lender/file/$leadId'
     | '/oauth/google/return'
   fileRoutesByTo: FileRoutesByTo
@@ -274,6 +284,7 @@ export interface FileRouteTypes {
     | '/admin-people/$personId'
     | '/application/$leadId'
     | '/property/$propertyId'
+    | '/lender/case/$leadId'
     | '/lender/file/$leadId'
     | '/oauth/google/return'
   id:
@@ -299,6 +310,7 @@ export interface FileRouteTypes {
     | '/admin-people/$personId'
     | '/application/$leadId'
     | '/property/$propertyId'
+    | '/lender/case/$leadId'
     | '/lender/file/$leadId'
     | '/oauth/google/return'
   fileRoutesById: FileRoutesById
@@ -325,6 +337,7 @@ export interface RootRouteChildren {
   AdminPeoplePersonIdRoute: typeof AdminPeoplePersonIdRoute
   ApplicationLeadIdRoute: typeof ApplicationLeadIdRoute
   PropertyPropertyIdRoute: typeof PropertyPropertyIdRoute
+  LenderCaseLeadIdRoute: typeof LenderCaseLeadIdRoute
   LenderFileLeadIdRoute: typeof LenderFileLeadIdRoute
   OauthGoogleReturnRoute: typeof OauthGoogleReturnRoute
 }
@@ -478,6 +491,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PropertyPropertyIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/lender/case/$leadId': {
+      id: '/lender/case/$leadId'
+      path: '/lender/case/$leadId'
+      fullPath: '/lender/case/$leadId'
+      preLoaderRoute: typeof LenderCaseLeadIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/lender/file/$leadId': {
       id: '/lender/file/$leadId'
       path: '/lender/file/$leadId'
@@ -517,6 +537,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminPeoplePersonIdRoute: AdminPeoplePersonIdRoute,
   ApplicationLeadIdRoute: ApplicationLeadIdRoute,
   PropertyPropertyIdRoute: PropertyPropertyIdRoute,
+  LenderCaseLeadIdRoute: LenderCaseLeadIdRoute,
   LenderFileLeadIdRoute: LenderFileLeadIdRoute,
   OauthGoogleReturnRoute: OauthGoogleReturnRoute,
 }
