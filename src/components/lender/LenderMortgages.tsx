@@ -1,5 +1,5 @@
 import { useActiveLeads } from "@/lib/leads";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   MORTGAGE_STAGE_LABEL,
   hasPricedOffer,
@@ -63,7 +63,7 @@ export function LenderMortgages({
     hardCheckOpen: files.filter((l) => progressOf(l.id).hardCheckOpen).length,
   };
 
-  useMemo(() => {
+  useEffect(() => {
     if (!focusLeadId || !files.some((lead) => lead.id === focusLeadId)) return;
     setState("all");
     setStage("all");
