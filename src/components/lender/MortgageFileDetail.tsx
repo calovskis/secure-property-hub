@@ -11,7 +11,8 @@
  *  6. Transfer to the bank — after closing the file waits here until it is
  *     handed over to the chosen bank.
  */
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
+import { Building2, FileCheck2, FileText, Landmark, MessageSquareText, Send, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import {
   CLIENT_DECISION_LABEL,
@@ -37,6 +38,8 @@ import {
   type PurchaseProgress,
 } from "@/lib/purchase-stage";
 import { useAuth } from "@/lib/auth";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const money = (n: number) => `$${Math.round(n).toLocaleString()}`;
 const inputClass =
@@ -499,19 +502,131 @@ function TransferBlock({ lead, progress }: { lead: MortgageLead; progress: Purch
   );
 }
 
+type CaseTab = "overview" | "preapproval" | "eligibility" | "submission" | "requests" | "transfer";
+
+const CASE_TABS: Array<{ id: CaseTab; label: string; icon: typeof FileText }> = [
+  { id: "overview", label: "Overview", icon: UserRound },
+  { id: "preapproval", label: "Pre-approval", icon: FileText },
+  { id: "eligibility", label: "Bank eligibility", icon: Landmark },
+  { id: "submission", label: "Loan submission", icon: FileCheck2 },
+  { id: "requests", label: "Requests", icon: MessageSquareText },
+  { id: "transfer", label: "Bank transfer", icon: Send },
+];
+
+function SummaryTile({ label, value, note }: { label: string; value: string; note?: string }) {
+  return (
+    <div className="min-w-0 border-r border-border px-3 py-3 last:border-r-0 sm:px-4">
+      <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div className="mt-1 truncate text-base font-bold text-brand">{value}</div>
+      {note ? <div className="mt-0.5 truncate text-[11px] text-muted-foreground">{note}</div> : null}
+    </div>
+  );
+}
+
+function WorkspacePanel({ children }: { children: ReactNode }) {
+  return <div className="case-workspace-panel">{children}</div>;
+}
+
 export function MortgageFileDetail({ lead }: { lead: MortgageLead }) {
   const { progressOf } = usePurchaseProgress();
   const progress = progressOf(lead.id);
+  const [tab, setTab] = useState<CaseTab>("overview");
+  const terms = lead.terms!;
+  const price = progress.agreedPrice ?? lead.propertyPrice;
+  const loan = price * (1 - terms.downPaymentPct / 100);
+  const requests = lead.infoRequests ?? [];
+  const openRequests = requests.filter((request) => !request.answeredAt).length;
+  const purchaseLabel = PURCHASE_STAGE_LABEL[progress.stage];
 
   return (
-    <div className="space-y-6 border-t border-border bg-background/50 p-6">
-      <PreApprovalBlock lead={lead} />
-      <ClientFileTransfer lead={lead} />
-      <StatusBlock lead={lead} progress={progress} />
-      <BankEligibilitySection lead={lead} />
-      <LoanSubmissionBlock lead={lead} progress={progress} />
-      <RequestsBlock lead={lead} />
-      <TransferBlock lead={lead} progress={progress} />
+    <div className="border-t border-border bg-background/60 p-3 sm:p-5">
+      <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+        <div className="bg-brand px-4 py-4 text-primary-foreground sm:px-5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="text-[10px] font-bold uppercase tracking-wide text-gold">
+                {loqalNumber(lead.clientEmail)} · Mortgage case
+              </div>
+              <div className="mt-1 truncate text-lg font-bold sm:text-xl">{lead.clientName}</div>
+              <div className="mt-0.5 text-xs text-primary-foreground/75">
+                {lead.propertyLabel} · {purchaseLabel}
+              </div>
+            </div>
+            <span className="rounded-full border border-primary-foreground/20 bg-primary-foreground/10 px-3 py-1 text-[11px] font-semibold">
+              {MORTGAGE_STAGE_LABEL[mortgageStage(lead)]}
+            </span>
+          </div>
+          <div className="mt-4 flex items-center gap-3">
+            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-primary-foreground/20">
+              <div
+                className={cn("h-full rounded-full bg-gold", progress.stage === "agreement_signed" ? "w-full" : progress.stage === "with_seller" ? "w-2/3" : "w-1/3")}
+              />
+            </div>
+            <span className="text-[11px] font-semibold text-gold">{purchaseLabel}</span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 border-b border-border bg-card sm:grid-cols-4">
+          <SummaryTile label="Loan amount" value={money(loan)} note={`${terms.downPaymentPct}% down`} />
+          <SummaryTile label="Rate & term" value={`${terms.ratePct}% · ${terms.termYears}y`} note="Current terms" />
+          <SummaryTile label="Purchase price" value={money(price)} note={progress.agreedPrice ? "Agreed" : "Requested"} />
+          <SummaryTile label="Open requests" value={String(openRequests)} note={openRequests ? "Awaiting client" : "File is current"} />
+        </div>
+
+        <nav className="flex gap-1 overflow-x-auto border-b border-border bg-muted/35 px-2 py-2" aria-label="Mortgage case sections">
+          {CASE_TABS.map(({ id, label, icon: Icon }) => (
+            <Button
+              key={id}
+              type="button"
+              size="sm"
+              variant={tab === id ? "default" : "ghost"}
+              onClick={() => setTab(id)}
+              className={cn("shrink-0 gap-1.5", tab === id && "shadow-sm")}
+            >
+              <Icon className="h-3.5 w-3.5" />
+              {label}
+              {id === "requests" && openRequests ? (
+                <span className="ml-0.5 rounded-full bg-gold px-1.5 py-0.5 text-[9px] font-bold text-foreground">{openRequests}</span>
+              ) : null}
+            </Button>
+          ))}
+        </nav>
+
+        <div className="bg-background/45 p-3 sm:p-4">
+          {tab === "overview" ? (
+            <div className="grid gap-4 xl:grid-cols-[1.05fr_.95fr]">
+              <WorkspacePanel><StatusBlock lead={lead} progress={progress} /></WorkspacePanel>
+              <WorkspacePanel><BankEligibilitySection lead={lead} /></WorkspacePanel>
+              {progress.stage === "agreement_signed" ? (
+                <WorkspacePanel><LoanSubmissionBlock lead={lead} progress={progress} /></WorkspacePanel>
+              ) : null}
+              <WorkspacePanel><RequestsBlock lead={lead} /></WorkspacePanel>
+            </div>
+          ) : null}
+          {tab === "preapproval" ? (
+            <div className="space-y-4">
+              <WorkspacePanel><PreApprovalBlock lead={lead} /></WorkspacePanel>
+              <WorkspacePanel><ClientFileTransfer lead={lead} /></WorkspacePanel>
+            </div>
+          ) : null}
+          {tab === "eligibility" ? <WorkspacePanel><BankEligibilitySection lead={lead} /></WorkspacePanel> : null}
+          {tab === "submission" ? <WorkspacePanel><LoanSubmissionBlock lead={lead} progress={progress} /></WorkspacePanel> : null}
+          {tab === "requests" ? <WorkspacePanel><RequestsBlock lead={lead} /></WorkspacePanel> : null}
+          {tab === "transfer" ? (
+            <WorkspacePanel>
+              {progress.stage === "agreement_signed" ? (
+                <TransferBlock lead={lead} progress={progress} />
+              ) : (
+                <div className="rounded-lg border border-border bg-card p-6 text-center">
+                  <Building2 className="mx-auto h-6 w-6 text-muted-foreground" />
+                  <div className="mt-2 text-sm font-semibold text-foreground">Bank transfer is not open yet</div>
+                  <div className="mt-1 text-xs text-muted-foreground">This section opens after the purchase agreement is signed and the loan submission is confirmed.</div>
+                </div>
+              )}
+            </WorkspacePanel>
+          ) : null}
+        </div>
+      </div>
     </div>
   );
 }
