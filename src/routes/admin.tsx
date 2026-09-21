@@ -16,6 +16,7 @@ import {
   PartnerMetrics,
 } from "@/components/admin/AdminSections";
 import { TaskTracker } from "@/components/tasks/TaskTracker";
+import { AdminActivityCard } from "@/components/admin/AdminActivityCard";
 import { TeamAvailabilityCard } from "@/components/admin/TeamAvailabilityCard";
 import { AdminCases } from "@/components/admin/AdminCases";
 import { AdminAccounting } from "@/components/admin/AdminAccounting";
