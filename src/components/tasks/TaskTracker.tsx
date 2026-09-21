@@ -370,7 +370,18 @@ export function TaskTracker({ className = "" }: { className?: string }) {
         "entitysetup-",
         "deletion-",
       ];
-      for (const n of adminItems.filter(isStillOpen))
+      for (const n of adminItems.filter(isStillOpen)) {
+        /* A stored notification can outlive the user it concerns — once the
+           user is deleted, any task about them stops being actionable. Match
+           by lead id or request id embedded in the id/href. */
+        const lead = leads.find(
+          (l) => n.id.includes(l.id) || (n.href?.includes(l.id) ?? false),
+        );
+        if (lead && gone.has(lead.clientEmail.trim().toLowerCase())) continue;
+        const request = requests.find(
+          (r) => n.id.includes(r.id) || (n.href?.includes(r.id) ?? false),
+        );
+        if (request && gone.has(request.email.trim().toLowerCase())) continue;
         /* Licence, registration, countersignature and KYB work is derived from
            the live records above, so stored copies must not double-count. */
         if (
@@ -380,6 +391,7 @@ export function TaskTracker({ className = "" }: { className?: string }) {
           )
         )
           push(n, adminGroupOf(n.id));
+      }
     } else {
       for (const n of notifications.filter(isStillOpen)) push(n, groupOf(n.id));
       for (const n of adminItems.filter(isStillOpen)) push(n, adminGroupOf(n.id));
