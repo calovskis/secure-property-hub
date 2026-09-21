@@ -35,8 +35,11 @@ import { isValidPhone } from "@/lib/phone";
 import { DeleteAccountControls } from "@/components/admin/DeleteAccountControls";
 import { useMyPermissions } from "@/lib/staff";
 import { fullName, useAuth } from "@/lib/auth";
-import { LicenceVerificationDialog } from "@/components/admin/LicenceVerificationPanel";
-import { pendingVerifications } from "@/lib/licence-verification";
+import {
+  LicenceVerificationDialog,
+  LicenceVerificationPanel,
+} from "@/components/admin/LicenceVerificationPanel";
+import { licenceRows, isLicenceVerified, pendingVerifications } from "@/lib/licence-verification";
 import { PartnerCountersignDialog } from "@/components/admin/PartnerCountersignDialog";
 import { notify } from "@/lib/notifications";
 import { ActiveActionsList } from "@/components/admin/PersonActions";
@@ -44,6 +47,7 @@ import { ActiveActionsList } from "@/components/admin/PersonActions";
 type Tab =
   | "actions"
   | "profile"
+  | "licences"
   | "documents"
   | "correspondence"
   | "partners"
@@ -51,9 +55,10 @@ type Tab =
   | "activity"
   | "metrics";
 
-const TABS: [Tab, string, string][] = [
+const ALL_TABS: [Tab, string, string][] = [
   ["actions", "⚡", "Active actions"],
   ["profile", "👤", "Profile & registration"],
+  ["licences", "🎫", "Licences"],
   ["documents", "📎", "Uploaded documents"],
   ["correspondence", "✉️", "Requests & correspondence"],
   ["partners", "🤝", "Partners & clients"],
@@ -61,6 +66,14 @@ const TABS: [Tab, string, string][] = [
   ["activity", "🕘", "Activity history"],
   ["metrics", "📊", "Engagement metrics"],
 ];
+
+/** The Licences tab only exists for partners who hold state licences. */
+function tabsFor(person: AdminPerson) {
+  const type = person.request?.partnerType;
+  const licensed = type === "lender" || type === "realtor";
+  return ALL_TABS.filter(([id]) => id !== "licences" || licensed);
+}
+
 
 
 export function PersonDetail({
@@ -169,7 +182,7 @@ export function PersonDetailContent({
           </div>
         </div>
         <nav className="mt-3 flex gap-1 overflow-x-auto">
-          {TABS.map(([id, icon, label]) => (
+          {tabsFor(person).map(([id, icon, label]) => (
             <button
               key={id}
               type="button"
@@ -205,6 +218,7 @@ export function PersonDetailContent({
             />
           </>
         ) : null}
+        {tab === "licences" ? <LicencesTab person={person} /> : null}
         {tab === "documents" ? <DocumentsTab person={person} /> : null}
         {tab === "correspondence" ? (
           person.request ? (
@@ -418,33 +432,12 @@ function ProfileTab({ person }: { person: AdminPerson }) {
             />
           </dl>
           {req.partnerType === "lender" || req.partnerType === "realtor" ? (
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-border p-3">
-              <div>
-                <p className="text-sm font-semibold text-foreground">State licence verification</p>
-                <p className="text-xs text-muted-foreground">
-                  {licencesToVerify.length
-                    ? `${licencesToVerify.length} state${licencesToVerify.length === 1 ? "" : "s"} awaiting verification: ${licencesToVerify.map((l) => l.state).join(", ")}`
-                    : "All submitted licences are verified."}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setLicenceDialogOpen(true)}
-                className={`rounded-md px-3 py-1.5 text-xs font-semibold ${
-                  licencesToVerify.length
-                    ? "bg-brand text-background hover:bg-brand-soft"
-                    : "border border-border text-muted-foreground hover:bg-brand-tint"
-                }`}
-              >
-                Open verification
-              </button>
-              <LicenceVerificationDialog
-                request={req}
-                open={licenceDialogOpen}
-                onOpenChange={setLicenceDialogOpen}
-              />
-            </div>
+            <p className="mt-4 rounded-md border border-border p-3 text-xs text-muted-foreground">
+              State licences, copies and verification are in the{" "}
+              <span className="font-semibold text-foreground">Licences</span> tab.
+            </p>
           ) : null}
+
           {req.agreementSignedAt && !req.agreementCountersignedAt ? (
             <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-md border border-success/40 bg-success/5 p-3">
               <p className="text-xs text-muted-foreground">
@@ -705,6 +698,99 @@ function AccessCard({ person }: { person: AdminPerson }) {
 /* ------------------------------------------------------------------ */
 /* Documents                                                           */
 /* ------------------------------------------------------------------ */
+
+/* ------------------------------------------------------------------ */
+/* Licences (mortgage lenders and realtors)                            */
+/* ------------------------------------------------------------------ */
+
+const LICENCE_ACTION_LABEL: Record<string, string> = {
+  added: "Licence added",
+  updated: "Licence updated",
+  removed: "Licence removed",
+  copy_uploaded: "Copy uploaded",
+  verified: "Verified by Loqal",
+  info_requested: "Information requested",
+};
+
+function LicencesTab({ person }: { person: AdminPerson }) {
+  const req = person.request;
+  if (!req) {
+    return <p className="text-sm text-muted-foreground">No registration on file for this person.</p>;
+  }
+  const rows = licenceRows(req);
+  const pending = pendingVerifications(req);
+  const verified = rows.filter((l) => isLicenceVerified(l));
+  const history = req.realtorVerification?.licenseHistory ?? [];
+
+  return (
+    <div className="space-y-6">
+      <div className="grid gap-3 sm:grid-cols-4">
+        <Metric label="States on file" value={String(rows.length)} />
+        <Metric label="Verified" value={String(verified.length)} />
+        <Metric label="Awaiting verification" value={String(pending.length)} />
+        <Metric
+          label={req.partnerType === "lender" ? "General NMLS" : "Coverage"}
+          value={
+            req.partnerType === "lender"
+              ? req.lenderLicence || "—"
+              : req.allStates
+                ? "All states"
+                : req.states.join(", ") || "—"
+          }
+        />
+      </div>
+
+      {pending.length ? (
+        <div className="rounded-lg border border-gold/50 bg-gold-tint/50 p-4 text-xs text-muted-foreground">
+          <p className="text-sm font-semibold text-gold">
+            {pending.length} state{pending.length === 1 ? "" : "s"} awaiting your verification
+          </p>
+          <p className="mt-1">
+            {pending.map((l) => l.state).join(", ")} — until you verify them, no cases are assigned
+            in those states.
+          </p>
+        </div>
+      ) : null}
+
+      <section>
+        <h3 className="text-sm font-bold text-foreground">Licences on file</h3>
+        <p className="mt-0.5 mb-3 text-xs text-muted-foreground">
+          Every state with its licence number, validity and uploaded copy. Download a copy to check
+          it, then verify the state or ask the partner for more information.
+        </p>
+        <LicenceVerificationPanel request={req} />
+      </section>
+
+      <section>
+        <h3 className="text-sm font-bold text-foreground">Licence history</h3>
+        {history.length ? (
+          <ul className="mt-2 space-y-2">
+            {[...history]
+              .sort((a, b) => b.at.localeCompare(a.at))
+              .map((e) => (
+                <li key={e.id} className="rounded-md border border-border p-3 text-xs">
+                  <p className="font-semibold text-foreground">
+                    {e.state} · {LICENCE_ACTION_LABEL[e.action] ?? e.action}
+                  </p>
+                  <p className="mt-0.5 text-muted-foreground">
+                    {formatDateTime(e.at)} · {e.by}
+                  </p>
+                  {e.before || e.after ? (
+                    <p className="mt-1 text-muted-foreground">
+                      {e.before ? `${e.before} → ` : ""}
+                      {e.after ?? ""}
+                    </p>
+                  ) : null}
+                </li>
+              ))}
+          </ul>
+        ) : (
+          <p className="mt-2 text-xs text-muted-foreground">No licence changes recorded yet.</p>
+        )}
+      </section>
+    </div>
+  );
+}
 
 function DocumentsTab({ person }: { person: AdminPerson }) {
   const req = person.request;
