@@ -967,6 +967,7 @@ function OpenRequests({ user, isRealtor }: { user: LoqalUser; isRealtor: boolean
             onSubmit={(next) => {
               if (renewState) renewLicence(renewState, next);
             }}
+            ownerEmail={user.email}
           />
 
         </>
