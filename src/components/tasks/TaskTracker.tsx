@@ -203,9 +203,13 @@ export function TaskTracker({ className = "" }: { className?: string }) {
    * countersign, KYB questionnaires to review and every state licence a partner
    * submitted that nobody verified yet.
    */
+  const gone = useMemo(
+    () => new Set(deleted.map((d) => d.email.trim().toLowerCase())),
+    [deleted],
+  );
+
   const staffTasks = useMemo<Task[]>(() => {
     if (!isAdmin) return [];
-    const gone = new Set(deleted.map((d) => d.email.trim().toLowerCase()));
     const list: Task[] = [];
     const add = (
       id: string,
