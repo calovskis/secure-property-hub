@@ -488,14 +488,6 @@ export function matchProgram(program: BankProgram, snap: ApplicantSnapshot): Pro
       .map((o) => OCCUPANCY_LABEL[o].toLowerCase())
       .join(", ")}`,
   );
-  if (tooSmall) {
-    recommendations.push(`Increase the requested loan to at least ${money(program.minLoan ?? 0)}, or use a programme with a lower minimum.`);
-  } else if (tooBig) {
-    recommendations.push(`Reduce the loan to ${money(program.maxLoan)} or less by increasing the down payment by at least ${money(snap.loanAmount - program.maxLoan)}.`);
-  } else if (belowBaseline) {
-    recommendations.push(`This high-balance programme starts above ${money(program.minLoanAbove ?? 0)}; use the standard conventional programme at the current loan size.`);
-  }
-
   const maxLtv = ltvForLoan(program, snap.loanAmount);
   const tooSmall = program.minLoan ? snap.loanAmount < program.minLoan : false;
   const tooBig = snap.loanAmount > program.maxLoan;
@@ -507,6 +499,13 @@ export function matchProgram(program: BankProgram, snap: ApplicantSnapshot): Pro
       program.minLoanAbove ? ` (only above ${money(program.minLoanAbove)})` : ""
     }`,
   );
+  if (tooSmall) {
+    recommendations.push(`Increase the requested loan to at least ${money(program.minLoan ?? 0)}, or use a programme with a lower minimum.`);
+  } else if (tooBig) {
+    recommendations.push(`Reduce the loan to ${money(program.maxLoan)} or less by increasing the down payment by at least ${money(snap.loanAmount - program.maxLoan)}.`);
+  } else if (belowBaseline) {
+    recommendations.push(`This high-balance programme starts above ${money(program.minLoanAbove ?? 0)}; use the standard conventional programme at the current loan size.`);
+  }
   if (snap.ltv > maxLtv) {
     const requiredDown = Math.ceil(snap.propertyPrice * (1 - maxLtv / 100));
     recommendations.push(`Increase the down payment to at least ${money(requiredDown)} (${100 - maxLtv}%) to meet the ${maxLtv}% maximum LTV.`);
@@ -663,18 +662,29 @@ export function matchProgram(program: BankProgram, snap: ApplicantSnapshot): Pro
   }
 
   if (program.creditEventMonths) {
+    const declarationsComplete = Boolean(snap.hasCreditEvent || snap.creditEventMonthsAgo !== undefined);
     const knownTooRecent =
       snap.hasCreditEvent &&
       snap.creditEventMonthsAgo !== undefined &&
       snap.creditEventMonthsAgo < program.creditEventMonths;
+    const seasoned =
+      snap.hasCreditEvent &&
+      snap.creditEventMonthsAgo !== undefined &&
+      snap.creditEventMonthsAgo >= program.creditEventMonths;
     add(
       "Credit events",
-      knownTooRecent ? "fail" : "review",
+      knownTooRecent ? "fail" : seasoned || !snap.hasCreditEvent ? "pass" : "review",
       knownTooRecent
         ? `${snap.creditEventMonthsAgo} months since the disclosed bankruptcy discharge · ${program.creditEventMonths} months required`
-        : `At least ${program.creditEventMonths} months out of any bankruptcy, foreclosure or short sale`,
+        : seasoned
+          ? `${snap.creditEventMonthsAgo} months since the disclosed bankruptcy discharge · seasoning requirement met`
+          : !snap.hasCreditEvent
+            ? "No bankruptcy, foreclosure, short sale or deed in lieu declared"
+            : `At least ${program.creditEventMonths} months out of the disclosed credit event — exact completion date needs verification`,
     );
-    if (!knownTooRecent) recommendations.push(`Verify credit-event dates and provide discharge or completion documents showing at least ${program.creditEventMonths} months of seasoning.`);
+    if (snap.hasCreditEvent && !knownTooRecent && !seasoned) {
+      recommendations.push(`Add discharge or completion documents showing at least ${program.creditEventMonths} months of seasoning.`);
+    }
   }
 
   const sanctionedFailure = checks.find((c) => c.label === "Sanctions screening" && c.result === "fail");
