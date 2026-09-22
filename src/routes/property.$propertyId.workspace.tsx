@@ -25,7 +25,7 @@ import { useAuth } from "@/lib/auth";
 import { useBuyerProcess } from "@/lib/buyer-process";
 import { openDeepLink } from "@/lib/deep-link";
 import { useEntityPlan } from "@/lib/entity-structure";
-import { hasPricedOffer, LEAD_STATUS_LABEL, useLeads } from "@/lib/leads";
+import { hasPricedOffer, useLeads } from "@/lib/leads";
 import { assignedPartner } from "@/lib/partner-assignments";
 import { usePartnerRequests } from "@/lib/partner-requests";
 import { useClientPropertyActivity } from "@/lib/property-activity";
