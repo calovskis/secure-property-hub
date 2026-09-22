@@ -297,7 +297,7 @@ function PropertyDetailPage() {
                 Request Mortgage Info
               </button>
             )}
-    </div>
+          </div>
         </section>
 
         {activeView === "deal" && lead ? (
