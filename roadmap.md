@@ -14,3 +14,4 @@
 - [x] Add editable visa, evidence, and information request actions to bank eligibility suggestions
 
 - [x] Sync client company information between dashboard purchase flow and My Profile
+- [x] Hide the client entity tip once company information is on file
