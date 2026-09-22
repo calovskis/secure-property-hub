@@ -1,5 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { MortgageQuestionnaire } from "@/components/mortgage/MortgageQuestionnaire";
 
@@ -16,6 +16,8 @@ import {
 
 export const Route = createFileRoute("/property/$propertyId")({
   component: PropertyDetailPage,
+  validateSearch: (search: Record<string, unknown>): { open?: "questionnaire" } =>
+    search["open"] === "questionnaire" ? { open: "questionnaire" } : {},
   loader: ({ params }) => {
     const property = getProperty(Number(params.propertyId));
     if (!property) throw notFound();
@@ -134,6 +136,11 @@ function PropertyDetailPage() {
   const { leadForProperty } = useLeads();
   const lead = user ? leadForProperty(user.email, property.id) : undefined;
   const [questionnaireOpen, setQuestionnaireOpen] = useState(false);
+  const { open } = Route.useSearch();
+
+  useEffect(() => {
+    if (open === "questionnaire") setQuestionnaireOpen(true);
+  }, [open]);
 
 
   const privileged = user?.role === "admin" || user?.role === "partner";
