@@ -77,7 +77,7 @@ function useDerivedNotifications() {
     /* ------------------------------ client side ------------------------------ */
     const myLeads = leads.filter((l) => l.clientEmail.toLowerCase() === email);
     for (const lead of myLeads) {
-      const href = `/property/${lead.propertyId}?view=deal`;
+      const href = `/property/${lead.propertyId}/workspace`;
       // Feedback-related alerts open the pre-approval pop-up directly.
       const feedbackHref = `${href}?open=feedback`;
 
@@ -158,7 +158,7 @@ function useDerivedNotifications() {
             to: email,
             title: "Finish setting up your buyer's agent",
             body: `${lead.propertyLabel} — choose how you want to work with your agent and how to start. Your answers so far are saved.`,
-            href: `/property/${lead.propertyId}?open=agent&view=deal`,
+            href: `/property/${lead.propertyId}/workspace?open=agent`,
             severity: "warning",
             createdAt: since,
           });
@@ -169,7 +169,7 @@ function useDerivedNotifications() {
               to: email,
               title: `Reminder: finish setting up your buyer's agent (${rem.label})`,
               body: `${lead.propertyLabel} — your answers so far are saved; continue where you left off.`,
-              href: `/property/${lead.propertyId}?open=agent&view=deal`,
+              href: `/property/${lead.propertyId}/workspace?open=agent`,
               severity: rem.hours >= 336 ? "critical" : "warning",
               emailCopy: rem.email,
               createdAt: rem.dueAt,
@@ -200,7 +200,7 @@ function useDerivedNotifications() {
             body: `${lead.propertyLabel} — ${
               p.agentSuggestedPrice ? `${formatPrice(p.agentSuggestedPrice)} instead of ${formatPrice(p.raisedPrice ?? p.offerPrice)}` : "a higher price"
             }.${p.agentNote ? ` Your agent: ${p.agentNote}` : ""} You can accept this price or propose another one.`,
-            href: `/property/${lead.propertyId}?open=chat&view=deal`,
+            href: `/property/${lead.propertyId}/workspace?open=chat`,
             severity: "warning",
             createdAt: p.respondedAt ?? p.createdAt,
           });
@@ -221,7 +221,7 @@ function useDerivedNotifications() {
           body: `${lead.propertyLabel} — ${formatPrice(p.offerPrice)} is decided and is being presented to the seller. Next step: tell us how the property will be held; your agent then proposes the purchase terms for your confirmation.${
             p.agentNote ? ` Your agent: ${p.agentNote}` : ""
           }`,
-          href: `/property/${lead.propertyId}?open=agreement&view=deal`,
+          href: `/property/${lead.propertyId}/workspace?open=agreement`,
           severity: "warning",
           createdAt: p.respondedAt ?? p.createdAt,
         });
@@ -397,7 +397,7 @@ function useDerivedNotifications() {
         title: "Unfinished pre-approval questionnaire",
         body: `${d.propertyLabel ?? "Mortgage questionnaire"} — ${d.completion}% complete.`,
         href: d.propertyId
-          ? `/property/${d.propertyId}?open=questionnaire&view=deal`
+          ? `/property/${d.propertyId}?open=questionnaire`
           : "/profile?open=questionnaire",
         severity: "info",
         createdAt: d.updatedAt,

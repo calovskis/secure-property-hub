@@ -79,7 +79,7 @@ export function AgreementTermsPanel({
         to: buyerEmail.toLowerCase(),
         title: "Your purchase agreement is ready to sign",
         body: `${propertyLabel} at ${formatPrice(purchase.offerPrice)} — review the agreement and sign it.`,
-        href: `/property/${propertyId}?open=agreement`,
+        href: `/property/${propertyId}/workspace?open=agreement`,
         severity: "warning",
       });
     }
@@ -103,7 +103,7 @@ export function AgreementTermsPanel({
         to: buyerEmail.toLowerCase(),
         title: "Your agent proposed the purchase terms — your confirmation is needed",
         body: `${propertyLabel} at ${formatPrice(purchase.offerPrice)}. Review the terms and confirm them so they can be put to the seller.`,
-        href: `/property/${propertyId}?open=agreement`,
+        href: `/property/${propertyId}/workspace?open=agreement`,
         severity: "warning",
       });
     }

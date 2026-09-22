@@ -80,7 +80,7 @@ export function BuyerRequestsPanel({
       to: buyerEmail.toLowerCase(),
       title,
       body,
-      href: `/property/${propertyId}?open=chat`,
+      href: `/property/${propertyId}/workspace?open=chat`,
       severity: "info",
     });
   }
