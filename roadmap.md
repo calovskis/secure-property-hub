@@ -12,3 +12,5 @@
 - [x] Allow lender mortgage cases to open as a full workspace in a new browser tab
 - [x] Add typed information requests and persistent communication threads to mortgage case files
 - [x] Add editable visa, evidence, and information request actions to bank eligibility suggestions
+
+- [x] Sync client company information between dashboard purchase flow and My Profile
