@@ -9,7 +9,7 @@
  *  - Request Loqal support → the terms, then a confirmation that assigns a
  *    Loqal entity manager.
  */
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ArrowRight, Building2, CheckCircle2, Lightbulb, X } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -25,7 +25,12 @@ import { notify } from "@/lib/notifications";
 import { useDeepLinkAction } from "@/lib/deep-link";
 import { formatDateTime } from "@/lib/dates";
 import { ENTITY_TYPES, useEntityIntent } from "@/lib/entity-onboarding";
-import { LOQAL_SETUP_FEE_USD, RELATED_SERVICES_MAX_USD } from "@/lib/entity-structure";
+import {
+  LOQAL_SETUP_FEE_USD,
+  RELATED_SERVICES_MAX_USD,
+  useEntityPlans,
+} from "@/lib/entity-structure";
+import { useLeads } from "@/lib/leads";
 
 const TERM_POINTS = [
   `One-time Loqal Managerial Set-up fee of $${LOQAL_SETUP_FEE_USD} — we design the structure, coordinate every provider and keep you out of the paperwork.`,
@@ -38,6 +43,8 @@ const TERM_POINTS = [
 export function EntityTipCard() {
   const { user } = useAuth();
   const { intent, saveIntent } = useEntityIntent(user?.email);
+  const { plans } = useEntityPlans();
+  const { leadsForClient } = useLeads();
   const [entityOpen, setEntityOpen] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
   const [agreed, setAgreed] = useState(false);
@@ -46,10 +53,22 @@ export function EntityTipCard() {
   // "Request Loqal to help manage the structure" from the FAQ tab lands here.
   useDeepLinkAction("entity-support", () => setSupportOpen(true));
 
+  const hasCompanyOnPropertyFile = useMemo(() => {
+    if (!user) return false;
+    const leadIds = new Set(leadsForClient(user.email).map((lead) => lead.id));
+    return plans.some(
+      (plan) =>
+        leadIds.has(plan.leadId) && Boolean(plan.entityName || plan.loqalSetupRequestedAt),
+    );
+  }, [leadsForClient, plans, user]);
+
   if (!user || user.role !== "client" || user.usPerson) return null;
 
   const clientLabel = `${user.firstName} ${user.lastName}`.trim();
-  const done = Boolean(intent?.entityProvidedAt || intent?.supportRequestedAt);
+  const done = Boolean(
+    intent?.entityProvidedAt || intent?.supportRequestedAt || hasCompanyOnPropertyFile,
+  );
+  if (done) return null;
   if (intent?.dismissedAt && !done) return null;
 
   function saveEntity() {
