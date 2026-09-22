@@ -28,11 +28,14 @@ export const Route = createFileRoute("/property/$propertyId")({
   ): {
     open?: "feedback" | "questionnaire" | "call" | "agent" | "chat" | "agreement";
     focus?: string;
+    view?: "listing" | "deal";
   } => {
     const value = search["open"];
+    const viewValue = search["view"];
     const out: {
       open?: "feedback" | "questionnaire" | "call" | "agent" | "chat" | "agreement";
       focus?: string;
+      view?: "listing" | "deal";
     } = {};
     if (
       value === "feedback" ||
@@ -44,6 +47,7 @@ export const Route = createFileRoute("/property/$propertyId")({
     )
       out.open = value;
     if (typeof search["focus"] === "string") out.focus = search["focus"];
+    if (viewValue === "listing" || viewValue === "deal") out.view = viewValue;
     return out;
   },
   loader: ({ params }) => {
@@ -296,7 +300,7 @@ function PropertyDetailPage() {
     </div>
         </section>
 
-        {activeView === "deal" && lead ? ({lead ? (
+        {activeView === "deal" && lead ? (
           priced ? (
             <>
 
@@ -661,7 +665,7 @@ function PropertyDetailPage() {
         propertyLabel={`${property.address}, ${property.location}`}
         property={{ id: property.id, price: property.price }}
       />
-      {activeView === "deal" && lead ? ({lead ? (
+      {activeView === "deal" && lead ? (
         <>
           <FeedbackDialog lead={lead} open={feedbackOpen} onOpenChange={setFeedbackOpen} />
           <BuyerAgentDialog lead={lead} open={agentOpen} onOpenChange={setAgentOpen} />
