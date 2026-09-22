@@ -157,7 +157,7 @@ export function MyPartnersCard() {
               <div className="mt-auto grid grid-cols-2 gap-2 pt-4">
                 <Button asChild size="sm" variant="outline">
                   {role === "realtor" ? (
-                    <Link to="/property/$propertyId/workspace" params={{ propertyId: String(lead.propertyId) }} search={{ open: "chat" }}>
+                    <Link to="/property/$propertyId/workspace" params={{ propertyId: String(lead.propertyId) }} search={{ open: "chat" } as never}>
                       <MessageSquareText aria-hidden /> Write
                     </Link>
                   ) : (

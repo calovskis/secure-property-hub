@@ -264,9 +264,9 @@ function PropertyWorkspacePage() {
 
         <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {[
-            ["Deal status", activity?.awaitingClient ? "Action needed" : "In progress", activity?.headline ?? LEAD_STATUS_LABEL[lead.status]],
+            ["Deal status", activity?.awaitingClient ? "Action needed" : "In progress", activity?.headline ?? "Your property file is active"],
             ["Purchase price", formatPrice(purchasePrice), latestPurchase ? "Current buyer-side price" : "Initial listing price"],
-            ["Mortgage", priced ? "Pre-approved" : LEAD_STATUS_LABEL[lead.status], priced ? "Lender terms available" : "File is being reviewed"],
+            ["Mortgage", priced ? "Pre-approved" : "In review", priced ? "Lender terms available" : "File is being reviewed"],
             ["Next action", nextStep, activity?.awaitingClient ? `${activity.awaitingClient} item${activity.awaitingClient === 1 ? "" : "s"} need your answer` : "Team is moving the file forward"],
           ].map(([label, value, detail]) => (
             <div key={label} className="rounded-lg border border-border bg-card p-4">

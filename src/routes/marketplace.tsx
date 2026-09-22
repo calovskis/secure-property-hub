@@ -11,6 +11,8 @@ import { allProperties, formatPrice, type Property } from "@/data/properties";
 
 export const Route = createFileRoute("/marketplace")({
   component: MarketplacePage,
+  validateSearch: (search: Record<string, unknown>): { tab?: "search" | "action" } =>
+    search["tab"] === "action" || search["tab"] === "search" ? { tab: search["tab"] } : {},
   head: () => ({
     meta: [
       { title: "LOQAL - Properties Marketplace" },
@@ -35,7 +37,6 @@ const PROPERTIES_PER_PAGE = 6;
 function MarketplacePage() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  useEffect(() => { if (tabParam) setTab(tabParam); }, [tabParam]);
 
   // Property browsing is for signed-in Loqal users only.
   useEffect(() => {
@@ -54,6 +55,7 @@ function MarketplacePage() {
   const [currentPage, setCurrentPage] = useState(1);
   const { tab: tabParam } = Route.useSearch();
   const [tab, setTab] = useState<"search" | "action">(tabParam || "search");
+  useEffect(() => { if (tabParam) setTab(tabParam); }, [tabParam]);
 
   /** Properties this client already has an active process on. */
   const activity = useClientPropertyActivity();
