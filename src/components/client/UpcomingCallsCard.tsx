@@ -153,7 +153,7 @@ export function UpcomingCallsCard({ compact = false }: { compact?: boolean }) {
               ) : null}
 
               <Link
-                to="/property/$propertyId" search={{ view: "deal" }}
+                to="/property/$propertyId/workspace"
                 params={{ propertyId: String(lead.propertyId) }}
                 className="mt-2 inline-flex text-[11px] font-semibold text-brand hover:underline"
               >

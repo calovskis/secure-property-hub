@@ -157,7 +157,7 @@ export function MyPartnersCard() {
               <div className="mt-auto grid grid-cols-2 gap-2 pt-4">
                 <Button asChild size="sm" variant="outline">
                   {role === "realtor" ? (
-                    <Link to="/property/$propertyId" search={{ view: "deal" }} params={{ propertyId: String(lead.propertyId) }} search={{ open: "chat", view: "deal" }}>
+                    <Link to="/property/$propertyId/workspace" params={{ propertyId: String(lead.propertyId) }} search={{ open: "chat" }}>
                       <MessageSquareText aria-hidden /> Write
                     </Link>
                   ) : (
@@ -173,7 +173,7 @@ export function MyPartnersCard() {
                 </Button>
               </div>
               <Link
-                to="/property/$propertyId" search={{ view: "deal" }}
+                to="/property/$propertyId/workspace"
                 params={{ propertyId: String(lead.propertyId) }}
                 className="mt-2 inline-flex text-[11px] font-semibold text-brand hover:underline"
               >

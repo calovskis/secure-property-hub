@@ -509,7 +509,7 @@ function Dashboard() {
                           </div>
                         </div>
                         <Link
-                          to="/property/$propertyId" search={{ view: "deal" }}
+                          to="/property/$propertyId/workspace"
                           params={{ propertyId: String(l.propertyId) }}
                           className="rounded-md bg-brand px-4 py-2 text-xs font-semibold text-background hover:bg-brand-soft"
                         >

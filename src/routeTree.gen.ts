@@ -33,6 +33,7 @@ import { Route as PropertyPropertyIdRouteImport } from './routes/property.$prope
 import { Route as LenderCaseLeadIdRouteImport } from './routes/lender.case.$leadId'
 import { Route as LenderFileLeadIdRouteImport } from './routes/lender.file.$leadId'
 import { Route as OauthGoogleReturnRouteImport } from './routes/oauth.google.return'
+import { Route as PropertyPropertyIdWorkspaceRouteImport } from './routes/property.$propertyId.workspace'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -154,6 +155,12 @@ const OauthGoogleReturnRoute = OauthGoogleReturnRouteImport.update({
   path: '/oauth/google/return',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PropertyPropertyIdWorkspaceRoute =
+  PropertyPropertyIdWorkspaceRouteImport.update({
+    id: '/workspace',
+    path: '/workspace',
+    getParentRoute: () => PropertyPropertyIdRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -176,10 +183,11 @@ export interface FileRoutesByFullPath {
   '/ssn-terms': typeof SsnTermsRoute
   '/admin-people/$personId': typeof AdminPeoplePersonIdRoute
   '/application/$leadId': typeof ApplicationLeadIdRoute
-  '/property/$propertyId': typeof PropertyPropertyIdRoute
+  '/property/$propertyId': typeof PropertyPropertyIdRouteWithChildren
   '/lender/case/$leadId': typeof LenderCaseLeadIdRoute
   '/lender/file/$leadId': typeof LenderFileLeadIdRoute
   '/oauth/google/return': typeof OauthGoogleReturnRoute
+  '/property/$propertyId/workspace': typeof PropertyPropertyIdWorkspaceRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -202,10 +210,11 @@ export interface FileRoutesByTo {
   '/ssn-terms': typeof SsnTermsRoute
   '/admin-people/$personId': typeof AdminPeoplePersonIdRoute
   '/application/$leadId': typeof ApplicationLeadIdRoute
-  '/property/$propertyId': typeof PropertyPropertyIdRoute
+  '/property/$propertyId': typeof PropertyPropertyIdRouteWithChildren
   '/lender/case/$leadId': typeof LenderCaseLeadIdRoute
   '/lender/file/$leadId': typeof LenderFileLeadIdRoute
   '/oauth/google/return': typeof OauthGoogleReturnRoute
+  '/property/$propertyId/workspace': typeof PropertyPropertyIdWorkspaceRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -229,10 +238,11 @@ export interface FileRoutesById {
   '/ssn-terms': typeof SsnTermsRoute
   '/admin-people/$personId': typeof AdminPeoplePersonIdRoute
   '/application/$leadId': typeof ApplicationLeadIdRoute
-  '/property/$propertyId': typeof PropertyPropertyIdRoute
+  '/property/$propertyId': typeof PropertyPropertyIdRouteWithChildren
   '/lender/case/$leadId': typeof LenderCaseLeadIdRoute
   '/lender/file/$leadId': typeof LenderFileLeadIdRoute
   '/oauth/google/return': typeof OauthGoogleReturnRoute
+  '/property/$propertyId/workspace': typeof PropertyPropertyIdWorkspaceRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -261,6 +271,7 @@ export interface FileRouteTypes {
     | '/lender/case/$leadId'
     | '/lender/file/$leadId'
     | '/oauth/google/return'
+    | '/property/$propertyId/workspace'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -287,6 +298,7 @@ export interface FileRouteTypes {
     | '/lender/case/$leadId'
     | '/lender/file/$leadId'
     | '/oauth/google/return'
+    | '/property/$propertyId/workspace'
   id:
     | '__root__'
     | '/'
@@ -313,6 +325,7 @@ export interface FileRouteTypes {
     | '/lender/case/$leadId'
     | '/lender/file/$leadId'
     | '/oauth/google/return'
+    | '/property/$propertyId/workspace'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -336,7 +349,7 @@ export interface RootRouteChildren {
   SsnTermsRoute: typeof SsnTermsRoute
   AdminPeoplePersonIdRoute: typeof AdminPeoplePersonIdRoute
   ApplicationLeadIdRoute: typeof ApplicationLeadIdRoute
-  PropertyPropertyIdRoute: typeof PropertyPropertyIdRoute
+  PropertyPropertyIdRoute: typeof PropertyPropertyIdRouteWithChildren
   LenderCaseLeadIdRoute: typeof LenderCaseLeadIdRoute
   LenderFileLeadIdRoute: typeof LenderFileLeadIdRoute
   OauthGoogleReturnRoute: typeof OauthGoogleReturnRoute
@@ -512,8 +525,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OauthGoogleReturnRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/property/$propertyId/workspace': {
+      id: '/property/$propertyId/workspace'
+      path: '/workspace'
+      fullPath: '/property/$propertyId/workspace'
+      preLoaderRoute: typeof PropertyPropertyIdWorkspaceRouteImport
+      parentRoute: typeof PropertyPropertyIdRoute
+    }
   }
 }
+
+interface PropertyPropertyIdRouteChildren {
+  PropertyPropertyIdWorkspaceRoute: typeof PropertyPropertyIdWorkspaceRoute
+}
+
+const PropertyPropertyIdRouteChildren: PropertyPropertyIdRouteChildren = {
+  PropertyPropertyIdWorkspaceRoute: PropertyPropertyIdWorkspaceRoute,
+}
+
+const PropertyPropertyIdRouteWithChildren =
+  PropertyPropertyIdRoute._addFileChildren(PropertyPropertyIdRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -536,7 +567,7 @@ const rootRouteChildren: RootRouteChildren = {
   SsnTermsRoute: SsnTermsRoute,
   AdminPeoplePersonIdRoute: AdminPeoplePersonIdRoute,
   ApplicationLeadIdRoute: ApplicationLeadIdRoute,
-  PropertyPropertyIdRoute: PropertyPropertyIdRoute,
+  PropertyPropertyIdRoute: PropertyPropertyIdRouteWithChildren,
   LenderCaseLeadIdRoute: LenderCaseLeadIdRoute,
   LenderFileLeadIdRoute: LenderFileLeadIdRoute,
   OauthGoogleReturnRoute: OauthGoogleReturnRoute,
