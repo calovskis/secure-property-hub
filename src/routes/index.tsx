@@ -549,9 +549,15 @@ function Dashboard() {
                 ))}
               </SectionCard>
 
-              <SectionCard title="Active Services" action="Manage →">
-                {activeServices.map((s) => (
-                  <ActivityRow key={s.title} icon={s.icon} title={s.title} desc={s.desc} time={s.time} service />
+              <SectionCard title="Saved Properties" action="View all →">
+                {savedProperties.map((p) => (
+                  <div key={p.title} className="flex items-center justify-between gap-3 border-b border-border py-3 first:pt-0 last:border-none last:pb-0">
+                    <div className="min-w-0">
+                      <div className="truncate text-[13px] font-medium text-foreground">{t(p.title)}</div>
+                      <div className="truncate text-[11px] text-muted-foreground">{p.meta}</div>
+                    </div>
+                    <span className="shrink-0 rounded border border-gold/40 bg-gold-tint px-2 py-1 text-[10px] font-semibold text-gold">{t("★ Saved")}</span>
+                  </div>
                 ))}
               </SectionCard>
             </div>
@@ -594,15 +600,9 @@ function Dashboard() {
               ))}
             </SectionCard>
 
-            <SectionCard title="Saved Properties" action="View all →">
-              {savedProperties.map((p) => (
-                <div key={p.title} className="flex items-center justify-between gap-3 border-b border-border py-3 first:pt-0 last:border-none last:pb-0">
-                  <div className="min-w-0">
-                    <div className="truncate text-[13px] font-medium text-foreground">{t(p.title)}</div>
-                    <div className="truncate text-[11px] text-muted-foreground">{p.meta}</div>
-                  </div>
-                  <span className="shrink-0 rounded border border-gold/40 bg-gold-tint px-2 py-1 text-[10px] font-semibold text-gold">{t("★ Saved")}</span>
-                </div>
+            <SectionCard title="Active Services" action="Manage →">
+              {activeServices.map((s) => (
+                <ActivityRow key={s.title} icon={s.icon} title={s.title} desc={s.desc} time={s.time} service />
               ))}
             </SectionCard>
 
