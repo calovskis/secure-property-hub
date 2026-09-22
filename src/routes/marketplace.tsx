@@ -35,6 +35,7 @@ const PROPERTIES_PER_PAGE = 6;
 function MarketplacePage() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  useEffect(() => { if (tabParam) setTab(tabParam); }, [tabParam]);
 
   // Property browsing is for signed-in Loqal users only.
   useEffect(() => {
@@ -51,7 +52,8 @@ function MarketplacePage() {
   const [sqftMin, setSqftMin] = useState("");
   const [sortBy, setSortBy] = useState("newest");
   const [currentPage, setCurrentPage] = useState(1);
-  const [tab, setTab] = useState<"search" | "action">("search");
+  const { tab: tabParam } = Route.useSearch();
+  const [tab, setTab] = useState<"search" | "action">(tabParam || "search");
 
   /** Properties this client already has an active process on. */
   const activity = useClientPropertyActivity();
