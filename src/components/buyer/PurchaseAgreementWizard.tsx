@@ -37,6 +37,7 @@ import {
   useEntityPlan,
   type EntityPath,
 } from "@/lib/entity-structure";
+import { useEntityIntent } from "@/lib/entity-onboarding";
 import { termsSummary, type AgreementTerms } from "@/lib/purchase-agreement";
 import type { PurchaseRequest } from "@/lib/property-requests";
 
@@ -74,6 +75,7 @@ export function PurchaseAgreementWizard({
 }) {
   const { user } = useAuth();
   const { plan, savePlan } = useEntityPlan(leadId);
+  const { saveIntent } = useEntityIntent(user?.email);
 
   const [step, setStep] = useState(1);
   const [guideOpen, setGuideOpen] = useState(false);
@@ -125,6 +127,17 @@ export function PurchaseAgreementWizard({
       wizardStep: 2,
       ...(next === "loqal_setup" ? { loqalSetupRequestedAt: now } : {}),
     });
+    if (next === "existing_entity" && extra?.entityName) {
+      saveIntent({
+        hasEntity: true,
+        entityName: extra.entityName,
+        entityState: extra.entityState,
+        entityEin: extra.entityEin,
+        entityProvidedAt: now,
+      });
+    } else if (next === "loqal_setup") {
+      saveIntent({ hasEntity: false, supportRequestedAt: now, termsAcceptedAt: now });
+    }
     if (next === "loqal_setup") {
       tellLoqal(
         `entitysetup-${leadId}`,
@@ -335,10 +348,18 @@ export function PurchaseAgreementWizard({
                       type="button"
                       disabled={!entityName.trim()}
                       onClick={() => {
+                        const now = new Date().toISOString();
                         savePlan({
                           entityName: entityName.trim(),
                           entityState,
                           entityEin: entityEin.trim(),
+                        });
+                        saveIntent({
+                          hasEntity: true,
+                          entityName: entityName.trim(),
+                          entityState,
+                          entityEin: entityEin.trim(),
+                          entityProvidedAt: now,
                         });
                         toast("Company details saved");
                       }}

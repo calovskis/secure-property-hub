@@ -13,4 +13,4 @@
 - [x] Add typed information requests and persistent communication threads to mortgage case files
 - [x] Add editable visa, evidence, and information request actions to bank eligibility suggestions
 
-- [ ] Sync client company information between dashboard purchase flow and My Profile
+- [x] Sync client company information between dashboard purchase flow and My Profile

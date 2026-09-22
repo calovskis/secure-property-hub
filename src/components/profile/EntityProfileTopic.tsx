@@ -9,7 +9,7 @@
  *
  * When details are on file they are shown here in full.
  */
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, Building2, CheckCircle2, Lightbulb } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -25,6 +25,8 @@ import { notify } from "@/lib/notifications";
 import { formatDateTime } from "@/lib/dates";
 import { ENTITY_TYPES, useEntityIntent } from "@/lib/entity-onboarding";
 import { LOQAL_SETUP_FEE_USD, RELATED_SERVICES_MAX_USD } from "@/lib/entity-structure";
+import { useEntityPlans } from "@/lib/entity-structure";
+import { useLeads } from "@/lib/leads";
 import { TopicCard, TopicField } from "@/components/profile/TopicCard";
 
 const TERM_POINTS = [
@@ -38,20 +40,59 @@ const TERM_POINTS = [
 export function EntityProfileTopic() {
   const { user } = useAuth();
   const { intent, saveIntent } = useEntityIntent(user?.email);
+  const { plans } = useEntityPlans();
+  const { leadsForClient } = useLeads();
   const [entityOpen, setEntityOpen] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
   const [agreed, setAgreed] = useState(false);
   const [form, setForm] = useState({ name: "", type: "LLC", state: "", ein: "" });
 
+  const fileCompany = useMemo(() => {
+    if (!user) return undefined;
+    const leadIds = new Set(leadsForClient(user.email).map((lead) => lead.id));
+    return plans
+      .filter((plan) => leadIds.has(plan.leadId) && (plan.entityName || plan.loqalSetupRequestedAt))
+      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0];
+  }, [user, leadsForClient, plans]);
+
+  useEffect(() => {
+    if (!user || intent?.entityProvidedAt || intent?.supportRequestedAt || !fileCompany) return;
+    if (fileCompany.entityName) {
+      saveIntent({
+        hasEntity: true,
+        entityName: fileCompany.entityName,
+        entityState: fileCompany.entityState,
+        entityEin: fileCompany.entityEin,
+        entityProvidedAt: fileCompany.updatedAt,
+      });
+    } else if (fileCompany.loqalSetupRequestedAt) {
+      saveIntent({
+        hasEntity: false,
+        supportRequestedAt: fileCompany.loqalSetupRequestedAt,
+        termsAcceptedAt: fileCompany.feesAcknowledgedAt ?? fileCompany.loqalSetupRequestedAt,
+      });
+    }
+  }, [fileCompany, intent?.entityProvidedAt, intent?.supportRequestedAt, saveIntent, user]);
+
   if (!user || user.role !== "client" || user.usPerson) return null;
 
   const clientLabel = `${user.firstName} ${user.lastName}`.trim();
-  const hasEntity = Boolean(intent?.entityProvidedAt);
-  const requested = Boolean(intent?.supportRequestedAt);
+  const effectiveIntent = intent ?? (fileCompany?.entityName
+    ? {
+        entityName: fileCompany.entityName,
+        entityState: fileCompany.entityState,
+        entityEin: fileCompany.entityEin,
+        entityProvidedAt: fileCompany.updatedAt,
+      }
+    : fileCompany?.loqalSetupRequestedAt
+      ? { supportRequestedAt: fileCompany.loqalSetupRequestedAt }
+      : undefined);
+  const hasEntity = Boolean(effectiveIntent?.entityProvidedAt);
+  const requested = Boolean(effectiveIntent?.supportRequestedAt);
   const missing = !hasEntity && !requested;
 
   const summary = hasEntity
-    ? `${intent!.entityName}${intent!.entityState ? ` · ${intent!.entityState}` : ""}`
+    ? `${effectiveIntent?.entityName ?? "US holding entity"}${effectiveIntent?.entityState ? ` · ${effectiveIntent.entityState}` : ""}`
     : requested
       ? "Loqal is structuring your holding entity"
       : "No US holding entity on file yet";
@@ -118,20 +159,20 @@ export function EntityProfileTopic() {
             <div className="mb-3 flex items-center gap-2 rounded-lg border border-success/40 bg-success/10 px-3 py-2.5">
               <CheckCircle2 className="h-4 w-4 text-success" aria-hidden />
               <span className="text-sm text-foreground">
-                On file since {formatDateTime(intent!.entityProvidedAt!)} — purchase documents will
+                On file since {formatDateTime(effectiveIntent?.entityProvidedAt ?? "")} — purchase documents will
                 be prepared in the entity's name.
               </span>
             </div>
-            <TopicField label="Legal name" value={intent!.entityName} />
-            <TopicField label="Type" value={intent!.entityType} />
-            <TopicField label="State of registration" value={intent!.entityState} />
-            <TopicField label="EIN" value={intent!.entityEin || "—"} />
+            <TopicField label="Legal name" value={effectiveIntent?.entityName} />
+            <TopicField label="Type" value={intent?.entityType || "—"} />
+            <TopicField label="State of registration" value={effectiveIntent?.entityState} />
+            <TopicField label="EIN" value={effectiveIntent?.entityEin || "—"} />
           </div>
         ) : requested ? (
           <div className="flex items-center gap-2 rounded-lg border border-success/40 bg-success/10 px-3 py-2.5">
             <CheckCircle2 className="h-4 w-4 text-success" aria-hidden />
             <span className="text-sm text-foreground">
-              Terms confirmed on {formatDateTime(intent!.supportRequestedAt!)} — a Loqal entity
+              Terms confirmed on {formatDateTime(effectiveIntent?.supportRequestedAt ?? "")} — a Loqal entity
               manager is being assigned and will reach out within three business days.
             </span>
           </div>
