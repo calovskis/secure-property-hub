@@ -66,11 +66,11 @@ export function PropertiesInAction({ items }: { items: PropertyActivity[] }) {
               </div>
             </div>
             <Link
-              to="/property/$propertyId"
+              to="/property/$propertyId" search={{ view: "deal" }}
               params={{ propertyId: String(entry.propertyId) }}
               className="self-start rounded-md bg-brand px-4 py-2.5 text-sm font-semibold text-background hover:bg-brand-soft"
             >
-              Open property
+              Open deal
             </Link>
           </div>
 
