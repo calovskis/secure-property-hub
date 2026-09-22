@@ -1,15 +1,9 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { MortgageQuestionnaire } from "@/components/mortgage/MortgageQuestionnaire";
-import { MortgageCaseCard } from "@/components/mortgage/MortgageCaseCard";
-import { BuyerProcessCard } from "@/components/buyer/BuyerProcessCard";
-import { BuyerAgentDialog } from "@/components/mortgage/BuyerAgentDialog";
-import { FeedbackDialog } from "@/components/mortgage/FeedbackDialog";
-import { VideoCallDialog } from "@/components/calls/VideoCallDialog";
 
 import { useLeads, hasPricedOffer, toLoanTerms } from "@/lib/leads";
-import { useBuyerProcess } from "@/lib/buyer-process";
 import { useAuth } from "@/lib/auth";
 import {
   buildInvestmentModel,
@@ -22,34 +16,6 @@ import {
 
 export const Route = createFileRoute("/property/$propertyId")({
   component: PropertyDetailPage,
-  /** `?open=feedback|questionnaire|call|agent|chat|agreement` lets a notification jump straight in. */
-  validateSearch: (
-    search: Record<string, unknown>,
-  ): {
-    open?: "feedback" | "questionnaire" | "call" | "agent" | "chat" | "agreement";
-    focus?: string;
-    view?: "listing" | "deal";
-  } => {
-    const value = search["open"];
-    const viewValue = search["view"];
-    const out: {
-      open?: "feedback" | "questionnaire" | "call" | "agent" | "chat" | "agreement";
-      focus?: string;
-      view?: "listing" | "deal";
-    } = {};
-    if (
-      value === "feedback" ||
-      value === "questionnaire" ||
-      value === "call" ||
-      value === "agent" ||
-      value === "chat" ||
-      value === "agreement"
-    )
-      out.open = value;
-    if (typeof search["focus"] === "string") out.focus = search["focus"];
-    if (viewValue === "listing" || viewValue === "deal") out.view = viewValue;
-    return out;
-  },
   loader: ({ params }) => {
     const property = getProperty(Number(params.propertyId));
     if (!property) throw notFound();
@@ -168,39 +134,6 @@ function PropertyDetailPage() {
   const { leadForProperty } = useLeads();
   const lead = user ? leadForProperty(user.email, property.id) : undefined;
   const [questionnaireOpen, setQuestionnaireOpen] = useState(false);
-  const [feedbackOpen, setFeedbackOpen] = useState(false);
-  const [callOpen, setCallOpen] = useState(false);
-  const [agentOpen, setAgentOpen] = useState(false);
-  const { open: openParam, focus: focusParam, view: viewParam } = Route.useSearch();
-  const { bookings } = useBuyerProcess();
-  const activeView = viewParam || (openParam ? "deal" : "listing");
-
-  // A "call confirmed" notification opens the video-call details pop-up.
-  const callBooking = bookings.find(
-    (b) =>
-      b.status === "confirmed" &&
-      b.propertyLabel.startsWith(property.address) &&
-      (!focusParam || b.id === focusParam),
-  ) ?? (focusParam ? bookings.find((b) => b.id === focusParam && b.status === "confirmed") : undefined);
-
-  // Arriving from a notification opens the exact pop-up that needs attention.
-  useEffect(() => {
-    if (openParam === "feedback") setFeedbackOpen(true);
-    if (openParam === "questionnaire") setQuestionnaireOpen(true);
-    if (openParam === "call" && callBooking) setCallOpen(true);
-    if (openParam === "agent") setAgentOpen(true);
-    if (openParam === "agreement") {
-      const t = window.setTimeout(
-        () =>
-          document
-            .getElementById("purchase-agreement")
-            ?.scrollIntoView({ behavior: "smooth", block: "start" }),
-        250,
-      );
-      return () => window.clearTimeout(t);
-    }
-    return undefined;
-  }, [openParam, callBooking?.id]);
 
 
   const privileged = user?.role === "admin" || user?.role === "partner";
@@ -239,18 +172,15 @@ function PropertyDetailPage() {
       <main className="mx-auto max-w-[1400px] px-4 py-8 md:px-7">
         <Link
           to="/marketplace"
-          search={activeView === "deal" ? { tab: "action" } : undefined}
           className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-brand hover:underline"
         >
-          ← Back to {activeView === "deal" ? "My Properties" : "Properties"}
+          ← Back to Properties
         </Link>
 
         {/* HEADER */}
         <section className="mb-8 flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
           <div>
-            <h1 className="text-2xl font-bold text-foreground md:text-[32px]">{activeView === "deal" ? "Deal Workspace: " : ""}
-              {property.address}
-            </h1>
+            <h1 className="text-2xl font-bold text-foreground md:text-[32px]">{property.address}</h1>
             <p className="mt-1 text-sm text-muted-foreground">{property.location}</p>
             <div className="mt-3 flex flex-wrap gap-2">
               <span className="rounded-full bg-success/10 px-3 py-1 text-xs font-semibold text-success">
@@ -270,23 +200,13 @@ function PropertyDetailPage() {
                 Edit Property
               </button>
             ) : null}
-            {activeView === "deal" ? (
+            {lead ? (
               <Link
-                to="/property/$propertyId"
+                to="/property/$propertyId/workspace"
                 params={{ propertyId: String(property.id) }}
-                search={{ view: "listing" }}
-                className="rounded-md border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-brand-tint"
-              >
-                View Initial Listing
-              </Link>
-            ) : lead ? (
-              <Link
-                to="/property/$propertyId"
-                params={{ propertyId: String(property.id) }}
-                search={{ view: "deal" }}
                 className="rounded-md bg-brand px-4 py-2.5 text-sm font-semibold text-background hover:bg-brand-soft"
               >
-                Open Deal Workspace
+                Open deal workspace
               </Link>
             ) : (
               <button
@@ -299,36 +219,6 @@ function PropertyDetailPage() {
             )}
           </div>
         </section>
-
-        {activeView === "deal" && lead ? (
-          priced ? (
-            <>
-
-            <div className="mb-6 flex flex-col gap-3 rounded-lg border border-success/30 bg-success/10 p-5 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <div className="text-sm font-semibold text-success">
-                  This property has been pre-approved for a mortgage
-                </div>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Your lender issued estimated pre-approval terms for this property. Open the
-                  feedback to review the terms and respond.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setFeedbackOpen(true)}
-                className="shrink-0 rounded-md bg-brand px-4 py-2.5 text-sm font-semibold text-background transition-colors hover:bg-brand-soft"
-              >
-                View feedback
-              </button>
-            </div>
-            {lead.buyerAgent ? <BuyerProcessCard lead={lead} /> : null}
-            </>
-          ) : (
-            <MortgageCaseCard lead={lead} />
-          )
-        ) : null}) : null}
-
 
         {/* TOP METRICS */}
         <section className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-3">
@@ -665,24 +555,6 @@ function PropertyDetailPage() {
         propertyLabel={`${property.address}, ${property.location}`}
         property={{ id: property.id, price: property.price }}
       />
-      {activeView === "deal" && lead ? (
-        <>
-          <FeedbackDialog lead={lead} open={feedbackOpen} onOpenChange={setFeedbackOpen} />
-          <BuyerAgentDialog lead={lead} open={agentOpen} onOpenChange={setAgentOpen} />
-        </>
-      ) : null}) : null}
-      {callBooking ? (
-        <VideoCallDialog
-          open={callOpen}
-          onOpenChange={setCallOpen}
-          title={callBooking.kind === "video_tour" ? "Live video tour" : callBooking.kind === "intro_call" ? "Intro call" : "Property visit call"}
-          startAt={callBooking.startAt}
-          meetUrl={callBooking.meetUrl}
-          withLabel="Your Loqal realtor partner"
-          contextLabel={callBooking.propertyLabel}
-        />
-      ) : null}
-
     </div>
   );
 }
