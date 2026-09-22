@@ -277,7 +277,7 @@ export function GetStartedCard({ className = "" }: { className?: string }) {
       {
         id: "c-team",
         title: "Meet your Loqal team",
-        desc: "Your lender, your buyer's agent and your Loqal contact — all reachable from the dashboard.",
+        desc: "Your assigned lender and buyer's agent appear here as your files progress. Loqal support is always reachable from the dashboard.",
         icon: "👥",
         done: read.has("c-team"),
         info: true,
