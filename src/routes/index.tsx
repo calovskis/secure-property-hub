@@ -1,4 +1,5 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
+import { Search } from "lucide-react";
 
 import { AppHeader, LanguageMenu } from "@/components/layout/AppHeader";
 import { useAuth } from "@/lib/auth";
@@ -89,15 +90,15 @@ function SectionCard({
 }) {
   const t = useT();
   return (
-    <div className="rounded-lg border border-border bg-card shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
-      <div className="flex items-center justify-between border-b border-border px-5 py-4">
-        <h2 className="text-base font-semibold text-foreground">{t(title)}</h2>
+    <section className="overflow-hidden rounded-lg border border-border bg-card shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+      <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3.5">
+        <h2 className="text-sm font-semibold text-foreground">{t(title)}</h2>
         <button type="button" className="text-xs font-semibold text-brand hover:underline">
           {t(action)}
         </button>
       </div>
-      <div className="p-5">{children}</div>
-    </div>
+      <div className="p-4">{children}</div>
+    </section>
   );
 }
 
@@ -460,8 +461,8 @@ function Dashboard() {
     <div className="min-h-screen bg-background">
       <AppHeader active="Home" />
 
-      <main className="mx-auto max-w-[1400px] px-4 py-8 md:px-7">
-        <div className="mb-6">
+      <main className="mx-auto max-w-[1360px] px-4 py-6 md:px-7 md:py-8">
+        <div className="mb-5">
           <h1 className="min-h-8 text-2xl font-bold tracking-tight text-foreground md:text-[32px]">
             {greeting}
           </h1>
@@ -470,180 +471,144 @@ function Dashboard() {
           </p>
         </div>
 
-        <div className="mb-8 flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
-          <span aria-hidden className="text-xl">
-            🏙️
-          </span>
+        <div className="mb-5 flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 shadow-[0_1px_2px_rgba(0,0,0,0.04)] focus-within:border-brand/40 focus-within:ring-2 focus-within:ring-brand/10">
+          <Search className="size-4 shrink-0 text-muted-foreground" aria-hidden />
           <input
             type="text"
             aria-label={t("Search properties")}
             placeholder={t("Search for a property, address, city, or ID…")}
             className="min-w-40 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
           />
-          <span className="text-xs text-muted-foreground">
+          <span className="hidden text-xs text-muted-foreground sm:block">
             {t("Start typing or")} <span className="cursor-pointer font-semibold text-brand">{t("open full search")}</span>
           </span>
         </div>
 
-        {pendingOffers.length ? (
-          <div className="mb-8 rounded-xl border border-gold/40 bg-gold-tint/50 p-5">
-            <div className="text-sm font-semibold text-foreground">
-              ⏳ Action needed — your pre-approval terms are waiting for your answer
-            </div>
-            <div className="mt-3 space-y-2">
-              {pendingOffers.map((l) => {
-                const next = offerReminders(l).find((r) => !r.due);
-                return (
-                  <div
-                    key={l.id}
-                    className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card px-4 py-3"
-                  >
-                    <div>
-                      <div className="text-sm font-semibold text-foreground">{l.propertyLabel}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {l.terms!.ratePct}% · {l.terms!.termYears}y · {l.terms!.downPaymentPct}% down
-                        {next
-                          ? ` · next reminder ${formatDateTime(next.dueAt)}${next.email ? " (platform + e-mail)" : ""}`
-                          : ""}
+        <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1.65fr)_minmax(320px,0.85fr)]">
+          <div className="min-w-0 space-y-5">
+            {pendingOffers.length ? (
+              <section className="rounded-lg border border-gold/40 bg-gold-tint/50 p-5">
+                <div className="text-sm font-semibold text-foreground">
+                  ⏳ Action needed — your pre-approval terms are waiting for your answer
+                </div>
+                <div className="mt-3 space-y-2">
+                  {pendingOffers.map((l) => {
+                    const next = offerReminders(l).find((r) => !r.due);
+                    return (
+                      <div
+                        key={l.id}
+                        className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card px-4 py-3"
+                      >
+                        <div>
+                          <div className="text-sm font-semibold text-foreground">{l.propertyLabel}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {l.terms!.ratePct}% · {l.terms!.termYears}y · {l.terms!.downPaymentPct}% down
+                            {next
+                              ? ` · next reminder ${formatDateTime(next.dueAt)}${next.email ? " (platform + e-mail)" : ""}`
+                              : ""}
+                          </div>
+                        </div>
+                        <Link
+                          to="/property/$propertyId"
+                          params={{ propertyId: String(l.propertyId) }}
+                          className="rounded-md bg-brand px-4 py-2 text-xs font-semibold text-background hover:bg-brand-soft"
+                        >
+                          Review &amp; respond
+                        </Link>
                       </div>
+                    );
+                  })}
+                </div>
+              </section>
+            ) : null}
+
+            <GetStartedCard />
+            <EntityTipCard />
+            <PriceConfirmedCard />
+
+            <div className="grid gap-5 lg:grid-cols-2">
+              <SectionCard title="Your Recent Properties" action="View all →">
+                {[
+                  { emoji: "🏠", name: "Luxury Apartment - Downtown", loc: "Berlin, Germany", status: "● Active", pending: false },
+                  { emoji: "🏢", name: "Modern Office Space", loc: "Madrid, Spain", status: "● Pending review", pending: true },
+                ].map((p, i) => (
+                  <div key={p.name} className={i > 0 ? "mt-4 border-t border-border pt-4" : ""}>
+                    <div className="flex items-center gap-3">
+                      <div className="flex size-11 shrink-0 items-center justify-center rounded-md bg-brand-tint text-xl" aria-hidden>
+                        {p.emoji}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-sm font-semibold text-foreground">{t(p.name)}</div>
+                        <div className="text-xs text-muted-foreground">{t(p.loc)}</div>
+                      </div>
+                      <span className={`shrink-0 rounded px-2 py-1 text-[10px] font-semibold ${p.pending ? "bg-warning/10 text-warning" : "bg-success/10 text-success"}`}>
+                        {t(p.status)}
+                      </span>
                     </div>
-                    <Link
-                      to="/property/$propertyId"
-                      params={{ propertyId: String(l.propertyId) }}
-                      className="rounded-md bg-brand px-4 py-2 text-xs font-semibold text-background hover:bg-brand-soft"
-                    >
-                      Review &amp; respond
-                    </Link>
                   </div>
-                );
-              })}
+                ))}
+              </SectionCard>
+
+              <SectionCard title="Active Services" action="Manage →">
+                {activeServices.map((s) => (
+                  <ActivityRow key={s.title} icon={s.icon} title={s.title} desc={s.desc} time={s.time} service />
+                ))}
+              </SectionCard>
             </div>
+
+            <SectionCard title="Recent Activity & Updates" action="View all →">
+              {activity.map((a) => (
+                <ActivityRow key={a.title} icon={a.icon} title={a.title} desc={a.desc} time={a.time} service={a.service} />
+              ))}
+            </SectionCard>
           </div>
-        ) : null}
 
-        <div className="mb-8">
-          <GetStartedCard />
-        </div>
+          <aside className="min-w-0 space-y-5">
+            <UpcomingCallsCard />
 
-        <div className="mb-8">
-          <EntityTipCard />
-        </div>
-
-        <div className="mb-8">
-          <PriceConfirmedCard />
-        </div>
-
-        <div className="mb-8">
-          <UpcomingCallsCard />
-        </div>
-
-
-        <div className="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
-          {metrics.map((m) => (
-            <div
-              key={m.label}
-              className="rounded-lg border border-border bg-card p-5 shadow-[0_1px_3px_rgba(0,0,0,0.05)] transition-shadow hover:shadow-md"
-            >
-              <div className={`mb-3 flex size-10 items-center justify-center rounded-md text-lg ${toneClass[m.tone]}`} aria-hidden>
-                {m.icon}
-              </div>
-              <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{t(m.label)}</div>
-              <div className="mt-1 text-3xl font-bold text-foreground">{m.value}</div>
-              <div className={`mt-1 text-xs font-medium ${m.positive ? "text-success" : "text-warning"}`}>
-                {t(m.change)}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="mb-8 grid grid-cols-1 gap-5 lg:grid-cols-2 xl:grid-cols-4">
-          <SectionCard title="Your Recent Properties" action="View all →">
-            {[
-              { emoji: "🏠", name: "Luxury Apartment - Downtown", loc: "Berlin, Germany", status: "● Active", pending: false },
-              { emoji: "🏢", name: "Modern Office Space", loc: "Madrid, Spain", status: "● Pending review", pending: true },
-            ].map((p, i) => (
-              <div key={p.name} className={i > 0 ? "mt-4 border-t border-border pt-4" : ""}>
-                <div className="flex aspect-video items-center justify-center rounded-md bg-gradient-to-br from-brand-tint to-gold-tint text-5xl text-brand">
-                  <span aria-hidden>{p.emoji}</span>
+            <section className="grid grid-cols-2 gap-3" aria-label={t("Portfolio summary")}>
+              {metrics.map((m) => (
+                <div key={m.label} className="rounded-lg border border-border bg-card p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className={`flex size-8 items-center justify-center rounded-md text-sm ${toneClass[m.tone]}`} aria-hidden>
+                      {m.icon}
+                    </div>
+                    <div className="text-xl font-bold text-foreground">{m.value}</div>
+                  </div>
+                  <div className="mt-3 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{t(m.label)}</div>
+                  <div className={`mt-1 text-[11px] font-medium ${m.positive ? "text-success" : "text-warning"}`}>{t(m.change)}</div>
                 </div>
-                <div className="mt-3">
-                  <div className="text-sm font-semibold text-foreground">{t(p.name)}</div>
-                  <div className="text-xs text-muted-foreground">{t(p.loc)}</div>
-                  <span
-                    className={`mt-2 inline-block rounded px-2 py-1 text-[11px] font-semibold ${
-                      p.pending ? "bg-warning/10 text-warning" : "bg-success/10 text-success"
-                    }`}
-                  >
-                    {t(p.status)}
-                  </span>
+              ))}
+            </section>
+
+            <SectionCard title="Upcoming & Due Payments" action="View financials →">
+              {payments.map((p) => (
+                <ActivityRow
+                  key={p.title}
+                  icon={p.icon}
+                  title={p.title}
+                  desc={p.desc}
+                  time={p.time}
+                  right={<span className={`h-fit rounded px-2 py-1 text-[9px] font-semibold uppercase ${badgeTone[p.tone]}`}>{t(p.badge)}</span>}
+                />
+              ))}
+            </SectionCard>
+
+            <SectionCard title="Saved Properties" action="View all →">
+              {savedProperties.map((p) => (
+                <div key={p.title} className="flex items-center justify-between gap-3 border-b border-border py-3 first:pt-0 last:border-none last:pb-0">
+                  <div className="min-w-0">
+                    <div className="truncate text-[13px] font-medium text-foreground">{t(p.title)}</div>
+                    <div className="truncate text-[11px] text-muted-foreground">{p.meta}</div>
+                  </div>
+                  <span className="shrink-0 rounded border border-gold/40 bg-gold-tint px-2 py-1 text-[10px] font-semibold text-gold">{t("★ Saved")}</span>
                 </div>
-              </div>
-            ))}
-          </SectionCard>
+              ))}
+            </SectionCard>
 
-          <SectionCard title="Active Services" action="Manage →">
-            {activeServices.map((s) => (
-              <ActivityRow key={s.title} icon={s.icon} title={s.title} desc={s.desc} time={s.time} service />
-            ))}
-          </SectionCard>
-
-          <SectionCard title="Upcoming & Due Payments" action="View financials →">
-            {payments.map((p) => (
-              <ActivityRow
-                key={p.title}
-                icon={p.icon}
-                title={p.title}
-                desc={p.desc}
-                time={p.time}
-                right={
-                  <span
-                    className={`h-fit rounded px-2 py-1 text-[10px] font-semibold uppercase tracking-wider ${badgeTone[p.tone]}`}
-                  >
-                    {t(p.badge)}
-                  </span>
-                }
-              />
-            ))}
-          </SectionCard>
-
-          <SectionCard title="Saved Properties" action="View all →">
-            {savedProperties.map((p) => (
-              <div
-                key={p.title}
-                className="flex items-center justify-between border-b border-border py-3 first:pt-0 last:border-none last:pb-0"
-              >
-                <div className="flex flex-col">
-                  <span className="text-[13px] font-medium text-foreground">{t(p.title)}</span>
-                  <span className="text-[11px] text-muted-foreground">{p.meta}</span>
-                </div>
-                <span className="rounded border border-gold/40 bg-gold-tint px-2 py-1 text-[11px] font-semibold text-gold">
-                  {t("★ Saved")}
-                </span>
-              </div>
-            ))}
-          </SectionCard>
-        </div>
-
-        <div className="rounded-lg border border-border bg-card shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
-          <div className="flex items-center justify-between border-b border-border px-5 py-4">
-            <h2 className="text-base font-semibold text-foreground">{t("Recent Activity & Updates")}</h2>
-            <button type="button" className="text-xs font-semibold text-brand hover:underline">
-              {t("View all →")}
-            </button>
-          </div>
-          <div className="p-5">
-            {activity.map((a) => (
-              <ActivityRow key={a.title} icon={a.icon} title={a.title} desc={a.desc} time={a.time} service={a.service} />
-            ))}
-          </div>
-        </div>
-
-        <div className="mt-8">
-          <MyPartnersCard />
-        </div>
-
-        <div className="mt-8">
-          <TaskTracker />
+            <MyPartnersCard />
+            <TaskTracker />
+          </aside>
         </div>
       </main>
     </div>
