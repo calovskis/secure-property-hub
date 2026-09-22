@@ -16,7 +16,7 @@ import { CalendarPlus, ExternalLink, Headphones, Landmark, MessageSquareText, Us
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import { useLeads, type MortgageLead } from "@/lib/leads";
-import { usePartnerRequests, type PartnerRequest } from "@/lib/partner-requests";
+import { usePartnerRequests } from "@/lib/partner-requests";
 import {
   PARTNER_ROLE_LABEL,
   assignedPartner,
@@ -88,7 +88,7 @@ export function MyPartnersCard() {
             role,
             lead,
             name: lead.buyerAgent.agentName,
-            email: realtor?.email,
+            ...(realtor?.email ? { email: realtor.email } : {}),
           });
         }
         if (role === "lender" && (lead.lenderPartnerName || lead.terms?.lenderName)) {
