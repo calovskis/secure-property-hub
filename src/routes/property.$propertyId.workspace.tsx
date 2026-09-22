@@ -159,6 +159,7 @@ function PropertyWorkspacePage() {
   }, [latestPurchase, plan, priced]);
   const completed = steps.filter((step) => step.done).length;
   const progress = Math.round((completed / steps.length) * 100);
+  const progressClass = ["w-0", "w-1/5", "w-2/5", "w-3/5", "w-4/5", "w-full"][completed] ?? "w-0";
   const nextStep = steps.find((step) => !step.done)?.label ?? "Closing coordination";
 
   if (!user || user.role !== "client") {
@@ -285,7 +286,7 @@ function PropertyWorkspacePage() {
                 </div>
               ) : null}
               <div className="mb-5 h-2 overflow-hidden rounded-full bg-muted">
-                <div className="h-full bg-brand transition-all" style={{ width: `${progress}%` }} />
+                <div className={`h-full bg-brand transition-all ${progressClass}`} />
               </div>
               <ol className="grid gap-2 sm:grid-cols-5">
                 {steps.map((step, index) => (

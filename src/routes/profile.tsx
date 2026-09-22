@@ -193,7 +193,7 @@ function ApplicationCard({ lead }: { lead: MortgageLead }) {
         ) : null}
 
         <Link
-          to="/property/$propertyId" search={{ view: "deal" }}
+          to={annulled ? "/property/$propertyId" : "/property/$propertyId/workspace"}
           params={{ propertyId: String(lead.propertyId) }}
           className="rounded-md bg-brand px-3 py-1.5 text-xs font-semibold text-background hover:bg-brand-soft"
         >
@@ -594,8 +594,9 @@ function ProfilePage() {
                         </div>
                         {d.propertyId ? (
                           <Link
-                            to="/property/$propertyId" search={{ view: "deal" }}
+                            to="/property/$propertyId"
                             params={{ propertyId: String(d.propertyId) }}
+                            search={{ open: "questionnaire" } as never}
                             className="mt-3 inline-flex rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-brand-tint hover:text-brand"
                           >
                             Continue
