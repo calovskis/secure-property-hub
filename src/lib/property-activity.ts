@@ -111,7 +111,7 @@ function buildActivity(
         label: "Lender requested information from you",
         detail: req.needsDocument ? `${req.question} (document upload required)` : req.question,
         tone: "pending",
-        action: { href: `/property/${lead.propertyId}?open=feedback`, cta: "Respond to lender" },
+        action: { href: `/property/${lead.propertyId}/workspace?open=feedback`, cta: "Respond to lender" },
       });
     }
   }
@@ -141,7 +141,7 @@ function buildActivity(
       tone: lead.clientDecision ? "done" : "pending",
       action: lead.clientDecision
         ? undefined
-        : { href: `/property/${lead.propertyId}?open=feedback`, cta: "Review terms and answer" },
+        : { href: `/property/${lead.propertyId}/workspace?open=feedback`, cta: "Review terms and answer" },
     });
     if (!lead.clientDecision) awaiting += 1;
   }
@@ -213,7 +213,7 @@ function buildActivity(
         label: `Fresh photos delivered (${delivery.photos.length}) — your decision is awaited`,
         detail: delivery.comments || undefined,
         tone: "pending",
-        action: { href: `/property/${lead.propertyId}`, cta: "Review photos and decide" },
+        action: { href: `/property/${lead.propertyId}/workspace`, cta: "Review photos and decide" },
       });
     } else if (delivery.status === "delayed") {
       push(items, {
@@ -247,7 +247,7 @@ function buildActivity(
      Everything exchanged with the realtor on this property file: the request
      to proceed with a price and the agent's answer, property-change requests,
      messages both ways, and the purchase agreement. */
-  const chatHref = `/property/${lead.propertyId}?open=chat`;
+  const chatHref = `/property/${lead.propertyId}/workspace?open=chat`;
 
   for (const p of purchases.filter((x) => x.leadId === lead.id)) {
     push(items, {
@@ -306,7 +306,7 @@ function buildActivity(
           detail: "Directly, or through a US company holding the property.",
           tone: "pending",
           action: {
-            href: `/property/${lead.propertyId}?open=agreement`,
+            href: `/property/${lead.propertyId}/workspace?open=agreement`,
             cta: "Continue",
           },
         });
@@ -339,7 +339,7 @@ function buildActivity(
           "These terms go to the seller, who can confirm them or suggest changes. Once agreed, your agent uploads the agreement for signing.",
         tone: "pending",
         action: {
-          href: `/property/${lead.propertyId}?open=agreement`,
+          href: `/property/${lead.propertyId}/workspace?open=agreement`,
           cta: "Review and confirm the terms",
         },
       });

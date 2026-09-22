@@ -70,7 +70,7 @@ export function FileChatPanel({
     if (otherEmail) {
       const href =
         side === "agent"
-          ? `/property/${propertyId}?open=chat`
+          ? `/property/${propertyId}/workspace?open=chat`
           : `/partner?tab=buyers&focus=${leadId}`;
       notify({
         id: `filechat-${leadId}-${Date.now()}`,
