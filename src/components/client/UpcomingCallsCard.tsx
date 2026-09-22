@@ -8,6 +8,7 @@
  */
 import { useMemo } from "react";
 import { Link } from "@tanstack/react-router";
+import { CalendarDays, Clock3, MapPin, Video } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useLeads } from "@/lib/leads";
 import { usePartnerRequests } from "@/lib/partner-requests";
@@ -60,33 +61,46 @@ export function UpcomingCallsCard({ compact = false }: { compact?: boolean }) {
   if (!rows.length) return null;
 
   return (
-    <section className="rounded-xl border border-border bg-card p-5">
-      <h2 className="text-base font-semibold text-foreground">Your planned calls</h2>
-      <p className="mt-0.5 text-xs text-muted-foreground">
-        Calls and viewings arranged for your properties.
-      </p>
+    <section className="overflow-hidden rounded-lg border border-border bg-card shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+      <div className="flex items-center gap-3 border-b border-border px-5 py-4">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-tint text-brand">
+          <CalendarDays className="size-4" aria-hidden />
+        </span>
+        <div>
+          <h2 className="text-base font-semibold text-foreground">Your planned calls</h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Calls and viewings arranged for your properties.
+          </p>
+        </div>
+      </div>
 
-      <div className={`mt-4 grid gap-3 ${compact ? "" : "md:grid-cols-2"}`}>
+      <div className={`grid gap-3 p-4 ${!compact && rows.length > 1 ? "2xl:grid-cols-2" : "grid-cols-1"}`}>
         {rows.map(({ booking: b, lead, agent }) => {
           const proposed = b.status === "proposed";
           return (
             <div
               key={b.id}
-              className={`rounded-lg border p-4 ${
-                proposed ? "border-gold/40 bg-gold-tint/30" : "border-border"
+              className={`relative overflow-hidden rounded-lg border p-4 ${
+                proposed ? "border-gold/40 bg-gold-tint/30" : "border-brand/20 bg-brand-tint/20"
               }`}
             >
-              <div className="flex items-start gap-2.5">
-                <span aria-hidden className="text-lg">
-                  {KIND_ICON[b.kind]}
+              <div className="flex items-start gap-3">
+                <span aria-hidden className="flex size-10 shrink-0 items-center justify-center rounded-full bg-card text-lg shadow-sm ring-1 ring-border">
+                  {b.kind === "video_tour" ? <Video className="size-4 text-brand" /> : KIND_ICON[b.kind]}
                 </span>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <div className="text-sm font-semibold text-foreground">{KIND_LABEL[b.kind]}</div>
-                  <div className="truncate text-xs text-muted-foreground">{b.propertyLabel}</div>
+                  <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                    <MapPin className="size-3 shrink-0" aria-hidden />
+                    <span className="truncate">{b.propertyLabel}</span>
+                  </div>
                 </div>
+                <span className={`shrink-0 rounded px-2 py-1 text-[10px] font-semibold ${proposed ? "bg-gold-tint text-gold" : "bg-success/10 text-success"}`}>
+                  {proposed ? "Awaiting confirmation" : "Confirmed"}
+                </span>
               </div>
 
-              <div className="mt-3 text-xs text-foreground">
+              <div className="mt-4 rounded-md border border-border/70 bg-card/80 p-3 text-xs text-foreground">
                 {proposed ? (
                   <>
                     <strong>Times proposed</strong> — waiting for {agent} to confirm.
@@ -100,7 +114,11 @@ export function UpcomingCallsCard({ compact = false }: { compact?: boolean }) {
                   </>
                 ) : (
                   <>
-                    <strong>{formatDateTime(b.startAt)}</strong> · 1 hour · with {agent}
+                    <span className="flex items-center gap-1.5 font-semibold">
+                      <Clock3 className="size-3.5 text-brand" aria-hidden />
+                      {formatDateTime(b.startAt)}
+                    </span>
+                    <span className="mt-1 block text-muted-foreground">1 hour · with {agent}</span>
                   </>
                 )}
               </div>

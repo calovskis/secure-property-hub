@@ -606,9 +606,12 @@ function Dashboard() {
               ))}
             </SectionCard>
 
-            <MyPartnersCard />
             <TaskTracker />
           </aside>
+        </div>
+
+        <div className="mt-5">
+          <MyPartnersCard />
         </div>
       </main>
     </div>
