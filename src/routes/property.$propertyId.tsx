@@ -167,8 +167,9 @@ function PropertyDetailPage() {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [callOpen, setCallOpen] = useState(false);
   const [agentOpen, setAgentOpen] = useState(false);
-  const { open: openParam, focus: focusParam } = Route.useSearch();
+  const { open: openParam, focus: focusParam, view: viewParam } = Route.useSearch();
   const { bookings } = useBuyerProcess();
+  const activeView = viewParam || (openParam ? "deal" : "listing");
 
   // A "call confirmed" notification opens the video-call details pop-up.
   const callBooking = bookings.find(
@@ -234,15 +235,16 @@ function PropertyDetailPage() {
       <main className="mx-auto max-w-[1400px] px-4 py-8 md:px-7">
         <Link
           to="/marketplace"
+          search={activeView === "deal" ? { tab: "action" } : undefined}
           className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-brand hover:underline"
         >
-          ← Back to Properties
+          ← Back to {activeView === "deal" ? "My Properties" : "Properties"}
         </Link>
 
         {/* HEADER */}
         <section className="mb-8 flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
           <div>
-            <h1 className="text-2xl font-bold text-foreground md:text-[32px]">
+            <h1 className="text-2xl font-bold text-foreground md:text-[32px]">{activeView === "deal" ? "Deal Workspace: " : ""}
               {property.address}
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">{property.location}</p>
@@ -264,20 +266,37 @@ function PropertyDetailPage() {
                 Edit Property
               </button>
             ) : null}
-            <button
-              type="button"
-              onClick={openQuestionnaire}
-              className="rounded-md border border-gold/30 bg-gold-tint px-4 py-2.5 text-sm font-semibold text-gold hover:bg-gold/20"
-            >
-              Request Mortgage Info
-            </button>
-            <button className="rounded-md bg-brand px-4 py-2.5 text-sm font-semibold text-background hover:bg-brand-soft">
-              Open Deal
-            </button>
-          </div>
+            {activeView === "deal" ? (
+              <Link
+                to="/property/$propertyId"
+                params={{ propertyId: String(property.id) }}
+                search={{ view: "listing" }}
+                className="rounded-md border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-brand-tint"
+              >
+                View Initial Listing
+              </Link>
+            ) : lead ? (
+              <Link
+                to="/property/$propertyId"
+                params={{ propertyId: String(property.id) }}
+                search={{ view: "deal" }}
+                className="rounded-md bg-brand px-4 py-2.5 text-sm font-semibold text-background hover:bg-brand-soft"
+              >
+                Open Deal Workspace
+              </Link>
+            ) : (
+              <button
+                type="button"
+                onClick={openQuestionnaire}
+                className="rounded-md border border-gold/30 bg-gold-tint px-4 py-2.5 text-sm font-semibold text-gold hover:bg-gold/20"
+              >
+                Request Mortgage Info
+              </button>
+            )}
+    </div>
         </section>
 
-        {lead ? (
+        {activeView === "deal" && lead ? ({lead ? (
           priced ? (
             <>
 
@@ -304,7 +323,7 @@ function PropertyDetailPage() {
           ) : (
             <MortgageCaseCard lead={lead} />
           )
-        ) : null}
+        ) : null}) : null}
 
 
         {/* TOP METRICS */}
@@ -642,12 +661,12 @@ function PropertyDetailPage() {
         propertyLabel={`${property.address}, ${property.location}`}
         property={{ id: property.id, price: property.price }}
       />
-      {lead ? (
+      {activeView === "deal" && lead ? ({lead ? (
         <>
           <FeedbackDialog lead={lead} open={feedbackOpen} onOpenChange={setFeedbackOpen} />
           <BuyerAgentDialog lead={lead} open={agentOpen} onOpenChange={setAgentOpen} />
         </>
-      ) : null}
+      ) : null}) : null}
       {callBooking ? (
         <VideoCallDialog
           open={callOpen}
