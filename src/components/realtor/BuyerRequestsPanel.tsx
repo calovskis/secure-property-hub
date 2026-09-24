@@ -129,7 +129,7 @@ export function BuyerRequestsPanel({
             <div className="flex items-center gap-2">
               <StatusPill
                 active={purchaseActive}
-                label={PURCHASE_STATUS_LABEL[purchase.status]}
+                label={REALTOR_PURCHASE_STATUS_LABEL[purchase.status]}
               />
               <span className="text-[10px] text-muted-foreground">
                 {formatDateTime(purchase.createdAt)}
@@ -161,7 +161,7 @@ export function BuyerRequestsPanel({
           ) : null}
           {!purchaseActive ? (
             <p className="mt-1.5 text-muted-foreground">
-              Status: {PURCHASE_STATUS_LABEL[purchase.status]}
+              Status: {REALTOR_PURCHASE_STATUS_LABEL[purchase.status]}
             </p>
           ) : null}
 
