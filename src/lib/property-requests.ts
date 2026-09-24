@@ -421,3 +421,12 @@ export const PURCHASE_STATUS_LABEL: Record<PurchaseRequestStatus, string> = {
   buyer_raised: "Your new price is with your agent",
   withdrawn: "Withdrawn",
 };
+
+/** Realtor-perspective wording — the agent drives these steps, so no coaching copy. */
+export const REALTOR_PURCHASE_STATUS_LABEL: Record<PurchaseRequestStatus, string> = {
+  pending: "Price request — awaiting your answer",
+  price_supported: "Price decided — with the seller",
+  price_pushback: "Awaiting buyer's price answer",
+  buyer_raised: "Buyer proposed a new price",
+  withdrawn: "Withdrawn",
+};
