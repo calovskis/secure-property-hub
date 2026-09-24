@@ -77,13 +77,29 @@ export function UpcomingCallsCard({ compact = false }: { compact?: boolean }) {
       <div className={`grid gap-3 p-4 ${!compact && rows.length > 1 ? "2xl:grid-cols-2" : "grid-cols-1"}`}>
         {rows.map(({ booking: b, lead, agent }) => {
           const proposed = b.status === "proposed";
+          const start = new Date(b.startAt);
+          const now = new Date();
+          const isToday =
+            !proposed &&
+            start.getFullYear() === now.getFullYear() &&
+            start.getMonth() === now.getMonth() &&
+            start.getDate() === now.getDate();
           return (
             <div
               key={b.id}
               className={`relative overflow-hidden rounded-lg border p-4 ${
-                proposed ? "border-gold/40 bg-gold-tint/30" : "border-brand/20 bg-brand-tint/20"
+                isToday
+                  ? "border-brand bg-brand-tint/40 ring-2 ring-brand/40"
+                  : proposed
+                    ? "border-gold/40 bg-gold-tint/30"
+                    : "border-brand/20 bg-brand-tint/20"
               }`}
             >
+              {isToday ? (
+                <span className="absolute right-0 top-0 rounded-bl-lg bg-brand px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-background">
+                  Today
+                </span>
+              ) : null}
               <div className="flex items-start gap-3">
                 <span aria-hidden className="flex size-10 shrink-0 items-center justify-center rounded-full bg-card text-lg shadow-sm ring-1 ring-border">
                   {b.kind === "video_tour" ? <Video className="size-4 text-brand" /> : KIND_ICON[b.kind]}
@@ -95,8 +111,8 @@ export function UpcomingCallsCard({ compact = false }: { compact?: boolean }) {
                     <span className="truncate">{b.propertyLabel}</span>
                   </div>
                 </div>
-                <span className={`shrink-0 rounded px-2 py-1 text-[10px] font-semibold ${proposed ? "bg-gold-tint text-gold" : "bg-success/10 text-success"}`}>
-                  {proposed ? "Awaiting confirmation" : "Confirmed"}
+                <span className={`shrink-0 rounded px-2 py-1 text-[10px] font-semibold ${isToday ? "mt-4 bg-brand text-background" : proposed ? "bg-gold-tint text-gold" : "bg-success/10 text-success"}`}>
+                  {isToday ? "Happening today" : proposed ? "Awaiting confirmation" : "Confirmed"}
                 </span>
               </div>
 
