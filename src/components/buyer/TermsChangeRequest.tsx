@@ -4,7 +4,7 @@
  * inputs the agent used when preparing them.
  */
 import { useMemo, useState } from "react";
-import { Check } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 import { DateInput } from "@/components/form/DateInput";
 import { formatDate } from "@/lib/dates";
 import { formatPrice, getProperty } from "@/data/properties";
@@ -301,29 +301,39 @@ export function TermsChangeRequest({
         <p className="text-sm font-semibold text-foreground">What would you like to change?</p>
         <p className="text-xs text-muted-foreground">Tick the terms you want different, then set what you'd prefer.</p>
       </div>
-      <div className="flex flex-wrap gap-1.5">
+      <ul className="divide-y divide-border rounded-md border border-border">
         {keys.map((k) => {
           const on = picked.includes(k);
           return (
-            <button key={k} type="button" onClick={() => toggle(k)} className={`inline-flex items-center gap-1 ${chip(on)}`} aria-pressed={on}>
-              {on ? <Check className="h-3 w-3" aria-hidden /> : null}
-              {describe[k].label}
-            </button>
+            <li key={k} className={on ? "bg-brand-tint/30" : undefined}>
+              <button
+                type="button"
+                onClick={() => toggle(k)}
+                aria-pressed={on}
+                className="flex w-full items-center gap-3 px-3 py-2.5 text-left hover:bg-brand-tint/40"
+              >
+                <span
+                  className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
+                    on ? "border-brand bg-brand text-background" : "border-input bg-background"
+                  }`}
+                  aria-hidden
+                >
+                  {on ? <Check className="h-3 w-3" /> : null}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-medium text-foreground">{describe[k].label}</span>
+                  {k !== "other" ? (
+                    <span className="block truncate text-[11px] text-muted-foreground">Now: {describe[k].text(terms)}</span>
+                  ) : null}
+                </span>
+                <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${on ? "rotate-180" : ""}`} aria-hidden />
+              </button>
+              {on ? <div className="px-3 pb-3 pl-10">{editor(k)}</div> : null}
+            </li>
           );
         })}
-      </div>
+      </ul>
 
-      {picked.map((k) => (
-        <div key={k} className="space-y-2 rounded-md border border-brand/30 bg-brand-tint/30 p-3">
-          <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <span className="text-xs font-semibold uppercase tracking-wide text-brand">{describe[k].label}</span>
-            {k !== "other" ? (
-              <span className="text-[11px] text-muted-foreground">Now: {describe[k].text(terms)}</span>
-            ) : null}
-          </div>
-          {editor(k)}
-        </div>
-      ))}
 
       {changes.length ? (
         <div className="rounded-md border border-border p-3 text-xs">
