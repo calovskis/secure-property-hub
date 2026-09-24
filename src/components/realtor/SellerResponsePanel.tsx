@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { ArrowRight, Check, CheckCircle2, ChevronDown, FileSignature, FileText, Handshake, Link2, MessageSquareQuote, Pencil, Scale, Upload } from "lucide-react";
+import { ArrowRight, Check, CheckCircle2, ChevronDown, Download, FileSignature, FileText, Handshake, Link2, MessageSquareQuote, Pencil, Scale, Upload } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { formatDateTime } from "@/lib/dates";
 import { notify } from "@/lib/notifications";
 import { formatPrice } from "@/data/properties";
-import { Download } from "lucide-react";
 import { useEntityPlan } from "@/lib/entity-structure";
 import { termsSummary, type AgreementTerms } from "@/lib/purchase-agreement";
 import { storeAgreementFile, downloadAgreementFile } from "@/lib/agreement-files";
