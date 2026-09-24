@@ -111,8 +111,8 @@ export function UpcomingCallsCard({ compact = false }: { compact?: boolean }) {
                     <span className="truncate">{b.propertyLabel}</span>
                   </div>
                 </div>
-                <span className={`shrink-0 rounded px-2 py-1 text-[10px] font-semibold ${proposed ? "bg-gold-tint text-gold" : "bg-success/10 text-success"}`}>
-                  {proposed ? "Awaiting confirmation" : "Confirmed"}
+                <span className={`shrink-0 rounded px-2 py-1 text-[10px] font-semibold ${isToday ? "mt-4 bg-brand text-background" : proposed ? "bg-gold-tint text-gold" : "bg-success/10 text-success"}`}>
+                  {isToday ? "Happening today" : proposed ? "Awaiting confirmation" : "Confirmed"}
                 </span>
               </div>
 
