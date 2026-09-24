@@ -37,6 +37,33 @@ type NotificationState = { items: AppNotification[] };
 
 const STORAGE_KEY = "loqal.notifications.v1";
 const MAX_ITEMS = 300;
+/* Ids the recipient has already read. Kept separately so a derived notice that
+   was trimmed from the list and re-derived later never comes back unread. */
+const READ_KEY = "loqal.notifications.read.v1";
+const MAX_READ = 3000;
+let readIds: Set<string> | null = null;
+function loadRead(): Set<string> {
+  if (readIds) return readIds;
+  try {
+    readIds = new Set(JSON.parse(window.localStorage.getItem(READ_KEY) ?? "[]") as string[]);
+  } catch {
+    readIds = new Set();
+  }
+  return readIds;
+}
+function rememberRead(keys: string[]) {
+  if (!keys.length) return;
+  const set = loadRead();
+  keys.forEach((k) => set.add(k));
+  const arr = [...set].slice(-MAX_READ);
+  readIds = new Set(arr);
+  try {
+    window.localStorage.setItem(READ_KEY, JSON.stringify(arr));
+  } catch {
+    /* ignore */
+  }
+}
+const readKey = (i: { to: string; id: string }) => `${i.to}|${i.id}`;
 
 let state: NotificationState | null = null;
 const listeners = new Set<() => void>();
@@ -55,6 +82,7 @@ function load(): NotificationState {
 }
 
 function commit(next: NotificationState) {
+  rememberRead(next.items.filter((i) => i.readAt).map(readKey));
   state = { items: next.items.slice(0, MAX_ITEMS) };
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -71,7 +99,11 @@ export function notify(n: Omit<AppNotification, "createdAt"> & { createdAt?: str
   const entry: AppNotification = {
     ...n,
     createdAt: n.createdAt ?? existing?.createdAt ?? new Date().toISOString(),
-    ...(existing?.readAt ? { readAt: existing.readAt } : {}),
+    ...(existing?.readAt
+      ? { readAt: existing.readAt }
+      : loadRead().has(readKey(n))
+        ? { readAt: new Date().toISOString() }
+        : {}),
   };
   if (
     existing &&
@@ -80,7 +112,8 @@ export function notify(n: Omit<AppNotification, "createdAt"> & { createdAt?: str
     existing.severity === entry.severity &&
     existing.completed === entry.completed &&
     existing.badge === entry.badge &&
-    existing.href === entry.href
+    existing.href === entry.href &&
+    Boolean(existing.readAt) === Boolean(entry.readAt)
   ) {
     return; // nothing changed — avoid render loops
   }
