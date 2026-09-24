@@ -854,7 +854,7 @@ function SellerStage({ plan, leadId, agentName, counterNote, setCounterNote, onC
             {plan.agreementDoc ? (
               <button
                 type="button"
-                onClick={() => { if (!downloadAgreementFile(leadId)) toast("The uploaded copy is only available on the device it was uploaded from."); }}
+                onClick={() => { void downloadAgreementFile(leadId, plan.agreementDoc).then((ok) => { if (!ok) toast.error("The agreement copy isn't available yet. Please ask your agent to re-upload it."); }); }}
                 className={btnGhost}
               >
                 Download the agreement copy

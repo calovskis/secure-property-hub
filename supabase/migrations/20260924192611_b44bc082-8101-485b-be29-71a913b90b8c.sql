@@ -1,0 +1,3 @@
+CREATE POLICY "Signed-in users can upload purchase agreements" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'purchase-agreements');
+CREATE POLICY "Signed-in users can read purchase agreements" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'purchase-agreements');
+CREATE POLICY "Signed-in users can replace purchase agreements" ON storage.objects FOR UPDATE TO authenticated USING (bucket_id = 'purchase-agreements');

@@ -1,71 +1,34 @@
 /**
- * Storage of the actual purchase agreement files the buyer's agent uploads.
- *
- * The entity plan only carries the file name; the bytes live here so the buyer
- * (and anyone reviewing the file) can download the uploaded copy of the
- * agreement. Files are kept per lead (one per property purchase file).
+ * Purchase agreement files uploaded by the buyer's agent.
+ * Stored in private backend file storage under `<leadId>/current`, so the
+ * buyer (on any device) can download the copy the agent uploaded.
  */
+import { supabase } from "@/integrations/supabase/client";
 
-const KEY = "loqal.agreement-files.v1";
+const BUCKET = "purchase-agreements";
+const pathFor = (leadId: string) => `${leadId}/current`;
 
-export type StoredAgreementFile = {
-  name: string;
-  type: string;
-  /** Data URL with the file contents. */
-  dataUrl: string;
-  savedAt: string;
-};
-
-type Store = Record<string, StoredAgreementFile>;
-
-function read(): Store {
-  if (typeof window === "undefined") return {};
-  try {
-    return JSON.parse(window.localStorage.getItem(KEY) ?? "{}") as Store;
-  } catch {
-    return {};
-  }
-}
-
-function write(store: Store) {
-  try {
-    window.localStorage.setItem(KEY, JSON.stringify(store));
-  } catch {
-    /* Quota exceeded — the name still shows, only the download is unavailable. */
-  }
-}
-
-/** Read a file input selection and keep the uploaded copy for this lead. */
+/** Upload the selected file as the current agreement copy for this lead. */
 export async function storeAgreementFile(leadId: string, file: File) {
-  const dataUrl = await new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result ?? ""));
-    reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(file);
+  const { error } = await supabase.storage.from(BUCKET).upload(pathFor(leadId), file, {
+    upsert: true,
+    contentType: file.type || "application/octet-stream",
+    metadata: { name: file.name },
   });
-  const store = read();
-  store[leadId] = {
-    name: file.name,
-    type: file.type || "application/octet-stream",
-    dataUrl,
-    savedAt: new Date().toISOString(),
-  };
-  write(store);
+  if (error) throw error;
 }
 
-export function getAgreementFile(leadId: string): StoredAgreementFile | undefined {
-  return read()[leadId];
-}
-
-/** Trigger a browser download of the stored copy. Returns false when absent. */
-export function downloadAgreementFile(leadId: string, fallbackName = "purchase-agreement") {
-  const stored = getAgreementFile(leadId);
-  if (!stored) return false;
+/** Download the stored copy. Returns false when it cannot be found. */
+export async function downloadAgreementFile(leadId: string, fileName = "purchase-agreement") {
+  const { data, error } = await supabase.storage.from(BUCKET).download(pathFor(leadId));
+  if (error || !data) return false;
+  const url = URL.createObjectURL(data);
   const a = document.createElement("a");
-  a.href = stored.dataUrl;
-  a.download = stored.name || fallbackName;
+  a.href = url;
+  a.download = fileName;
   document.body.appendChild(a);
   a.click();
   a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
   return true;
 }
