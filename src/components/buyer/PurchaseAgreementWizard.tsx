@@ -618,6 +618,20 @@ export function PurchaseAgreementWizard({
                     </li>
                   ))}
                 </ul>
+                {plan?.termsChangeResponses?.length && !plan?.termsConfirmedAt ? (
+                  <div className="rounded-md border border-gold/50 bg-gold-tint/30 p-3 text-xs">
+                    <p className="font-semibold text-foreground">{agentName} answered your change requests</p>
+                    <ul className="mt-2 space-y-1.5">
+                      {plan.termsChangeResponses.map((r) => (
+                        <li key={r.label} className="flex flex-wrap items-baseline gap-2">
+                          <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase ${r.decision === "declined" ? "bg-destructive/15 text-destructive" : r.decision === "accepted" ? "bg-success/15 text-success" : "bg-gold text-background"}`}>{r.decision === "accepted" ? "Confirmed" : r.decision === "adjusted" ? "Adjusted" : "Not possible"}</span>
+                          <span className="font-semibold text-foreground">{r.label}</span>
+                          {r.decision === "declined" && r.reason ? <span className="text-muted-foreground">— {r.reason}</span> : null}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
                 {plan?.termsNote ? (
                   <p className="rounded-md bg-muted/60 px-3 py-2 text-xs italic text-muted-foreground">
                     {agentName}: {plan.termsNote}
