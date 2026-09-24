@@ -67,6 +67,8 @@ export type EntityPlan = {
   /** Buyer asked the agent to change something before confirming. */
   termsChangeRequestedAt?: string | undefined;
   termsChangeNote?: string | undefined;
+  /** The exact terms the buyer asked to change: label, current value, requested value. */
+  termsChangeItems?: { label: string; from: string; to: string }[] | undefined;
   /** Furthest step the buyer reached in the window (1–2). */
   wizardStep?: number | undefined;
   /** The purchase agreement the buyer's agent uploaded for review and signing. */
