@@ -14,11 +14,67 @@ import { formatDate } from "@/lib/dates";
 export type PaymentMode = "cash" | "financed" | "seller_finance";
 export type PossessionMode = "at_closing" | "by_agreement" | "seller_rent_back";
 export type HomeWarrantyMode = "none" | "seller" | "buyer";
+export type CommissionPayer = "seller" | "buyer" | "split";
+export type DepositMode = "pct" | "custom";
+
+/**
+ * States where an attorney customarily handles or reviews the purchase
+ * (attorney closing / attorney review states). Elsewhere attorney review
+ * is not part of the terms.
+ */
+export const ATTORNEY_STATES = ["CT", "DE", "DC", "GA", "MA", "NJ", "NY", "NC", "SC", "WV"] as const;
+export function isAttorneyState(code?: string | null) {
+  return Boolean(code && (ATTORNEY_STATES as readonly string[]).includes(code.toUpperCase()));
+}
+/** Two-letter state from a "City, ST" location. */
+export function stateFromLocation(location?: string) {
+  const m = location?.match(/,\s*([A-Z]{2})\b/);
+  return m?.[1];
+}
+
+export type PropertyCategory = "house" | "condo" | "multi_family" | "commercial" | "industrial" | "land";
+export const PROPERTY_CATEGORY_LABEL: Record<PropertyCategory, string> = {
+  house: "House", condo: "Apartment / condo", multi_family: "Multi-family", commercial: "Commercial (retail, office, garage)", industrial: "Industrial / warehouse", land: "Land",
+};
+export function propertyCategory(type?: string): PropertyCategory {
+  const t = (type ?? "").toLowerCase();
+  if (t.includes("land") || t.includes("lot")) return "land";
+  if (t.includes("industrial") || t.includes("warehouse")) return "industrial";
+  if (t.includes("commercial") || t.includes("retail") || t.includes("office") || t.includes("garage") || t.includes("mall")) return "commercial";
+  if (t.includes("multi")) return "multi_family";
+  if (t.includes("condo") || t.includes("apartment")) return "condo";
+  return "house";
+}
+
+/** Inspection types that apply to each kind of property. */
+export const INSPECTION_TYPES: Record<PropertyCategory, string[]> = {
+  house: ["General home inspection", "Wood-destroying insects / termite", "Roof", "Radon", "Mold", "Sewer line (camera scope)", "HVAC", "Electrical", "Plumbing", "Foundation / structural", "Chimney", "Well water & septic", "Pool / spa", "Lead-based paint (pre-1978)"],
+  condo: ["Unit interior inspection", "HVAC", "Electrical", "Plumbing", "Mold", "Radon", "Termite / pests", "Association documents & building condition", "Lead-based paint (pre-1978)"],
+  multi_family: ["General inspection of all units", "Roof", "Foundation / structural", "HVAC", "Electrical", "Plumbing", "Sewer line", "Termite / pests", "Fire & life safety", "Code compliance / permits", "Rent roll & lease audit", "Mold", "Lead-based paint (pre-1978)"],
+  commercial: ["Property condition assessment (PCA)", "Phase I environmental site assessment", "Roof", "HVAC / mechanical", "Electrical", "Plumbing", "Structural / parking structure", "ADA accessibility", "Fire & life safety", "Zoning & code compliance", "Elevators / escalators", "Asbestos survey"],
+  industrial: ["Property condition assessment (PCA)", "Phase I environmental site assessment", "Phase II environmental (soil / groundwater)", "Roof", "Structural / slab", "Electrical capacity", "Fire suppression", "Loading docks & doors", "Zoning & code compliance", "Asbestos survey"],
+  land: ["Land survey / boundary", "Soil / percolation test", "Phase I environmental site assessment", "Wetlands / flood zone", "Zoning & permitted use", "Utilities & access", "Topography"],
+};
 
 /** The commercial terms the agent proposes and the buyer confirms. */
 export type AgreementTerms = {
   /** Earnest money as a share of the price. */
   depositPct: number;
+  depositMode: DepositMode;
+  /** Custom earnest money in USD when depositMode is "custom". */
+  depositAmount: number;
+  /** Whether the property is in an attorney state (attorney review applies). */
+  attorneyApplicable: boolean;
+  inspectionTypes: string[];
+  /** Deadlines, in days from signing the agreement. */
+  inspectionDeadlineDays: number;
+  appraisalDeadlineDays: number;
+  mortgageSubmissionDays: number;
+  finalLoanApprovalDays: number;
+  offerExpiresDays: number;
+  commissionPayer: CommissionPayer;
+  /** Share of the commission the seller pays when split, in %. */
+  commissionSellerSharePct: number;
   /** Business days after signing to pay the deposit. */
   depositDays: number;
   /** Target closing date, ISO. */
@@ -62,6 +118,17 @@ export function defaultTerms(financed: boolean): AgreementTerms {
   return {
     depositPct: 10,
     depositDays: 5,
+    depositMode: "pct",
+    depositAmount: 0,
+    attorneyApplicable: true,
+    inspectionTypes: [],
+    inspectionDeadlineDays: 14,
+    appraisalDeadlineDays: 21,
+    mortgageSubmissionDays: 10,
+    finalLoanApprovalDays: 45,
+    offerExpiresDays: 3,
+    commissionPayer: "seller",
+    commissionSellerSharePct: 50,
     closingDate: isoAfter(60),
     possession: "at_closing",
     attorneyReviewDays: 3,
@@ -115,62 +182,52 @@ export const HOME_WARRANTY_LABEL: Record<HomeWarrantyMode, string> = {
   buyer: "Buyer to purchase",
 };
 
+export function depositAmount(price: number, t: AgreementTerms) {
+  return t.depositMode === "custom" ? Math.round(t.depositAmount || 0) : Math.round((price * t.depositPct) / 100);
+}
+
+export function commissionText(t: AgreementTerms) {
+  if (t.commissionPayer === "buyer") return `${t.commissionPct}% of the price, paid by the buyer`;
+  if (t.commissionPayer === "split") return `${t.commissionPct}% of the price, split — seller ${t.commissionSellerSharePct}% / buyer ${100 - t.commissionSellerSharePct}%`;
+  return `${t.commissionPct}% of the price, paid by the seller`;
+}
+
+const days = (n: number) => `${n} day${n === 1 ? "" : "s"} from signing the agreement`;
+
 /** Plain-language lines describing the proposed terms, shown to both sides. */
 export function termsSummary(price: number, t: AgreementTerms): { label: string; value: string }[] {
   const terms = completeTerms(t, t.paymentMode === "financed");
-  const deposit = Math.round((price * terms.depositPct) / 100);
+  const deposit = depositAmount(price, terms);
   return [
     { label: "Purchase price", value: formatPrice(Math.round(price)) },
     {
       label: "Deposit (earnest money)",
-      value: `${formatPrice(deposit)} (${terms.depositPct}%), paid within ${terms.depositDays} business days and held in escrow`,
+      value: `${formatPrice(deposit)}${terms.depositMode === "custom" ? " (custom amount)" : ` (${terms.depositPct}%)`}, paid within ${terms.depositDays} business days and held in escrow`,
     },
     { label: "Target closing date", value: formatDate(terms.closingDate) },
     { label: "Possession / key handover", value: POSSESSION_LABEL[terms.possession] },
     { label: "How the purchase is paid", value: PAYMENT_LABEL[terms.paymentMode] },
-    {
-      label: "Attorney review",
-      value: `${terms.attorneyReviewDays} business days for each side's attorney`,
-    },
+    ...(terms.attorneyApplicable ? [{ label: "Attorney review", value: `${terms.attorneyReviewDays} business days for each side's attorney` }] : []),
     {
       label: "Inspection protection",
       value: terms.inspection
-        ? `Included — through ${formatDate(terms.inspectionDeadline)}, with the right to ask for repairs or walk away`
+        ? `Included — within ${days(terms.inspectionDeadlineDays)}${terms.inspectionTypes.length ? `: ${terms.inspectionTypes.join(", ")}` : ""}`
         : "Not included — the property is taken as is",
     },
-    {
-      label: "Appraisal protection",
-      value: terms.appraisal
-        ? `Included — appraisal due ${formatDate(terms.appraisalDeadline)}`
-        : "Not included",
-    },
+    { label: "Appraisal protection", value: terms.appraisal ? `Included — appraisal within ${days(terms.appraisalDeadlineDays)}` : "Not included" },
     {
       label: "Financing protection",
       value: terms.financing
-        ? `Included — submit by ${formatDate(terms.mortgageSubmissionDeadline)}; final approval by ${formatDate(terms.finalLoanApprovalDeadline)}`
+        ? `Included — mortgage submitted within ${days(terms.mortgageSubmissionDays)}; final approval within ${days(terms.finalLoanApprovalDays)}`
         : "Not included",
     },
-    { label: "Title and lien review", value: terms.titleReview ? `Included — objections by ${formatDate(terms.titleObjectionDeadline)}` : "Not included" },
-    { label: "Survey / boundary review", value: terms.surveyReview ? "Included" : "Not included" },
-    { label: "Due diligence / HOA review", value: terms.dueDiligenceReview ? "Included" : "Not included" },
-    {
-      label: "Right to transfer the purchase",
-      value: terms.assignable
-        ? "Yes — the purchase can be transferred to your company or another buyer"
-        : "No",
-    },
-    {
-      label: "Buyer's agent commission",
-      value: `${terms.commissionPct}% of the price, paid by the seller`,
-    },
+    { label: "Buyer's agent commission", value: commissionText(terms) },
     { label: "Included with the property", value: terms.includedItems || "as listed" },
     { label: "Excluded from the sale", value: terms.excludedItems || "none" },
     { label: "Seller concessions / credits", value: terms.sellerConcessions || "None" },
     { label: "Home warranty", value: HOME_WARRANTY_LABEL[terms.homeWarranty] },
-    { label: "Closing costs", value: terms.closingCostsAllocation || "As customary" },
-    { label: "Prorations and adjustments", value: terms.prorationsNote || "As agreed at closing" },
-    { label: "Offer expires", value: formatDate(terms.agreementExpiresAt) },
-    ...(terms.specialTerms ? [{ label: "Special terms and disclosures", value: terms.specialTerms }] : []),
+    { label: "Offer expires", value: days(terms.offerExpiresDays) },
+    ...(terms.specialTerms ? [{ label: "Additional terms", value: terms.specialTerms }] : []),
   ];
 }
 
@@ -178,7 +235,7 @@ export function termsSummary(price: number, t: AgreementTerms): { label: string;
 export function termsChips(price: number, t: AgreementTerms): string[] {
   const terms = completeTerms(t, t.paymentMode === "financed");
   return [
-    `Deposit ${terms.depositPct}%`,
+    terms.depositMode === "custom" ? `Deposit ${formatPrice(depositAmount(price, terms))}` : `Deposit ${terms.depositPct}%`,
     `Closing ${formatDate(terms.closingDate)}`,
     PAYMENT_LABEL[terms.paymentMode],
     terms.inspection ? "Inspection protection" : "No inspection protection",
