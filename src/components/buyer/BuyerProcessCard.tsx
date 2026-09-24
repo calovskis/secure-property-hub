@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import type React from "react";
+import { createPortal } from "react-dom";
 import { Link, useSearch } from "@tanstack/react-router";
 import {
   CLIENT_ACTION_LABEL,
@@ -66,7 +68,15 @@ const ACTION_TILES: { id: ClientNextAction; title: string; blurb: string }[] = [
  * status, kickoff tracking, delivered photos with the agent's
  * recommendations, and the buyer's next-step decisions.
  */
-export function BuyerProcessCard({ lead }: { lead: MortgageLead }) {
+export function BuyerProcessCard({ lead, teamSlotId }: { lead: MortgageLead; teamSlotId?: string }) {
+  /* When a slot id is given (property workspace), the agent contact/actions
+     render inside the "Property team" side card instead of this card. */
+  const [slotEl, setSlotEl] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    if (teamSlotId) setSlotEl(document.getElementById(teamSlotId));
+  }, [teamSlotId]);
+  const placeAgentActions = (node: React.ReactNode) =>
+    teamSlotId ? (slotEl ? createPortal(node, slotEl) : null) : node;
   const { photos, bookings, actions, addClientAction, bookCall } = useBuyerProcess();
   const { requests: partnerRegistrations } = usePartnerRequests();
   const [setupOpen, setSetupOpen] = useState(false);
@@ -188,7 +198,7 @@ export function BuyerProcessCard({ lead }: { lead: MortgageLead }) {
 
   return (
     <div className="mb-6 rounded-lg border border-brand/30 bg-card p-5">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className={teamSlotId ? "hidden" : "flex flex-wrap items-center justify-between gap-2"}>
         <h4 className="text-sm font-semibold text-foreground">Your purchase team</h4>
         <div className="flex items-center gap-2">
           {chatUnread ? (
@@ -270,7 +280,16 @@ export function BuyerProcessCard({ lead }: { lead: MortgageLead }) {
             </div>
           ) : null}
 
-          <div id="buyer-agent-file" className="mt-4 scroll-mt-24 rounded-lg border border-brand/40 bg-brand-tint/40 p-4">
+          {placeAgentActions(
+          <div id="buyer-agent-file" className={`${teamSlotId ? "" : "mt-4 "}scroll-mt-24 rounded-lg border border-brand/40 bg-brand-tint/40 p-4`}>
+            {teamSlotId ? (
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <span className="text-xs font-semibold text-foreground">Your file with {agentDisplay ?? "your agent"}</span>
+                {chatUnread ? (
+                  <span className="rounded-full bg-brand px-2 py-0.5 text-[10px] font-semibold text-background">{chatUnread} new</span>
+                ) : null}
+              </div>
+            ) : null}
             <p className="text-xs text-muted-foreground">
               {latestPurchase
                 ? PURCHASE_STATUS_LABEL[latestPurchase.status]
@@ -299,6 +318,7 @@ export function BuyerProcessCard({ lead }: { lead: MortgageLead }) {
               </button>
             </div>
           </div>
+          )}
 
           <RealtorFileDialog
             lead={lead}

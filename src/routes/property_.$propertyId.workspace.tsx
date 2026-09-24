@@ -337,7 +337,7 @@ function PropertyWorkspacePage() {
                 </div>
               ) : null}
               {priced ? (
-                lead.buyerAgent ? <BuyerProcessCard lead={lead} /> : <MortgageCaseCard lead={lead} />
+                lead.buyerAgent ? <BuyerProcessCard lead={lead} teamSlotId="workspace-agent-actions" /> : <MortgageCaseCard lead={lead} />
               ) : (
                 <MortgageCaseCard lead={lead} />
               )}
@@ -381,6 +381,7 @@ function PropertyWorkspacePage() {
                     </div>
                   </div>
                 ))}
+                <div id="workspace-agent-actions" className="empty:hidden" />
                 <div className="flex items-center gap-3 rounded-md border border-border bg-background p-3">
                   <span className="flex size-9 items-center justify-center rounded-full bg-gold-tint text-gold"><Building2 className="size-4" aria-hidden /></span>
                   <div><div className="text-xs font-semibold text-foreground">Loqal support</div><div className="text-[11px] text-muted-foreground">Available for coordination</div></div>
