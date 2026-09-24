@@ -374,7 +374,7 @@ function PropertyWorkspacePage() {
             <WorkspaceCard title="Property team">
               <div className="space-y-3">
                  <div id="workspace-agent-actions" className="empty:hidden" />
-                 {lender ? (
+                 {lead ? (
                    <div>
                      <Button
                        type="button"
@@ -385,8 +385,8 @@ function PropertyWorkspacePage() {
                      >
                        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-tint text-brand"><Landmark className="size-4" aria-hidden /></span>
                        <span className="min-w-0 flex-1">
-                         <span className="block truncate text-xs font-semibold text-foreground">{lenderDisplay}</span>
-                         <span className="block truncate text-[11px] font-normal text-muted-foreground">Mortgage lender{lender.companyName ? ` · ${lender.companyName}` : ""}</span>
+                         <span className="block truncate text-xs font-semibold text-foreground">{lenderDisplay ?? "Your mortgage lender"}</span>
+                         <span className="block truncate text-[11px] font-normal text-muted-foreground">Mortgage lender{lender?.companyName ? ` · ${lender.companyName}` : ""}</span>
                        </span>
                        <ChevronDown className={`size-4 shrink-0 text-muted-foreground transition-transform ${lenderActionsOpen ? "rotate-180" : ""}`} aria-hidden />
                      </Button>
