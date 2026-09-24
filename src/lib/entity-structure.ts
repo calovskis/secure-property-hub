@@ -92,6 +92,8 @@ export type EntityPlan = {
   agreementDoc?: string | undefined;
   agreementUploadedAt?: string | undefined;
   agreementUploadedBy?: string | undefined;
+  /** Earlier agreement/DocuSign versions, kept on file when the agent edits them. */
+  agreementHistory?: { doc: string; url: string; sentAt: string; by: string }[] | undefined;
   /** Buyer signed the uploaded purchase agreement. */
   agreementSignedAt?: string | undefined;
   agreementSignedBy?: string | undefined;
