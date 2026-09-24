@@ -56,11 +56,22 @@ export function realtorFileStatus(i: Input): RealtorFileStatus {
 
   if (plan?.agreementSignedAt) return { label: "Agreement signed", tone: "done" };
   if (plan?.agreementUploadedAt) return { label: "Awaiting buyer signature", tone: "waiting" };
-  if (plan?.termsConfirmedAt)
+  if (plan?.termsConfirmedAt && plan.sellerAgreedAt)
     return act(
       "Upload the agreement",
-      "Upload the purchase agreement",
-      "The buyer confirmed the terms. Once the seller agrees, upload the agreement for signing.",
+      "Upload the agreement and DocuSign link",
+      "The seller agreed. Upload the purchase agreement and share the DocuSign link within 48 hours.",
+      "requests",
+    );
+  if (plan?.termsConfirmedAt && plan.sellerStatus === "countered" && !plan.sellerCounterBuyerDecision)
+    return { label: "Counter-offer with buyer", tone: "waiting" };
+  if (plan?.termsConfirmedAt)
+    return act(
+      plan.sellerCounterBuyerDecision === "declined" ? "Buyer declined counter-offer" : "Record the seller's answer",
+      "Record the seller's answer",
+      plan.sellerCounterBuyerDecision === "declined"
+        ? `The buyer declined the counter-offer${plan.sellerCounterBuyerNote ? `: ${plan.sellerCounterBuyerNote}` : "."}`
+        : "The buyer confirmed the terms. Record whether the seller accepted or countered.",
       "requests",
     );
 

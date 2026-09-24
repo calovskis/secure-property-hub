@@ -73,6 +73,21 @@ export type EntityPlan = {
   termsChangeResponses?: { label: string; to: string; decision: "accepted" | "adjusted" | "declined"; reason?: string | undefined }[] | undefined;
   /** Furthest step the buyer reached in the window (1–2). */
   wizardStep?: number | undefined;
+  /** Seller side's answer to the buyer-confirmed terms. */
+  sellerStatus?: "accepted" | "countered" | undefined;
+  sellerRespondedAt?: string | undefined;
+  /** Seller's counter-offer: each amended term, current → seller's value. */
+  sellerCounterItems?: { label: string; from: string; to: string }[] | undefined;
+  sellerCounterNote?: string | undefined;
+  sellerCounterDocs?: string[] | undefined;
+  /** Buyer's answer to the seller's counter-offer. */
+  sellerCounterBuyerDecision?: "accepted" | "declined" | undefined;
+  sellerCounterBuyerAt?: string | undefined;
+  sellerCounterBuyerNote?: string | undefined;
+  /** Both sides agreed the terms — the agreement follows within 48 hours. */
+  sellerAgreedAt?: string | undefined;
+  /** DocuSign envelope link the agent shares for e-signing. */
+  agreementDocusignUrl?: string | undefined;
   /** The purchase agreement the buyer's agent uploaded for review and signing. */
   agreementDoc?: string | undefined;
   agreementUploadedAt?: string | undefined;
