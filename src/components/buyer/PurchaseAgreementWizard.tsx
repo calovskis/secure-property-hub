@@ -15,7 +15,10 @@
  */
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { CheckCircle2, Building2, ClipboardCheck } from "lucide-react";
+import { CheckCircle2, Building2, ClipboardCheck, Phone } from "lucide-react";
+import { TermsChangeRequest, type TermsChange } from "@/components/buyer/TermsChangeRequest";
+import { CallScheduler } from "@/components/buyer/CallScheduler";
+import { useBuyerProcess } from "@/lib/buyer-process";
 import {
   Dialog,
   DialogContent,
@@ -82,8 +85,11 @@ export function PurchaseAgreementWizard({
   const [entityName, setEntityName] = useState(plan?.entityName ?? "");
   const [entityState, setEntityState] = useState(plan?.entityState ?? "");
   const [entityEin, setEntityEin] = useState(plan?.entityEin ?? "");
-  const [changeNote, setChangeNote] = useState("");
   const [askingChange, setAskingChange] = useState(false);
+  const [askingCall, setAskingCall] = useState(false);
+  const [callSlot, setCallSlot] = useState<string | null>(null);
+  const [callMeetUrl, setCallMeetUrl] = useState<string | null>(null);
+  const { bookCall } = useBuyerProcess();
   const [signature, setSignature] = useState("");
 
   const path = plan?.path;
@@ -225,26 +231,55 @@ export function PurchaseAgreementWizard({
     });
   }
 
-  function askChange() {
-    if (!changeNote.trim()) {
+  function askChange(changes: TermsChange[], extra: string) {
+    const lines = changes.map((c) => (c.from ? `${c.label}: ${c.from} → ${c.to}` : `${c.label}: ${c.to}`));
+    if (extra) lines.push(`Note: ${extra}`);
+    const text = lines.join("; ");
+    if (!text) {
       toast("Tell your agent what should be different.");
       return;
     }
     const now = new Date().toISOString();
-    savePlan({ termsChangeRequestedAt: now, termsChangeNote: changeNote.trim() });
+    savePlan({ termsChangeRequestedAt: now, termsChangeNote: text });
     if (agentEmail) {
       notify({
         id: `terms-change-${leadId}-${now}`,
         to: agentEmail.toLowerCase(),
         title: "Your buyer asked to change the proposed terms",
-        body: `${purchase.propertyLabel} — ${clientLabel}: ${changeNote.trim()}`,
+        body: `${purchase.propertyLabel} — ${clientLabel}: ${text}`,
         href: `/partner?tab=buyers&focus=${leadId}`,
         severity: "warning",
       });
     }
-    setChangeNote("");
     setAskingChange(false);
     toast("Sent to your agent", { description: `${agentName} will adjust the terms.` });
+  }
+
+  function onCallBooked(startAt: string, meeting?: { eventId?: string; meetUrl?: string | null; htmlLink?: string | null }) {
+    bookCall({
+      leadId,
+      clientName: user ? fullName(user) : clientLabel,
+      ...(user?.email ? { clientEmail: user.email } : {}),
+      propertyLabel: purchase.propertyLabel,
+      kind: "intro_call",
+      startAt,
+      ...(meeting?.eventId ? { googleEventId: meeting.eventId } : {}),
+      ...(meeting?.meetUrl ? { meetUrl: meeting.meetUrl } : {}),
+      ...(meeting?.htmlLink ? { calendarLink: meeting.htmlLink } : {}),
+    });
+    setCallSlot(startAt);
+    setCallMeetUrl(meeting?.meetUrl ?? null);
+    if (agentEmail) {
+      notify({
+        id: `terms-call-${leadId}-${startAt}`,
+        to: agentEmail.toLowerCase(),
+        title: "Your buyer booked a call about the terms",
+        body: `${purchase.propertyLabel} — ${clientLabel} · ${formatDateTime(startAt)}`,
+        href: `/partner?tab=buyers&focus=${leadId}`,
+        severity: "info",
+      });
+    }
+    toast("Call booked", { description: `${agentName} · ${formatDateTime(startAt)}` });
   }
 
   return (
@@ -661,24 +696,41 @@ export function PurchaseAgreementWizard({
                       </button>
                       <button
                         type="button"
-                        onClick={() => setAskingChange((v) => !v)}
+                        onClick={() => { setAskingChange((v) => !v); setAskingCall(false); }}
                         className={btnGhost}
                       >
                         Ask my agent to change something
                       </button>
+                      <button
+                        type="button"
+                        onClick={() => { setAskingCall((v) => !v); setAskingChange(false); }}
+                        className={`${btnGhost} inline-flex items-center gap-1.5`}
+                      >
+                        <Phone className="h-3.5 w-3.5" aria-hidden /> Ask for a call
+                      </button>
                     </div>
                     {askingChange ? (
-                      <div className="space-y-2 rounded-md border border-border p-3">
-                        <textarea
-                          rows={3}
-                          value={changeNote}
-                          onChange={(e) => setChangeNote(e.target.value)}
-                          placeholder="What should be different — for example a later closing date or a smaller deposit."
-                          className={inputClass}
+                      <TermsChangeRequest
+                        price={purchase.offerPrice}
+                        terms={terms!}
+                        propertyId={purchase.propertyId}
+                        agentName={agentName}
+                        onSend={askChange}
+                        onCancel={() => setAskingChange(false)}
+                      />
+                    ) : null}
+                    {askingCall ? (
+                      <div className="space-y-2 rounded-lg border border-border bg-background p-4">
+                        <p className="text-sm font-semibold text-foreground">Talk the terms through with {agentName}</p>
+                        <p className="text-xs text-muted-foreground">Pick a free slot from {agentName}'s calendar.</p>
+                        <CallScheduler
+                          agentEmail={agentEmail}
+                          {...(callSlot ? { booked: callSlot } : {})}
+                          {...(callMeetUrl ? { meetUrl: callMeetUrl } : {})}
+                          summary={`Loqal — purchase terms call · ${purchase.propertyLabel}`}
+                          description={`Call about the proposed purchase terms for ${purchase.propertyLabel}, arranged through Loqal.`}
+                          onBook={onCallBooked}
                         />
-                        <button type="button" onClick={askChange} className={btnPrimary}>
-                          Send to {agentName}
-                        </button>
                       </div>
                     ) : null}
                   </div>
