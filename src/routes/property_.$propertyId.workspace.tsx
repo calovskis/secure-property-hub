@@ -39,7 +39,7 @@ type WorkspaceSearch = {
   k?: string;
 };
 
-export const Route = createFileRoute("/property/$propertyId/workspace")({
+export const Route = createFileRoute("/property_/$propertyId/workspace")({
   component: PropertyWorkspacePage,
   validateSearch: (search: Record<string, unknown>): WorkspaceSearch => {
     const open = search["open"];
