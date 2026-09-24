@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type React from "react";
 import { createPortal } from "react-dom";
 import { Link, useSearch } from "@tanstack/react-router";
+import { CalendarPlus, ChevronDown, MessageSquareText, UserRound } from "lucide-react";
 import {
   CLIENT_ACTION_LABEL,
   INSPECTION_OPTIONS,
@@ -21,6 +22,14 @@ import { clientDisplayForPartner, partnerDisplayForClient } from "@/lib/user-id"
 import { usePartnerRequests } from "@/lib/partner-requests";
 import { useFileChat } from "@/lib/file-chat";
 import { PURCHASE_STATUS_LABEL, useFileRequests } from "@/lib/property-requests";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 const money = (n: number) => `$${Math.round(n).toLocaleString()}`;
 const inputClass =
@@ -68,15 +77,27 @@ const ACTION_TILES: { id: ClientNextAction; title: string; blurb: string }[] = [
  * status, kickoff tracking, delivered photos with the agent's
  * recommendations, and the buyer's next-step decisions.
  */
-export function BuyerProcessCard({ lead, teamSlotId }: { lead: MortgageLead; teamSlotId?: string }) {
+export function BuyerProcessCard({
+  lead,
+  teamSlotId,
+  propertyChangeSlotId,
+}: {
+  lead: MortgageLead;
+  teamSlotId?: string;
+  propertyChangeSlotId?: string;
+}) {
   /* When a slot id is given (property workspace), the agent contact/actions
      render inside the "Property team" side card instead of this card. */
   const [slotEl, setSlotEl] = useState<HTMLElement | null>(null);
+  const [propertyChangeSlotEl, setPropertyChangeSlotEl] = useState<HTMLElement | null>(null);
   useEffect(() => {
     if (teamSlotId) setSlotEl(document.getElementById(teamSlotId));
-  }, [teamSlotId]);
+    if (propertyChangeSlotId) setPropertyChangeSlotEl(document.getElementById(propertyChangeSlotId));
+  }, [teamSlotId, propertyChangeSlotId]);
   const placeAgentActions = (node: React.ReactNode) =>
     teamSlotId ? (slotEl ? createPortal(node, slotEl) : null) : node;
+  const placePropertyChange = (node: React.ReactNode) =>
+    propertyChangeSlotId ? (propertyChangeSlotEl ? createPortal(node, propertyChangeSlotEl) : null) : node;
   const { photos, bookings, actions, addClientAction, bookCall } = useBuyerProcess();
   const { requests: partnerRegistrations } = usePartnerRequests();
   const [setupOpen, setSetupOpen] = useState(false);
@@ -88,6 +109,8 @@ export function BuyerProcessCard({ lead, teamSlotId }: { lead: MortgageLead; tea
   const [callSlot, setCallSlot] = useState<string | null>(null);
   const [callMeetUrl, setCallMeetUrl] = useState<string | null>(null);
   const [fileOpen, setFileOpen] = useState(false);
+  const [agentActionsOpen, setAgentActionsOpen] = useState(false);
+  const [agentCallOpen, setAgentCallOpen] = useState(false);
   const [fileTab, setFileTab] = useState<"status" | "chat" | "purchase" | "change">("status");
   const { unread: chatUnread } = useFileChat(lead.id, "client");
   const { purchases } = useFileRequests(lead.id);
@@ -281,43 +304,46 @@ export function BuyerProcessCard({ lead, teamSlotId }: { lead: MortgageLead; tea
           ) : null}
 
           {placeAgentActions(
-          <div id="buyer-agent-file" className={`${teamSlotId ? "" : "mt-4 "}scroll-mt-24 rounded-lg border border-brand/40 bg-brand-tint/40 p-4`}>
-            {teamSlotId ? (
-              <div className="mb-2 flex items-center justify-between gap-2">
-                <span className="text-xs font-semibold text-foreground">Your file with {agentDisplay ?? "your agent"}</span>
+            <div id="buyer-agent-file" className={`${teamSlotId ? "" : "mt-4 "}scroll-mt-24`}>
+              <button
+                type="button"
+                onClick={() => setAgentActionsOpen((value) => !value)}
+                className="flex w-full items-center gap-3 rounded-md border border-border bg-background p-3 text-left transition-colors hover:border-brand/40 hover:bg-brand-tint/20"
+                aria-expanded={agentActionsOpen}
+              >
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-tint text-brand">
+                  <UserRound className="size-4" aria-hidden />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-xs font-semibold text-foreground">{agentDisplay ?? "Your buyer's agent"}</span>
+                  <span className="block truncate text-[11px] text-muted-foreground">Buyer's agent{latestPurchase ? ` · ${PURCHASE_STATUS_LABEL[latestPurchase.status]}` : ""}</span>
+                </span>
                 {chatUnread ? (
                   <span className="rounded-full bg-brand px-2 py-0.5 text-[10px] font-semibold text-background">{chatUnread} new</span>
                 ) : null}
+                <ChevronDown className={`size-4 shrink-0 text-muted-foreground transition-transform ${agentActionsOpen ? "rotate-180" : ""}`} aria-hidden />
+              </button>
+              {agentActionsOpen ? (
+                <div className="grid grid-cols-2 gap-2 px-1 pt-2">
+                  <Button size="sm" variant="outline" onClick={() => openFile("chat")}>
+                    <MessageSquareText aria-hidden /> Message
+                  </Button>
+                  <Button size="sm" onClick={() => setAgentCallOpen(true)}>
+                    <CalendarPlus aria-hidden /> Call
+                  </Button>
+                </div>
+              ) : null}
+            </div>,
+          )}
+
+          {placePropertyChange(
+            <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">Need a different property?</h3>
+                <p className="mt-1 text-xs text-muted-foreground">Ask your agent to suggest alternatives or choose another listing yourself.</p>
               </div>
-            ) : null}
-            <p className="text-xs text-muted-foreground">
-              {latestPurchase
-                ? PURCHASE_STATUS_LABEL[latestPurchase.status]
-                : `Message ${agentDisplay ?? "your agent"}, ask to proceed with the purchase, or ask for other properties.`}
-            </p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <button type="button" onClick={() => openFile("chat")} className={btnPrimary}>
-                Message the agent
-              </button>
-              {latestPurchase && latestPurchase.status !== "withdrawn" ? (
-                <button
-                  type="button"
-                  onClick={() => openFile("status")}
-                  className={btnGhost}
-                  title="The purchase is already underway — follow it in the file"
-                >
-                  Purchase underway — see the status
-                </button>
-              ) : (
-                <button type="button" onClick={() => openFile("purchase")} className={btnGhost}>
-                  Request to proceed with the purchase
-                </button>
-              )}
-              <button type="button" onClick={() => openFile("change")} className={btnGhost}>
-                Request a property change
-              </button>
-            </div>
-          </div>
+              <Button variant="outline" onClick={() => openFile("change")}>Request a property change</Button>
+            </div>,
           )}
 
           <RealtorFileDialog
@@ -329,6 +355,40 @@ export function BuyerProcessCard({ lead, teamSlotId }: { lead: MortgageLead; tea
             onOpenChange={setFileOpen}
             initialTab={fileTab}
           />
+
+          <Dialog open={agentCallOpen} onOpenChange={setAgentCallOpen}>
+            <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Schedule a call with {agentDisplay ?? "your buyer's agent"}</DialogTitle>
+                <DialogDescription>Choose an available one-hour time for {lead.propertyLabel}.</DialogDescription>
+              </DialogHeader>
+              <CallScheduler
+                realtorId={ba.agentId}
+                agentEmail={agentEmail}
+                {...(callSlot ? { booked: callSlot } : {})}
+                {...(callMeetUrl ? { meetUrl: callMeetUrl } : {})}
+                summary={`Loqal property call — ${lead.propertyLabel}`}
+                description={`Client call with their buyer's agent about ${lead.propertyLabel}.`}
+                attendeeEmails={[lead.clientEmail]}
+                onBook={(startAt, meeting) => {
+                  bookCall({
+                    leadId: lead.id,
+                    clientName: lead.clientName,
+                    clientEmail: lead.clientEmail,
+                    propertyLabel: lead.propertyLabel,
+                    kind: "intro_call",
+                    startAt,
+                    ...(ba.agentId ? { realtorId: ba.agentId } : {}),
+                    ...(meeting?.eventId ? { googleEventId: meeting.eventId } : {}),
+                    ...(meeting?.meetUrl ? { meetUrl: meeting.meetUrl } : {}),
+                    ...(meeting?.htmlLink ? { calendarLink: meeting.htmlLink } : {}),
+                  });
+                  setCallSlot(startAt);
+                  setCallMeetUrl(meeting?.meetUrl ?? null);
+                }}
+              />
+            </DialogContent>
+          </Dialog>
 
           {latestPurchase?.status === "price_supported" ? (
             <PurchaseAgreementCard
