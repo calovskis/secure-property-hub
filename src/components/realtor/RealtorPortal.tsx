@@ -20,6 +20,7 @@ import { formatDate, formatDateTime } from "@/lib/dates";
 import { DateInput } from "@/components/form/DateInput";
 import { CallScheduler } from "@/components/buyer/CallScheduler";
 import { TourProposalPanel } from "@/components/buyer/TourProposalPanel";
+import { BuyerContactActions } from "@/components/realtor/BuyerContactActions";
 import { FileChatPanel } from "@/components/messaging/FileChatPanel";
 import { BuyerRequestsPanel } from "@/components/realtor/BuyerRequestsPanel";
 import { Button } from "@/components/ui/button";
@@ -531,13 +532,14 @@ function BuyerFile({ lead, me }: { lead: MortgageLead; me: Realtor }) {
                   </p>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 2xl:grid-cols-6">
                 <Button variant="outline" size="sm" onClick={() => setWorkspaceTab("messages")}>
                   <MessageSquare /> Message
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => setWorkspaceTab("requests")}>
                   <ClipboardCheck /> Requests
                 </Button>
+                <BuyerContactActions leadId={lead.id} propertyId={lead.propertyId} propertyLabel={lead.propertyLabel} buyerName={displayName} buyerEmail={lead.clientEmail} clientName={lead.clientName} agentName={`${me.firstName} ${me.lastName}`.trim()} realtorId={me.id} agentEmail={me.email} />
                 <Button variant="outline" size="sm" onClick={() => setWorkspaceTab("visits")}>
                   <CalendarDays /> Visits
                 </Button>
