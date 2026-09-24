@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 
 const input = "w-full rounded-md border border-input bg-background px-2.5 py-1.5 text-xs text-foreground outline-none focus:border-brand";
 
-type Row = { label: string; from: string; to: string };
+type Row = { label: string; from: string; to: string; customLabel?: string };
 
 /** After the buyer confirms: seller's answer → agreement + DocuSign. */
 export function SellerResponsePanel({ leadId, propertyId, propertyLabel, purchase, buyerName, buyerEmail, agentName }: {
@@ -39,7 +39,9 @@ export function SellerResponsePanel({ leadId, propertyId, propertyLabel, purchas
   }
 
   function sendCounter() {
-    const items = rows.filter((r) => r.label.trim() && r.to.trim());
+    const items = rows
+      .map((row) => ({ label: row.label === "Other term" ? row.customLabel?.trim() ?? "" : row.label, from: row.from, to: row.to.trim() }))
+      .filter((row) => row.label && row.to);
     if (!items.length) { toast("Add at least one term the seller amended."); return; }
     const now = new Date().toISOString();
     savePlan({ sellerStatus: "countered", sellerRespondedAt: now, sellerCounterItems: items, sellerCounterNote: note.trim() || undefined, sellerCounterDocs: docs, sellerCounterBuyerDecision: undefined, sellerCounterBuyerAt: undefined, sellerCounterBuyerNote: undefined, sellerAgreedAt: undefined });
@@ -104,10 +106,7 @@ export function SellerResponsePanel({ leadId, propertyId, propertyLabel, purchas
                 <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${selected ? "rotate-180" : ""}`} aria-hidden />
               </Button>
               {selected ? <div className="space-y-2 px-3 pb-3 pl-10">
-                {option.label === "Other term" ? <input className={input} value={selected.to ? selected.label === "Other term" ? "" : selected.label : ""} placeholder="Name the amended term" onChange={(e) => {
-                  const nextLabel = e.target.value || "Other term";
-                  setRows(rows.map((row) => row === selected ? { ...row, label: nextLabel } : row));
-                }} /> : null}
+                {option.label === "Other term" ? <input className={input} value={selected.customLabel ?? ""} placeholder="Name the amended term" onChange={(e) => updateCounterRow(option.label, { customLabel: e.target.value })} /> : null}
                 <input className={input} value={selected.to} placeholder="Enter the seller's proposed value" onChange={(e) => updateCounterRow(option.label, { to: e.target.value })} />
                 {selected.to ? <p className="flex flex-wrap items-center gap-2 text-xs"><span className="rounded bg-muted px-2 py-1 text-muted-foreground line-through">{selected.from || "Original offer"}</span><ArrowRight className="h-3 w-3 text-brand" aria-hidden /><span className="rounded border border-gold/60 bg-background px-2 py-1 font-semibold text-foreground">{selected.to}</span></p> : null}
               </div> : null}
