@@ -56,11 +56,6 @@ export function RealtorFileDialog({
 }) {
   const [tab, setTab] = useState<Tab>(initialTab);
 
-  useEffect(() => {
-    /* deep links may ask for the purchase tab — fall back to Status once a
-       request is already open */
-    if (open) setTab(initialTab === "purchase" && openPurchase ? "status" : initialTab);
-  }, [open, initialTab, openPurchase]);
 
   const {
     purchases,
