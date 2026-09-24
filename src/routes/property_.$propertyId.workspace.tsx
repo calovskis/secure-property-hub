@@ -116,7 +116,7 @@ function PropertyWorkspacePage() {
   const { open, focus, k } = Route.useSearch();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { leadForProperty } = useLeads();
+  const { leadForProperty, askClientQuestion } = useLeads();
   const lead = user ? leadForProperty(user.email, property.id) : undefined;
   const activity = useClientPropertyActivity().find((item) => item.propertyId === property.id);
   const { bookings, bookCall } = useBuyerProcess();
@@ -126,6 +126,9 @@ function PropertyWorkspacePage() {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [callOpen, setCallOpen] = useState(false);
   const [agentOpen, setAgentOpen] = useState(false);
+  const [lenderActionsOpen, setLenderActionsOpen] = useState(false);
+  const [lenderChatOpen, setLenderChatOpen] = useState(false);
+  const [lenderMessage, setLenderMessage] = useState("");
   const [supportActionsOpen, setSupportActionsOpen] = useState(false);
   const [supportCallOpen, setSupportCallOpen] = useState(false);
   const [supportCallSlot, setSupportCallSlot] = useState<string | null>(null);
@@ -213,16 +216,9 @@ function PropertyWorkspacePage() {
     );
   }
 
-  const team = [
-    lender
-      ? {
-          role: "Mortgage lender",
-          name: partnerDisplayForClient(`${lender.firstName} ${lender.lastName}`, lender.email),
-          company: lender.companyName,
-          Icon: Landmark,
-        }
-      : undefined,
-  ].filter((item): item is NonNullable<typeof item> => Boolean(item));
+  const lenderDisplay = lender
+    ? partnerDisplayForClient(`${lender.firstName} ${lender.lastName}`, lender.email)
+    : undefined;
 
   return (
     <div className="min-h-screen bg-background">
@@ -377,16 +373,32 @@ function PropertyWorkspacePage() {
 
             <WorkspaceCard title="Property team">
               <div className="space-y-3">
-                {team.map(({ role, name, company, Icon }) => (
-                  <div key={role} className="flex items-center gap-3 rounded-md border border-border bg-background p-3">
-                    <span className="flex size-9 items-center justify-center rounded-full bg-brand-tint text-brand"><Icon className="size-4" aria-hidden /></span>
-                    <div className="min-w-0">
-                      <div className="truncate text-xs font-semibold text-foreground">{name}</div>
-                      <div className="truncate text-[11px] text-muted-foreground">{role}{company ? ` · ${company}` : ""}</div>
-                    </div>
-                  </div>
-                ))}
                  <div id="workspace-agent-actions" className="empty:hidden" />
+                 {lender ? (
+                   <div>
+                     <Button
+                       type="button"
+                       variant="ghost"
+                       onClick={() => setLenderActionsOpen((value) => !value)}
+                       className="h-auto w-full justify-start gap-3 rounded-md border border-border bg-background p-3 text-left hover:border-brand/40 hover:bg-brand-tint/20"
+                       aria-expanded={lenderActionsOpen}
+                     >
+                       <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-tint text-brand"><Landmark className="size-4" aria-hidden /></span>
+                       <span className="min-w-0 flex-1">
+                         <span className="block truncate text-xs font-semibold text-foreground">{lenderDisplay}</span>
+                         <span className="block truncate text-[11px] font-normal text-muted-foreground">Mortgage lender{lender.companyName ? ` · ${lender.companyName}` : ""}</span>
+                       </span>
+                       <ChevronDown className={`size-4 shrink-0 text-muted-foreground transition-transform ${lenderActionsOpen ? "rotate-180" : ""}`} aria-hidden />
+                     </Button>
+                     {lenderActionsOpen ? (
+                       <div className="px-1 pt-2">
+                         <Button size="sm" variant="outline" className="w-full" onClick={() => setLenderChatOpen(true)}>
+                           <MessageSquareText aria-hidden /> Chat
+                         </Button>
+                       </div>
+                     ) : null}
+                   </div>
+                 ) : null}
                  <div>
                    <button
                      type="button"
@@ -447,6 +459,59 @@ function PropertyWorkspacePage() {
 
       <FeedbackDialog lead={lead} open={feedbackOpen} onOpenChange={setFeedbackOpen} />
       <BuyerAgentDialog lead={lead} open={agentOpen} onOpenChange={setAgentOpen} />
+      <Dialog open={lenderChatOpen} onOpenChange={setLenderChatOpen}>
+        <DialogContent className="max-h-[90vh] max-w-xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Chat with {lenderDisplay ?? "your mortgage lender"}</DialogTitle>
+            <DialogDescription>Messages about {property.address} stay with this mortgage file.</DialogDescription>
+          </DialogHeader>
+          <div className="max-h-72 space-y-3 overflow-y-auto rounded-md border border-border bg-muted/20 p-3">
+            {(lead.clientQuestions ?? []).length ? (
+              (lead.clientQuestions ?? []).map((question) => (
+                <div key={question.id} className="space-y-2">
+                  <div className="ml-auto max-w-[85%] rounded-md bg-brand px-3 py-2 text-sm text-primary-foreground">
+                    <p>{question.text}</p>
+                    <p className="mt-1 text-[10px] text-primary-foreground/75">{formatDateTime(question.askedAt)}</p>
+                  </div>
+                  {question.answer ? (
+                    <div className="max-w-[85%] border-l-2 border-brand px-3 py-1 text-sm text-foreground">
+                      <p className="text-[10px] font-semibold uppercase text-muted-foreground">{lenderDisplay ?? "Mortgage lender"}</p>
+                      <p className="mt-1">{question.answer}</p>
+                      {question.answeredAt ? <p className="mt-1 text-[10px] text-muted-foreground">{formatDateTime(question.answeredAt)}</p> : null}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">Waiting for the lender's reply.</p>
+                  )}
+                </div>
+              ))
+            ) : (
+              <p className="py-6 text-center text-sm text-muted-foreground">No messages yet. Start the conversation below.</p>
+            )}
+          </div>
+          <div className="space-y-2">
+            <textarea
+              rows={3}
+              value={lenderMessage}
+              onChange={(event) => setLenderMessage(event.target.value)}
+              placeholder="Write a message to your mortgage lender…"
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-brand"
+            />
+            <div className="flex justify-end">
+              <Button
+                disabled={!lenderMessage.trim()}
+                onClick={() => {
+                  const message = lenderMessage.trim();
+                  if (!message) return;
+                  askClientQuestion(lead.id, message);
+                  setLenderMessage("");
+                }}
+              >
+                <MessageSquareText aria-hidden /> Send message
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
       <Dialog open={supportCallOpen} onOpenChange={setSupportCallOpen}>
         <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
           <DialogHeader>
