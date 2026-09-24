@@ -36,7 +36,10 @@ import {
   UserRound,
 } from "lucide-react";
 import { useFileRequests } from "@/lib/property-requests";
-import { useFileChat } from "@/lib/file-chat";
+import { useAllFileChat, useFileChat } from "@/lib/file-chat";
+import { usePropertyRequests } from "@/lib/property-requests";
+import { useEntityPlans } from "@/lib/entity-structure";
+import { STATUS_CLS, realtorFileStatus } from "@/lib/realtor-file-status";
 
 import { GoogleCalendarCard } from "@/components/google/GoogleCalendarCard";
 import { RealtorAnalytics } from "@/components/realtor/RealtorAnalytics";
@@ -441,6 +444,8 @@ function BuyerFile({ lead, me }: { lead: MortgageLead; me: Realtor }) {
   const decisions = process.actions[lead.id] ?? [];
   const purchase = fileRequests.purchases[0];
   const change = fileRequests.changes[0];
+  const { plans } = useEntityPlans();
+  const plan = plans.find((p) => p.leadId === lead.id);
   const openRequestCount =
     (purchase && (purchase.status === "pending" || purchase.status === "buyer_raised") ? 1 : 0) +
     (change?.status === "pending" ? 1 : 0);
@@ -462,7 +467,19 @@ function BuyerFile({ lead, me }: { lead: MortgageLead; me: Realtor }) {
         ? "Property due diligence"
         : "Active buyer";
   const stageStep = purchase?.status === "price_supported" ? 4 : purchase ? 3 : photo ? 2 : 1;
-  const nextAction = openRequestCount
+  const fileStatus = realtorFileStatus({
+    lead,
+    purchase,
+    change,
+    plan,
+    photo,
+    hasVideoTour: !!videoTour,
+    hasIntroCall: !!introCall,
+    unread: fileChat.unread,
+  });
+  const nextAction = fileStatus.task
+    ? fileStatus.task
+    : openRequestCount
     ? {
         title: `Review ${openRequestCount === 1 ? "buyer request" : `${openRequestCount} buyer requests`}`,
         detail: "A response is needed before the purchase can move forward.",
@@ -506,6 +523,9 @@ function BuyerFile({ lead, me }: { lead: MortgageLead; me: Realtor }) {
         onClick={() => setOpen(!open)}
         className="flex w-full flex-wrap items-center gap-4 p-5 text-left hover:bg-brand-tint/30"
       >
+        {fileStatus.task ? (
+          <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-warning" aria-label="Task for you" />
+        ) : null}
         <div className="min-w-[220px] flex-1">
           <div className="text-sm font-semibold text-foreground">
             {clientDisplayForPartner(lead.clientName, lead.clientEmail)}
@@ -513,8 +533,15 @@ function BuyerFile({ lead, me }: { lead: MortgageLead; me: Realtor }) {
           <div className="text-xs text-muted-foreground">
             {lead.propertyLabel} · {money(lead.propertyPrice)}
           </div>
+          {fileStatus.task ? (
+            <div className="mt-1 text-xs font-semibold text-warning">
+              Your task: {fileStatus.task.title}
+            </div>
+          ) : null}
         </div>
-        <RepresentationBadge lead={lead} />
+        <span className={`rounded-full px-3 py-1 text-[11px] font-semibold ${STATUS_CLS[fileStatus.tone]}`}>
+          {fileStatus.label}
+        </span>
         {open ? (
           <ChevronUp className="h-4 w-4 text-muted-foreground" aria-hidden />
         ) : (
