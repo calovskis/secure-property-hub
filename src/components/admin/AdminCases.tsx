@@ -276,7 +276,11 @@ function OwnershipTask({ lead }: { lead: MortgageLead }) {
                 plan.termsConfirmedAt,
               )} — the buyer's agent is putting them to the seller.`
             : plan.termsChangeRequestedAt
-              ? `the buyer asked the agent to change something — ${plan.termsChangeNote ?? "no details"}.`
+              ? `the buyer asked the agent to change: ${
+                  plan.termsChangeItems?.length
+                    ? plan.termsChangeItems.map((i) => `${i.label} (${i.from ? `${i.from} → ` : ""}${i.to})`).join(", ")
+                    : plan.termsChangeNote ?? "no details"
+                }.`
               : plan.termsProposedAt
                 ? `proposed by the buyer's agent on ${formatDateTime(plan.termsProposedAt)} — awaiting the buyer's confirmation.`
                 : "not proposed by the buyer's agent yet."}

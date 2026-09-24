@@ -71,9 +71,11 @@ export function realtorFileStatus(i: Input): RealtorFileStatus {
     return act(
       "Revise the terms",
       "Revise the purchase terms",
-      plan?.termsChangeNote
-        ? `The buyer asked for changes: ${plan.termsChangeNote}`
-        : "The buyer asked for changes before confirming.",
+      plan?.termsChangeItems?.length
+        ? `The buyer asked to change: ${plan.termsChangeItems.map((i) => i.label).join(", ")}.`
+        : plan?.termsChangeNote
+          ? `The buyer asked for changes: ${plan.termsChangeNote}`
+          : "The buyer asked for changes before confirming.",
       "requests",
     );
   if (plan?.termsProposedAt) return { label: "Terms sent — awaiting buyer", tone: "waiting" };

@@ -348,7 +348,10 @@ function buildActivity(
       push(items, {
         at: plan.termsChangeRequestedAt,
         label: "You asked your agent to change the proposed terms",
-        detail: plan.termsChangeNote || undefined,
+        detail:
+          plan.termsChangeItems?.length
+            ? plan.termsChangeItems.map((i) => `${i.label}: ${i.from ? `${i.from} → ` : ""}${i.to}`).join(" · ")
+            : plan.termsChangeNote || undefined,
         tone: "update",
       });
     }
