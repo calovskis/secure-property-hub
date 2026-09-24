@@ -56,9 +56,6 @@ export function RealtorFileDialog({
 }) {
   const [tab, setTab] = useState<Tab>(initialTab);
 
-  useEffect(() => {
-    if (open) setTab(initialTab);
-  }, [open, initialTab]);
 
   const {
     purchases,
@@ -93,6 +90,12 @@ export function RealtorFileDialog({
   /* One purchase request per property file — once sent (and not withdrawn),
      the buyer negotiates on that request instead of starting a new one. */
   const openPurchase = purchases.find((p) => p.status !== "withdrawn");
+
+  /* deep links may ask for the purchase tab — fall back to Status once a
+     request is already open */
+  useEffect(() => {
+    if (open) setTab(initialTab === "purchase" && openPurchase ? "status" : initialTab);
+  }, [open, initialTab, openPurchase]);
   const lastPurchase = purchases[0];
   const lastChange = changes[0];
   const otherProperties = useMemo(
@@ -164,10 +167,15 @@ export function RealtorFileDialog({
     setTab("status");
   }
 
+  /* Once a purchase request is open (price agreed with the agent or still in
+     discussion), the "Proceed with purchase" option disappears — everything
+     continues on the Status tab. It only exists while no request is open. */
   const tabs: [Tab, string][] = [
     ["status", "Status"],
     ["chat", "Message the agent"],
-    ["purchase", "Proceed with purchase"],
+    ...(openPurchase
+      ? []
+      : ([["purchase", "Proceed with purchase"]] as [Tab, string][])),
     ["change", "Change the property"],
   ];
 
