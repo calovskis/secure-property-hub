@@ -3,15 +3,16 @@ import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   Building2,
+  CalendarPlus,
   CalendarClock,
   Check,
+  ChevronDown,
   ChevronRight,
   Clock3,
   ExternalLink,
   FileText,
   Landmark,
   MessageSquareText,
-  UserRound,
 } from "lucide-react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { BuyerProcessCard } from "@/components/buyer/BuyerProcessCard";
@@ -20,6 +21,14 @@ import { MortgageCaseCard } from "@/components/mortgage/MortgageCaseCard";
 import { BuyerAgentDialog } from "@/components/mortgage/BuyerAgentDialog";
 import { FeedbackDialog } from "@/components/mortgage/FeedbackDialog";
 import { Button } from "@/components/ui/button";
+import { CallScheduler } from "@/components/buyer/CallScheduler";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { formatPrice, getProperty } from "@/data/properties";
 import { useAuth } from "@/lib/auth";
 import { useBuyerProcess } from "@/lib/buyer-process";
@@ -110,13 +119,17 @@ function PropertyWorkspacePage() {
   const { leadForProperty } = useLeads();
   const lead = user ? leadForProperty(user.email, property.id) : undefined;
   const activity = useClientPropertyActivity().find((item) => item.propertyId === property.id);
-  const { bookings } = useBuyerProcess();
+  const { bookings, bookCall } = useBuyerProcess();
   const { requests } = usePartnerRequests();
   const { plan } = useEntityPlan(lead?.id ?? "");
   const { purchases } = useFileRequests(lead?.id ?? "");
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [callOpen, setCallOpen] = useState(false);
   const [agentOpen, setAgentOpen] = useState(false);
+  const [supportActionsOpen, setSupportActionsOpen] = useState(false);
+  const [supportCallOpen, setSupportCallOpen] = useState(false);
+  const [supportCallSlot, setSupportCallSlot] = useState<string | null>(null);
+  const [supportMeetUrl, setSupportMeetUrl] = useState<string | null>(null);
 
   const callBooking = bookings.find(
     (booking) =>
@@ -201,14 +214,6 @@ function PropertyWorkspacePage() {
   }
 
   const team = [
-    realtor
-      ? {
-          role: "Buyer's agent",
-          name: partnerDisplayForClient(`${realtor.firstName} ${realtor.lastName}`, realtor.email),
-          company: realtor.companyName,
-          Icon: UserRound,
-        }
-      : undefined,
     lender
       ? {
           role: "Mortgage lender",
@@ -337,7 +342,7 @@ function PropertyWorkspacePage() {
                 </div>
               ) : null}
               {priced ? (
-                lead.buyerAgent ? <BuyerProcessCard lead={lead} teamSlotId="workspace-agent-actions" /> : <MortgageCaseCard lead={lead} />
+                lead.buyerAgent ? <BuyerProcessCard lead={lead} teamSlotId="workspace-agent-actions" propertyChangeSlotId="workspace-property-change" /> : <MortgageCaseCard lead={lead} />
               ) : (
                 <MortgageCaseCard lead={lead} />
               )}
@@ -381,11 +386,30 @@ function PropertyWorkspacePage() {
                     </div>
                   </div>
                 ))}
-                <div id="workspace-agent-actions" className="empty:hidden" />
-                <div className="flex items-center gap-3 rounded-md border border-border bg-background p-3">
-                  <span className="flex size-9 items-center justify-center rounded-full bg-gold-tint text-gold"><Building2 className="size-4" aria-hidden /></span>
-                  <div><div className="text-xs font-semibold text-foreground">Loqal support</div><div className="text-[11px] text-muted-foreground">Available for coordination</div></div>
-                </div>
+                 <div id="workspace-agent-actions" className="empty:hidden" />
+                 <div>
+                   <button
+                     type="button"
+                     onClick={() => setSupportActionsOpen((value) => !value)}
+                     className="flex w-full items-center gap-3 rounded-md border border-border bg-background p-3 text-left transition-colors hover:border-gold/50 hover:bg-gold-tint/20"
+                     aria-expanded={supportActionsOpen}
+                   >
+                     <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-gold-tint text-gold"><Building2 className="size-4" aria-hidden /></span>
+                     <span className="min-w-0 flex-1"><span className="block text-xs font-semibold text-foreground">Loqal support</span><span className="block text-[11px] text-muted-foreground">Available for coordination</span></span>
+                     <ChevronDown className={`size-4 shrink-0 text-muted-foreground transition-transform ${supportActionsOpen ? "rotate-180" : ""}`} aria-hidden />
+                   </button>
+                   {supportActionsOpen ? (
+                     <div className="grid grid-cols-2 gap-2 px-1 pt-2">
+                       <Button size="sm" variant="outline" onClick={() => window.dispatchEvent(new Event("loqal:open-support-chat"))}>
+                         <MessageSquareText aria-hidden /> Chat
+                       </Button>
+                       <Button size="sm" onClick={() => setSupportCallOpen(true)}>
+                         <CalendarPlus aria-hidden /> Call
+                       </Button>
+                       <p className="col-span-2 px-1 text-[10px] leading-relaxed text-muted-foreground">Chat live when the team is available, or leave a message for a reply.</p>
+                     </div>
+                   ) : null}
+                 </div>
               </div>
             </WorkspaceCard>
 
@@ -411,10 +435,48 @@ function PropertyWorkspacePage() {
             </WorkspaceCard>
           </aside>
         </div>
+
+        {lead.buyerAgent ? (
+          <div className="mt-5">
+            <WorkspaceCard title="Property change">
+              <div id="workspace-property-change" />
+            </WorkspaceCard>
+          </div>
+        ) : null}
       </main>
 
       <FeedbackDialog lead={lead} open={feedbackOpen} onOpenChange={setFeedbackOpen} />
       <BuyerAgentDialog lead={lead} open={agentOpen} onOpenChange={setAgentOpen} />
+      <Dialog open={supportCallOpen} onOpenChange={setSupportCallOpen}>
+        <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Schedule a call with Loqal support</DialogTitle>
+            <DialogDescription>Choose a convenient one-hour time to discuss {property.address}.</DialogDescription>
+          </DialogHeader>
+          <CallScheduler
+            {...(supportCallSlot ? { booked: supportCallSlot } : {})}
+            {...(supportMeetUrl ? { meetUrl: supportMeetUrl } : {})}
+            summary={`Loqal support call — ${property.address}`}
+            description={`Client support call about ${property.address}.`}
+            attendeeEmails={[lead.clientEmail]}
+            onBook={(startAt, meeting) => {
+              bookCall({
+                leadId: lead.id,
+                clientName: lead.clientName,
+                clientEmail: lead.clientEmail,
+                propertyLabel: `${property.address} · Loqal support`,
+                kind: "intro_call",
+                startAt,
+                ...(meeting?.eventId ? { googleEventId: meeting.eventId } : {}),
+                ...(meeting?.meetUrl ? { meetUrl: meeting.meetUrl } : {}),
+                ...(meeting?.htmlLink ? { calendarLink: meeting.htmlLink } : {}),
+              });
+              setSupportCallSlot(startAt);
+              setSupportMeetUrl(meeting?.meetUrl ?? null);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
       {callBooking ? (
         <VideoCallDialog
           open={callOpen}

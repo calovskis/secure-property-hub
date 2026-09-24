@@ -34,6 +34,12 @@ export function SupportChat() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
   }, [messages.length, open]);
 
+  useEffect(() => {
+    const openSupport = () => setOpen(true);
+    window.addEventListener("loqal:open-support-chat", openSupport);
+    return () => window.removeEventListener("loqal:open-support-chat", openSupport);
+  }, []);
+
   if (!user || user.role === "admin") return null;
 
   return (
