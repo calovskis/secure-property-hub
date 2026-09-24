@@ -36,6 +36,11 @@ function LenderMortgageCasePage() {
         navSlot={<LenderNavSlot current="mortgages" />}
       />
       <main className="mx-auto max-w-[1400px] px-4 py-8 md:px-7">
+        <div className="mb-4 flex flex-wrap items-center gap-3">
+          <span className="rounded-full bg-gold-tint px-3 py-1 text-xs font-semibold text-gold">
+            Mortgage lender portal
+          </span>
+        </div>
         <Link
           to="/partner"
           search={{ tab: "mortgages" }}
