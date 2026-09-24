@@ -70,7 +70,7 @@ export type EntityPlan = {
   /** The exact terms the buyer asked to change: label, current value, requested value. */
   termsChangeItems?: { key?: string; label: string; from: string; to: string; patch?: Record<string, unknown> }[] | undefined;
   /** Realtor's answer to each buyer change request on the latest round. */
-  termsChangeResponses?: { label: string; to: string; decision: "accepted" | "adjusted" | "declined"; reason?: string }[] | undefined;
+  termsChangeResponses?: { label: string; to: string; decision: "accepted" | "adjusted" | "declined"; reason?: string | undefined }[] | undefined;
   /** Furthest step the buyer reached in the window (1–2). */
   wizardStep?: number | undefined;
   /** The purchase agreement the buyer's agent uploaded for review and signing. */

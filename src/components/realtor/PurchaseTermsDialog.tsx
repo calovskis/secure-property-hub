@@ -37,7 +37,7 @@ export function PurchaseTermsDialog({ open, onOpenChange, leadId, propertyLabel,
   const inspectionOptions = INSPECTION_TYPES[category];
   type Decision = "accepted" | "adjusted" | "declined";
   const requests = plan?.termsChangeRequestedAt ? plan?.termsChangeItems ?? [] : [];
-  const [responses, setResponses] = useState<Record<string, { decision: Decision; reason?: string }>>({});
+  const [responses, setResponses] = useState<Record<string, { decision: Decision; reason?: string | undefined }>>({});
   const STEP_OF: Record<string, number> = { closing: 1, deposit: 1, possession: 1, inspection: 2, appraisal: 2, financing: 2, attorney: 3, commission: 3, concessions: 3, warranty: 3, items: 3, expiry: 3, other: 4 };
   function respond(label: string, decision: Decision, reason?: string) {
     setResponses((r) => { const next = { ...r, [label]: { decision, reason } }; savePlan({ termsChangeResponses: requests.map((q) => next[q.label] ? { label: q.label, to: q.to, ...next[q.label]! } : null).filter(Boolean) as NonNullable<typeof plan>["termsChangeResponses"] }); return next; });
