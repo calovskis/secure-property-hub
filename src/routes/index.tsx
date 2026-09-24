@@ -13,6 +13,7 @@ import { MyPartnersCard } from "@/components/client/MyPartnersCard";
 import { UpcomingCallsCard } from "@/components/client/UpcomingCallsCard";
 import { PriceConfirmedCard } from "@/components/client/PriceConfirmedCard";
 import { EntityTipCard } from "@/components/client/EntityTipCard";
+import { RecentActivityCard } from "@/components/client/RecentActivityCard";
 
 
 export const Route = createFileRoute("/")({
@@ -72,12 +73,7 @@ const savedProperties = [
   { title: "Historic Mansion", meta: "Florence, Italy • Heritage" },
 ];
 
-const activity = [
-  { icon: "📅", title: "New Service Request Received", desc: "Maintenance request for Berlin Downtown Apartment has been received and assigned to contractor", time: "2 hours ago", service: false },
-  { icon: "✅", title: "Service Completed", desc: "Cleaning service completed at Madrid Office Space", time: "5 hours ago", service: true },
-  { icon: "💵", title: "Payment Received", desc: "Monthly rent payment from 3 tenants has been processed", time: "1 day ago", service: false },
-  { icon: "📝", title: "Document Uploaded", desc: "Lease agreement for new tenant has been uploaded to documents", time: "3 days ago", service: false },
-];
+
 
 function SectionCard({
   title,
@@ -562,11 +558,7 @@ function Dashboard() {
               </SectionCard>
             </div>
 
-            <SectionCard title="Recent Activity & Updates" action="View all →">
-              {activity.map((a) => (
-                <ActivityRow key={a.title} icon={a.icon} title={a.title} desc={a.desc} time={a.time} service={a.service} />
-              ))}
-            </SectionCard>
+            <RecentActivityCard />
           </div>
 
           <aside className="min-w-0 space-y-5">

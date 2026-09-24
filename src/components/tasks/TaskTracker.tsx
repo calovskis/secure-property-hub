@@ -20,6 +20,7 @@ import { usePartnerRequests } from "@/lib/partner-requests";
 import { useDeletions } from "@/lib/deletions";
 import { pendingVerifications } from "@/lib/licence-verification";
 import { formatDate, formatDateTime } from "@/lib/dates";
+import { usePurchaseProgress } from "@/lib/purchase-stage";
 
 type GroupId =
   | "documents"
@@ -199,6 +200,7 @@ export function TaskTracker({ className = "" }: { className?: string }) {
   const { leads: allLeads } = useLeads();
   const { requests } = usePartnerRequests();
   const { deleted } = useDeletions();
+  const { progressOf } = usePurchaseProgress();
 
   /**
    * Loqal-side tasks read straight off the live records instead of waiting for
@@ -398,6 +400,55 @@ export function TaskTracker({ className = "" }: { className?: string }) {
     } else {
       for (const n of notifications.filter(isStillOpen)) push(n, groupOf(n.id));
       for (const n of adminItems.filter(isStillOpen)) push(n, adminGroupOf(n.id));
+
+      /* Visa: a foreign buyer with no valid US visa on file must say whether
+         Loqal helps or they handle it; when self-handled, the visa details are
+         due 2 weeks before closing so Loqal can organise the notary. */
+      const vp = user?.mortgageProfile ?? myLeads.find((l) => l.profile)?.profile;
+      if (user && !isAdmin && !user.usPerson && vp && !vp.usVisaActive && !vp.visaValidUntil) {
+        const since = vp.submittedAt ?? myLeads[0]?.submittedAt ?? new Date().toISOString();
+        if (!vp.visaSupport) {
+          push(
+            {
+              id: "visa-choice",
+              to: user.email,
+              title: "Sort out your US visa",
+              body: "You have no active US visa on file. Tell us whether you want Loqal visa support or will handle it on your own.",
+              href: "/profile",
+              severity: "warning",
+              createdAt: since,
+            },
+            "documents",
+          );
+        } else if (vp.visaSupport === "self") {
+          const closings = myLeads
+            .map((l) => progressOf(l.id).closingDate)
+            .filter((d): d is string => Boolean(d))
+            .sort();
+          const closing = closings[0];
+          const due = closing
+            ? new Date(new Date(closing).getTime() - 14 * 86_400_000)
+            : undefined;
+          const daysLeft = due ? Math.ceil((due.getTime() - Date.now()) / 86_400_000) : undefined;
+          push(
+            {
+              id: "visa-submit",
+              to: user.email,
+              title: due
+                ? `Submit your visa details by ${formatDate(due)}`
+                : "Submit your visa details before closing",
+              body: due
+                ? `Closing is ${formatDate(closing)}. Loqal needs your visa details 2 weeks before closing to organise the notary.`
+                : "You chose to handle the visa yourself. Share the visa details at least 2 weeks before closing so Loqal can organise the notary — the exact date appears once the purchase terms are agreed.",
+              href: "/profile",
+              severity: daysLeft !== undefined && daysLeft <= 7 ? "critical" : "warning",
+              createdAt: since,
+              ...(due ? { badge: daysLeft! < 0 ? "Overdue" : `Due in ${daysLeft} day${daysLeft === 1 ? "" : "s"}` } : {}),
+            },
+            "documents",
+          );
+        }
+      }
     }
 
 
@@ -420,7 +471,9 @@ export function TaskTracker({ className = "" }: { className?: string }) {
     requests,
     gone,
     user?.email,
-    user?.mortgageProfile?.submittedAt,
+    user?.mortgageProfile,
+    user?.usPerson,
+    progressOf,
   ]);
 
   const [showAll, setShowAll] = useState(false);
