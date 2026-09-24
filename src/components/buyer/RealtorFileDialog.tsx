@@ -87,6 +87,12 @@ export function RealtorFileDialog({
   const [price, setPrice] = useState<PricePreference>("same_range");
   const [pickedId, setPickedId] = useState("");
 
+  /* deep links may ask for the purchase tab — fall back to Status once a
+     request is already open */
+  useEffect(() => {
+    if (open) setTab(initialTab === "purchase" && openPurchase ? "status" : initialTab);
+  }, [open, initialTab, openPurchase]);
+
   /* One purchase request per property file — once sent (and not withdrawn),
      the buyer negotiates on that request instead of starting a new one. */
   const openPurchase = purchases.find((p) => p.status !== "withdrawn");
