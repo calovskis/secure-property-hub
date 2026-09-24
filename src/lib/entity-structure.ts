@@ -50,6 +50,10 @@ export type EntityPlan = {
   guideSeenAt?: string | undefined;
   /** Purchase terms the buyer's agent proposes (AgreementTerms). */
   proposedTerms?: unknown;
+  /** Agent's in-progress purchase terms, saved before they are sent to the buyer. */
+  draftTerms?: unknown;
+  /** Last stage reached in the agent's purchase-terms window (1–4). */
+  termsDraftStep?: number | undefined;
   /** When the agent sent the terms to the buyer for confirmation. */
   termsProposedAt?: string | undefined;
   termsProposedBy?: string | undefined;
