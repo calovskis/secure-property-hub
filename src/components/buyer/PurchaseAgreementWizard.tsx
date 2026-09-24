@@ -15,7 +15,7 @@
  */
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { CheckCircle2, Building2, ClipboardCheck, Phone } from "lucide-react";
+import { CheckCircle2, Building2, ClipboardCheck, Phone, ExternalLink, Clock } from "lucide-react";
 import { TermsChangeRequest, type TermsChange } from "@/components/buyer/TermsChangeRequest";
 import { CallScheduler } from "@/components/buyer/CallScheduler";
 import { useBuyerProcess } from "@/lib/buyer-process";
@@ -42,6 +42,9 @@ import {
 } from "@/lib/entity-structure";
 import { useEntityIntent } from "@/lib/entity-onboarding";
 import { termsSummary, type AgreementTerms } from "@/lib/purchase-agreement";
+import { CLOSING_STEPS } from "@/lib/closing-steps";
+import { CounterCard } from "@/components/realtor/SellerResponsePanel";
+import type { EntityPlan } from "@/lib/entity-structure";
 import type { PurchaseRequest } from "@/lib/property-requests";
 
 const inputClass =
@@ -90,7 +93,7 @@ export function PurchaseAgreementWizard({
   const [callSlot, setCallSlot] = useState<string | null>(null);
   const [callMeetUrl, setCallMeetUrl] = useState<string | null>(null);
   const { bookCall } = useBuyerProcess();
-  const [signature, setSignature] = useState("");
+  const [counterNote, setCounterNote] = useState("");
 
   const path = plan?.path;
   const decided = Boolean(path);
@@ -209,15 +212,39 @@ export function PurchaseAgreementWizard({
     toast("Terms confirmed", { description: `${agentName} will put them to the seller.` });
   }
 
-  /** The buyer signs the agreement the agent uploaded. */
-  function signAgreement() {
-    const expected = fullName(user ?? ({} as never)).trim().toLowerCase();
-    const typed = signature.trim();
-    if (typed.length < 4 || (expected && typed.toLowerCase() !== expected)) {
-      toast("Type your full name exactly as it is on your profile to sign.");
+  /** Buyer accepts or declines the seller's counter-offer. */
+  function answerCounter(decision: "accepted" | "declined") {
+    if (decision === "declined" && !counterNote.trim()) {
+      toast("Tell your agent why, so they can go back to the seller.");
       return;
     }
     const now = new Date().toISOString();
+    savePlan({
+      sellerCounterBuyerDecision: decision,
+      sellerCounterBuyerAt: now,
+      sellerCounterBuyerNote: counterNote.trim() || undefined,
+      ...(decision === "accepted" ? { sellerAgreedAt: now } : {}),
+    });
+    if (agentEmail) {
+      notify({
+        id: `counter-${decision}-${leadId}-${now}`,
+        to: agentEmail.toLowerCase(),
+        title: decision === "accepted" ? "Your buyer accepted the seller's counter-offer" : "Your buyer declined the seller's counter-offer",
+        body: `${purchase.propertyLabel} — ${clientLabel}${counterNote.trim() ? `: ${counterNote.trim()}` : ""}${decision === "accepted" ? ". Upload the agreement and DocuSign link within 48 hours." : ""}`,
+        href: `/partner?tab=buyers&focus=${leadId}`,
+        severity: "warning",
+      });
+    }
+    setCounterNote("");
+    toast(decision === "accepted" ? "Counter-offer accepted" : "Sent to your agent", {
+      description: decision === "accepted" ? "The agreement follows within 48 hours." : `${agentName} will go back to the seller.`,
+    });
+  }
+
+  /** Buyer confirms they signed in DocuSign. */
+  function markDocusignSigned() {
+    const now = new Date().toISOString();
+    const typed = user ? fullName(user) : clientLabel;
     savePlan({ agreementSignedAt: now, agreementSignedBy: typed });
     if (agentEmail) {
       notify({
@@ -670,47 +697,14 @@ export function PurchaseAgreementWizard({
                       </p>
                     </div>
 
-                    {plan?.agreementSignedAt ? (
-                      <div className="rounded-lg border border-success/30 bg-success/10 p-4">
-                        <p className="text-sm font-semibold text-foreground">
-                          Purchase agreement signed
-                        </p>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          Signed by {plan.agreementSignedBy} on{" "}
-                          {formatDateTime(plan.agreementSignedAt)}
-                          {plan.agreementDoc ? ` · ${plan.agreementDoc}` : ""}. Your mortgage company
-                          has the signed copy and is reconfirming the terms of your mortgage
-                          approval.
-                        </p>
-                      </div>
-                    ) : plan?.agreementDoc ? (
-                      <div className="space-y-2 rounded-lg border border-gold/40 bg-gold-tint/30 p-4">
-                        <p className="text-sm font-semibold text-foreground">
-                          The purchase agreement is ready for your signature
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {agentName} uploaded {plan.agreementDoc}
-                          {plan.agreementUploadedAt
-                            ? ` on ${formatDateTime(plan.agreementUploadedAt)}`
-                            : ""}
-                          . Read it, then type your full name to sign.
-                        </p>
-                        <input
-                          value={signature}
-                          onChange={(e) => setSignature(e.target.value)}
-                          placeholder="Type your full name to sign"
-                          className={inputClass}
-                        />
-                        <button type="button" onClick={signAgreement} className={btnPrimary}>
-                          Sign the purchase agreement
-                        </button>
-                      </div>
-                    ) : (
-                      <p className="rounded-md border border-border bg-background p-3 text-xs text-muted-foreground">
-                        Once the seller agrees, {agentName} uploads the purchase agreement here for
-                        your review and signature.
-                      </p>
-                    )}
+                    <SellerStage
+                      plan={plan!}
+                      agentName={agentName}
+                      counterNote={counterNote}
+                      setCounterNote={setCounterNote}
+                      onCounter={answerCounter}
+                      onSigned={markDocusignSigned}
+                    />
                   </>
                 ) : changeAsked ? (
                   <div className="rounded-lg border border-gold/40 bg-gold-tint/30 p-4 text-xs text-foreground">
@@ -809,4 +803,84 @@ export function PurchaseAgreementWizard({
       </DialogContent>
     </Dialog>
   );
+}
+
+function NextSteps({ current }: { current: number }) {
+  return (
+    <div className="rounded-lg border border-border bg-background p-4 text-xs">
+      <p className="text-sm font-semibold text-foreground">What happens next</p>
+      <ol className="mt-2 space-y-2">
+        {CLOSING_STEPS.map((s, i) => (
+          <li key={s.title} className="flex gap-2.5">
+            <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${i < current ? "bg-success text-background" : i === current ? "bg-brand text-background" : "bg-muted text-muted-foreground"}`}>{i < current ? "✓" : i + 1}</span>
+            <span><strong className="text-foreground">{s.title}</strong><span className="block text-muted-foreground">{s.detail}</span></span>
+          </li>
+        ))}
+      </ol>
+      <p className="mt-3 text-[11px] text-muted-foreground">A general guide to US practice — exact deadlines follow your signed agreement and your state.</p>
+    </div>
+  );
+}
+
+function SellerStage({ plan, agentName, counterNote, setCounterNote, onCounter, onSigned }: {
+  plan: EntityPlan; agentName: string; counterNote: string; setCounterNote: (v: string) => void;
+  onCounter: (d: "accepted" | "declined") => void; onSigned: () => void;
+}) {
+  if (plan.agreementSignedAt)
+    return (
+      <>
+        <div className="rounded-lg border border-success/30 bg-success/10 p-4">
+          <p className="text-sm font-semibold text-foreground">Purchase agreement signed</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Signed by {plan.agreementSignedBy} on {formatDateTime(plan.agreementSignedAt)}
+            {plan.agreementDoc ? ` · ${plan.agreementDoc}` : ""}. Your mortgage company has the signed copy and is reconfirming your mortgage terms.
+          </p>
+        </div>
+        <NextSteps current={1} />
+      </>
+    );
+  if (plan.sellerAgreedAt && plan.agreementDocusignUrl)
+    return (
+      <>
+        <div className="space-y-2 rounded-lg border-2 border-brand/50 bg-brand-tint/30 p-4 text-xs">
+          <p className="text-sm font-semibold text-foreground">Step 2 — sign your purchase agreement electronically</p>
+          <p className="text-muted-foreground">
+            {agentName} uploaded {plan.agreementDoc}{plan.agreementUploadedAt ? ` on ${formatDateTime(plan.agreementUploadedAt)}` : ""} and sent it for signing with DocuSign. To move forward, open the link, read the agreement, and sign it electronically. Once you have signed, the seller countersigns.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <a href={plan.agreementDocusignUrl} target="_blank" rel="noreferrer" className={`${btnPrimary} inline-flex items-center gap-1.5`}><ExternalLink className="h-4 w-4" />Open DocuSign to sign</a>
+            <button type="button" onClick={onSigned} className={btnGhost}>I've signed in DocuSign</button>
+          </div>
+        </div>
+        <NextSteps current={0} />
+      </>
+    );
+  if (plan.sellerAgreedAt) {
+    const due = new Date(new Date(plan.sellerAgreedAt).getTime() + 48 * 3600e3).toISOString();
+    return (
+      <>
+        <div className="rounded-lg border border-success/30 bg-success/10 p-4 text-xs">
+          <p className="flex items-center gap-2 text-sm font-semibold text-foreground"><CheckCircle2 className="h-4 w-4 text-success" />Step 1 — the seller agreed to the terms</p>
+          <p className="mt-1 text-muted-foreground">{plan.sellerStatus === "countered" ? "You accepted the seller's counter-offer. " : "The seller's agent confirmed your terms. "}The purchase agreement follows within the next 48 hours.</p>
+          <p className="mt-2 inline-flex items-center gap-1.5 font-semibold text-foreground"><Clock className="h-3.5 w-3.5" />Expected by {formatDateTime(due)}</p>
+        </div>
+        <NextSteps current={0} />
+      </>
+    );
+  }
+  if (plan.sellerStatus === "countered" && !plan.sellerCounterBuyerDecision)
+    return (
+      <div className="space-y-3">
+        <p className="text-sm font-semibold text-foreground">The seller answered — please review their changes</p>
+        <CounterCard items={plan.sellerCounterItems ?? []} note={plan.sellerCounterNote} docs={plan.sellerCounterDocs} at={plan.sellerRespondedAt} />
+        <textarea value={counterNote} onChange={(e) => setCounterNote(e.target.value)} rows={2} placeholder="Comment for your agent (required if you decline)" className={inputClass} />
+        <div className="flex flex-wrap gap-2">
+          <button type="button" onClick={() => onCounter("accepted")} className={btnPrimary}>Accept the counter-offer</button>
+          <button type="button" onClick={() => onCounter("declined")} className={btnGhost}>Decline — tell my agent why</button>
+        </div>
+      </div>
+    );
+  if (plan.sellerCounterBuyerDecision === "declined")
+    return <p className="rounded-md border border-border bg-background p-3 text-xs text-muted-foreground">You declined the seller's counter-offer. {agentName} is taking your answer back to the seller.</p>;
+  return <p className="rounded-md border border-border bg-background p-3 text-xs text-muted-foreground">{agentName} is presenting your terms to the seller. You'll be notified as soon as the seller answers.</p>;
 }
