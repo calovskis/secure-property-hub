@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { ArrowRight, Check, CheckCircle2, ChevronDown, FileSignature, Handshake, Link2, MessageSquareQuote, Scale, Upload } from "lucide-react";
+import { ArrowRight, Check, CheckCircle2, ChevronDown, FileSignature, FileText, Handshake, Link2, MessageSquareQuote, Pencil, Scale, Upload } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { formatDateTime } from "@/lib/dates";
 import { notify } from "@/lib/notifications";
@@ -26,6 +27,9 @@ export function SellerResponsePanel({ leadId, propertyId, propertyLabel, purchas
   const [docs, setDocs] = useState<string[]>([]);
   const [docName, setDocName] = useState(plan?.agreementDoc ?? "");
   const [link, setLink] = useState(plan?.agreementDocusignUrl ?? "");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const [editing, setEditing] = useState(false);
   const href = `/property/${propertyId}/workspace?open=agreement`;
   const tell = (id: string, title: string, body: string, severity: "info" | "warning" = "warning") => {
     if (buyerEmail) notify({ id, to: buyerEmail.toLowerCase(), title, body, href, severity });
@@ -59,13 +63,28 @@ export function SellerResponsePanel({ leadId, propertyId, propertyLabel, purchas
     setRows(rows.map((row) => row.label === label ? { ...row, ...patch } : row));
   }
 
-  function sendAgreement() {
+  function openDialog(edit: boolean) {
+    setEditing(edit); setConfirming(false);
+    setDocName(plan?.agreementDoc ?? ""); setLink(plan?.agreementDocusignUrl ?? "");
+    setDialogOpen(true);
+  }
+
+  function review() {
     if (!docName) { toast("Upload the purchase agreement first."); return; }
     if (!/^https:\/\/\S+$/i.test(link.trim())) { toast("Add the DocuSign link (https://…)."); return; }
+    if (editing && docName === plan?.agreementDoc && link.trim() === plan?.agreementDocusignUrl) { toast("Nothing changed yet."); return; }
+    setConfirming(true);
+  }
+
+  function sendAgreement() {
     const now = new Date().toISOString();
-    savePlan({ agreementDoc: docName, agreementUploadedAt: now, agreementUploadedBy: agentName, agreementDocusignUrl: link.trim() });
-    tell(`agreement-ready-${leadId}-${now}`, "Sign your purchase agreement with DocuSign", `${propertyLabel} at ${formatPrice(purchase.offerPrice)} — open the DocuSign link to review and sign electronically.`);
-    toast("Agreement and DocuSign link sent", { description: `${buyerName} can sign now.` });
+    const history = plan?.agreementUploadedAt && plan.agreementDoc
+      ? [...(plan.agreementHistory ?? []), { doc: plan.agreementDoc, url: plan.agreementDocusignUrl ?? "", sentAt: plan.agreementUploadedAt, by: plan.agreementUploadedBy ?? agentName }]
+      : plan?.agreementHistory;
+    savePlan({ agreementDoc: docName, agreementUploadedAt: now, agreementUploadedBy: agentName, agreementDocusignUrl: link.trim(), agreementHistory: history });
+    tell(`agreement-ready-${leadId}-${now}`, editing ? "Your purchase agreement was updated" : "Sign your purchase agreement with DocuSign", `${propertyLabel} at ${formatPrice(purchase.offerPrice)} — open the DocuSign link to review and sign electronically.`);
+    toast(editing ? "Updated agreement sent" : "Agreement and DocuSign link sent", { description: `${buyerName} can sign now.` });
+    setDialogOpen(false); setConfirming(false);
   }
 
   const counter = plan?.sellerStatus === "countered" ? plan.sellerCounterItems ?? [] : [];
@@ -121,14 +140,47 @@ export function SellerResponsePanel({ leadId, propertyId, propertyLabel, purchas
 
       {plan?.sellerAgreedAt ? <>
         <p className="flex items-center gap-1.5 font-semibold text-success"><CheckCircle2 className="h-3.5 w-3.5" />Terms agreed with the seller · {formatDateTime(plan.sellerAgreedAt)}</p>
-        {plan.agreementSignedAt ? <p className="text-success">Signed by {plan.agreementSignedBy} on {formatDateTime(plan.agreementSignedAt)}{plan.agreementDoc ? ` · ${plan.agreementDoc}` : ""}. The mortgage company received the signed copy and the buyer's Loqal number.</p> : <div className="space-y-2 rounded-md border border-brand/30 bg-brand-tint/20 p-3">
+        {plan.agreementUploadedAt ? <div className="space-y-2 rounded-md border border-success/40 bg-success/5 p-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="font-semibold text-foreground">Purchase agreement on file</p>
+            {!plan.agreementSignedAt ? <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => openDialog(true)}><Pencil className="h-3 w-3" />Edit agreement or link</Button> : null}
+          </div>
+          <p className="flex items-center gap-1.5 text-foreground"><FileText className="h-3.5 w-3.5 text-brand" />{plan.agreementDoc}</p>
+          <a href={plan.agreementDocusignUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 break-all font-semibold text-brand hover:underline"><Link2 className="h-3.5 w-3.5 shrink-0" />{plan.agreementDocusignUrl}</a>
+          <p className="text-muted-foreground">Sent {formatDateTime(plan.agreementUploadedAt)} by {plan.agreementUploadedBy}{plan.agreementSignedAt ? "" : ` — waiting for ${buyerName} to sign in DocuSign.`}</p>
+          {plan.agreementSignedAt ? <p className="text-success">Signed by {plan.agreementSignedBy} on {formatDateTime(plan.agreementSignedAt)}. The mortgage company received the signed copy and the buyer's Loqal number.</p> : null}
+          {plan.agreementHistory?.length ? <div className="border-t border-border pt-2">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Earlier versions</p>
+            <ul className="mt-1 space-y-1">{[...plan.agreementHistory].reverse().map((h) => <li key={h.sentAt} className="text-muted-foreground"><span className="line-through">{h.doc}</span> · <a href={h.url} target="_blank" rel="noopener noreferrer" className="break-all hover:underline">{h.url}</a> · sent {formatDateTime(h.sentAt)}</li>)}</ul>
+          </div> : null}
+        </div> : <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-brand/30 bg-brand-tint/20 p-3">
           <p className="font-semibold text-foreground">Step 2 — agreement for e-signing <span className="font-normal text-muted-foreground">(due {formatDateTime(new Date(new Date(plan.sellerAgreedAt).getTime() + 48 * 3600e3).toISOString())})</span></p>
-          <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 font-semibold text-muted-foreground hover:text-foreground"><Upload className="h-3.5 w-3.5" />{docName ? `${docName} · replace` : "Upload the purchase agreement"}<input type="file" accept=".pdf,.doc,.docx" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) setDocName(f.name); e.target.value = ""; }} /></label>
-          <div className="flex items-center gap-2"><Link2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" /><input className={input} value={link} onChange={(e) => setLink(e.target.value)} placeholder="DocuSign signing link — https://…" /></div>
-          <Button size="sm" onClick={sendAgreement}>{plan.agreementUploadedAt ? "Update and resend" : "Send for e-signing"}</Button>
-          {plan.agreementUploadedAt ? <p className="text-muted-foreground">Sent {formatDateTime(plan.agreementUploadedAt)} — waiting for {buyerName} to sign in DocuSign.</p> : null}
+          <Button size="sm" onClick={() => openDialog(false)}><Upload />Share the agreement</Button>
         </div>}
       </> : null}
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{editing ? "Edit the agreement or link" : "Share the purchase agreement"}</DialogTitle>
+            <DialogDescription>{confirming ? `Check everything before it goes to ${buyerName}.` : `Upload the agreement and paste the DocuSign link so ${buyerName} can sign electronically.`}</DialogDescription>
+          </DialogHeader>
+          {!confirming ? <div className="space-y-3 text-xs">
+            <label className="flex cursor-pointer items-center gap-1.5 rounded-md border border-dashed border-border px-3 py-3 font-semibold text-muted-foreground hover:text-foreground"><Upload className="h-3.5 w-3.5" />{docName ? `${docName} · replace` : "Upload the purchase agreement"}<input type="file" accept=".pdf,.doc,.docx" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) setDocName(f.name); e.target.value = ""; }} /></label>
+            <div className="flex items-center gap-2"><Link2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" /><input className={input} value={link} onChange={(e) => setLink(e.target.value)} placeholder="DocuSign signing link — https://…" /></div>
+            {editing ? <p className="text-muted-foreground">The version already sent stays on file as history.</p> : null}
+          </div> : <div className="space-y-2 rounded-md border border-border bg-muted/30 p-3 text-xs">
+            <p><span className="text-muted-foreground">Property:</span> <strong>{propertyLabel}</strong> · {formatPrice(purchase.offerPrice)}</p>
+            <p className="flex items-center gap-1.5"><FileText className="h-3.5 w-3.5 text-brand" />{docName}</p>
+            <p className="flex items-center gap-1.5 break-all"><Link2 className="h-3.5 w-3.5 shrink-0 text-brand" />{link.trim()}</p>
+            <p className="text-muted-foreground">{buyerName} will be notified to sign in DocuSign.</p>
+          </div>}
+          <DialogFooter>
+            {confirming ? <><Button variant="ghost" onClick={() => setConfirming(false)}>Back</Button><Button onClick={sendAgreement}><Check />Confirm and send</Button></>
+              : <><Button variant="ghost" onClick={() => setDialogOpen(false)}>Cancel</Button><Button onClick={review}>Review before sending</Button></>}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   </div>;
 }
