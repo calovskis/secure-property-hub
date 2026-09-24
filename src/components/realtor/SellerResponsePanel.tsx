@@ -5,8 +5,10 @@ import { toast } from "sonner";
 import { formatDateTime } from "@/lib/dates";
 import { notify } from "@/lib/notifications";
 import { formatPrice } from "@/data/properties";
+import { Download } from "lucide-react";
 import { useEntityPlan } from "@/lib/entity-structure";
 import { termsSummary, type AgreementTerms } from "@/lib/purchase-agreement";
+import { storeAgreementFile, downloadAgreementFile } from "@/lib/agreement-files";
 import type { PurchaseRequest } from "@/lib/property-requests";
 import { Button } from "@/components/ui/button";
 
@@ -145,7 +147,7 @@ export function SellerResponsePanel({ leadId, propertyId, propertyLabel, purchas
             <p className="font-semibold text-foreground">Purchase agreement on file</p>
             {!plan.agreementSignedAt ? <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => openDialog(true)}><Pencil className="h-3 w-3" />Edit agreement or link</Button> : null}
           </div>
-          <p className="flex items-center gap-1.5 text-foreground"><FileText className="h-3.5 w-3.5 text-brand" />{plan.agreementDoc}</p>
+          <p className="flex flex-wrap items-center gap-2 text-foreground"><FileText className="h-3.5 w-3.5 text-brand" />{plan.agreementDoc}<Button size="sm" variant="outline" className="h-7 gap-1 px-2 text-xs" onClick={() => { if (!downloadAgreementFile(leadId)) toast("The uploaded copy is only available on the device it was uploaded from."); }}><Download className="h-3 w-3" />Download copy</Button></p>
           <a href={plan.agreementDocusignUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 break-all font-semibold text-brand hover:underline"><Link2 className="h-3.5 w-3.5 shrink-0" />{plan.agreementDocusignUrl}</a>
           <p className="text-muted-foreground">Sent {formatDateTime(plan.agreementUploadedAt)} by {plan.agreementUploadedBy}{plan.agreementSignedAt ? "" : ` — waiting for ${buyerName} to sign in DocuSign.`}</p>
           {plan.agreementSignedAt ? <p className="text-success">Signed by {plan.agreementSignedBy} on {formatDateTime(plan.agreementSignedAt)}. The mortgage company received the signed copy and the buyer's Loqal number.</p> : null}
@@ -166,7 +168,7 @@ export function SellerResponsePanel({ leadId, propertyId, propertyLabel, purchas
             <DialogDescription>{confirming ? `Check everything before it goes to ${buyerName}.` : `Upload the agreement and paste the DocuSign link so ${buyerName} can sign electronically.`}</DialogDescription>
           </DialogHeader>
           {!confirming ? <div className="space-y-3 text-xs">
-            <label className="flex cursor-pointer items-center gap-1.5 rounded-md border border-dashed border-border px-3 py-3 font-semibold text-muted-foreground hover:text-foreground"><Upload className="h-3.5 w-3.5" />{docName ? `${docName} · replace` : "Upload the purchase agreement"}<input type="file" accept=".pdf,.doc,.docx" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) setDocName(f.name); e.target.value = ""; }} /></label>
+            <label className="flex cursor-pointer items-center gap-1.5 rounded-md border border-dashed border-border px-3 py-3 font-semibold text-muted-foreground hover:text-foreground"><Upload className="h-3.5 w-3.5" />{docName ? `${docName} · replace` : "Upload the purchase agreement"}<input type="file" accept=".pdf,.doc,.docx" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) { setDocName(f.name); void storeAgreementFile(leadId, f); } e.target.value = ""; }} /></label>
             <div className="flex items-center gap-2"><Link2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" /><input className={input} value={link} onChange={(e) => setLink(e.target.value)} placeholder="DocuSign signing link — https://…" /></div>
             {editing ? <p className="text-muted-foreground">The version already sent stays on file as history.</p> : null}
           </div> : <div className="space-y-2 rounded-md border border-border bg-muted/30 p-3 text-xs">
