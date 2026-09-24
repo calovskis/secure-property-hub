@@ -699,6 +699,7 @@ export function PurchaseAgreementWizard({
 
                     <SellerStage
                       plan={plan!}
+                      leadId={leadId}
                       agentName={agentName}
                       counterNote={counterNote}
                       setCounterNote={setCounterNote}
@@ -822,8 +823,8 @@ function NextSteps({ current }: { current: number }) {
   );
 }
 
-function SellerStage({ plan, agentName, counterNote, setCounterNote, onCounter, onSigned }: {
-  plan: EntityPlan; agentName: string; counterNote: string; setCounterNote: (v: string) => void;
+function SellerStage({ plan, leadId, agentName, counterNote, setCounterNote, onCounter, onSigned }: {
+  plan: EntityPlan; leadId: string; agentName: string; counterNote: string; setCounterNote: (v: string) => void;
   onCounter: (d: "accepted" | "declined") => void; onSigned: () => void;
 }) {
   if (plan.agreementSignedAt)
@@ -845,12 +846,34 @@ function SellerStage({ plan, agentName, counterNote, setCounterNote, onCounter, 
         <div className="space-y-2 rounded-lg border-2 border-brand/50 bg-brand-tint/30 p-4 text-xs">
           <p className="text-sm font-semibold text-foreground">Step 2 — sign your purchase agreement electronically</p>
           <p className="text-muted-foreground">
-            {agentName} uploaded {plan.agreementDoc}{plan.agreementUploadedAt ? ` on ${formatDateTime(plan.agreementUploadedAt)}` : ""} and sent it for signing with DocuSign. To move forward, open the link, read the agreement, and sign it electronically. Once you have signed, the seller countersigns.
+            {agentName} uploaded {plan.agreementDoc}{plan.agreementUploadedAt ? ` on ${formatDateTime(plan.agreementUploadedAt)}` : ""} and sent it for signing. To move forward, open the link, read the agreement, and sign it electronically. Once you have signed, the seller countersigns.
           </p>
           <div className="flex flex-wrap gap-2">
-            <a href={plan.agreementDocusignUrl} target="_blank" rel="noreferrer" className={`${btnPrimary} inline-flex items-center gap-1.5`}><ExternalLink className="h-4 w-4" />Open DocuSign to sign</a>
+            <a href={plan.agreementDocusignUrl} target="_blank" rel="noreferrer" className={`${btnPrimary} inline-flex items-center gap-1.5`}><ExternalLink className="h-4 w-4" />Open Link for Signing</a>
+            {plan.agreementDoc ? (
+              <button
+                type="button"
+                onClick={() => { if (!downloadAgreementFile(leadId)) toast("The uploaded copy is only available on the device it was uploaded from."); }}
+                className={btnGhost}
+              >
+                Download the agreement copy
+              </button>
+            ) : null}
             <button type="button" onClick={onSigned} className={btnGhost}>I've signed in DocuSign</button>
           </div>
+          {plan.agreementHistory?.length ? (
+            <details className="rounded-md border border-border bg-background px-3 py-2">
+              <summary className="cursor-pointer text-[11px] font-semibold text-muted-foreground">Earlier versions on file</summary>
+              <ul className="mt-1 space-y-1">
+                {[...plan.agreementHistory].reverse().map((h) => (
+                  <li key={h.sentAt} className="text-muted-foreground">
+                    {h.doc} · sent {formatDateTime(h.sentAt)}
+                    {h.url ? <> · <a href={h.url} target="_blank" rel="noreferrer" className="break-all text-brand hover:underline">link</a></> : null}
+                  </li>
+                ))}
+              </ul>
+            </details>
+          ) : null}
         </div>
         <NextSteps current={0} />
       </>
