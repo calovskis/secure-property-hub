@@ -190,11 +190,18 @@ export function BuyerProcessCard({ lead }: { lead: MortgageLead }) {
     <div className="mb-6 rounded-lg border border-brand/30 bg-card p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h4 className="text-sm font-semibold text-foreground">Your purchase team</h4>
-        <span className="rounded-full bg-brand-tint px-3 py-1 text-[11px] font-semibold text-brand">
-          {ba.representation === "loqal_rep"
-            ? "Loqal personal manager (+1%)"
-            : `You + ${agentDisplay ?? "your buyer's agent"}`}
-        </span>
+        <div className="flex items-center gap-2">
+          {chatUnread ? (
+            <span className="rounded-full bg-brand px-2 py-0.5 text-[10px] font-semibold text-background">
+              {chatUnread} new
+            </span>
+          ) : null}
+          <span className="rounded-full bg-brand-tint px-3 py-1 text-[11px] font-semibold text-brand">
+            {ba.representation === "loqal_rep"
+              ? "Loqal personal manager (+1%)"
+              : `You + ${agentDisplay ?? "your buyer's agent"}`}
+          </span>
+        </div>
       </div>
 
       {ba.representation === "loqal_rep" ? (
