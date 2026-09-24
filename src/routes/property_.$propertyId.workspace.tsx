@@ -13,7 +13,6 @@ import {
   FileText,
   Landmark,
   MessageSquareText,
-  UserRound,
 } from "lucide-react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { BuyerProcessCard } from "@/components/buyer/BuyerProcessCard";
@@ -120,7 +119,7 @@ function PropertyWorkspacePage() {
   const { leadForProperty } = useLeads();
   const lead = user ? leadForProperty(user.email, property.id) : undefined;
   const activity = useClientPropertyActivity().find((item) => item.propertyId === property.id);
-  const { bookings } = useBuyerProcess();
+  const { bookings, bookCall } = useBuyerProcess();
   const { requests } = usePartnerRequests();
   const { plan } = useEntityPlan(lead?.id ?? "");
   const { purchases } = useFileRequests(lead?.id ?? "");
@@ -461,6 +460,17 @@ function PropertyWorkspacePage() {
             description={`Client support call about ${property.address}.`}
             attendeeEmails={[lead.clientEmail]}
             onBook={(startAt, meeting) => {
+              bookCall({
+                leadId: lead.id,
+                clientName: lead.clientName,
+                clientEmail: lead.clientEmail,
+                propertyLabel: `${property.address} · Loqal support`,
+                kind: "intro_call",
+                startAt,
+                ...(meeting?.eventId ? { googleEventId: meeting.eventId } : {}),
+                ...(meeting?.meetUrl ? { meetUrl: meeting.meetUrl } : {}),
+                ...(meeting?.htmlLink ? { calendarLink: meeting.htmlLink } : {}),
+              });
               setSupportCallSlot(startAt);
               setSupportMeetUrl(meeting?.meetUrl ?? null);
             }}
