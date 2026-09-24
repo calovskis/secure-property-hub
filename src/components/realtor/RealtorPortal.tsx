@@ -979,8 +979,11 @@ export function RealtorPortal({
 }) {
   const { realtors, ensureSeat } = useRealtors();
   const { leads, ready: leadsReady } = useActiveLeads();
-  const { photos } = useBuyerProcess();
+  const { photos, bookings } = useBuyerProcess();
   const { requests } = usePartnerRequests();
+  const allRequests = usePropertyRequests();
+  const { messages } = useAllFileChat();
+  const { plans } = useEntityPlans();
 
   const registration = requests.find(
     (r) => r.email.toLowerCase() === user.email.toLowerCase(),
@@ -997,6 +1000,27 @@ export function RealtorPortal({
     () => (me ? leads.filter((l) => l.buyerAgent?.agentId === me.id) : []),
     [leads, me],
   );
+  const statuses = useMemo(() => {
+    const newest = <T extends { leadId: string; createdAt: string }>(xs: T[], id: string) =>
+      xs.filter((x) => x.leadId === id).sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
+    return new Map(
+      mine.map((l) => [
+        l.id,
+        realtorFileStatus({
+          lead: l,
+          purchase: newest(allRequests.purchases, l.id),
+          change: newest(allRequests.changes, l.id),
+          plan: plans.find((p) => p.leadId === l.id),
+          photo: photos[l.id],
+          hasVideoTour: bookings.some((b) => b.leadId === l.id && b.kind === "video_tour"),
+          hasIntroCall: bookings.some((b) => b.leadId === l.id && b.kind === "intro_call"),
+          unread: messages.filter((m) => m.leadId === l.id && m.from !== "agent" && !m.readAt).length,
+        }),
+      ]),
+    );
+  }, [mine, allRequests.purchases, allRequests.changes, plans, photos, bookings, messages]);
+  const withTasks = mine.filter((l) => statuses.get(l.id)?.task);
+  const sortedMine = [...withTasks, ...mine.filter((l) => !statuses.get(l.id)?.task)];
   const photoWork = mine.filter((l) => {
     const p = photos[l.id];
     return p && p.status !== "delivered";
@@ -1061,6 +1085,54 @@ export function RealtorPortal({
             />
           </section>
 
+          <section className="mb-6 rounded-lg border border-border bg-card p-5">
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <h2 className="text-sm font-semibold text-foreground">
+                Buyer files needing your action{withTasks.length ? ` (${withTasks.length})` : ""}
+              </h2>
+              <button
+                type="button"
+                onClick={() => onTabChange("buyers")}
+                className="text-xs font-semibold text-brand hover:underline"
+              >
+                View all buyers →
+              </button>
+            </div>
+            {withTasks.length ? (
+              <ul className="divide-y divide-border">
+                {withTasks.map((l) => {
+                  const st = statuses.get(l.id)!;
+                  return (
+                    <li key={l.id}>
+                      <button
+                        type="button"
+                        onClick={() => onTabChange("buyers")}
+                        className="flex w-full items-center gap-3 py-3 text-left hover:bg-brand-tint/40"
+                      >
+                        <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-warning" aria-hidden />
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-[13px] font-semibold text-foreground">
+                            {st.task!.title}
+                          </span>
+                          <span className="block truncate text-xs text-muted-foreground">
+                            {clientDisplayForPartner(l.clientName, l.clientEmail)} · {l.propertyLabel}
+                          </span>
+                        </span>
+                        <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ${STATUS_CLS[st.tone]}`}>
+                          {st.label}
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                Nothing waiting on you right now. New buyer requests will appear here.
+              </p>
+            )}
+          </section>
+
           <div className="mb-6">
             <GetStartedCard />
           </div>
@@ -1091,7 +1163,7 @@ export function RealtorPortal({
           </div>
           {mine.length ? (
             <ul className="space-y-4">
-              {mine.map((l) => (
+              {sortedMine.map((l) => (
                 <BuyerFile key={l.id} lead={l} me={me} />
               ))}
             </ul>
