@@ -11,6 +11,7 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { formatDateTime } from "@/lib/dates";
+import { partnerDisplayForClient } from "@/lib/user-id";
 import { notify } from "@/lib/notifications";
 import { useFileChat, type ChatAttachment, type ChatSide } from "@/lib/file-chat";
 
@@ -120,7 +121,12 @@ export function FileChatPanel({
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="font-semibold text-foreground">
-                    {own ? "You" : m.authorName}
+                    {/* Clients never see a partner's family name — first name + number only. */}
+                    {own
+                      ? "You"
+                      : side === "client"
+                        ? partnerDisplayForClient(m.authorName, otherEmail)
+                        : m.authorName}
                     {m.kind === "info_request" ? " · information request" : ""}
                   </span>
                   <span className="text-[10px] text-muted-foreground">
