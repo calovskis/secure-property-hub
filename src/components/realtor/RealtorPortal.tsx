@@ -82,44 +82,6 @@ function Stat({ label, value, note }: { label: string; value: string | number; n
   );
 }
 
-/** Badge describing how the buyer is represented on this file. */
-function RepresentationBadge({ lead }: { lead: MortgageLead }) {
-  const ba = lead.buyerAgent!;
-  if (ba.representation === "loqal_rep") {
-    return (
-      <span className="rounded-full bg-gold-tint px-3 py-1 text-[11px] font-semibold text-gold">
-        🛡 Loqal personal advocate
-      </span>
-    );
-  }
-  if (ba.kickoff === "photo_visit") {
-    return (
-      <span className="rounded-full bg-gold-tint px-3 py-1 text-[11px] font-semibold text-gold">
-        📷 Photos requested
-      </span>
-    );
-  }
-  if (ba.kickoff === "video_showcase") {
-    return (
-      <span className="rounded-full bg-gold-tint px-3 py-1 text-[11px] font-semibold text-gold">
-        🎥 Video tour requested
-      </span>
-    );
-  }
-  if (ba.kickoff === "live_call" || ba.nextStep === "live_call") {
-    return (
-      <span className="rounded-full bg-gold-tint px-3 py-1 text-[11px] font-semibold text-gold">
-        📞 Live call
-      </span>
-    );
-  }
-  return (
-    <span className="rounded-full bg-brand-tint px-3 py-1 text-[11px] font-semibold text-brand">
-      Active buyer
-    </span>
-  );
-}
-
 /**
  * Photo visit workflow: deliver within 3 days, or set a new date with a
  * reason when the seller cannot receive the agent. Photos go out together
