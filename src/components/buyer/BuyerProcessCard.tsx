@@ -95,8 +95,9 @@ export function BuyerProcessCard({ lead }: { lead: MortgageLead }) {
     if (search.open === "chat") {
       setFileTab("chat");
       setFileOpen(true);
+      window.setTimeout(() => document.getElementById("buyer-agent-file")?.scrollIntoView({ behavior: "smooth", block: "start" }), 200);
     }
-  }, [search.open]);
+  }, [search.open, (search as { k?: string }).k]);
 
 
   const ba = lead.buyerAgent;
@@ -262,7 +263,7 @@ export function BuyerProcessCard({ lead }: { lead: MortgageLead }) {
             </div>
           ) : null}
 
-          <section className="mt-4 rounded-lg border border-brand/40 bg-brand-tint/40 p-4">
+          <section id="buyer-agent-file" className="mt-4 scroll-mt-24 rounded-lg border border-brand/40 bg-brand-tint/40 p-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h4 className="text-sm font-semibold text-foreground">
                 💬 Your file with {agentDisplay ?? "your buyer's agent"}
