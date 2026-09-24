@@ -42,6 +42,7 @@ import {
 } from "@/lib/entity-structure";
 import { useEntityIntent } from "@/lib/entity-onboarding";
 import { termsSummary, type AgreementTerms } from "@/lib/purchase-agreement";
+import { downloadAgreementFile } from "@/lib/agreement-files";
 import { CLOSING_STEPS } from "@/lib/closing-steps";
 import { CounterCard } from "@/components/realtor/SellerResponsePanel";
 import type { EntityPlan } from "@/lib/entity-structure";
