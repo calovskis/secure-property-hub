@@ -98,11 +98,18 @@ export function PurchaseAgreementWizard({
   const proposed = Boolean(plan?.termsProposedAt && terms);
   const confirmed = Boolean(plan?.termsConfirmedAt);
   const changeAsked = Boolean(plan?.termsChangeRequestedAt) && !confirmed;
+  /** The agent's terms are on the file — the buyer stays on the terms step. */
+  const termsStarted = Boolean(plan?.termsProposedAt) || confirmed;
 
-  /* Resume where the buyer left off. */
+  /* Resume where the buyer left off. With terms in discussion the window always
+     opens on the terms themselves, never back on the company step. */
   useEffect(() => {
     if (!open) return;
-    setStep(Math.min(2, Math.max(1, plan?.wizardStep ?? (decided ? 2 : 1))));
+    setStep(
+      termsStarted
+        ? 2
+        : Math.min(2, Math.max(1, plan?.wizardStep ?? (decided ? 2 : 1))),
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
@@ -302,7 +309,10 @@ export function PurchaseAgreementWizard({
         {/* stepper */}
         <ol className="grid grid-cols-2 gap-2">
           {STEPS.map((s) => {
-            const reachable = s.id === 1 || decided;
+            /* Once the terms are in discussion the buyer stays there — the
+               company choice is settled and shown as done, not reopened. */
+            const reachable = s.id === 1 ? !termsStarted : decided;
+            const done = s.id === 1 ? decided && termsStarted : confirmed;
             const active = s.id === step;
             return (
               <li key={s.id}>
@@ -313,12 +323,15 @@ export function PurchaseAgreementWizard({
                   className={`w-full rounded-md border px-3 py-2 text-left text-[11px] font-semibold transition-colors ${
                     active
                       ? "border-brand bg-brand-tint text-brand"
-                      : reachable
-                        ? "border-border text-muted-foreground hover:bg-brand-tint/40"
-                        : "border-border text-muted-foreground/50"
+                      : done
+                        ? "border-success/40 bg-success/5 text-success"
+                        : reachable
+                          ? "border-border text-muted-foreground hover:bg-brand-tint/40"
+                          : "border-border text-muted-foreground/50"
                   }`}
                 >
                   <span className="block">
+                    {done && !active ? "✓ " : ""}
                     {s.id}. {s.title}
                   </span>
                   <span className="block font-normal opacity-80">{s.hint}</span>
@@ -416,7 +429,7 @@ export function PurchaseAgreementWizard({
                     can continue with the terms in the meantime.
                   </p>
                 ) : null}
-                {!confirmed ? (
+                {!confirmed && !termsStarted ? (
                   <button
                     type="button"
                     onClick={() => savePlan({ path: undefined })}
@@ -757,11 +770,13 @@ export function PurchaseAgreementWizard({
               </>
             )}
 
-            <div className="flex justify-start">
-              <button type="button" onClick={() => goTo(1)} className={btnGhost}>
-                Back
-              </button>
-            </div>
+            {!termsStarted ? (
+              <div className="flex justify-start">
+                <button type="button" onClick={() => goTo(1)} className={btnGhost}>
+                  Back
+                </button>
+              </div>
+            ) : null}
           </div>
         ) : null}
 
