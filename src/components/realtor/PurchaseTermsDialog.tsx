@@ -58,7 +58,7 @@ export function PurchaseTermsDialog({ open, onOpenChange, leadId, propertyLabel,
     if (terms.depositMode === "custom" && !(terms.depositAmount > 0)) { toast("Enter the custom escrow amount."); return; }
     if (terms.inspection && terms.inspectionTypes.length === 0) { toast("Choose at least one inspection type."); return; }
     const now = new Date().toISOString();
-    savePlan({ draftTerms: terms, proposedTerms: terms, termsProposedAt: now, termsProposedBy: agentName, termsRound: (plan?.termsRound ?? 0) + 1, termsNote: note.trim() || undefined, termsChangeRequestedAt: undefined, termsChangeNote: undefined, termsConfirmedAt: undefined, termsConfirmedBy: undefined, termsDraftStep: 4 });
+    savePlan({ draftTerms: terms, proposedTerms: terms, termsProposedAt: now, termsProposedBy: agentName, termsRound: (plan?.termsRound ?? 0) + 1, termsNote: note.trim() || undefined, termsChangeRequestedAt: undefined, termsChangeNote: undefined, termsChangeItems: undefined, termsConfirmedAt: undefined, termsConfirmedBy: undefined, termsDraftStep: 4 });
     if (buyerEmail) notify({ id: `terms-proposed-${leadId}-${(plan?.termsRound ?? 0) + 1}`, to: buyerEmail.toLowerCase(), title: "Your agent proposed the purchase terms — your confirmation is needed", body: `${propertyLabel} at ${formatPrice(purchase.offerPrice)}. Review the complete terms before they are presented to the seller.`, href: `/property/${purchase.propertyId}/workspace?open=agreement`, severity: "warning" });
     toast("Terms sent to the buyer", { description: `${buyerName} must confirm them before they go to the seller.` }); onOpenChange(false);
   }
