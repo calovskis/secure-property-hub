@@ -181,6 +181,7 @@ export function PurchaseAgreementWizard({
       termsConfirmedBy: signer,
       termsChangeRequestedAt: undefined,
       termsChangeNote: undefined,
+      termsChangeItems: undefined,
       wizardStep: 2,
     });
     if (agentEmail) {
@@ -240,7 +241,11 @@ export function PurchaseAgreementWizard({
       return;
     }
     const now = new Date().toISOString();
-    savePlan({ termsChangeRequestedAt: now, termsChangeNote: text });
+    savePlan({
+      termsChangeRequestedAt: now,
+      termsChangeItems: changes.length ? changes : undefined,
+      termsChangeNote: changes.length ? (extra || undefined) : text || undefined,
+    });
     if (agentEmail) {
       notify({
         id: `terms-change-${leadId}-${now}`,
