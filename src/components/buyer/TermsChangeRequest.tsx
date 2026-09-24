@@ -95,7 +95,7 @@ export function TermsChangeRequest({
     },
     financing: {
       label: "Financing protection",
-      show: t0(terms).paymentMode === "financed",
+      show: terms.paymentMode === "financed",
       text: (t) =>
         t.financing
           ? `Submission in ${plural(t.mortgageSubmissionDays)}, approval in ${plural(t.finalLoanApprovalDays)}`
@@ -356,8 +356,4 @@ export function TermsChangeRequest({
       </div>
     </div>
   );
-}
-
-function t0(t: AgreementTerms) {
-  return t;
 }
