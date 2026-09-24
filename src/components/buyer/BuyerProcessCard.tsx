@@ -190,11 +190,18 @@ export function BuyerProcessCard({ lead }: { lead: MortgageLead }) {
     <div className="mb-6 rounded-lg border border-brand/30 bg-card p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h4 className="text-sm font-semibold text-foreground">Your purchase team</h4>
-        <span className="rounded-full bg-brand-tint px-3 py-1 text-[11px] font-semibold text-brand">
-          {ba.representation === "loqal_rep"
-            ? "Loqal personal manager (+1%)"
-            : `You + ${agentDisplay ?? "your buyer's agent"}`}
-        </span>
+        <div className="flex items-center gap-2">
+          {chatUnread ? (
+            <span className="rounded-full bg-brand px-2 py-0.5 text-[10px] font-semibold text-background">
+              {chatUnread} new
+            </span>
+          ) : null}
+          <span className="rounded-full bg-brand-tint px-3 py-1 text-[11px] font-semibold text-brand">
+            {ba.representation === "loqal_rep"
+              ? "Loqal personal manager (+1%)"
+              : `You + ${agentDisplay ?? "your buyer's agent"}`}
+          </span>
+        </div>
       </div>
 
       {ba.representation === "loqal_rep" ? (
@@ -263,21 +270,11 @@ export function BuyerProcessCard({ lead }: { lead: MortgageLead }) {
             </div>
           ) : null}
 
-          <section id="buyer-agent-file" className="mt-4 scroll-mt-24 rounded-lg border border-brand/40 bg-brand-tint/40 p-4">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <h4 className="text-sm font-semibold text-foreground">
-                💬 Your file with {agentDisplay ?? "your buyer's agent"}
-              </h4>
-              {chatUnread ? (
-                <span className="rounded-full bg-brand px-2 py-0.5 text-[10px] font-semibold text-background">
-                  {chatUnread} new
-                </span>
-              ) : null}
-            </div>
-            <p className="mt-1 text-xs text-muted-foreground">
+          <div id="buyer-agent-file" className="mt-4 scroll-mt-24 rounded-lg border border-brand/40 bg-brand-tint/40 p-4">
+            <p className="text-xs text-muted-foreground">
               {latestPurchase
                 ? PURCHASE_STATUS_LABEL[latestPurchase.status]
-                : "Message your agent, ask to proceed with the purchase, or ask for other properties."}
+                : `Message ${agentDisplay ?? "your agent"}, ask to proceed with the purchase, or ask for other properties.`}
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               <button type="button" onClick={() => openFile("chat")} className={btnPrimary}>
@@ -301,7 +298,7 @@ export function BuyerProcessCard({ lead }: { lead: MortgageLead }) {
                 Request a property change
               </button>
             </div>
-          </section>
+          </div>
 
           <RealtorFileDialog
             lead={lead}
