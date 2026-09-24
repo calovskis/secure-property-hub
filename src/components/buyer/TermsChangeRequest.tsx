@@ -46,7 +46,15 @@ type Key =
 
 const plural = (n: number, w = "day") => `${n} ${w}${n === 1 ? "" : "s"}`;
 
-export type TermsChange = { label: string; from: string; to: string };
+export type TermsChange = { key?: string; label: string; from: string; to: string; patch?: Partial<AgreementTerms> };
+
+const KEY_FIELDS: Record<Key, (keyof AgreementTerms)[]> = {
+  closing: ["closingDate"], deposit: ["depositMode", "depositPct", "depositAmount", "depositDays"], possession: ["possession"],
+  inspection: ["inspection", "inspectionDeadlineDays", "inspectionTypes"], appraisal: ["appraisal", "appraisalDeadlineDays"],
+  financing: ["financing", "mortgageSubmissionDays", "finalLoanApprovalDays"], attorney: ["attorneyReviewDays"],
+  commission: ["commissionPct", "commissionPayer", "commissionSellerSharePct"], concessions: ["sellerConcessions"],
+  warranty: ["homeWarranty"], items: ["includedItems", "excludedItems"], expiry: ["offerExpiresDays"], other: [],
+};
 
 export function TermsChangeRequest({
   price,
@@ -125,6 +133,8 @@ export function TermsChangeRequest({
 
   const changes: TermsChange[] = picked
     .map((k) => ({
+      key: k,
+      patch: Object.fromEntries(KEY_FIELDS[k].map((f) => [f, draft[f]])) as Partial<AgreementTerms>,
       label: describe[k].label,
       from: k === "other" ? "" : describe[k].text(terms),
       to: describe[k].text(draft),
