@@ -17,7 +17,7 @@ import { formatPrice } from "@/data/properties";
 import {
   LOCATION_LABEL,
   PRICE_LABEL,
-  PURCHASE_STATUS_LABEL,
+  REALTOR_PURCHASE_STATUS_LABEL,
   useFileRequests,
 } from "@/lib/property-requests";
 import { AgreementTermsPanel } from "@/components/realtor/AgreementTermsPanel";
