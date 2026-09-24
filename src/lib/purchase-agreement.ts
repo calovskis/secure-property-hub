@@ -118,7 +118,7 @@ export const HOME_WARRANTY_LABEL: Record<HomeWarrantyMode, string> = {
 /** Plain-language lines describing the proposed terms, shown to both sides. */
 export function termsSummary(price: number, t: AgreementTerms): { label: string; value: string }[] {
   const terms = completeTerms(t, t.paymentMode === "financed");
-  const deposit = Math.round((price * t.depositPct) / 100);
+  const deposit = Math.round((price * terms.depositPct) / 100);
   return [
     { label: "Purchase price", value: formatPrice(Math.round(price)) },
     {
