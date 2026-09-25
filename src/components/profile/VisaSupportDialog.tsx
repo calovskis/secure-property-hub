@@ -29,6 +29,7 @@ export function VisaSupportDialog({ open, onOpenChange, profile, onSave }: Props
   const [passports, setPassports] = useState<StoredDocument[]>(profile.passportDocuments ?? []);
   const [editing, setEditing] = useState(false);
   const [agreed, setAgreed] = useState(false);
+  const [changing, setChanging] = useState<{ citizenship?: boolean; residence?: boolean }>({});
 
   const onFile = Boolean(
     profile.citizenship && profile.countryOfResidence && profile.passportDocuments?.length,
@@ -41,7 +42,11 @@ export function VisaSupportDialog({ open, onOpenChange, profile, onSave }: Props
     setPassports(profile.passportDocuments ?? []);
     setEditing(false);
     setAgreed(false);
-  }, [open, profile]);
+    setChanging({});
+    // Reset only when the window opens — the profile object is recreated on every
+    // render, and resetting on it wiped the ticked box and attached passport.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const reviewMode = onFile && !editing;
   const complete = Boolean(citizenship && residence && passports.length);
@@ -116,22 +121,48 @@ export function VisaSupportDialog({ open, onOpenChange, profile, onSave }: Props
           </div>
         ) : (
           <div className="space-y-4">
-            <label className="block text-xs font-medium text-muted-foreground">
+            <div className="text-xs font-medium text-muted-foreground">
               Citizenship
-              <CountryCombobox
-                value={citizenship}
-                onChange={setCitizenship}
-                placeholder="Start typing a country…"
-              />
-            </label>
-            <label className="block text-xs font-medium text-muted-foreground">
+              {citizenship && !changing.citizenship ? (
+                <div className="mt-1 flex items-center justify-between rounded-md border border-border bg-muted/30 px-3 py-2 text-sm text-foreground">
+                  <span className="font-medium">{countryLabel(citizenship)}</span>
+                  <button
+                    type="button"
+                    onClick={() => setChanging((c) => ({ ...c, citizenship: true }))}
+                    className="text-xs font-semibold text-brand hover:underline"
+                  >
+                    Change
+                  </button>
+                </div>
+              ) : (
+                <CountryCombobox
+                  value={citizenship}
+                  onChange={setCitizenship}
+                  placeholder="Start typing a country…"
+                />
+              )}
+            </div>
+            <div className="text-xs font-medium text-muted-foreground">
               Country of residence
-              <CountryCombobox
-                value={residence}
-                onChange={setResidence}
-                placeholder="Start typing a country…"
-              />
-            </label>
+              {residence && !changing.residence ? (
+                <div className="mt-1 flex items-center justify-between rounded-md border border-border bg-muted/30 px-3 py-2 text-sm text-foreground">
+                  <span className="font-medium">{countryLabel(residence)}</span>
+                  <button
+                    type="button"
+                    onClick={() => setChanging((c) => ({ ...c, residence: true }))}
+                    className="text-xs font-semibold text-brand hover:underline"
+                  >
+                    Change
+                  </button>
+                </div>
+              ) : (
+                <CountryCombobox
+                  value={residence}
+                  onChange={setResidence}
+                  placeholder="Start typing a country…"
+                />
+              )}
+            </div>
             <div>
               <div className="mb-1 text-xs font-medium text-muted-foreground">Passport copy</div>
               {passports.length ? (
