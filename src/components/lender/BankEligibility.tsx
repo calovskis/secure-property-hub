@@ -17,6 +17,8 @@ import {
   TRACK_LABEL,
   applicantSnapshot,
   matchBanks,
+  sameTypeElsewhere,
+  FAMILY_LABEL,
   trackOf,
   type ProgramMatch,
 } from "@/lib/bank-matrix";
@@ -35,12 +37,14 @@ const RESULT_MARK: Record<string, string> = { pass: "✓", fail: "✕", review: 
 
 function MatchCard({
   match,
+  alsoAt,
   chosen,
   onChoose,
   onRequest,
   openRequestKeys,
 }: {
   match: ProgramMatch;
+  alsoAt: string[];
   chosen: boolean;
   onChoose: () => void;
   onRequest: (match: ProgramMatch, recommendation: string) => void;
@@ -59,7 +63,15 @@ function MatchCard({
           <div className="text-sm font-semibold text-foreground">
             {p.bank} — {p.program}
           </div>
+          <div className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-brand">
+            {FAMILY_LABEL[p.family] ?? p.family}
+          </div>
           <div className="mt-0.5 text-xs text-muted-foreground">{p.blurb}</div>
+          {alsoAt.length ? (
+            <div className="mt-1.5 inline-flex rounded-full bg-gold-tint px-2.5 py-0.5 text-[11px] font-medium text-gold">
+              Same loan type also at {alsoAt.join(", ")} — you can choose the bank
+            </div>
+          ) : null}
         </div>
         <span
           className={`rounded-full px-3 py-1 text-[11px] font-semibold ${ELIGIBILITY_TONE[match.eligibility]}`}
@@ -259,18 +271,36 @@ export function BankEligibilitySection({ lead }: { lead: MortgageLead }) {
             by a permanent borrower or matrix restriction are hidden. Pick the bank before confirming
             the loan submission.
           </p>
-          <ul className="mt-2 space-y-3">
-            {matches.map((m) => (
-              <MatchCard
-                key={m.program.id}
-                match={m}
-                chosen={submission?.bankProgramId === m.program.id}
-                onChoose={() => choose(m)}
-                onRequest={prepareRequest}
-                openRequestKeys={openRequestKeys}
-              />
-            ))}
-          </ul>
+          <div className="mt-2 space-y-5">
+            {Array.from(new Set(matches.map((m) => m.program.bank))).map((bank) => {
+              const bankMatches = matches.filter((m) => m.program.bank === bank);
+              return (
+                <div key={bank}>
+                  <div className="mb-2 flex items-baseline justify-between border-b border-border pb-1">
+                    <h4 className="text-sm font-semibold text-foreground">{bank}</h4>
+                    <span className="text-[11px] text-muted-foreground">
+                      {bankMatches.length} programme{bankMatches.length === 1 ? "" : "s"}
+                    </span>
+                  </div>
+                  <ul className="space-y-3">
+                    {bankMatches.map((m) => (
+                      <MatchCard
+                        key={m.program.id}
+                        match={m}
+                        alsoAt={Array.from(
+                          new Set(sameTypeElsewhere(m.program, matches).map((o) => o.program.bank)),
+                        )}
+                        chosen={submission?.bankProgramId === m.program.id}
+                        onChoose={() => choose(m)}
+                        onRequest={prepareRequest}
+                        openRequestKeys={openRequestKeys}
+                      />
+                    ))}
+                  </ul>
+                </div>
+              );
+            })}
+          </div>
         </DialogContent>
       </Dialog>
       <InfoRequestDialog

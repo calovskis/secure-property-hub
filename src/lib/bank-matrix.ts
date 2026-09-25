@@ -76,69 +76,396 @@ export type BankProgram = {
   creditEventMonths?: number;
   /** States / locations the matrix excludes. */
   ineligibleLocations?: string[];
+  /** Reserves by loan size (overrides reservesMonths). */
+  reserveTiers?: { upTo: number; months: number }[];
+  /**
+   * Shared loan type — programmes with the same family follow the same
+   * agency/product guideline at different banks, so the lender can choose.
+   */
+  family: string;
+  /** Refinance-only programmes are kept in the catalogue but not matched to purchases. */
+  refinanceOnly?: boolean;
+  /** Guideline documents the programme is read from. */
+  guidelines?: string[];
   /** The matrix terms shown to the lender, verbatim in substance. */
   terms: string[];
   source: string;
 };
 
+/** Human label for each shared loan type. */
+export const FAMILY_LABEL: Record<string, string> = {
+  "fannie-conforming": "Fannie Mae conforming",
+  "fannie-high-balance": "Fannie Mae high balance",
+  "freddie-conforming": "Freddie Mac conforming & high balance",
+  "fannie-refinow": "Fannie Mae RefiNow (refinance)",
+  jumbo: "Jumbo (above conforming limits)",
+  "non-qm-full-doc": "Non-QM full documentation",
+  "fn-full-doc": "Foreign national full doc",
+  "fn-dscr": "Foreign national DSCR",
+  "fn-asset": "Foreign national asset utilization",
+};
+
 /** Citizenships excluded by OFAC-sensitive matrices. */
 const SANCTIONED = ["russia", "belarus", "iran", "north korea", "syria", "cuba"];
 
+const CONFORMING_LIMIT = 832_750;
+const HIGH_BALANCE_LIMIT = 1_249_125;
+
 export const BANK_PROGRAMS: BankProgram[] = [
+  /* ---------------------------------------------------- A&D — conventional */
   {
-    id: "ad-conventional-standard",
+    id: "ad-fannie-mae",
     bank: "A&D Mortgage",
     bankNmls: "958660",
-    program: "Conventional Standard",
+    program: "Fannie Mae (standard & HomeReady)",
+    family: "fannie-conforming",
     track: "conventional",
-    blurb:
-      "Fully compliant with Fannie Mae and Freddie Mac. Traditional pricing, down payment from 3%.",
+    blurb: "Agency conforming loan per DU findings. From 3% down on a primary home; second homes and investment allowed.",
     occupancy: ["primary", "second", "investment"],
-    maxLoan: 832_750,
+    maxLoan: CONFORMING_LIMIT,
     maxPurchaseLtv: 97,
     noScoreAllowed: false,
     reservesMonths: 0,
-    creditEventMonths: 24,
+    ineligibleLocations: ["MD"],
     terms: [
-      "Max loan amount $832,750",
-      "CLTV up to 97% · minimum down payment 3%",
-      "FICO and DTI per automated underwriting (AUS), no hard minimum",
-      "Citizenship: US citizens, permanent and non-permanent residents",
-      "At least two consecutive years of stable income and employment",
-      "At least 2 years out of any credit event · reserves per AUS",
-      "Fixed 15/20/25/30 years · ARM 5/6, 7/6, 10/6 · gift funds allowed",
-      "Private mortgage insurance required below 20% down payment",
+      "Loan amount up to the conforming limit (high-cost county limits via the high balance option)",
+      "Primary 1 unit: fixed 97%, ARM 95% · 2–4 units 95% · cash-out 80% (1 unit) / 75% (2–4)",
+      "Second home: 90% purchase · 75% cash-out",
+      "Investment: 85% purchase 1 unit, 75% 2–4 units · cash-out 75% / 70%",
+      "Credit score, DTI, reserves and mortgage history evaluated by DU · scores below 580 ineligible with past-due debt",
+      "Residency: US citizen, permanent and non-permanent resident",
+      "Mortgage insurance required above 80% LTV · LPMI and split MI not allowed · no interest-only",
+      "Property: SFR, warrantable condo, PUD, manufactured, 1–4 units · title individual, joint or trust",
+      "Maryland: Baltimore County and Baltimore City investment excluded · docs max 4 months old",
     ],
-    source: "A&D Mortgage — Conventional Standard matrix",
+    guidelines: ["A&D Conventional Underwriting Guidelines (09/24/2026)"],
+    source: "A&D Mortgage — Fannie Mae Product Matrix (08/28/2026)",
   },
   {
-    id: "ad-conventional-high-balance",
+    id: "ad-fannie-high-balance",
     bank: "A&D Mortgage",
     bankNmls: "958660",
-    program: "Conventional High Balance",
+    program: "Fannie Mae High Balance",
+    family: "fannie-high-balance",
     track: "conventional",
-    blurb:
-      "For loans above the national baseline limit but within the county's high-cost conforming limit.",
+    blurb: "Fannie Mae loan above the baseline conforming limit, within the county high-cost limit.",
     occupancy: ["primary", "second", "investment"],
-    maxLoan: 1_249_125,
-    minLoanAbove: 832_750,
+    maxLoan: HIGH_BALANCE_LIMIT,
+    minLoanAbove: CONFORMING_LIMIT,
+    maxPurchaseLtv: 95,
+    noScoreAllowed: false,
+    reservesMonths: 0,
+    ineligibleLocations: ["MD"],
+    terms: [
+      "Loan above the conforming limit up to the FHFA county limit",
+      "Primary: 95% 1 unit · 85% 2 units · 75% 3–4 units",
+      "Second home 90% · investment 85% (1 unit) per the Fannie Mae matrix",
+      "Credit score, DTI and reserves per DU",
+      "Residency: US citizen, permanent and non-permanent resident",
+    ],
+    guidelines: ["A&D Conventional Underwriting Guidelines (09/24/2026)"],
+    source: "A&D Mortgage — Fannie Mae Product Matrix (08/28/2026)",
+  },
+  {
+    id: "ad-freddie-mac",
+    bank: "A&D Mortgage",
+    bankNmls: "958660",
+    program: "Freddie Mac (standard & high balance)",
+    family: "freddie-conforming",
+    track: "conventional",
+    blurb: "Agency conforming loan per LPA findings, including high-cost county limits.",
+    occupancy: ["primary", "second", "investment"],
+    maxLoan: HIGH_BALANCE_LIMIT,
+    maxPurchaseLtv: 95,
+    noScoreAllowed: false,
+    reservesMonths: 0,
+    ineligibleLocations: ["MD"],
+    terms: [
+      "Loan amount up to conforming limits including high-cost area limits",
+      "Primary purchase: 95% (1–4 units) · high balance 85% (2 units), 80% (3–4 units)",
+      "Condominium 90% · manufactured home 95% · cash-out lower per matrix",
+      "Credit score, DTI and reserves evaluated by LPA · scores below 580 ineligible with past-due debt",
+      "Residency: US citizen, permanent and non-permanent resident",
+      "Mortgage insurance required above 80% LTV · docs max 120 days old",
+    ],
+    guidelines: ["A&D Conventional Underwriting Guidelines (09/24/2026)"],
+    source: "A&D Mortgage — Freddie Mac Product Matrix (08/28/2026)",
+  },
+  {
+    id: "ad-fannie-refinow",
+    bank: "A&D Mortgage",
+    bankNmls: "958660",
+    program: "Fannie Mae RefiNow",
+    family: "fannie-refinow",
+    refinanceOnly: true,
+    track: "conventional",
+    blurb: "Limited cash-out refinance of an existing Fannie Mae loan on a primary residence.",
+    occupancy: ["primary"],
+    maxLoan: CONFORMING_LIMIT,
     maxPurchaseLtv: 97,
     noScoreAllowed: false,
     reservesMonths: 0,
-    creditEventMonths: 24,
-    terms: [
-      "Max loan amount $1,249,125 (county specific)",
-      "CLTV up to 97% · minimum down payment 3%",
-      "FICO and DTI per AUS",
-      "Citizenship: US citizens, permanent and non-permanent residents",
-      "Two consecutive years of stable income and employment · reserves per AUS",
-      "Fixed 15/30 years · ARM 5/6, 7/6, 10/6 · gift funds allowed · cash-out allowed",
-      "Private mortgage insurance required below 20% down payment",
+    terms: ["Primary residence, 1 unit, limited cash-out refinance · fixed up to 97%, condo 90%"],
+    source: "A&D Mortgage — Fannie Mae Product Matrix (08/28/2026)",
+  },
+  {
+    id: "ad-power-jumbo",
+    bank: "A&D Mortgage",
+    bankNmls: "958660",
+    program: "Power Jumbo",
+    family: "jumbo",
+    track: "conventional",
+    blurb: "Jumbo loans from the conforming limit + $1 up to $5M, AUS-evaluated with jumbo overlays.",
+    occupancy: ["primary", "second", "investment"],
+    minLoanAbove: CONFORMING_LIMIT,
+    maxLoan: 5_000_000,
+    maxPurchaseLtv: 89.99,
+    tiers: [
+      { upTo: 2_000_000, purchaseLtv: 89.99 },
+      { upTo: 3_500_000, purchaseLtv: 80 },
+      { upTo: 5_000_000, purchaseLtv: 75 },
     ],
-    source: "A&D Mortgage — Conventional High Balance matrix",
+    minFico: 660,
+    noScoreAllowed: false,
+    maxDti: 50,
+    reservesMonths: 0,
+    reserveTiers: [
+      { upTo: 2_000_000, months: 0 },
+      { upTo: 3_000_000, months: 12 },
+      { upTo: Infinity, months: 24 },
+    ],
+    ineligibleLocations: ["HI", "MD", "PA", "VI"],
+    terms: [
+      "Loan amount: conforming limit + $1 to $5,000,000",
+      "Max HCLTV 89.99% to $2M (primary, 680+) · 80% to $3.5M · 75% to $5M · lower for 660–679 and investment",
+      "DTI per AUS, max 50% · max 45% for loans over $3.5M",
+      "Reserves: per AUS to $2M · 12 months $2M–$3M · 24 months above $3M · FTHB 12 months",
+      "Residency: US citizen, permanent and non-permanent resident with valid SSN",
+      "Second appraisal above $2M · max points and fees 3% · prepayment penalty on investment only",
+      "Excluded: HI, Baltimore County & City MD, Philadelphia PA (investment), VI",
+    ],
+    guidelines: ["AD Power Jumbo Underwriting Guidelines (08/19/2026)"],
+    source: "A&D Mortgage — Power Jumbo Product Matrix (08/28/2026)",
+  },
+  {
+    id: "ad-apex-prime",
+    bank: "A&D Mortgage",
+    bankNmls: "958660",
+    program: "APEX Prime",
+    family: "non-qm-full-doc",
+    track: "conventional",
+    blurb: "Prime non-QM full documentation, $75,000 to $5M, credit score 680+.",
+    occupancy: ["primary", "second", "investment"],
+    minLoan: 75_000,
+    maxLoan: 5_000_000,
+    maxPurchaseLtv: 80,
+    tiers: [
+      { upTo: 1_000_000, purchaseLtv: 80 },
+      { upTo: 3_000_000, purchaseLtv: 75 },
+      { upTo: 5_000_000, purchaseLtv: 65 },
+    ],
+    minFico: 680,
+    noScoreAllowed: false,
+    maxDti: 45,
+    reservesMonths: 6,
+    reserveTiers: [
+      { upTo: 2_000_000, months: 6 },
+      { upTo: 4_000_000, months: 12 },
+      { upTo: Infinity, months: 24 },
+    ],
+    ineligibleLocations: ["MD", "PA"],
+    terms: [
+      "Loan amount $75,000 – $5,000,000 · max HCLTV 80% (740+, primary) decreasing by FICO and loan size",
+      "Min FICO 680 · non-permanent residents min FICO 700 · DTI max 45%",
+      "Reserves: 12 months $2M–$4M · 24 months above $4M",
+      "Residency: US citizen, permanent and non-permanent resident",
+      "2–4 units not allowed on second homes · FL PUD max CLTV 80% (OO/2nd), 75% (investment)",
+      "Cash in hand: unlimited below 55% CLTV · $1M to 65% · $500k above 65% with FICO below 700",
+      "Interested party contribution 6% (CLTV ≤80%) · investment 4% · vesting individual, joint, trust, LLC/Corp",
+    ],
+    guidelines: ["APEX Prime Eligibility Guidelines (09/24/2026)"],
+    source: "A&D Mortgage — APEX Prime Product Matrix (08/28/2026)",
+  },
+  {
+    id: "ad-prime",
+    bank: "A&D Mortgage",
+    bankNmls: "958660",
+    program: "Prime",
+    family: "non-qm-full-doc",
+    track: "conventional",
+    blurb: "Non-QM prime, $75,000 to $1.5M. Accepts FICO from 620 and no-FICO borrowers at lower LTV.",
+    occupancy: ["primary", "second", "investment"],
+    minLoan: 75_000,
+    maxLoan: 1_500_000,
+    maxPurchaseLtv: 80,
+    tiers: [
+      { upTo: 1_000_000, purchaseLtv: 80 },
+      { upTo: 1_500_000, purchaseLtv: 75 },
+    ],
+    minFico: 620,
+    noScoreAllowed: true,
+    maxDti: 50,
+    reservesMonths: 3,
+    reserveTiers: [
+      { upTo: 1_000_000, months: 3 },
+      { upTo: 2_000_000, months: 6 },
+      { upTo: Infinity, months: 12 },
+    ],
+    creditEventMonths: 12,
+    ineligibleLocations: ["AZ", "CA", "DC", "HI", "ID", "MD"],
+    terms: [
+      "Loan amount $75,000 – $1,500,000 · max HCLTV 80% (720+) decreasing by FICO",
+      "Min FICO 620 · no FICO allowed at 55–70% LTV up to $750,000",
+      "DTI max 50% · 50.01–55% only purchase/rate-term OO/2nd with FICO 680 and CLTV 80%",
+      "Reserves: 3 months to $1M · 6 months $1M–$2M · 12 months above $2M",
+      "12-month waiting period after a credit event · interest-only 120 months available",
+      "Investment without a licence restricted in AZ, CA, DC, HI, ID and Baltimore MD",
+    ],
+    source: "A&D Mortgage — Prime Product Matrix (08/28/2026)",
+  },
+  {
+    id: "ad-super-prime",
+    bank: "A&D Mortgage",
+    bankNmls: "958660",
+    program: "Super Prime",
+    family: "non-qm-full-doc",
+    track: "conventional",
+    blurb: "Non-QM super prime, $75,000 to $4M, up to 90% LTV for strong credit.",
+    occupancy: ["primary", "second", "investment"],
+    minLoan: 75_000,
+    maxLoan: 4_000_000,
+    maxPurchaseLtv: 90,
+    tiers: [
+      { upTo: 1_500_000, purchaseLtv: 90 },
+      { upTo: 2_000_000, purchaseLtv: 85 },
+      { upTo: 2_500_000, purchaseLtv: 80 },
+      { upTo: 3_000_000, purchaseLtv: 75 },
+      { upTo: 4_000_000, purchaseLtv: 70 },
+    ],
+    minFico: 620,
+    noScoreAllowed: false,
+    maxDti: 50,
+    reservesMonths: 3,
+    reserveTiers: [
+      { upTo: 1_000_000, months: 3 },
+      { upTo: 2_000_000, months: 6 },
+      { upTo: Infinity, months: 12 },
+    ],
+    creditEventMonths: 48,
+    terms: [
+      "Loan amount $75,000 – $4,000,000",
+      "Primary 720+: 90% to $1.5M · 85% to $2M · 80% to $2.5M · 75% to $3M · 70% to $4M (lower by FICO/occupancy)",
+      "Min FICO 620 · non-permanent residents min FICO 700 · DTI max 50%",
+      "Reserves: 6 months $1M–$2M · 12 months above $2M",
+      "48-month waiting period after a credit event · interest-only 120 months available",
+      "2–4 units not available on second homes · see guidelines for visa restrictions",
+    ],
+    source: "A&D Mortgage — Super Prime Product Matrix (08/28/2026)",
+  },
+  /* ---------------------------------------------- HomeXpress — conventional */
+  {
+    id: "homexpress-fnma-high-balance",
+    bank: "HomeXpress Mortgage",
+    program: "FNMA High Balance",
+    family: "fannie-high-balance",
+    track: "conventional",
+    blurb: "Fannie Mae high balance with HomeXpress overlays — DU approval, minimum credit score 580.",
+    occupancy: ["primary", "second", "investment"],
+    maxLoan: HIGH_BALANCE_LIMIT,
+    minLoanAbove: CONFORMING_LIMIT,
+    maxPurchaseLtv: 95,
+    minFico: 580,
+    noScoreAllowed: false,
+    reservesMonths: 0,
+    terms: [
+      "Loan above the conforming limit by at least $1, up to the FHFA county limit",
+      "Primary: 95% 1 unit · 85% 2 units · 75% 3–4 units · manufactured 95% · cash-out 80% / 75%",
+      "Second home: 90% purchase · 75% cash-out",
+      "Investment: 85% 1 unit · 75% 2–4 units · cash-out 75% / 70%",
+      "Min credit score 580 · DTI per DU · at least one borrower with a score, no manual underwriting",
+      "Reserves per DU · 6 months on cash-out when DTI above 45%",
+      "Mortgage insurance above 80% LTV · ACE appraisal waivers permitted",
+    ],
+    source: "HomeXpress Mortgage — FNMA High Balance Product Matrix (06/30/2026)",
+  },
+  {
+    id: "homexpress-agency-noo-xpress",
+    bank: "HomeXpress Mortgage",
+    program: "Agency Non-Owner Xpress",
+    family: "fannie-conforming",
+    track: "conventional",
+    blurb: "Fannie Mae conforming (DU only) for second homes and investment properties.",
+    occupancy: ["second", "investment"],
+    maxLoan: CONFORMING_LIMIT,
+    maxPurchaseLtv: 90,
+    minFico: 660,
+    noScoreAllowed: false,
+    reservesMonths: 0,
+    terms: [
+      "Conforming only, DU only, fixed rate",
+      "Second home 1 unit: 90% purchase · 75% cash-out",
+      "Investment: 85% purchase 1 unit · 75% 2–4 units and limited cash-out · cash-out 75% / 70%",
+      "Min FICO 660 (1 unit) · 680 (2–4 units) · DTI and reserves per DU",
+      "Residency: US citizen; non-US citizens per Fannie Mae guidelines",
+    ],
+    source: "HomeXpress Mortgage — Agency Non-Owner Xpress Matrix",
+  },
+  {
+    id: "homexpress-fnma-refinow",
+    bank: "HomeXpress Mortgage",
+    program: "FNMA RefiNow",
+    family: "fannie-refinow",
+    refinanceOnly: true,
+    track: "conventional",
+    blurb: "Limited cash-out refinance of an existing Fannie Mae loan on a primary residence.",
+    occupancy: ["primary"],
+    maxLoan: CONFORMING_LIMIT,
+    maxPurchaseLtv: 97,
+    noScoreAllowed: false,
+    reservesMonths: 0,
+    terms: ["Primary residence limited cash-out refinance · DU approval required · reserves per DU"],
+    source: "HomeXpress Mortgage — FNMA RefiNow Product Matrix",
+  },
+  /* ------------------------------------------ Champions — conventional */
+  {
+    id: "champions-accelerator-activator",
+    bank: "Champions Funding",
+    program: "Accelerator (investor) / Activator (primary & 2nd home) — Full Doc",
+    family: "non-qm-full-doc",
+    track: "conventional",
+    blurb: "Full doc (W-2, tax returns, retirement), $150,000 to $3M, up to 90% LTV for 740+.",
+    occupancy: ["primary", "second", "investment"],
+    minLoan: 150_000,
+    maxLoan: 3_000_000,
+    maxPurchaseLtv: 90,
+    tiers: [
+      { upTo: 1_000_000, purchaseLtv: 90 },
+      { upTo: 2_500_000, purchaseLtv: 80 },
+      { upTo: 3_000_000, purchaseLtv: 75 },
+    ],
+    minFico: 640,
+    noScoreAllowed: false,
+    maxDti: 50,
+    reservesMonths: 3,
+    reserveTiers: [
+      { upTo: 1_000_000, months: 3 },
+      { upTo: 1_500_000, months: 6 },
+      { upTo: Infinity, months: 9 },
+    ],
+    terms: [
+      "Loan amount $150,000 – $3,000,000",
+      "Primary/2nd: 90% (740+) · 85% (720) · 80% (700) · lower for 680–640 · investment max 85%",
+      "DTI max 50% · 55% with $3,000 residual income · 45% when LTV above 80%",
+      "Reserves: 3 months below $1M · 6 months to $1.5M · 9 months above (cash-out can satisfy)",
+      "Citizenship: US citizen, permanent resident, non-permanent resident with US credit and acceptable visa",
+      "Gift funds allowed for 100% of down payment, not for reserves · 2 appraisals from $2M",
+      "Ineligible states per Champions state licensing",
+    ],
+    source: "Champions Funding — Accelerator / Activator Full Doc matrix",
   },
   {
     id: "ad-fn-full-doc",
+    family: "fn-full-doc",
     bank: "A&D Mortgage",
     bankNmls: "958660",
     program: "Foreign National Full Doc",
@@ -171,6 +498,7 @@ export const BANK_PROGRAMS: BankProgram[] = [
   },
   {
     id: "ad-fn-dscr",
+    family: "fn-dscr",
     bank: "A&D Mortgage",
     bankNmls: "958660",
     program: "Foreign National DSCR",
@@ -204,6 +532,7 @@ export const BANK_PROGRAMS: BankProgram[] = [
   },
   {
     id: "ad-fn-asset-utilization",
+    family: "fn-asset",
     bank: "A&D Mortgage",
     bankNmls: "958660",
     program: "Foreign National Asset Utilization",
@@ -235,6 +564,7 @@ export const BANK_PROGRAMS: BankProgram[] = [
   },
   {
     id: "champions-fn-ambassador",
+    family: "fn-full-doc",
     bank: "Champions Funding",
     program: "Ambassador Investment — Foreign National (second home & investment)",
     track: "foreign_national",
@@ -577,25 +907,29 @@ export function matchProgram(program: BankProgram, snap: ApplicantSnapshot): Pro
     recommendations.push("Complete income and liability documents, then run automated underwriting (AUS).");
   }
 
-  if (program.reservesMonths) {
+  const reservesNeeded = program.reserveTiers
+    ? (program.reserveTiers.find((t) => snap.loanAmount <= t.upTo) ??
+        program.reserveTiers[program.reserveTiers.length - 1]!).months
+    : program.reservesMonths;
+  if (reservesNeeded) {
     const result: CheckResult =
       snap.reservesMonths === undefined
         ? "review"
-        : snap.reservesMonths >= program.reservesMonths
+        : snap.reservesMonths >= reservesNeeded
           ? "pass"
           : "fail";
     add(
       "Reserves",
       result,
       snap.reservesMonths === undefined
-        ? `${program.reservesMonths} months required`
-        : `${snap.reservesMonths} months of declared liquid assets (payment ${money(snap.monthlyPayment)}) · ${program.reservesMonths} months required`,
+        ? `${reservesNeeded} months required at this loan size`
+        : `${snap.reservesMonths} months of declared liquid assets (payment ${money(snap.monthlyPayment)}) · ${reservesNeeded} months required at this loan size`,
     );
     if (result === "fail") {
-      const needed = Math.max(0, program.reservesMonths * snap.monthlyPayment - snap.liquidAssets);
-      recommendations.push(`Document at least ${money(needed)} more in eligible liquid reserves to reach ${program.reservesMonths} months.`);
+      const needed = Math.max(0, reservesNeeded * snap.monthlyPayment - snap.liquidAssets);
+      recommendations.push(`Document at least ${money(needed)} more in eligible liquid reserves to reach ${reservesNeeded} months.`);
     } else if (result === "review") {
-      recommendations.push(`Add statements proving at least ${program.reservesMonths} months of reserves.`);
+      recommendations.push(`Add statements proving at least ${reservesNeeded} months of reserves.`);
     }
   }
 
@@ -714,7 +1048,7 @@ export function matchProgram(program: BankProgram, snap: ApplicantSnapshot): Pro
 export function matchBanks(snap: ApplicantSnapshot): ProgramMatch[] {
   const order: Record<Eligibility, number> = { eligible: 0, review: 1, ineligible: 2 };
   const track = trackOf(snap);
-  return BANK_PROGRAMS.filter((program) => program.track === track)
+  return BANK_PROGRAMS.filter((program) => program.track === track && !program.refinanceOnly)
     .map((program) => matchProgram(program, snap))
     .filter((match) => !match.hiddenReason)
     .sort(
@@ -722,4 +1056,9 @@ export function matchBanks(snap: ApplicantSnapshot): ProgramMatch[] {
       order[a.eligibility] - order[b.eligibility] ||
       a.program.bank.localeCompare(b.program.bank),
   );
+}
+
+/** Other banks offering the same loan type, for the lender's choice. */
+export function sameTypeElsewhere(program: BankProgram, matches: ProgramMatch[]) {
+  return matches.filter((m) => m.program.family === program.family && m.program.bank !== program.bank);
 }
