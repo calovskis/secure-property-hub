@@ -17,6 +17,8 @@ import {
   TRACK_LABEL,
   applicantSnapshot,
   matchBanks,
+  sameTypeElsewhere,
+  FAMILY_LABEL,
   trackOf,
   type ProgramMatch,
 } from "@/lib/bank-matrix";
@@ -35,12 +37,14 @@ const RESULT_MARK: Record<string, string> = { pass: "✓", fail: "✕", review: 
 
 function MatchCard({
   match,
+  alsoAt,
   chosen,
   onChoose,
   onRequest,
   openRequestKeys,
 }: {
   match: ProgramMatch;
+  alsoAt: string[];
   chosen: boolean;
   onChoose: () => void;
   onRequest: (match: ProgramMatch, recommendation: string) => void;
