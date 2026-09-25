@@ -7,7 +7,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { CalendarClock, FilePlus2, FileQuestion, Paperclip, Phone, X } from "lucide-react";
+import { CalendarClock, FilePlus2, FileQuestion, Paperclip, Phone } from "lucide-react";
 import { bookCaseCall } from "@/lib/google-calendar.functions";
 import { GoogleCalendarCard } from "@/components/google/GoogleCalendarCard";
 import { Button } from "@/components/ui/button";
