@@ -454,6 +454,20 @@ export function AdminCases() {
     const l = new URLSearchParams(window.location.search).get("line");
     if (l && ALL_LINES.some((x) => x.id === l)) setLineId(l as LineId);
   }, []);
+  /* Deep link from a notification: open that client's case pop-up. */
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const client = params.get("client")?.toLowerCase();
+    if (!client) return;
+    const line = params.get("line");
+    if (line === "entity") {
+      const r = entityRequests.find((e) => e.email === client);
+      if (r) setEntityOpen(r.id);
+    } else if (line === "visa") {
+      const r = visaRequests.find((v) => v.email === client);
+      if (r) setVisaOpen(r.id);
+    }
+  }, [entityRequests, visaRequests]);
   const [lineId, setLineId] = useState<LineId>("mortgage");
   const [audience, setAudience] = useState<Audience>("client");
   const [openId, setOpenId] = useState<string | null>(null);
