@@ -1410,6 +1410,7 @@ export function VisaSupportTopic({
               Our team is on it — we will be in touch with the next steps.
             </p>
           )}
+          {myVisa && myVisa.status !== "requested" ? null : (
           <button
             type="button"
             onClick={() => {
@@ -1420,6 +1421,7 @@ export function VisaSupportTopic({
           >
             Change my choice
           </button>
+          )}
         </div>
       ) : (
         <div className="mt-5 rounded-md border border-border bg-muted/50 p-3">

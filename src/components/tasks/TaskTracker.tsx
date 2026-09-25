@@ -18,6 +18,7 @@ import { openDeepLink } from "@/lib/deep-link";
 import { useActiveLeads, useLeads } from "@/lib/leads";
 import { usePartnerRequests } from "@/lib/partner-requests";
 import { useDeletions } from "@/lib/deletions";
+import { VISA_STATUS_LABEL, isVisaOpen, useVisaRequests } from "@/lib/visa-support";
 import { pendingVerifications } from "@/lib/licence-verification";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import { usePurchaseProgress } from "@/lib/purchase-stage";
@@ -199,6 +200,7 @@ export function TaskTracker({ className = "" }: { className?: string }) {
      notifications about a deleted user can still be matched and hidden. */
   const { leads: allLeads } = useLeads();
   const { requests } = usePartnerRequests();
+  const { requests: visaRequests } = useVisaRequests();
   const { deleted } = useDeletions();
   const { progressOf } = usePurchaseProgress();
 
@@ -311,8 +313,19 @@ export function TaskTracker({ className = "" }: { className?: string }) {
             "info",
           );
     }
+    for (const v of visaRequests)
+      if (isVisaOpen(v) && !gone.has(v.email))
+        add(
+          `visa-${v.id}`,
+          "other",
+          `Visa support — ${v.clientName}`,
+          `${VISA_STATUS_LABEL[v.status]}. Move the request forward so ${v.clientName.split(" ")[0]} sees the progress.`,
+          "/admin?tab=cases&line=visa",
+          v.updatedAt,
+          v.status === "requested" ? "warning" : "info",
+        );
     return list;
-  }, [isAdmin, requests, gone]);
+  }, [isAdmin, requests, gone, visaRequests]);
 
 
   const tasks = useMemo<Task[]>(() => {
@@ -374,7 +387,6 @@ export function TaskTracker({ className = "" }: { className?: string }) {
         "areq-",
         "entitysetup-",
         "deletion-",
-        "visasupport-",
       ];
       for (const n of adminItems.filter(isStillOpen)) {
         /* A stored notification can outlive the user it concerns — once the
