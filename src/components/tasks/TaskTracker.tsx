@@ -19,6 +19,10 @@ import { useActiveLeads, useLeads } from "@/lib/leads";
 import { usePartnerRequests } from "@/lib/partner-requests";
 import { useDeletions } from "@/lib/deletions";
 import { VISA_STATUS_LABEL, isVisaOpen, useVisaRequests } from "@/lib/visa-support";
+import { ENTITY_STATUS_LABEL, isEntityOpen, submitEntityRequest, useEntityRequests } from "@/lib/entity-setup";
+import { useEntityPlans } from "@/lib/entity-structure";
+import { useEntityIntent } from "@/lib/entity-onboarding";
+import { useEffect } from "react";
 import { pendingVerifications } from "@/lib/licence-verification";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import { usePurchaseProgress } from "@/lib/purchase-stage";
@@ -201,6 +205,27 @@ export function TaskTracker({ className = "" }: { className?: string }) {
   const { leads: allLeads } = useLeads();
   const { requests } = usePartnerRequests();
   const { requests: visaRequests } = useVisaRequests();
+  const { requests: entityRequests } = useEntityRequests();
+  const { plans: entityPlans } = useEntityPlans();
+  const { intent: entityIntent } = useEntityIntent(isAdmin ? undefined : user?.email);
+  /* Company set-up requests live in this browser; push them to the database
+     (idempotent) so every Loqal admin gets the open task on any device. */
+  useEffect(() => {
+    if (!user || isAdmin) return;
+    const email = user.email.toLowerCase();
+    const myLeads = allLeads.filter((l) => l.clientEmail?.toLowerCase() === email);
+    const plan = entityPlans.find((p) => p.loqalSetupRequestedAt && myLeads.some((l) => l.id === p.leadId));
+    const at = plan?.loqalSetupRequestedAt ?? entityIntent?.supportRequestedAt;
+    if (!at) return;
+    const lead = plan ? myLeads.find((l) => l.id === plan.leadId) : undefined;
+    void submitEntityRequest({
+      email,
+      clientName: `${user.firstName} ${user.lastName}`.trim() || email,
+      propertyLabel: lead?.propertyLabel,
+      leadId: lead?.id,
+      requestedAt: at,
+    });
+  }, [user, isAdmin, allLeads, entityPlans, entityIntent?.supportRequestedAt]);
   const { deleted } = useDeletions();
   const { progressOf } = usePurchaseProgress();
 
@@ -325,8 +350,19 @@ export function TaskTracker({ className = "" }: { className?: string }) {
           v.updatedAt,
           v.status === "requested" ? "warning" : "info",
         );
+    for (const e of entityRequests)
+      if (isEntityOpen(e) && !gone.has(e.email))
+        add(
+          `entity-${e.id}`,
+          "other",
+          `Company set-up support — ${e.clientName}`,
+          `${ENTITY_STATUS_LABEL[e.status]}${e.propertyLabel ? ` · ${e.propertyLabel}` : ""}. Assign an entity manager and set up the holding structure.`,
+          "/admin?tab=cases&line=entity",
+          e.updatedAt,
+          e.status === "requested" ? "warning" : "info",
+        );
     return list;
-  }, [isAdmin, requests, gone, visaRequests]);
+  }, [isAdmin, requests, gone, visaRequests, entityRequests]);
 
 
   const tasks = useMemo<Task[]>(() => {
