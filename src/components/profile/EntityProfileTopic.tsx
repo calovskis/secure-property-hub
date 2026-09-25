@@ -28,6 +28,8 @@ import { LOQAL_SETUP_FEE_USD, RELATED_SERVICES_MAX_USD } from "@/lib/entity-stru
 import { useEntityPlans } from "@/lib/entity-structure";
 import { useLeads } from "@/lib/leads";
 import { TopicCard, TopicField } from "@/components/profile/TopicCard";
+import { ClientCaseButton } from "@/components/cases/ClientCaseButton";
+import { ENTITY_STATUS_LABEL, useEntityRequests } from "@/lib/entity-setup";
 
 const TERM_POINTS = [
   `One-time Loqal Managerial Set-up fee of $${LOQAL_SETUP_FEE_USD} — we design the structure, coordinate every provider and keep you out of the paperwork.`,
@@ -163,12 +165,28 @@ export function EntityProfileTopic() {
             <TopicField label="EIN" value={effectiveIntent?.entityEin || "—"} />
           </div>
         ) : requested ? (
+          <div>
           <div className="flex items-center gap-2 rounded-lg border border-success/40 bg-success/10 px-3 py-2.5">
             <CheckCircle2 className="h-4 w-4 text-success" aria-hidden />
             <span className="text-sm text-foreground">
               Terms confirmed on {formatDateTime(effectiveIntent?.supportRequestedAt ?? "")} — a Loqal entity
               manager is being assigned and will reach out within three business days.
             </span>
+          </div>
+          {myEntityCase ? (
+            <>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Status: <span className="font-semibold text-foreground">{ENTITY_STATUS_LABEL[myEntityCase.status]}</span>
+                {myEntityCase.propertyLabel ? ` · ${myEntityCase.propertyLabel}` : ""}
+              </p>
+              <ClientCaseButton
+                caseKind="entity"
+                caseId={myEntityCase.id}
+                clientUserId={myEntityCase.userId}
+                title="Company set-up — messages with Loqal"
+              />
+            </>
+          ) : null}
           </div>
         ) : (
           <div>
