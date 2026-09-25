@@ -19,10 +19,11 @@
 import { totalMonthlyObligations, type MortgageLead } from "@/lib/leads";
 import { normalizeAssets, usStatusOf, type UsStatus } from "@/lib/mortgage-form";
 
-export type BorrowerTrack = "conventional" | "foreign_national";
+export type BorrowerTrack = "conventional" | "itin" | "foreign_national";
 
 export const TRACK_LABEL: Record<BorrowerTrack, string> = {
   conventional: "Conventional (SSN / US credit)",
+  itin: "ITIN borrower",
   foreign_national: "Foreign national",
 };
 
@@ -628,6 +629,8 @@ export type ApplicantSnapshot = {
   ltv: number;
   downPaymentPct: number;
   occupancy: Occupancy;
+  /** Buyer answered "vacation home" — sorted as primary, second-home matrices also fit. */
+  vacationHome: boolean;
   state: string;
   /** Declared assets, face value, all currencies added up. */
   totalAssets: number;
@@ -726,7 +729,9 @@ export function applicantSnapshot(lead: MortgageLead): ApplicantSnapshot {
     loanAmount,
     ltv: Math.round(100 - downPaymentPct),
     downPaymentPct,
-    occupancy: p.propertyUse === "vacation" ? "second" : "investment",
+    // A vacation home is treated as the primary residence (FHA and agency sorting).
+    occupancy: p.propertyUse === "vacation" ? "primary" : "investment",
+    vacationHome: p.propertyUse === "vacation",
     state: (lead.propertyLabel.match(/\b([A-Z]{2})\b/)?.[1] ?? "").toUpperCase(),
     totalAssets: entries.reduce((s, a) => s + num(a.value), 0),
     liquidAssets: liquidTotal,
@@ -747,7 +752,21 @@ export function applicantSnapshot(lead: MortgageLead): ApplicantSnapshot {
 export function trackOf(snap: ApplicantSnapshot): BorrowerTrack {
   const conventional =
     snap.hasSsn && (snap.usStatus === "citizen" || snap.usStatus === "green_card");
-  return conventional ? "conventional" : "foreign_national";
+  if (conventional) return "conventional";
+  if (snap.hasItin && !snap.hasSsn) return "itin";
+  return "foreign_national";
+}
+
+/** ITIN borrowers see ITIN matrices and, as a fallback, foreign-national ones. */
+function trackFits(program: BankProgram, track: BorrowerTrack) {
+  return program.track === track || (track === "itin" && program.track === "foreign_national");
+}
+
+function occupancyFits(program: BankProgram, snap: ApplicantSnapshot) {
+  return (
+    program.occupancy.includes(snap.occupancy) ||
+    (snap.vacationHome && program.occupancy.includes("second"))
+  );
 }
 
 /* ------------------------------------------------------------- matching */
@@ -800,12 +819,12 @@ export function matchProgram(program: BankProgram, snap: ApplicantSnapshot): Pro
   const track = trackOf(snap);
   add(
     "Borrower track",
-    program.track === track ? "pass" : "fail",
-    program.track === track
+    trackFits(program, track) ? "pass" : "fail",
+    trackFits(program, track)
       ? `${TRACK_LABEL[program.track]} — matches the borrower`
       : `This matrix is ${TRACK_LABEL[program.track].toLowerCase()}; the borrower is ${TRACK_LABEL[track].toLowerCase()}`,
   );
-  if (!program.occupancy.includes(snap.occupancy)) {
+  if (!occupancyFits(program, snap)) {
     recommendations.push(
       `This programme only supports ${program.occupancy.map((o) => OCCUPANCY_LABEL[o].toLowerCase()).join(" or ")}; only change occupancy if that is the borrower's genuine intended use.`,
     );
@@ -813,8 +832,8 @@ export function matchProgram(program: BankProgram, snap: ApplicantSnapshot): Pro
 
   add(
     "Occupancy",
-    program.occupancy.includes(snap.occupancy) ? "pass" : "fail",
-    `${OCCUPANCY_LABEL[snap.occupancy]} · matrix allows ${program.occupancy
+    occupancyFits(program, snap) ? "pass" : "fail",
+    `${snap.vacationHome ? "Vacation home (primary residence)" : OCCUPANCY_LABEL[snap.occupancy]} · matrix allows ${program.occupancy
       .map((o) => OCCUPANCY_LABEL[o].toLowerCase())
       .join(", ")}`,
   );
@@ -1048,7 +1067,7 @@ export function matchProgram(program: BankProgram, snap: ApplicantSnapshot): Pro
 export function matchBanks(snap: ApplicantSnapshot): ProgramMatch[] {
   const order: Record<Eligibility, number> = { eligible: 0, review: 1, ineligible: 2 };
   const track = trackOf(snap);
-  return BANK_PROGRAMS.filter((program) => program.track === track && !program.refinanceOnly)
+  return BANK_PROGRAMS.filter((program) => trackFits(program, track) && !program.refinanceOnly)
     .map((program) => matchProgram(program, snap))
     .filter((match) => !match.hiddenReason)
     .sort(
