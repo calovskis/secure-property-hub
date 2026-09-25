@@ -38,6 +38,8 @@ import {
 import { formatDate, formatDateTime } from "@/lib/dates";
 import { ENTITY_PATH_LABEL, updateEntityPlan, useEntityPlans } from "@/lib/entity-structure";
 import { notify } from "@/lib/notifications";
+import { ENTITY_STATUS_LABEL, isEntityOpen, useEntityRequests } from "@/lib/entity-setup";
+import { EntityStatusDialog } from "@/components/admin/EntityStatusDialog";
 import { usd } from "@/lib/accounting";
 import type { StoredDocument } from "@/lib/auth";
 
@@ -429,6 +431,7 @@ type CaseRow = {
   leadId?: string;
   href?: string;
   visaId?: string;
+  entityId?: string;
 };
 
 const AUDIENCE_LABEL: Record<Audience, string> = { client: "Client support", partner: "Partner support" };
@@ -445,6 +448,8 @@ export function AdminCases() {
   const { deleted } = useDeletions();
   const { requests: visaRequests } = useVisaRequests();
   const [visaOpen, setVisaOpen] = useState<string | null>(null);
+  const { requests: entityRequests } = useEntityRequests();
+  const [entityOpen, setEntityOpen] = useState<string | null>(null);
   useEffect(() => {
     const l = new URLSearchParams(window.location.search).get("line");
     if (l && ALL_LINES.some((x) => x.id === l)) setLineId(l as LineId);
@@ -562,7 +567,22 @@ export function AdminCases() {
     // Company set-up
     out.entity.client = leads
       .filter((l) => planOf(l.id)?.path === "loqal_setup")
+      .filter((l) => !entityRequests.some((e) => e.leadId === l.id || e.email === l.clientEmail?.toLowerCase()))
       .map((l) => leadRow(l, ENTITY_PATH_LABEL.loqal_setup, true));
+    out.entity.client = [
+      ...entityRequests
+        .filter((e) => !gone.has(e.email))
+        .map((e) => ({
+          key: `entity-${e.id}`,
+          title: e.clientName,
+          subtitle: e.propertyLabel ?? "Holding structure for the upcoming purchase",
+          status: ENTITY_STATUS_LABEL[e.status],
+          needsLoqal: isEntityOpen(e),
+          since: e.requestedAt,
+          entityId: e.id,
+        })),
+      ...out.entity.client,
+    ];
 
     // Visa
     out.visa.client = visaRequests
@@ -583,7 +603,7 @@ export function AdminCases() {
           x.needsLoqal === y.needsLoqal ? y.since.localeCompare(x.since) : x.needsLoqal ? -1 : 1,
         );
     return out;
-  }, [leads, plans, requests, gone, visaRequests]);
+  }, [leads, plans, requests, gone, visaRequests, entityRequests]);
 
   const line = ALL_LINES.find((l) => l.id === lineId)!;
   const aud: Audience = line.audiences.includes(audience) ? audience : line.audiences[0]!;
@@ -725,7 +745,11 @@ export function AdminCases() {
                 );
                 return (
                   <li key={r.key} className="transition-colors hover:bg-brand-tint/40">
-                    {r.visaId ? (
+                    {r.entityId ? (
+                      <button type="button" className="w-full text-left" onClick={() => setEntityOpen(r.entityId!)}>
+                        {body}
+                      </button>
+                    ) : r.visaId ? (
                       <button type="button" className="w-full text-left" onClick={() => setVisaOpen(r.visaId!)}>
                         {body}
                       </button>
@@ -750,6 +774,10 @@ export function AdminCases() {
           <VisaStatusDialog
             request={visaRequests.find((v) => v.id === visaOpen)}
             onClose={() => setVisaOpen(null)}
+          />
+          <EntityStatusDialog
+            request={entityRequests.find((e) => e.id === entityOpen)}
+            onClose={() => setEntityOpen(null)}
           />
         </div>
       </div>
