@@ -85,7 +85,10 @@ export function useEntityRequests() {
   );
   useEffect(() => {
     if (!loaded) void refreshEntityRequests();
-    if (!timer) timer = setInterval(() => void refreshEntityRequests(), 60_000);
+    if (!timer) timer = setInterval(() => void refreshEntityRequests(), 30_000);
+    const onFocus = () => void refreshEntityRequests();
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
   }, []);
   const update = useCallback(
     async (r: EntitySetupRequest, status: EntityStatus, by: string, note?: string) => {
