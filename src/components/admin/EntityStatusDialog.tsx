@@ -68,6 +68,23 @@ export function EntityStatusDialog({
           </DialogDescription>
         </DialogHeader>
 
+        <section className="rounded-lg border border-border p-3">
+          <div className="mb-2 text-sm font-semibold text-foreground">
+            Communication with the client
+            {request.propertyLabel ? (
+              <span className="font-normal text-muted-foreground"> · {request.propertyLabel}</span>
+            ) : null}
+          </div>
+          <CaseThread
+            caseKind="entity"
+            caseId={request.id}
+            clientUserId={request.userId}
+            viewer="loqal"
+            authorName={by}
+            clientFirstName={request.clientName.split(" ")[0] ?? ""}
+          />
+        </section>
+
         <div className="space-y-1.5">
           <div className="text-xs font-medium text-muted-foreground">Progress status</div>
           {OPTIONS.map((st) => (
