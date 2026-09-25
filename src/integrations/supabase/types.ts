@@ -175,7 +175,11 @@ export type Database = {
           history: Json
           id: string
           lead_id: string | null
+          manager: Json | null
           property_label: string | null
+          recommendation: Json | null
+          recommendation_history: Json
+          recommendation_response: Json | null
           requested_at: string
           status: string
           status_note: string | null
@@ -189,7 +193,11 @@ export type Database = {
           history?: Json
           id?: string
           lead_id?: string | null
+          manager?: Json | null
           property_label?: string | null
+          recommendation?: Json | null
+          recommendation_history?: Json
+          recommendation_response?: Json | null
           requested_at?: string
           status?: string
           status_note?: string | null
@@ -203,7 +211,11 @@ export type Database = {
           history?: Json
           id?: string
           lead_id?: string | null
+          manager?: Json | null
           property_label?: string | null
+          recommendation?: Json | null
+          recommendation_history?: Json
+          recommendation_response?: Json | null
           requested_at?: string
           status?: string
           status_note?: string | null
@@ -499,6 +511,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      respond_entity_recommendation: {
+        Args: { _id: string; _response: Json }
+        Returns: undefined
       }
     }
     Enums: {
