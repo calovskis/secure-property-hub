@@ -234,7 +234,8 @@ export function TaskTracker({ className = "" }: { className?: string }) {
 
     for (const r of requests) {
       if (r.status === "declined" || gone.has(r.email.trim().toLowerCase())) continue;
-      const who = r.companyName || `${r.firstName} ${r.lastName}`.trim();
+      const full = `${r.firstName} ${r.lastName}`.trim();
+      const who = r.companyName ? `${full} · ${r.companyName}` : full;
 
       if (r.status === "pending")
         add(
