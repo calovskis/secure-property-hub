@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useAuth } from "@/lib/auth";
+import { notify } from "@/lib/notifications";
 import { toast } from "sonner";
 import type { MortgageProfile, StoredDocument } from "@/lib/auth";
 import { countryLabel } from "@/data/countries";
@@ -1282,6 +1284,23 @@ export function VisaSupportTopic({
 }) {
   const [editOpen, setEditOpen] = useState(false);
   const [loqalOpen, setLoqalOpen] = useState(false);
+  const { user: visaUser } = useAuth();
+  // Loqal staff get an open task for every client who requested visa support
+  // (idempotent — also covers requests made before this notice existed).
+  useEffect(() => {
+    if (profile.visaSupport !== "loqal" || !visaUser?.email) return;
+    const email = visaUser.email.toLowerCase();
+    const who = `${visaUser.firstName} ${visaUser.lastName}`.trim() || email;
+    notify({
+      id: `visasupport-${email}`,
+      to: "admins",
+      title: `Visa support requested — ${who}`,
+      body: `${who} confirmed the Loqal visa support (100 USD fee plus partner and consular fees). Citizenship: ${countryLabel(profile.citizenship ?? "") || "—"}, residence: ${countryLabel(profile.countryOfResidence ?? "") || "—"}${profile.visaSupportRequestedAt ? `, requested ${formatDate(profile.visaSupportRequestedAt)}` : ""}. Engage a visa partner in the client's country of residence.`,
+      href: "/admin?tab=people",
+      severity: "warning",
+      ...(profile.visaSupportRequestedAt ? { createdAt: profile.visaSupportRequestedAt } : {}),
+    });
+  }, [profile.visaSupport, profile.visaSupportRequestedAt, profile.citizenship, profile.countryOfResidence, visaUser?.email, visaUser?.firstName, visaUser?.lastName]);
 
   const initial = {
     visaType: (profile.visaType ?? "") as UsStatus | "",
