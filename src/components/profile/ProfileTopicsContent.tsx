@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
-import { notify } from "@/lib/notifications";
+import {
+  VISA_STATUSES,
+  VISA_STATUS_CLIENT_TEXT,
+  VISA_STATUS_LABEL,
+  submitVisaRequest,
+  useVisaRequests,
+  type VisaRequest,
+} from "@/lib/visa-support";
 import { toast } from "sonner";
 import type { MortgageProfile, StoredDocument } from "@/lib/auth";
 import { countryLabel } from "@/data/countries";
@@ -1285,20 +1292,20 @@ export function VisaSupportTopic({
   const [editOpen, setEditOpen] = useState(false);
   const [loqalOpen, setLoqalOpen] = useState(false);
   const { user: visaUser } = useAuth();
+  const { requests: visaRequests } = useVisaRequests();
+  const myVisa = visaRequests.find((r) => r.email === visaUser?.email.toLowerCase());
   // Loqal staff get an open task for every client who requested visa support
   // (idempotent — also covers requests made before this notice existed).
   useEffect(() => {
     if (profile.visaSupport !== "loqal" || !visaUser?.email) return;
     const email = visaUser.email.toLowerCase();
     const who = `${visaUser.firstName} ${visaUser.lastName}`.trim() || email;
-    notify({
-      id: `visasupport-${email}`,
-      to: "admins",
-      title: `Visa support requested — ${who}`,
-      body: `${who} confirmed the Loqal visa support (100 USD fee plus partner and consular fees). Citizenship: ${countryLabel(profile.citizenship ?? "") || "—"}, residence: ${countryLabel(profile.countryOfResidence ?? "") || "—"}${profile.visaSupportRequestedAt ? `, requested ${formatDate(profile.visaSupportRequestedAt)}` : ""}. Engage a visa partner in the client's country of residence.`,
-      href: "/admin?tab=people",
-      severity: "warning",
-      ...(profile.visaSupportRequestedAt ? { createdAt: profile.visaSupportRequestedAt } : {}),
+    void submitVisaRequest({
+      email,
+      clientName: who,
+      citizenship: profile.citizenship,
+      countryOfResidence: profile.countryOfResidence,
+      requestedAt: profile.visaSupportRequestedAt,
     });
   }, [profile.visaSupport, profile.visaSupportRequestedAt, profile.citizenship, profile.countryOfResidence, visaUser?.email, visaUser?.firstName, visaUser?.lastName]);
 
@@ -1396,9 +1403,14 @@ export function VisaSupportTopic({
               : ""}
             .
           </p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Our team is on it — we will be in touch with the next steps.
-          </p>
+          {myVisa ? (
+            <VisaProgress request={myVisa} />
+          ) : (
+            <p className="mt-1 text-xs text-muted-foreground">
+              Our team is on it — we will be in touch with the next steps.
+            </p>
+          )}
+          {myVisa && myVisa.status !== "requested" ? null : (
           <button
             type="button"
             onClick={() => {
@@ -1409,6 +1421,7 @@ export function VisaSupportTopic({
           >
             Change my choice
           </button>
+          )}
         </div>
       ) : (
         <div className="mt-5 rounded-md border border-border bg-muted/50 p-3">
@@ -1515,5 +1528,45 @@ export function VisaSupportTopic({
         )}
       </TopicEditDialog>
     </TopicCard>
+  );
+}
+
+function VisaProgress({ request }: { request: VisaRequest }) {
+  const idx = VISA_STATUSES.indexOf(request.status as (typeof VISA_STATUSES)[number]);
+  const at = (st: string) => [...request.history].reverse().find((h) => h.status === st)?.at;
+  return (
+    <div className="mt-3 space-y-3">
+      <p className="text-xs text-foreground">{VISA_STATUS_CLIENT_TEXT[request.status]}</p>
+      {request.statusNote ? (
+        <p className="rounded-md border border-border bg-background px-3 py-2 text-xs italic text-muted-foreground">
+          Note from Loqal: “{request.statusNote}”
+        </p>
+      ) : null}
+      {request.status === "not_possible" ? null : (
+        <ol className="space-y-1.5">
+          {VISA_STATUSES.map((st, i) => {
+            const done = i <= idx;
+            const when = at(st);
+            return (
+              <li key={st} className="flex items-center gap-2 text-xs">
+                <span
+                  className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border text-[9px] font-bold ${
+                    done ? "border-brand bg-brand text-brand-foreground" : "border-border text-muted-foreground"
+                  } ${i === idx ? "ring-2 ring-brand/30" : ""}`}
+                >
+                  {done ? "✓" : i + 1}
+                </span>
+                <span className={done ? "font-medium text-foreground" : "text-muted-foreground"}>
+                  {VISA_STATUS_LABEL[st]}
+                </span>
+                {done && when ? (
+                  <span className="ml-auto text-muted-foreground">{formatDate(when)}</span>
+                ) : null}
+              </li>
+            );
+          })}
+        </ol>
+      )}
+    </div>
   );
 }

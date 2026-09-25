@@ -326,6 +326,51 @@ export type Database = {
         }
         Relationships: []
       }
+      visa_support_requests: {
+        Row: {
+          citizenship: string | null
+          client_name: string
+          country_of_residence: string | null
+          created_at: string
+          email: string
+          history: Json
+          id: string
+          requested_at: string
+          status: string
+          status_note: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          citizenship?: string | null
+          client_name?: string
+          country_of_residence?: string | null
+          created_at?: string
+          email: string
+          history?: Json
+          id?: string
+          requested_at?: string
+          status?: string
+          status_note?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          citizenship?: string | null
+          client_name?: string
+          country_of_residence?: string | null
+          created_at?: string
+          email?: string
+          history?: Json
+          id?: string
+          requested_at?: string
+          status?: string
+          status_note?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

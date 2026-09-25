@@ -4,7 +4,7 @@
  * the full correspondence timeline (lender info requests, client questions,
  * decisions, kickoff notes).
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   Briefcase,
@@ -22,7 +22,9 @@ import {
 } from "lucide-react";
 import { usePartnerRequests, type PartnerRequest } from "@/lib/partner-requests";
 import { useDeletions } from "@/lib/deletions";
-import { useNotifications } from "@/lib/notifications";
+import { countryLabel } from "@/data/countries";
+import { VisaStatusDialog } from "@/components/admin/VisaStatusDialog";
+import { VISA_STATUS_LABEL, isVisaOpen, useVisaRequests } from "@/lib/visa-support";
 import { personActions } from "@/lib/person-actions";
 import {
   KICKOFF_LABEL,
@@ -426,6 +428,7 @@ type CaseRow = {
   since: string;
   leadId?: string;
   href?: string;
+  visaId?: string;
 };
 
 const AUDIENCE_LABEL: Record<Audience, string> = { client: "Client support", partner: "Partner support" };
@@ -440,7 +443,12 @@ export function AdminCases() {
   const { plans } = useEntityPlans();
   const { requests } = usePartnerRequests();
   const { deleted } = useDeletions();
-  const { notifications: adminNotes } = useNotifications("admins");
+  const { requests: visaRequests } = useVisaRequests();
+  const [visaOpen, setVisaOpen] = useState<string | null>(null);
+  useEffect(() => {
+    const l = new URLSearchParams(window.location.search).get("line");
+    if (l && ALL_LINES.some((x) => x.id === l)) setLineId(l as LineId);
+  }, []);
   const [lineId, setLineId] = useState<LineId>("mortgage");
   const [audience, setAudience] = useState<Audience>("client");
   const [openId, setOpenId] = useState<string | null>(null);
@@ -555,17 +563,16 @@ export function AdminCases() {
       .map((l) => leadRow(l, ENTITY_PATH_LABEL.loqal_setup, true));
 
     // Visa
-    out.visa.client = adminNotes
-      .filter((n) => n.id.startsWith("visasupport-"))
-      .filter((n) => !gone.has(n.id.slice("visasupport-".length)))
-      .map((n) => ({
-        key: n.id,
-        title: n.title.replace(/^Visa support requested — /, ""),
-        subtitle: n.body ?? "",
-        status: n.completed ? "Handled" : "Engage a visa partner",
-        needsLoqal: !n.completed,
-        since: n.createdAt,
-        ...(n.href ? { href: n.href } : {}),
+    out.visa.client = visaRequests
+      .filter((v) => !gone.has(v.email))
+      .map((v) => ({
+        key: `visa-${v.id}`,
+        title: v.clientName,
+        subtitle: `Citizenship ${countryLabel(v.citizenship ?? "") || "—"} · residence ${countryLabel(v.countryOfResidence ?? "") || "—"}`,
+        status: VISA_STATUS_LABEL[v.status],
+        needsLoqal: isVisaOpen(v),
+        since: v.requestedAt,
+        visaId: v.id,
       }));
 
     for (const l of ALL_LINES)
@@ -574,7 +581,7 @@ export function AdminCases() {
           x.needsLoqal === y.needsLoqal ? y.since.localeCompare(x.since) : x.needsLoqal ? -1 : 1,
         );
     return out;
-  }, [leads, plans, requests, gone, adminNotes]);
+  }, [leads, plans, requests, gone, visaRequests]);
 
   const line = ALL_LINES.find((l) => l.id === lineId)!;
   const aud: Audience = line.audiences.includes(audience) ? audience : line.audiences[0]!;
@@ -716,7 +723,11 @@ export function AdminCases() {
                 );
                 return (
                   <li key={r.key} className="transition-colors hover:bg-brand-tint/40">
-                    {r.leadId ? (
+                    {r.visaId ? (
+                      <button type="button" className="w-full text-left" onClick={() => setVisaOpen(r.visaId!)}>
+                        {body}
+                      </button>
+                    ) : r.leadId ? (
                       <button type="button" className="w-full text-left" onClick={() => setOpenId(r.leadId!)}>
                         {body}
                       </button>
@@ -734,6 +745,10 @@ export function AdminCases() {
           )}
 
           {open ? <CaseDetail lead={open} onClose={() => setOpenId(null)} /> : null}
+          <VisaStatusDialog
+            request={visaRequests.find((v) => v.id === visaOpen)}
+            onClose={() => setVisaOpen(null)}
+          />
         </div>
       </div>
     </section>
