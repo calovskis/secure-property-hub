@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useAuth } from "@/lib/auth";
+import { notify } from "@/lib/notifications";
 import { toast } from "sonner";
 import type { MortgageProfile, StoredDocument } from "@/lib/auth";
 import { countryLabel } from "@/data/countries";
