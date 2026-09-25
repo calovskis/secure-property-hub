@@ -25,9 +25,9 @@ function ago(iso: string): string {
 
 export function AdminActivityCard({ className = "" }: { className?: string }) {
   const entries = useActivity();
-  const [showAll, setShowAll] = useState(false);
-  const visible = showAll ? entries.slice(0, 40) : entries.slice(0, MAX_VISIBLE);
-  const hidden = Math.max(Math.min(entries.length, 40) - visible.length, 0);
+  const [shown, setShown] = useState(INITIAL_VISIBLE);
+  const visible = entries.slice(0, shown);
+  const hasMore = entries.length > visible.length;
 
   return (
     <section className={`rounded-xl border border-border bg-card p-4 ${className}`}>
