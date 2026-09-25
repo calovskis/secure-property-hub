@@ -465,6 +465,7 @@ export const BANK_PROGRAMS: BankProgram[] = [
   },
   {
     id: "ad-fn-full-doc",
+    family: "fn-full-doc",
     bank: "A&D Mortgage",
     bankNmls: "958660",
     program: "Foreign National Full Doc",
@@ -497,6 +498,7 @@ export const BANK_PROGRAMS: BankProgram[] = [
   },
   {
     id: "ad-fn-dscr",
+    family: "fn-dscr",
     bank: "A&D Mortgage",
     bankNmls: "958660",
     program: "Foreign National DSCR",
@@ -530,6 +532,7 @@ export const BANK_PROGRAMS: BankProgram[] = [
   },
   {
     id: "ad-fn-asset-utilization",
+    family: "fn-asset",
     bank: "A&D Mortgage",
     bankNmls: "958660",
     program: "Foreign National Asset Utilization",
@@ -561,6 +564,7 @@ export const BANK_PROGRAMS: BankProgram[] = [
   },
   {
     id: "champions-fn-ambassador",
+    family: "fn-full-doc",
     bank: "Champions Funding",
     program: "Ambassador Investment — Foreign National (second home & investment)",
     track: "foreign_national",
@@ -1044,7 +1048,7 @@ export function matchProgram(program: BankProgram, snap: ApplicantSnapshot): Pro
 export function matchBanks(snap: ApplicantSnapshot): ProgramMatch[] {
   const order: Record<Eligibility, number> = { eligible: 0, review: 1, ineligible: 2 };
   const track = trackOf(snap);
-  return BANK_PROGRAMS.filter((program) => program.track === track)
+  return BANK_PROGRAMS.filter((program) => program.track === track && !program.refinanceOnly)
     .map((program) => matchProgram(program, snap))
     .filter((match) => !match.hiddenReason)
     .sort(
@@ -1052,4 +1056,9 @@ export function matchBanks(snap: ApplicantSnapshot): ProgramMatch[] {
       order[a.eligibility] - order[b.eligibility] ||
       a.program.bank.localeCompare(b.program.bank),
   );
+}
+
+/** Other banks offering the same loan type, for the lender's choice. */
+export function sameTypeElsewhere(program: BankProgram, matches: ProgramMatch[]) {
+  return matches.filter((m) => m.program.family === program.family && m.program.bank !== program.bank);
 }
