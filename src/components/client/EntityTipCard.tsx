@@ -47,6 +47,7 @@ export function EntityTipCard() {
   const { leadsForClient } = useLeads();
   const [entityOpen, setEntityOpen] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
+  const [sentOpen, setSentOpen] = useState(false);
   const [agreed, setAgreed] = useState(false);
   const [form, setForm] = useState({ name: "", type: "LLC", state: "", ein: "" });
 
@@ -68,6 +69,29 @@ export function EntityTipCard() {
   const done = Boolean(
     intent?.entityProvidedAt || intent?.supportRequestedAt || hasCompanyOnPropertyFile,
   );
+  /* The confirmation window must still show after the request, when the tip
+     card itself is done and hides. */
+  if (sentOpen)
+    return (
+      <Dialog open onOpenChange={setSentOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Request received</DialogTitle>
+            <DialogDescription>
+              Thank you for confirming. Loqal will revert to you within two days with the next
+              steps for setting up your holding structure.
+            </DialogDescription>
+          </DialogHeader>
+          <button
+            type="button"
+            onClick={() => setSentOpen(false)}
+            className="w-full rounded-md bg-brand px-4 py-2.5 text-sm font-semibold text-background hover:bg-brand-soft"
+          >
+            Close
+          </button>
+        </DialogContent>
+      </Dialog>
+    );
   if (done) return null;
   if (intent?.dismissedAt && !done) return null;
 
@@ -109,16 +133,9 @@ export function EntityTipCard() {
       href: "/admin?tab=people",
       severity: "warning",
     });
-    notify({
-      id: `entitysupport-client-${user!.email.toLowerCase()}`,
-      to: user!.email.toLowerCase(),
-      title: "Your entity set-up request is received",
-      body: "A Loqal entity manager will be assigned and will reach out within three business days.",
-      severity: "info",
-    });
     setSupportOpen(false);
     setAgreed(false);
-    toast.success("Request sent — your Loqal entity manager will be in touch.");
+    setSentOpen(true);
   }
 
   return (
