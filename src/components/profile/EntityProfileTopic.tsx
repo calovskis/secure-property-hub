@@ -41,6 +41,8 @@ const TERM_POINTS = [
 
 export function EntityProfileTopic() {
   const { user } = useAuth();
+  const { requests: entityCases } = useEntityRequests();
+  const myEntityCase = entityCases.find((r) => r.email === user?.email.toLowerCase());
   const { intent, saveIntent } = useEntityIntent(user?.email);
   const { plans } = useEntityPlans();
   const { leadsForClient } = useLeads();
