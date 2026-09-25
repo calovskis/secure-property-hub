@@ -631,7 +631,7 @@ export function AdminCases() {
                         ) : (
                           <span className="flex items-center gap-1 text-[11px]">
                             {oc ? (
-                              <span className="rounded-full bg-warning px-1.5 font-semibold text-warning-foreground">
+                              <span className="rounded-full bg-warning px-1.5 font-semibold text-foreground">
                                 {oc}
                               </span>
                             ) : null}
@@ -703,7 +703,7 @@ export function AdminCases() {
                     </div>
                     <span
                       className={`hidden shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold sm:inline ${
-                        r.needsLoqal ? "bg-warning/15 text-warning-foreground" : "bg-brand-tint text-brand"
+                        r.needsLoqal ? "bg-warning/15 text-foreground" : "bg-brand-tint text-brand"
                       }`}
                     >
                       {r.needsLoqal ? "Loqal to act · " : ""}
