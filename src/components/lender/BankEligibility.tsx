@@ -266,8 +266,10 @@ export function BankEligibilitySection({ lead }: { lead: MortgageLead }) {
             </DialogTitle>
           </DialogHeader>
           <p className="text-xs text-muted-foreground">
-            Only relevant programmes are shown. US citizens and green card holders with an SSN see
-            conventional matrices; other borrowers see foreign-national matrices. Programmes blocked
+            Only relevant programmes are shown, grouped by bank. US citizens and green card holders with
+            an SSN see conventional, FHA and non-QM matrices; ITIN borrowers see ITIN matrices plus
+            foreign-national ones; other borrowers see foreign-national matrices. A vacation home is
+            sorted as a primary residence. Programmes blocked
             by a permanent borrower or matrix restriction are hidden. Pick the bank before confirming
             the loan submission.
           </p>
