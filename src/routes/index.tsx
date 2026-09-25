@@ -14,6 +14,7 @@ import { UpcomingCallsCard } from "@/components/client/UpcomingCallsCard";
 import { PriceConfirmedCard } from "@/components/client/PriceConfirmedCard";
 import { EntityTipCard } from "@/components/client/EntityTipCard";
 import { RecentActivityCard } from "@/components/client/RecentActivityCard";
+import { PendingRequestsCard } from "@/components/client/PendingRequestsCard";
 
 
 export const Route = createFileRoute("/")({
@@ -562,6 +563,7 @@ function Dashboard() {
           </div>
 
           <aside className="min-w-0 space-y-5">
+            <PendingRequestsCard />
             <UpcomingCallsCard />
 
             <section className="grid grid-cols-2 gap-3" aria-label={t("Portfolio summary")}>
