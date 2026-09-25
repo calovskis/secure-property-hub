@@ -7,7 +7,10 @@ import { useState } from "react";
 import { useActivity } from "@/lib/activity";
 import { formatDateTime } from "@/lib/dates";
 
-const MAX_VISIBLE = 6;
+/** The card opens with three entries and reveals ten more per click, so the
+ * list never has to count or render everything at once. */
+const INITIAL_VISIBLE = 3;
+const MORE_STEP = 10;
 
 /** "3 hours ago" style age, matching the open-tasks card. */
 function ago(iso: string): string {
@@ -22,9 +25,9 @@ function ago(iso: string): string {
 
 export function AdminActivityCard({ className = "" }: { className?: string }) {
   const entries = useActivity();
-  const [showAll, setShowAll] = useState(false);
-  const visible = showAll ? entries.slice(0, 40) : entries.slice(0, MAX_VISIBLE);
-  const hidden = Math.max(Math.min(entries.length, 40) - visible.length, 0);
+  const [shown, setShown] = useState(INITIAL_VISIBLE);
+  const visible = entries.slice(0, shown);
+  const hasMore = entries.length > visible.length;
 
   return (
     <section className={`rounded-xl border border-border bg-card p-4 ${className}`}>
@@ -66,13 +69,17 @@ export function AdminActivityCard({ className = "" }: { className?: string }) {
               </div>
             </div>
           ))}
-          {hidden > 0 || showAll ? (
+          {hasMore || shown > INITIAL_VISIBLE ? (
             <button
               type="button"
-              onClick={() => setShowAll((v) => !v)}
+              onClick={() =>
+                setShown((n) =>
+                  n > INITIAL_VISIBLE ? INITIAL_VISIBLE : n + MORE_STEP,
+                )
+              }
               className="w-full py-2 text-left text-xs font-semibold text-brand hover:underline"
             >
-              {showAll ? "Show less" : `Show ${hidden} more`}
+              {shown > INITIAL_VISIBLE ? "Show less" : "Show more"}
             </button>
           ) : null}
         </div>
