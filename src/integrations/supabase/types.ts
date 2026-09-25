@@ -65,6 +65,66 @@ export type Database = {
         }
         Relationships: []
       }
+      case_messages: {
+        Row: {
+          answered_at: string | null
+          attachments: Json
+          author_id: string
+          author_name: string
+          body: string
+          call_slots: Json
+          case_id: string
+          case_kind: string
+          chosen_slot: string | null
+          client_user_id: string
+          created_at: string
+          from_loqal: boolean
+          id: string
+          kind: string
+          read_by_client_at: string | null
+          read_by_loqal_at: string | null
+          reply_to: string | null
+        }
+        Insert: {
+          answered_at?: string | null
+          attachments?: Json
+          author_id?: string
+          author_name?: string
+          body?: string
+          call_slots?: Json
+          case_id: string
+          case_kind: string
+          chosen_slot?: string | null
+          client_user_id: string
+          created_at?: string
+          from_loqal?: boolean
+          id?: string
+          kind?: string
+          read_by_client_at?: string | null
+          read_by_loqal_at?: string | null
+          reply_to?: string | null
+        }
+        Update: {
+          answered_at?: string | null
+          attachments?: Json
+          author_id?: string
+          author_name?: string
+          body?: string
+          call_slots?: Json
+          case_id?: string
+          case_kind?: string
+          chosen_slot?: string | null
+          client_user_id?: string
+          created_at?: string
+          from_loqal?: boolean
+          id?: string
+          kind?: string
+          read_by_client_at?: string | null
+          read_by_loqal_at?: string | null
+          reply_to?: string | null
+        }
+        Relationships: []
+      }
       client_profiles: {
         Row: {
           created_at: string
@@ -385,6 +445,7 @@ export type Database = {
           status_note: string | null
           updated_at: string
           user_id: string
+          visa_partner: Json | null
         }
         Insert: {
           citizenship?: string | null
@@ -399,6 +460,7 @@ export type Database = {
           status_note?: string | null
           updated_at?: string
           user_id: string
+          visa_partner?: Json | null
         }
         Update: {
           citizenship?: string | null
@@ -413,6 +475,7 @@ export type Database = {
           status_note?: string | null
           updated_at?: string
           user_id?: string
+          visa_partner?: Json | null
         }
         Relationships: []
       }
