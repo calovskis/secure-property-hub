@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
+import { ClientCaseButton } from "@/components/cases/ClientCaseButton";
 import {
   VISA_STATUSES,
   VISA_STATUS_CLIENT_TEXT,
@@ -1532,7 +1533,14 @@ export function VisaSupportTopic({
 }
 
 function VisaProgress({ request }: { request: VisaRequest }) {
-  const idx = VISA_STATUSES.indexOf(request.status as (typeof VISA_STATUSES)[number]);
+  const current =
+    request.status === "documents_in_preparation"
+      ? "visa_preparation"
+      : request.status === "appointment_booked"
+        ? "embassy_meeting"
+        : request.status;
+  const idx = VISA_STATUSES.indexOf(current as (typeof VISA_STATUSES)[number]);
+  const vp = request.visaPartner;
   const at = (st: string) => [...request.history].reverse().find((h) => h.status === st)?.at;
   return (
     <div className="mt-3 space-y-3">
@@ -1542,6 +1550,19 @@ function VisaProgress({ request }: { request: VisaRequest }) {
           Note from Loqal: “{request.statusNote}”
         </p>
       ) : null}
+      {vp ? (
+        <div className="rounded-md border border-brand/30 bg-background px-3 py-2 text-xs">
+          <div className="font-semibold text-foreground">Your visa support partner</div>
+          <div className="mt-1 text-foreground">{vp.company}</div>
+          <div className="text-muted-foreground">
+            {vp.firstName} {vp.lastName}
+            {vp.email ? <> · <a className="text-brand" href={`mailto:${vp.email}`}>{vp.email}</a></> : null}
+            {vp.phone ? <> · <a className="text-brand" href={`tel:${vp.phone}`}>{vp.phone}</a></> : null}
+          </div>
+          <div className="mt-1 text-muted-foreground">Loqal coordinates all communication with the partner for you.</div>
+        </div>
+      ) : null}
+      <ClientCaseButton caseKind="visa" caseId={request.id} clientUserId={request.userId} title="Visa support — messages with Loqal" />
       {request.status === "not_possible" ? null : (
         <ol className="space-y-1.5">
           {VISA_STATUSES.map((st, i) => {

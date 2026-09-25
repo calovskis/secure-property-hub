@@ -10,16 +10,32 @@ export const VISA_STATUSES = [
   "requested",
   "partner_contacted",
   "partner_confirmed",
-  "documents_in_preparation",
-  "appointment_booked",
+  "file_passed_to_partner",
+  "visa_preparation",
+  "embassy_meeting",
+  "awaiting_issuance",
   "visa_issued",
 ] as const;
-export type VisaStatus = (typeof VISA_STATUSES)[number] | "not_possible";
+/** Earlier statuses kept so older history entries still read correctly. */
+type LegacyVisaStatus = "documents_in_preparation" | "appointment_booked";
+export type VisaStatus = (typeof VISA_STATUSES)[number] | "not_possible" | LegacyVisaStatus;
+
+export type VisaPartner = {
+  company: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+};
 
 export const VISA_STATUS_LABEL: Record<VisaStatus, string> = {
   requested: "Request received",
   partner_contacted: "Visa partner contacted",
   partner_confirmed: "Partner confirmed they can assist",
+  file_passed_to_partner: "File passed to the visa support partner",
+  visa_preparation: "Preparations for the visa",
+  embassy_meeting: "Meeting at the embassy",
+  awaiting_issuance: "Awaiting visa issuance",
   documents_in_preparation: "Application documents in preparation",
   appointment_booked: "Embassy appointment booked",
   visa_issued: "Visa issued",
@@ -31,6 +47,10 @@ export const VISA_STATUS_CLIENT_TEXT: Record<VisaStatus, string> = {
   requested: "We have your request and are identifying a visa partner in your country of residence.",
   partner_contacted: "We have contacted a trusted visa partner in your country of residence.",
   partner_confirmed: "Our partner confirmed they can assist. We will introduce them to you shortly.",
+  file_passed_to_partner: "We have passed your file to our visa support partner. Loqal continues to coordinate all communication.",
+  visa_preparation: "Your visa application is being prepared. We may ask you for a few details or documents.",
+  embassy_meeting: "Your embassy / consulate meeting is scheduled — please attend in person.",
+  awaiting_issuance: "The embassy meeting has taken place. We are awaiting the visa decision and issuance.",
   documents_in_preparation: "Your application documents are being prepared. We may ask you for a few details.",
   appointment_booked: "Your embassy / consulate appointment is booked — please attend in person.",
   visa_issued: "Your US visa has been issued. Please add its details to your profile.",
@@ -48,6 +68,7 @@ export type VisaRequest = {
   countryOfResidence: string | null;
   status: VisaStatus;
   statusNote: string | null;
+  visaPartner: VisaPartner | null;
   history: VisaHistoryEntry[];
   requestedAt: string;
   updatedAt: string;
@@ -68,6 +89,7 @@ function map(r: any): VisaRequest {
     countryOfResidence: r.country_of_residence,
     status: r.status,
     statusNote: r.status_note,
+    visaPartner: r.visa_partner ?? null,
     history: Array.isArray(r.history) ? r.history : [],
     requestedAt: r.requested_at,
     updatedAt: r.updated_at,
@@ -112,7 +134,12 @@ export function useVisaRequests() {
     },
     [],
   );
-  return { requests: snap, update };
+  const setPartner = useCallback(async (r: VisaRequest, partner: VisaPartner | null) => {
+    const { error } = await table().update({ visa_partner: partner }).eq("id", r.id);
+    if (error) throw error;
+    await refreshVisaRequests();
+  }, []);
+  return { requests: snap, update, setPartner };
 }
 
 /** Client side: create the request once (idempotent). */

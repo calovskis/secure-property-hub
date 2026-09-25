@@ -8,6 +8,7 @@ import {
   VISA_STATUS_CLIENT_TEXT,
   VISA_STATUS_LABEL,
   useVisaRequests,
+  type VisaPartner,
   type VisaRequest,
   type VisaStatus,
 } from "@/lib/visa-support";
@@ -18,6 +19,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { CaseThread } from "@/components/cases/CaseThread";
+
+const EMPTY_PARTNER: VisaPartner = { company: "", firstName: "", lastName: "", email: "", phone: "" };
+const PARTNER_FIELDS: { key: keyof VisaPartner; label: string; type?: string }[] = [
+  { key: "company", label: "Company name" },
+  { key: "firstName", label: "Representative first name" },
+  { key: "lastName", label: "Representative last name" },
+  { key: "email", label: "Email", type: "email" },
+  { key: "phone", label: "Phone", type: "tel" },
+];
 
 const OPTIONS: VisaStatus[] = [...VISA_STATUSES, "not_possible"];
 
@@ -29,7 +40,8 @@ export function VisaStatusDialog({
   onClose: () => void;
 }) {
   const { user } = useAuth();
-  const { update } = useVisaRequests();
+  const { update, setPartner } = useVisaRequests();
+  const [partner, setPartnerDraft] = useState<VisaPartner>(EMPTY_PARTNER);
   const [status, setStatus] = useState<VisaStatus>("requested");
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
@@ -38,11 +50,24 @@ export function VisaStatusDialog({
     if (!request) return;
     setStatus(request.status);
     setNote("");
+    setPartnerDraft(request.visaPartner ?? EMPTY_PARTNER);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [request?.id]);
 
   if (!request) return null;
   const by = user ? `${user.firstName} ${user.lastName}`.trim() || user.email : "Loqal";
+
+  const partnerChanged = JSON.stringify(partner) !== JSON.stringify(request.visaPartner ?? EMPTY_PARTNER);
+  const savePartner = async () => {
+    if (!partner.company.trim() || !partner.firstName.trim() || !partner.lastName.trim())
+      { toast.error("Add at least the company and representative name"); return; }
+    try {
+      await setPartner(request, partner);
+      toast.success(`Visa partner saved — now shared with ${request.clientName.split(" ")[0]}`);
+    } catch {
+      toast.error("Could not save the partner. Please try again.");
+    }
+  };
 
   const save = async () => {
     setBusy(true);
@@ -59,7 +84,7 @@ export function VisaStatusDialog({
 
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>Visa support — {request.clientName}</DialogTitle>
           <DialogDescription>
@@ -68,6 +93,48 @@ export function VisaStatusDialog({
             {countryLabel(request.countryOfResidence ?? "") || "—"}
           </DialogDescription>
         </DialogHeader>
+
+        <section className="rounded-lg border border-border p-3">
+          <div className="mb-1 text-sm font-semibold text-foreground">Visa support partner</div>
+          <p className="mb-2 text-xs text-muted-foreground">
+            Once saved, these details are shared openly with the client. Loqal still leads the communication.
+          </p>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {PARTNER_FIELDS.map((f) => (
+              <label key={f.key} className="block text-xs font-medium text-muted-foreground">
+                {f.label}
+                <input
+                  type={f.type ?? "text"}
+                  value={partner[f.key]}
+                  onChange={(e) => setPartnerDraft({ ...partner, [f.key]: e.target.value })}
+                  className="mt-1 w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground"
+                />
+              </label>
+            ))}
+          </div>
+          <div className="mt-2 flex justify-end">
+            <button
+              type="button"
+              disabled={!partnerChanged}
+              onClick={savePartner}
+              className="rounded-md border border-brand px-3 py-1.5 text-xs font-semibold text-brand disabled:opacity-50"
+            >
+              {request.visaPartner ? "Update partner details" : "Save and share with client"}
+            </button>
+          </div>
+        </section>
+
+        <section className="rounded-lg border border-border p-3">
+          <div className="mb-2 text-sm font-semibold text-foreground">Communication with the client</div>
+          <CaseThread
+            caseKind="visa"
+            caseId={request.id}
+            clientUserId={request.userId}
+            viewer="loqal"
+            authorName={by}
+            clientFirstName={request.clientName.split(" ")[0] ?? ""}
+          />
+        </section>
 
         <div className="space-y-1.5">
           <div className="text-xs font-medium text-muted-foreground">Progress status</div>

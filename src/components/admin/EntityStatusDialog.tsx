@@ -16,6 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { CaseThread } from "@/components/cases/CaseThread";
 
 const OPTIONS: EntityStatus[] = [...ENTITY_STATUSES];
 
@@ -57,7 +58,7 @@ export function EntityStatusDialog({
 
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>Company set-up support — {request.clientName}</DialogTitle>
           <DialogDescription>
@@ -66,6 +67,23 @@ export function EntityStatusDialog({
             set-up terms — assign an entity manager and choose the holding structure.
           </DialogDescription>
         </DialogHeader>
+
+        <section className="rounded-lg border border-border p-3">
+          <div className="mb-2 text-sm font-semibold text-foreground">
+            Communication with the client
+            {request.propertyLabel ? (
+              <span className="font-normal text-muted-foreground"> · {request.propertyLabel}</span>
+            ) : null}
+          </div>
+          <CaseThread
+            caseKind="entity"
+            caseId={request.id}
+            clientUserId={request.userId}
+            viewer="loqal"
+            authorName={by}
+            clientFirstName={request.clientName.split(" ")[0] ?? ""}
+          />
+        </section>
 
         <div className="space-y-1.5">
           <div className="text-xs font-medium text-muted-foreground">Progress status</div>
