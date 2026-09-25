@@ -60,7 +60,7 @@ export function personActions({
   const first = name.trim().split(/\s+/)[0] || name;
 
   if (request && request.status !== "declined") {
-    const who = request.companyName || name;
+    const who = request.companyName ? `${name} · ${request.companyName}` : name;
 
     if (request.status === "pending")
       out.push({
