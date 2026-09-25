@@ -7,7 +7,10 @@ import { useState } from "react";
 import { useActivity } from "@/lib/activity";
 import { formatDateTime } from "@/lib/dates";
 
-const MAX_VISIBLE = 6;
+/** The card opens with three entries and reveals ten more per click, so the
+ * list never has to count or render everything at once. */
+const INITIAL_VISIBLE = 3;
+const MORE_STEP = 10;
 
 /** "3 hours ago" style age, matching the open-tasks card. */
 function ago(iso: string): string {
