@@ -69,13 +69,17 @@ export function AdminActivityCard({ className = "" }: { className?: string }) {
               </div>
             </div>
           ))}
-          {hidden > 0 || showAll ? (
+          {hasMore || shown > INITIAL_VISIBLE ? (
             <button
               type="button"
-              onClick={() => setShowAll((v) => !v)}
+              onClick={() =>
+                setShown((n) =>
+                  n > INITIAL_VISIBLE ? INITIAL_VISIBLE : n + MORE_STEP,
+                )
+              }
               className="w-full py-2 text-left text-xs font-semibold text-brand hover:underline"
             >
-              {showAll ? "Show less" : `Show ${hidden} more`}
+              {shown > INITIAL_VISIBLE ? "Show less" : "Show more"}
             </button>
           ) : null}
         </div>
