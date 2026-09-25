@@ -92,7 +92,7 @@ export type MortgageProfile = {
   visaDocumentUploadedAt?: string;
   visaDocuments?: StoredDocument[];
   /** Applicants without a US visa: who handles obtaining one. */
-  visaSupport?: "loqal" | "self";
+  visaSupport?: "loqal" | "self" | undefined;
   visaSupportRequestedAt?: string;
   /** Passport copy — collected for Loqal visa support. */
   passportDocuments?: StoredDocument[];
