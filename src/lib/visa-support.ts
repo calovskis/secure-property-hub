@@ -121,7 +121,10 @@ export function useVisaRequests() {
   );
   useEffect(() => {
     if (!loaded) void refreshVisaRequests();
-    if (!timer) timer = setInterval(() => void refreshVisaRequests(), 60_000);
+    if (!timer) timer = setInterval(() => void refreshVisaRequests(), 30_000);
+    const onFocus = () => void refreshVisaRequests();
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
   }, []);
   const update = useCallback(
     async (r: VisaRequest, status: VisaStatus, by: string, note?: string) => {
