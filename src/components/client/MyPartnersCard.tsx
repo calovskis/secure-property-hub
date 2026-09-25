@@ -27,6 +27,7 @@ import { useDeepLinkAction } from "@/lib/deep-link";
 import { formatDateTime } from "@/lib/dates";
 import { firstNameOnly, partnerDisplayForClient } from "@/lib/user-id";
 import { useRealtors } from "@/lib/realtors";
+import { EntityManagerContact } from "@/components/client/EntityManagerContact";
 
 const ROLE_ICON: Record<PartnerRole, typeof Landmark> = { lender: Landmark, realtor: UserRound };
 
@@ -155,6 +156,7 @@ export function MyPartnersCard() {
       ) : null}
 
       <div className="grid gap-4 p-5 md:grid-cols-2">
+        <EntityManagerContact variant="card" />
         {seats.map(({ key, role, lead, name, email: partnerEmail, company }) => {
           // Clients see first name + internal number only — never the family name.
           const person = partnerDisplayForClient(

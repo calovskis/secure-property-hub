@@ -29,6 +29,7 @@ import { useEntityPlans } from "@/lib/entity-structure";
 import { useLeads } from "@/lib/leads";
 import { TopicCard, TopicField } from "@/components/profile/TopicCard";
 import { ClientCaseButton } from "@/components/cases/ClientCaseButton";
+import { EntityRecommendationReview } from "@/components/client/EntityRecommendationReview";
 import { ENTITY_STATUS_LABEL, useEntityRequests } from "@/lib/entity-setup";
 
 const TERM_POINTS = [
@@ -181,6 +182,12 @@ export function EntityProfileTopic() {
                 Status: <span className="font-semibold text-foreground">{ENTITY_STATUS_LABEL[myEntityCase.status]}</span>
                 {myEntityCase.propertyLabel ? ` · ${myEntityCase.propertyLabel}` : ""}
               </p>
+              {myEntityCase.manager ? (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Your entity manager: <span className="font-semibold text-foreground">{myEntityCase.manager.name}</span> · {myEntityCase.manager.title}
+                </p>
+              ) : null}
+              <EntityRecommendationReview request={myEntityCase} />
               <ClientCaseButton
                 caseKind="entity"
                 caseId={myEntityCase.id}

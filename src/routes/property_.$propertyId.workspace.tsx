@@ -1,4 +1,5 @@
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
+import { EntityManagerContact } from "@/components/client/EntityManagerContact";
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
@@ -374,6 +375,7 @@ function PropertyWorkspacePage() {
             <WorkspaceCard title="Property team">
               <div className="space-y-3">
                  <div id="workspace-agent-actions" className="empty:hidden" />
+                 <EntityManagerContact />
                  {lead ? (
                    <div>
                      <Button
