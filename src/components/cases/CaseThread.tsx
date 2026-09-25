@@ -3,12 +3,17 @@
  * Message / Information request / Call request; the client answers requests
  * (text + uploads, or picking a proposed call time) and can write back.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { bookCaseCall } from "@/lib/google-calendar.functions";
+import { GoogleCalendarCard } from "@/components/google/GoogleCalendarCard";
 import { toast } from "sonner";
 import { CalendarClock, FileQuestion, MessageSquare, Paperclip, X } from "lucide-react";
 import { formatDateTime } from "@/lib/dates";
 import {
   caseFileName,
+  markReadByLoqal,
+  unreadByLoqal,
   openCaseFile,
   uploadCaseFile,
   useCaseMessages,
@@ -164,6 +169,11 @@ export function CaseThread({
   const [slots, setSlots] = useState<string[]>(["", "", ""]);
   const [busy, setBusy] = useState(false);
   const isLoqal = viewer === "loqal";
+  const book = useServerFn(bookCaseCall);
+  const unreadIds = isLoqal ? unreadByLoqal(messages).map((m) => m.id).join(",") : "";
+  useEffect(() => {
+    if (unreadIds) void markReadByLoqal(unreadIds.split(","));
+  }, [unreadIds]);
   const byId = new Map(messages.map((m) => [m.id, m]));
 
   const upload = async (fs: File[]) => Promise.all(fs.map((f) => uploadCaseFile(clientUserId, caseId, f)));
@@ -246,7 +256,49 @@ export function CaseThread({
                 ) : null}
                 {m.body ? <p className="mt-1 whitespace-pre-wrap text-foreground">{m.body}</p> : null}
                 {m.kind === "call_request" && m.chosenSlot ? (
-                  <p className="mt-1 text-xs font-semibold text-success">Call agreed: {formatDateTime(m.chosenSlot)}</p>
+                  <div className="mt-1 space-y-1.5">
+                    <p className="text-xs font-semibold text-success">Call agreed: {formatDateTime(m.chosenSlot)}</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {m.meetUrl ? (
+                        <a
+                          href={m.meetUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="rounded-md bg-brand px-3 py-1 text-xs font-semibold text-brand-foreground"
+                        >
+                          Join Google Meet
+                        </a>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">
+                          {isLoqal ? "No calendar invitation sent — connect Google Calendar below for automatic invitations." : "Loqal will send you the meeting details."}
+                        </span>
+                      )}
+                      {!isLoqal && new Date(m.chosenSlot) > new Date() ? (
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            try {
+                              await send({
+                                caseKind,
+                                caseId,
+                                clientUserId,
+                                authorName,
+                                fromLoqal: false,
+                                kind: "message",
+                                body: `Could we find a different time for the call on ${formatDateTime(m.chosenSlot!)}?`,
+                              });
+                              toast.success("Loqal will propose new times");
+                            } catch {
+                              toast.error("Could not send. Please try again.");
+                            }
+                          }}
+                          className="rounded-md border border-border px-3 py-1 text-xs font-semibold text-foreground hover:bg-muted"
+                        >
+                          Ask to change the date
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
                 ) : m.kind === "call_request" && isLoqal ? (
                   <p className="mt-1 text-xs text-muted-foreground">
                     Proposed: {m.callSlots.map((s) => formatDateTime(s)).join(" · ")}
@@ -274,6 +326,21 @@ export function CaseThread({
                           replyTo: m.id,
                           ...(slot ? { chosenSlot: slot } : {}),
                         });
+                        if (slot) {
+                          try {
+                            const r = await book({ data: { messageId: m.id, startAt: slot } });
+                            toast.success(
+                              r.booked
+                                ? "Call confirmed — a calendar invitation with a Google Meet link is on its way to your email"
+                                : "Call time confirmed — Loqal will send you the meeting details",
+                            );
+                          } catch {
+                            toast.success("Call time confirmed — Loqal will send you the meeting details");
+                          }
+                          const { refreshCaseMessages } = await import("@/lib/case-messages");
+                          await refreshCaseMessages();
+                          return;
+                        }
                         toast.success("Thank you — Loqal has your answer");
                       } catch {
                         toast.error("Could not send. Please try again.");
@@ -320,6 +387,8 @@ export function CaseThread({
           }
         />
         {isLoqal && kind === "call_request" ? (
+          <div className="space-y-2">
+          <GoogleCalendarCard />
           <div className="grid gap-1.5 sm:grid-cols-3">
             {slots.map((s, i) => (
               <input
@@ -331,6 +400,7 @@ export function CaseThread({
                 aria-label={`Proposed time ${i + 1}`}
               />
             ))}
+          </div>
           </div>
         ) : (
           <FilePicker files={files} setFiles={setFiles} />

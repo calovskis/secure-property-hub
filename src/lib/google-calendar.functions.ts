@@ -169,3 +169,37 @@ export const cancelAgentMeeting = createServerFn({ method: "POST" })
     await cancelMeetEvent(conn.connectionAPIKey, data.eventId);
     return { cancelled: true };
   });
+
+/**
+ * Client picked a time on a Loqal case call request: create the invitation in
+ * the requesting Loqal employee's Google Calendar with a Meet link. Google
+ * emails the client, who can accept or propose a new time.
+ */
+export const bookCaseCall = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { messageId: string; startAt: string }) => input)
+  .handler(async ({ data, context }) => {
+    /* eslint-disable @typescript-eslint/no-explicit-any */
+    const sb = context.supabase as any;
+    const { data: msg } = await sb.from("case_messages").select("*").eq("id", data.messageId).maybeSingle();
+    if (!msg || msg.client_user_id !== context.userId || msg.kind !== "call_request")
+      throw new Error("Call request not found");
+    if (!(msg.call_slots ?? []).includes(data.startAt)) throw new Error("Invalid time");
+    const { getConnectionKeyForUser } = await import("@/server/appUserConnections.server");
+    const key = await getConnectionKeyForUser(msg.author_id, "google_calendar");
+    if (!key) return { booked: false as const };
+    const { createMeetEvent } = await import("@/server/googleCalendar.server");
+    const email = (context.claims as { email?: string }).email;
+    const ev = await createMeetEvent(key, {
+      startAt: data.startAt,
+      durationMin: 30,
+      summary: `Loqal — ${msg.case_kind === "visa" ? "visa support" : "company set-up"} call`,
+      description: msg.body || "Call with your Loqal team.",
+      attendeeEmails: email ? [email] : [],
+    });
+    await sb
+      .from("case_messages")
+      .update({ meet_url: ev.meetUrl, event_id: ev.eventId, event_link: ev.htmlLink })
+      .eq("id", msg.id);
+    return { booked: true as const, meetUrl: ev.meetUrl };
+  });

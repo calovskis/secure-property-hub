@@ -24,6 +24,9 @@ export type CaseMessage = {
   chosenSlot: string | null;
   replyTo: string | null;
   answeredAt: string | null;
+  readByLoqalAt: string | null;
+  meetUrl: string | null;
+  eventLink: string | null;
   createdAt: string;
 };
 
@@ -47,6 +50,9 @@ function map(r: any): CaseMessage {
     chosenSlot: r.chosen_slot,
     replyTo: r.reply_to,
     answeredAt: r.answered_at,
+    readByLoqalAt: r.read_by_loqal_at,
+    meetUrl: r.meet_url,
+    eventLink: r.event_link,
     createdAt: r.created_at,
   };
 }
@@ -145,4 +151,13 @@ export function useSendCaseMessage() {
     },
     [],
   );
+}
+
+/** Client messages Loqal has not opened yet. */
+export const unreadByLoqal = (msgs: CaseMessage[]) => msgs.filter((m) => !m.fromLoqal && !m.readByLoqalAt);
+
+export async function markReadByLoqal(ids: string[]) {
+  if (!ids.length) return;
+  await table().update({ read_by_loqal_at: new Date().toISOString() }).in("id", ids);
+  await refreshCaseMessages();
 }

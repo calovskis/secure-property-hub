@@ -19,6 +19,7 @@ import { useActiveLeads, useLeads } from "@/lib/leads";
 import { usePartnerRequests } from "@/lib/partner-requests";
 import { useDeletions } from "@/lib/deletions";
 import { VISA_STATUS_LABEL, isVisaOpen, useVisaRequests } from "@/lib/visa-support";
+import { unreadByLoqal, useCaseMessages } from "@/lib/case-messages";
 import { ENTITY_STATUS_LABEL, isEntityOpen, submitEntityRequest, useEntityRequests } from "@/lib/entity-setup";
 import { useEntityPlans } from "@/lib/entity-structure";
 import { useEntityIntent } from "@/lib/entity-onboarding";
@@ -206,6 +207,7 @@ export function TaskTracker({ className = "" }: { className?: string }) {
   const { requests } = usePartnerRequests();
   const { requests: visaRequests } = useVisaRequests();
   const { requests: entityRequests } = useEntityRequests();
+  const { all: caseMessages } = useCaseMessages();
   const { plans: entityPlans } = useEntityPlans();
   const { intent: entityIntent } = useEntityIntent(isAdmin ? undefined : user?.email);
   /* Company set-up requests live in this browser; push them to the database
@@ -361,8 +363,26 @@ export function TaskTracker({ className = "" }: { className?: string }) {
           e.updatedAt,
           e.status === "requested" ? "warning" : "info",
         );
+    const unread = unreadByLoqal(caseMessages);
+    const byCase = new Map<string, typeof unread>();
+    for (const m of unread) byCase.set(`${m.caseKind}:${m.caseId}`, [...(byCase.get(`${m.caseKind}:${m.caseId}`) ?? []), m]);
+    for (const [k, ms] of byCase) {
+      const [kind, id] = k.split(":");
+      const req = kind === "visa" ? visaRequests.find((v) => v.id === id) : entityRequests.find((e) => e.id === id);
+      if (!req || gone.has(req.email)) continue;
+      const last = ms[ms.length - 1]!;
+      add(
+        `casereply-${k}-${last.id}`,
+        "other",
+        `New reply from ${req.clientName} — ${kind === "visa" ? "visa support" : "company set-up"}`,
+        `${ms.length > 1 ? `${ms.length} unread messages. ` : ""}“${(last.body || "Files shared").slice(0, 120)}”`,
+        `/admin?tab=cases&line=${kind}`,
+        last.createdAt,
+        "warning",
+      );
+    }
     return list;
-  }, [isAdmin, requests, gone, visaRequests, entityRequests]);
+  }, [isAdmin, requests, gone, visaRequests, entityRequests, caseMessages]);
 
 
   const tasks = useMemo<Task[]>(() => {
