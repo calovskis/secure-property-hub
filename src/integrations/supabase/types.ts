@@ -98,6 +98,51 @@ export type Database = {
         }
         Relationships: []
       }
+      entity_setup_requests: {
+        Row: {
+          client_name: string
+          created_at: string
+          email: string
+          history: Json
+          id: string
+          lead_id: string | null
+          property_label: string | null
+          requested_at: string
+          status: string
+          status_note: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          client_name?: string
+          created_at?: string
+          email: string
+          history?: Json
+          id?: string
+          lead_id?: string | null
+          property_label?: string | null
+          requested_at?: string
+          status?: string
+          status_note?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          client_name?: string
+          created_at?: string
+          email?: string
+          history?: Json
+          id?: string
+          lead_id?: string | null
+          property_label?: string | null
+          requested_at?: string
+          status?: string
+          status_note?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       partner_requests: {
         Row: {
           additional_contacts: Json
