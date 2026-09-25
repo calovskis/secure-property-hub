@@ -374,6 +374,7 @@ export function TaskTracker({ className = "" }: { className?: string }) {
         "areq-",
         "entitysetup-",
         "deletion-",
+        "visasupport-",
       ];
       for (const n of adminItems.filter(isStillOpen)) {
         /* A stored notification can outlive the user it concerns — once the
