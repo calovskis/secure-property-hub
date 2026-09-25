@@ -15,6 +15,7 @@ export type Permission =
   | "partners.review"
   | "partners.approve"
   | "cases.manage"
+  | "entity.assign"
   | "accounting.manage"
   | "support.manage"
   | "activity.view"
@@ -30,6 +31,7 @@ export const PERMISSION_LABEL: Record<Permission, string> = {
   "partners.review": "Review partner registrations & documents",
   "partners.approve": "Approve or decline partners, countersign agreements",
   "cases.manage": "Work on mortgage and purchase cases",
+  "entity.assign": "Assign entity set-up managers to company set-up cases",
   "accounting.manage": "Issue invoices and manage billing",
   "support.manage": "Answer the support inbox",
   "activity.view": "See the platform activity log",
@@ -78,6 +80,7 @@ export const LOQAL_ROLES: LoqalRole[] = [
       "people.view",
       "people.edit",
       "cases.manage",
+      "entity.assign",
       "support.manage",
       "activity.view",
       "users.delete.request",
