@@ -11,7 +11,7 @@ import {
   type ClientNextAction,
   type PropertyChangeMode,
 } from "@/lib/buyer-process";
-import { KICKOFF_LABEL, type MortgageLead } from "@/lib/leads";
+import { type MortgageLead } from "@/lib/leads";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import { CallScheduler } from "@/components/buyer/CallScheduler";
 import { TourProposalPanel } from "@/components/buyer/TourProposalPanel";
@@ -166,7 +166,6 @@ export function BuyerProcessCard({
     ? partnerDisplayForClient(ba.agentName, agentEmail)
     : undefined;
   const history = actions[lead.id] ?? [];
-  const callBooking = bookings.find((b) => b.leadId === lead.id && b.kind === "intro_call");
   const tourBooking = bookings.find(
     (b) => b.leadId === lead.id && (b.kind === "video_tour" || b.kind === "in_person_visit"),
   );
