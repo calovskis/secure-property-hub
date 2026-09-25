@@ -245,30 +245,6 @@ export function BuyerProcessCard({
         </p>
       ) : (
         <>
-          <div className="mt-3 space-y-1.5 text-sm text-muted-foreground">
-            <p>
-              <strong className="text-foreground">Kickoff:</strong>{" "}
-              {ba.kickoff ? KICKOFF_LABEL[ba.kickoff] : "—"}
-              {ba.kickoff === "live_call" && callBooking
-                ? ` — booked for ${formatDateTime(callBooking.startAt)} (1 hour)`
-                : ""}
-              {ba.kickoff === "photo_visit" && photo
-                ? photo.status === "delivered"
-                  ? ` — delivered ${formatDateTime(photo.deliveredAt)}`
-                  : photo.status === "delayed"
-                    ? ` — rescheduled to ${photo.etaAt ? formatDate(photo.etaAt) : "a new date"} (${photo.delayReason})`
-                    : ` — photos due ${formatDate(photo.dueAt)}`
-                : ""}
-              {ba.kickoff === "video_showcase"
-                ? tourBooking?.status === "confirmed"
-                  ? ` — confirmed for ${formatDateTime(tourBooking.startAt)}`
-                  : " — agreeing the tour time with your agent"
-                : ""}
-            </p>
-            {ba.kickoffNotes ? (
-              <p className="text-xs italic">Your notes: {ba.kickoffNotes}</p>
-            ) : null}
-          </div>
 
           {tourBooking && tourBooking.status === "proposed" ? (
             <div className="mt-4">
