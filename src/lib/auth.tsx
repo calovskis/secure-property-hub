@@ -94,6 +94,8 @@ export type MortgageProfile = {
   /** Applicants without a US visa: who handles obtaining one. */
   visaSupport?: "loqal" | "self";
   visaSupportRequestedAt?: string;
+  /** Passport copy — collected for Loqal visa support. */
+  passportDocuments?: StoredDocument[];
   /** US citizens / green card / ITIN holders: driver's license (front & back), green card or passport. */
   idDocuments?: StoredDocument[];
   /** Bankruptcy discharge papers — required when a bankruptcy was declared. */
