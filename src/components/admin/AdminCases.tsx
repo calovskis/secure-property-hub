@@ -4,7 +4,7 @@
  * the full correspondence timeline (lender info requests, client questions,
  * decisions, kickoff notes).
  */
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   Briefcase,
@@ -454,6 +454,21 @@ export function AdminCases() {
     const l = new URLSearchParams(window.location.search).get("line");
     if (l && ALL_LINES.some((x) => x.id === l)) setLineId(l as LineId);
   }, []);
+  const deepLinked = useRef(false);
+  /* Deep link from a notification: open that client's case pop-up. */
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const client = params.get("client")?.toLowerCase();
+    if (!client || deepLinked.current) return;
+    const line = params.get("line");
+    if (line === "entity") {
+      const r = entityRequests.find((e) => e.email === client);
+      if (r) { deepLinked.current = true; setEntityOpen(r.id); }
+    } else if (line === "visa") {
+      const r = visaRequests.find((v) => v.email === client);
+      if (r) { deepLinked.current = true; setVisaOpen(r.id); }
+    }
+  }, [entityRequests, visaRequests]);
   const [lineId, setLineId] = useState<LineId>("mortgage");
   const [audience, setAudience] = useState<Audience>("client");
   const [openId, setOpenId] = useState<string | null>(null);

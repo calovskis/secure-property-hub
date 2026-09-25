@@ -137,7 +137,7 @@ export function EntityProfileTopic() {
       to: "admins",
       title: "Entity structure support requested",
       body: `${clientLabel} accepted the set-up terms and needs a Loqal entity manager assigned.`,
-      href: "/admin?tab=people",
+      href: `/admin?tab=cases&line=entity&client=${encodeURIComponent(user!.email.toLowerCase())}`,
       severity: "warning",
     });
     setSupportOpen(false);

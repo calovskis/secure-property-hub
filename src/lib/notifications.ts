@@ -180,6 +180,12 @@ export function useNotifications(recipient: string | undefined) {
   const items = key
     ? snapshot.items
         .filter((i) => i.to === key)
+        .map((i) =>
+          /* Older company set-up alerts pointed at People — send them to the case. */
+          i.id.startsWith("entitysupport-")
+            ? { ...i, href: `/admin?tab=cases&line=entity&client=${encodeURIComponent(i.id.slice("entitysupport-".length))}` }
+            : i,
+        )
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
     : [];
 
