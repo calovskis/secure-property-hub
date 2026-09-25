@@ -170,8 +170,8 @@ export function CaseThread({
 
   const submit = async () => {
     const validSlots = slots.filter(Boolean).map((s) => new Date(s).toISOString());
-    if (kind === "call_request" && !validSlots.length) return toast.error("Add at least one proposed time");
-    if (kind !== "call_request" && !body.trim()) return toast.error("Please write the message");
+    if (kind === "call_request" && !validSlots.length) { toast.error("Add at least one proposed time"); return; }
+    if (kind !== "call_request" && !body.trim()) { toast.error("Please write the message"); return; }
     setBusy(true);
     try {
       const attachments = await upload(files);

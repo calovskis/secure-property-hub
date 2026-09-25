@@ -60,7 +60,7 @@ export function VisaStatusDialog({
   const partnerChanged = JSON.stringify(partner) !== JSON.stringify(request.visaPartner ?? EMPTY_PARTNER);
   const savePartner = async () => {
     if (!partner.company.trim() || !partner.firstName.trim() || !partner.lastName.trim())
-      return toast.error("Add at least the company and representative name");
+      { toast.error("Add at least the company and representative name"); return; }
     try {
       await setPartner(request, partner);
       toast.success(`Visa partner saved — now shared with ${request.clientName.split(" ")[0]}`);
