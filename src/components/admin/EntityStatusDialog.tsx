@@ -27,7 +27,7 @@ export function EntityStatusDialog({
   onClose: () => void;
 }) {
   const { user } = useAuth();
-  const { update } = useEntitySetupRequests();
+  const { update } = useEntityRequests();
   const [status, setStatus] = useState<EntityStatus>("requested");
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
