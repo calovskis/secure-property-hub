@@ -37,6 +37,7 @@ import { TopicEditDialog } from "@/components/profile/TopicEditDialog";
 import { DateInput } from "@/components/form/DateInput";
 import { CountryCombobox } from "@/components/form/CountryCombobox";
 import { DocumentUploadBox } from "@/components/mortgage/DocumentUploadBox";
+import { VisaSupportDialog } from "@/components/profile/VisaSupportDialog";
 import { documentExpiryState } from "@/lib/mortgage-form";
 import {
   Dialog,
@@ -1350,10 +1351,7 @@ export function VisaSupportTopic({
       <div className="mt-5 flex flex-col gap-2 sm:flex-row">
         <button
           type="button"
-          onClick={() => {
-            onSave({ visaSupport: "loqal", visaSupportRequestedAt: new Date().toISOString() });
-            setLoqalOpen(true);
-          }}
+          onClick={() => setLoqalOpen(true)}
           className={`rounded-md px-4 py-2 text-sm font-semibold ${
             choice === "loqal"
               ? "bg-brand text-brand-foreground"
@@ -1383,26 +1381,12 @@ export function VisaSupportTopic({
         </p>
       ) : null}
 
-      <Dialog open={loqalOpen} onOpenChange={setLoqalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Loqal visa support requested</DialogTitle>
-            <DialogDescription>
-              A Loqal visa agent will be assigned to your file and will reach out to you within
-              3 days to walk you through the options and required paperwork.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex justify-end">
-            <button
-              type="button"
-              onClick={() => setLoqalOpen(false)}
-              className="rounded-md bg-brand px-4 py-2 text-sm font-semibold text-brand-foreground"
-            >
-              Got it
-            </button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <VisaSupportDialog
+        open={loqalOpen}
+        onOpenChange={setLoqalOpen}
+        profile={profile}
+        onSave={(p) => onSave(p)}
+      />
 
       <TopicEditDialog<typeof initial>
         open={editOpen}
