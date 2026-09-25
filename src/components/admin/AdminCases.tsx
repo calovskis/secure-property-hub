@@ -5,6 +5,25 @@
  * decisions, kickoff notes).
  */
 import { useMemo, useState } from "react";
+import { Link } from "@tanstack/react-router";
+import {
+  Briefcase,
+  Building2,
+  Calculator,
+  ClipboardCheck,
+  FileSearch,
+  Globe2,
+  Home,
+  Landmark,
+  LifeBuoy,
+  UserPlus,
+  Wallet,
+  type LucideIcon,
+} from "lucide-react";
+import { usePartnerRequests, type PartnerRequest } from "@/lib/partner-requests";
+import { useDeletions } from "@/lib/deletions";
+import { useNotifications } from "@/lib/notifications";
+import { personActions } from "@/lib/person-actions";
 import {
   KICKOFF_LABEL,
   LEAD_STATUS_LABEL,
@@ -299,107 +318,424 @@ function Mini({ label, value }: { label: string; value: string }) {
   );
 }
 
+/* ------------------------------------------------------------------ */
+/* Support lines — how Loqal organises its work                        */
+/* ------------------------------------------------------------------ */
+
+type Audience = "client" | "partner";
+type LineId =
+  | "registration"
+  | "realtor"
+  | "mortgage"
+  | "direct"
+  | "entity"
+  | "visa"
+  | "appraisal"
+  | "inspection"
+  | "accounting"
+  | "errors"
+  | "partner_onboarding";
+
+type Line = {
+  id: LineId;
+  label: string;
+  blurb: string;
+  icon: LucideIcon;
+  audiences: Audience[];
+  soon?: boolean;
+};
+
+const STAGES: { title: string; lines: Line[] }[] = [
+  {
+    title: "Onboarding",
+    lines: [
+      {
+        id: "registration",
+        label: "Registration",
+        blurb: "Partner and corporate-client registrations waiting for review or approval.",
+        icon: UserPlus,
+        audiences: ["partner", "client"],
+      },
+    ],
+  },
+  {
+    title: "Buying a property",
+    lines: [
+      {
+        id: "realtor",
+        label: "Realtor support",
+        blurb: "Buyer's-agent files — search, viewings, offers and purchase terms.",
+        icon: Home,
+        audiences: ["client", "partner"],
+      },
+      {
+        id: "mortgage",
+        label: "Mortgage support",
+        blurb: "Pre-approval inquiries and mortgage files through to closing.",
+        icon: Landmark,
+        audiences: ["client", "partner"],
+      },
+      {
+        id: "direct",
+        label: "Direct purchase support",
+        blurb: "All-cash and seller-financed purchases — no mortgage lender involved.",
+        icon: Wallet,
+        audiences: ["client", "partner"],
+      },
+      {
+        id: "entity",
+        label: "Company set-up support",
+        blurb: "US LLC / holding structures Loqal is setting up for the purchase.",
+        icon: Building2,
+        audiences: ["client"],
+      },
+    ],
+  },
+  {
+    title: "Relocation",
+    lines: [
+      {
+        id: "visa",
+        label: "Visa support",
+        blurb: "Clients who asked Loqal to organise their US visa application.",
+        icon: Globe2,
+        audiences: ["client"],
+      },
+    ],
+  },
+  {
+    title: "Coming soon",
+    lines: [
+      { id: "appraisal", label: "Appraisal support", blurb: "", icon: FileSearch, audiences: ["client"], soon: true },
+      { id: "inspection", label: "Inspection support", blurb: "", icon: ClipboardCheck, audiences: ["client"], soon: true },
+      { id: "accounting", label: "Accounting support", blurb: "", icon: Calculator, audiences: ["client"], soon: true },
+      { id: "errors", label: "General error support", blurb: "", icon: LifeBuoy, audiences: ["client", "partner"], soon: true },
+      { id: "partner_onboarding", label: "Partner registration support", blurb: "", icon: Briefcase, audiences: ["partner"], soon: true },
+    ],
+  },
+];
+const ALL_LINES = STAGES.flatMap((s) => s.lines);
+
+/** One row in a support line. */
+type CaseRow = {
+  key: string;
+  title: string;
+  subtitle: string;
+  status: string;
+  needsLoqal: boolean;
+  since: string;
+  leadId?: string;
+  href?: string;
+};
+
+const AUDIENCE_LABEL: Record<Audience, string> = { client: "Client support", partner: "Partner support" };
+
+function paymentModeOf(plan: { proposedTerms?: unknown } | undefined): string | undefined {
+  const t = plan?.proposedTerms as { paymentMode?: string } | undefined;
+  return t?.paymentMode;
+}
+
 export function AdminCases() {
   const { leads } = useActiveLeads();
+  const { plans } = useEntityPlans();
+  const { requests } = usePartnerRequests();
+  const { deleted } = useDeletions();
+  const { notifications: adminNotes } = useNotifications("admins");
+  const [lineId, setLineId] = useState<LineId>("mortgage");
+  const [audience, setAudience] = useState<Audience>("client");
   const [openId, setOpenId] = useState<string | null>(null);
-  const [filter, setFilter] = useState<"all" | "open" | "mortgages">("all");
+  const [onlyOpen, setOnlyOpen] = useState(false);
 
-  const rows = useMemo(() => {
-    const sorted = [...leads].sort((a, b) => b.submittedAt.localeCompare(a.submittedAt));
-    if (filter === "open")
-      return sorted.filter((l) => l.status === "new" || l.status === "info_required");
-    if (filter === "mortgages") return sorted.filter(isMortgageFile);
-    return sorted;
-  }, [leads, filter]);
+  const gone = useMemo(
+    () => new Set(deleted.map((d) => d.email.trim().toLowerCase())),
+    [deleted],
+  );
 
-  const open = rows.find((l) => l.id === openId) ?? leads.find((l) => l.id === openId);
+  const data = useMemo(() => {
+    const planOf = (id: string) => plans.find((p) => p.leadId === id);
+    const isDirect = (l: MortgageLead) => {
+      const m = paymentModeOf(planOf(l.id));
+      return m === "cash" || m === "seller_finance";
+    };
+    const livePartners = requests.filter(
+      (r) => r.status !== "declined" && !gone.has(r.email.trim().toLowerCase()),
+    );
+    const partnerName = (r: PartnerRequest) =>
+      r.companyName || `${r.firstName} ${r.lastName}`.trim();
+    const partnerRow = (r: PartnerRequest, files: number): CaseRow => {
+      const loqal = personActions({ request: r, leads: [], name: partnerName(r) }).filter(
+        (a) => a.owner === "loqal",
+      );
+      return {
+        key: `p-${r.id}`,
+        title: partnerName(r),
+        subtitle: `${r.firstName} ${r.lastName} · ${files} active file${files === 1 ? "" : "s"}`,
+        status: loqal[0]?.title ?? (r.agreementCountersignedAt ? "Active partner" : "Onboarding"),
+        needsLoqal: loqal.length > 0,
+        since: r.submittedAt,
+        href: `/admin-people/${r.kind}-${r.id}`,
+      };
+    };
+    const leadRow = (l: MortgageLead, status: string, needs: boolean): CaseRow => ({
+      key: `l-${l.id}`,
+      title: l.clientName,
+      subtitle: `${l.propertyLabel} · ${usd(l.propertyPrice)}`,
+      status,
+      needsLoqal: needs,
+      since: l.submittedAt,
+      leadId: l.id,
+    });
+    const needsLender = (l: MortgageLead) =>
+      (!l.lenderPartnerId && !l.terms) || (l.clientQuestions ?? []).some((q) => !q.answeredAt);
+
+    const out: Record<LineId, Partial<Record<Audience, CaseRow[]>>> = {} as never;
+    for (const l of ALL_LINES) out[l.id] = {};
+
+    // Registration
+    out.registration.partner = livePartners
+      .filter((r) => r.kind === "partner" && r.status === "pending")
+      .map((r) => ({ ...partnerRow(r, 0), status: "Approve or decline", needsLoqal: true }));
+    out.registration.client = livePartners
+      .filter((r) => r.kind === "corporate")
+      .map((r) => ({
+        ...partnerRow(r, 0),
+        status: r.status === "pending" ? "Approve or decline" : "Approved",
+        needsLoqal: r.status === "pending",
+      }));
+
+    // Realtor
+    out.realtor.client = leads
+      .filter((l) => l.buyerAgent)
+      .map((l) =>
+        leadRow(
+          l,
+          l.buyerAgent?.agentName
+            ? `Agent: ${l.buyerAgent.agentName.split(" ")[0]}`
+            : "Assign a buyer's agent",
+          !l.buyerAgent?.agentId && !l.buyerAgent?.agentName,
+        ),
+      );
+    out.realtor.partner = livePartners
+      .filter((r) => r.kind === "partner" && r.partnerType === "realtor" && r.status === "approved")
+      .map((r) =>
+        partnerRow(r, leads.filter((l) => l.buyerAgent?.agentId === r.id).length),
+      );
+
+    // Mortgage
+    out.mortgage.client = leads
+      .filter((l) => !isDirect(l))
+      .map((l) =>
+        leadRow(
+          l,
+          isMortgageFile(l) ? MORTGAGE_STAGE_LABEL[mortgageStage(l)] : LEAD_STATUS_LABEL[l.status],
+          needsLender(l),
+        ),
+      );
+    out.mortgage.partner = livePartners
+      .filter((r) => r.kind === "partner" && r.partnerType === "lender" && r.status === "approved")
+      .map((r) => partnerRow(r, leads.filter((l) => l.lenderPartnerId === r.id).length));
+
+    // Direct purchase
+    out.direct.client = leads
+      .filter(isDirect)
+      .map((l) =>
+        leadRow(
+          l,
+          paymentModeOf(planOf(l.id)) === "cash" ? "All-cash purchase" : "Part seller financing",
+          false,
+        ),
+      );
+    out.direct.partner = livePartners
+      .filter((r) => r.kind === "partner" && r.status === "approved" && r.partnerType !== "realtor" && r.partnerType !== "lender")
+      .map((r) => partnerRow(r, 0));
+
+    // Company set-up
+    out.entity.client = leads
+      .filter((l) => planOf(l.id)?.path === "loqal_setup")
+      .map((l) => leadRow(l, ENTITY_PATH_LABEL.loqal_setup, true));
+
+    // Visa
+    out.visa.client = adminNotes
+      .filter((n) => n.id.startsWith("visasupport-"))
+      .filter((n) => !gone.has(n.id.slice("visasupport-".length)))
+      .map((n) => ({
+        key: n.id,
+        title: n.title.replace(/^Visa support requested — /, ""),
+        subtitle: n.body ?? "",
+        status: n.completed ? "Handled" : "Engage a visa partner",
+        needsLoqal: !n.completed,
+        since: n.createdAt,
+        ...(n.href ? { href: n.href } : {}),
+      }));
+
+    for (const l of ALL_LINES)
+      for (const a of l.audiences)
+        out[l.id][a] = [...(out[l.id][a] ?? [])].sort((x, y) =>
+          x.needsLoqal === y.needsLoqal ? y.since.localeCompare(x.since) : x.needsLoqal ? -1 : 1,
+        );
+    return out;
+  }, [leads, plans, requests, gone, adminNotes]);
+
+  const line = ALL_LINES.find((l) => l.id === lineId)!;
+  const aud: Audience = line.audiences.includes(audience) ? audience : line.audiences[0]!;
+  const all = data[line.id][aud] ?? [];
+  const rows = onlyOpen ? all.filter((r) => r.needsLoqal) : all;
+  const count = (id: LineId) => ALL_LINES.find((l) => l.id === id)!.audiences.reduce(
+    (n, a) => n + (data[id][a]?.length ?? 0), 0);
+  const openCount = (id: LineId) => ALL_LINES.find((l) => l.id === id)!.audiences.reduce(
+    (n, a) => n + (data[id][a]?.filter((r) => r.needsLoqal).length ?? 0), 0);
+  const open = leads.find((l) => l.id === openId);
 
   return (
-    <section className="rounded-lg border border-border bg-card p-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="text-base font-semibold text-foreground">All cases & files</h2>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Every inquiry and mortgage file on the platform — click a row to see documents and the
-            full correspondence history.
-          </p>
-        </div>
-        <div className="flex gap-1.5">
-          {(
-            [
-              ["all", "All"],
-              ["open", "Open requests"],
-              ["mortgages", "Mortgage files"],
-            ] as const
-          ).map(([id, label]) => (
-            <button
-              key={id}
-              type="button"
-              onClick={() => setFilter(id)}
-              className={`rounded-full border px-3 py-1 text-[11px] font-semibold ${
-                filter === id
-                  ? "border-brand bg-brand text-background"
-                  : "border-border text-muted-foreground hover:bg-brand-tint"
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+    <section className="rounded-lg border border-border bg-card">
+      <div className="border-b border-border p-6">
+        <h2 className="text-base font-semibold text-foreground">Cases by support line</h2>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Every case sorted by the support Loqal provides. Pick a line, then client or partner
+          support — cases waiting on Loqal are always listed first.
+        </p>
       </div>
 
-      {rows.length === 0 ? (
-        <p className="mt-4 text-sm text-muted-foreground">No files in this view yet.</p>
-      ) : (
-        <div className="mt-4 overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-border text-[11px] uppercase tracking-wide text-muted-foreground">
-                <th className="py-2 pr-4 font-semibold">Buyer</th>
-                <th className="py-2 pr-4 font-semibold">Property</th>
-                <th className="py-2 pr-4 font-semibold">Status</th>
-                <th className="py-2 pr-4 font-semibold">Stage</th>
-                <th className="py-2 pr-4 font-semibold">Lender owner</th>
-                <th className="py-2 font-semibold">Submitted</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {rows.map((l) => (
-                <tr
-                  key={l.id}
-                  onClick={() => setOpenId(l.id)}
-                  className="cursor-pointer transition-colors hover:bg-brand-tint/40"
+      <div className="grid md:grid-cols-[240px_1fr]">
+        <nav className="space-y-5 border-b border-border p-4 md:border-b-0 md:border-r">
+          {STAGES.map((stage) => (
+            <div key={stage.title}>
+              <div className="mb-1.5 px-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                {stage.title}
+              </div>
+              <ul className="space-y-0.5">
+                {stage.lines.map((l) => {
+                  const active = l.id === lineId;
+                  const oc = l.soon ? 0 : openCount(l.id);
+                  return (
+                    <li key={l.id}>
+                      <button
+                        type="button"
+                        disabled={l.soon}
+                        onClick={() => {
+                          setLineId(l.id);
+                          setOpenId(null);
+                        }}
+                        className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors ${
+                          active
+                            ? "bg-brand text-brand-foreground"
+                            : l.soon
+                              ? "cursor-not-allowed text-muted-foreground/60"
+                              : "text-foreground hover:bg-brand-tint"
+                        }`}
+                      >
+                        <l.icon className="h-4 w-4 shrink-0" />
+                        <span className="flex-1 truncate">{l.label}</span>
+                        {l.soon ? (
+                          <span className="text-[10px] uppercase">Soon</span>
+                        ) : (
+                          <span className="flex items-center gap-1 text-[11px]">
+                            {oc ? (
+                              <span className="rounded-full bg-warning px-1.5 font-semibold text-foreground">
+                                {oc}
+                              </span>
+                            ) : null}
+                            <span className={active ? "" : "text-muted-foreground"}>{count(l.id)}</span>
+                          </span>
+                        )}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
+        </nav>
+
+        <div className="min-w-0 p-6">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                <line.icon className="h-4 w-4 text-brand" />
+                {line.label}
+              </h3>
+              <p className="mt-1 text-xs text-muted-foreground">{line.blurb}</p>
+            </div>
+            <label className="flex items-center gap-2 text-xs text-muted-foreground">
+              <input type="checkbox" checked={onlyOpen} onChange={(e) => setOnlyOpen(e.target.checked)} />
+              Only cases waiting on Loqal
+            </label>
+          </div>
+
+          {line.audiences.length > 1 ? (
+            <div className="mt-4 inline-flex rounded-full border border-border p-0.5">
+              {line.audiences.map((a) => (
+                <button
+                  key={a}
+                  type="button"
+                  onClick={() => setAudience(a)}
+                  className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                    aud === a ? "bg-brand text-brand-foreground" : "text-muted-foreground hover:text-foreground"
+                  }`}
                 >
-                  <td className="py-3 pr-4 font-semibold text-foreground">{l.clientName}</td>
-                  <td className="py-3 pr-4 text-muted-foreground">
-                    {l.propertyLabel} · {usd(l.propertyPrice)}
-                  </td>
-                  <td className="py-3 pr-4">
+                  {line.id === "registration" && a === "client" ? "Corporate clients" : line.id === "registration" ? "Partners" : AUDIENCE_LABEL[a]}
+                  <span className="ml-1.5 opacity-70">{data[line.id][a]?.length ?? 0}</span>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="mt-4 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              {AUDIENCE_LABEL[aud]} only
+            </div>
+          )}
+
+          {rows.length === 0 ? (
+            <p className="mt-6 rounded-md border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+              {onlyOpen ? "Nothing is waiting on Loqal here." : "No cases in this line yet."}
+            </p>
+          ) : (
+            <ul className="mt-4 divide-y divide-border rounded-lg border border-border">
+              {rows.map((r) => {
+                const body = (
+                  <div className="flex items-center gap-3 px-4 py-3">
                     <span
-                      className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${
-                        l.status === "qualified"
-                          ? "bg-success/10 text-success"
-                          : l.status === "not_qualified"
-                            ? "bg-destructive/10 text-destructive"
-                            : "bg-brand-tint text-brand"
+                      className={`h-2 w-2 shrink-0 rounded-full ${r.needsLoqal ? "bg-warning" : "bg-success"}`}
+                      aria-hidden
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-semibold text-foreground">{r.title}</div>
+                      <div className="truncate text-xs text-muted-foreground">{r.subtitle}</div>
+                    </div>
+                    <span
+                      className={`hidden shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold sm:inline ${
+                        r.needsLoqal ? "bg-warning/15 text-foreground" : "bg-brand-tint text-brand"
                       }`}
                     >
-                      {LEAD_STATUS_LABEL[l.status]}
+                      {r.needsLoqal ? "Loqal to act · " : ""}
+                      {r.status}
                     </span>
-                  </td>
-                  <td className="py-3 pr-4 text-muted-foreground">
-                    {isMortgageFile(l) ? MORTGAGE_STAGE_LABEL[mortgageStage(l)] : "—"}
-                  </td>
-                  <td className="py-3 pr-4 text-muted-foreground">{l.assignedToName ?? "—"}</td>
-                  <td className="py-3 text-muted-foreground">{formatDate(l.submittedAt)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+                    <span className="w-20 shrink-0 text-right text-xs text-muted-foreground">
+                      {formatDate(r.since)}
+                    </span>
+                  </div>
+                );
+                return (
+                  <li key={r.key} className="transition-colors hover:bg-brand-tint/40">
+                    {r.leadId ? (
+                      <button type="button" className="w-full text-left" onClick={() => setOpenId(r.leadId!)}>
+                        {body}
+                      </button>
+                    ) : r.href ? (
+                      <Link to={r.href as never} className="block">
+                        {body}
+                      </Link>
+                    ) : (
+                      body
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
 
-      {open ? <CaseDetail lead={open} onClose={() => setOpenId(null)} /> : null}
+          {open ? <CaseDetail lead={open} onClose={() => setOpenId(null)} /> : null}
+        </div>
+      </div>
     </section>
   );
 }
