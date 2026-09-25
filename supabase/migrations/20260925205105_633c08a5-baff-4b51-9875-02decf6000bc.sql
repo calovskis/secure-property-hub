@@ -1,0 +1,1 @@
+ALTER TABLE public.case_messages ADD COLUMN IF NOT EXISTS meet_url text, ADD COLUMN IF NOT EXISTS event_id text, ADD COLUMN IF NOT EXISTS event_link text;

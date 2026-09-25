@@ -78,9 +78,12 @@ export type Database = {
           chosen_slot: string | null
           client_user_id: string
           created_at: string
+          event_id: string | null
+          event_link: string | null
           from_loqal: boolean
           id: string
           kind: string
+          meet_url: string | null
           read_by_client_at: string | null
           read_by_loqal_at: string | null
           reply_to: string | null
@@ -97,9 +100,12 @@ export type Database = {
           chosen_slot?: string | null
           client_user_id: string
           created_at?: string
+          event_id?: string | null
+          event_link?: string | null
           from_loqal?: boolean
           id?: string
           kind?: string
+          meet_url?: string | null
           read_by_client_at?: string | null
           read_by_loqal_at?: string | null
           reply_to?: string | null
@@ -116,9 +122,12 @@ export type Database = {
           chosen_slot?: string | null
           client_user_id?: string
           created_at?: string
+          event_id?: string | null
+          event_link?: string | null
           from_loqal?: boolean
           id?: string
           kind?: string
+          meet_url?: string | null
           read_by_client_at?: string | null
           read_by_loqal_at?: string | null
           reply_to?: string | null
