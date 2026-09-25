@@ -4,7 +4,7 @@
  * the full correspondence timeline (lender info requests, client questions,
  * decisions, kickoff notes).
  */
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   Briefcase,
