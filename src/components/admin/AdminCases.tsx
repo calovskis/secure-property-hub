@@ -468,8 +468,10 @@ export function AdminCases() {
     const livePartners = requests.filter(
       (r) => r.status !== "declined" && !gone.has(r.email.trim().toLowerCase()),
     );
-    const partnerName = (r: PartnerRequest) =>
-      r.companyName || `${r.firstName} ${r.lastName}`.trim();
+    const partnerName = (r: PartnerRequest) => {
+      const full = `${r.firstName} ${r.lastName}`.trim();
+      return r.companyName ? `${full} · ${r.companyName}` : full;
+    };
     const partnerRow = (r: PartnerRequest, files: number): CaseRow => {
       const loqal = personActions({ request: r, leads: [], name: partnerName(r) }).filter(
         (a) => a.owner === "loqal",
