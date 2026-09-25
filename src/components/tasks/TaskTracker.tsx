@@ -468,7 +468,11 @@ export function TaskTracker({ className = "" }: { className?: string }) {
           push(n, adminGroupOf(n.id));
       }
     } else {
-      for (const n of notifications.filter(isStillOpen)) push(n, groupOf(n.id));
+      /* Partners: purely informational updates (already assigned, terms
+         reconfirmed…) belong in Recent activity, not in Open tasks. */
+      const partnerOpen = (n: AppNotification) =>
+        user?.role !== "partner" || (n.severity !== "info" && n.badge !== "Done" && n.badge !== "Assigned");
+      for (const n of notifications.filter((x) => isStillOpen(x) && partnerOpen(x))) push(n, groupOf(n.id));
       for (const n of adminItems.filter(isStillOpen)) push(n, adminGroupOf(n.id));
 
       /* Visa: a foreign buyer with no valid US visa on file must say whether
