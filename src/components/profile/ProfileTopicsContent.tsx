@@ -1290,7 +1290,7 @@ export function VisaSupportTopic({
   useEffect(() => {
     if (profile.visaSupport !== "loqal" || !visaUser?.email) return;
     const email = visaUser.email.toLowerCase();
-    const who = visaUser.name || email;
+    const who = `${visaUser.firstName} ${visaUser.lastName}`.trim() || email;
     notify({
       id: `visasupport-${email}`,
       to: "admins",
@@ -1300,7 +1300,7 @@ export function VisaSupportTopic({
       severity: "warning",
       ...(profile.visaSupportRequestedAt ? { createdAt: profile.visaSupportRequestedAt } : {}),
     });
-  }, [profile.visaSupport, profile.visaSupportRequestedAt, profile.citizenship, profile.countryOfResidence, visaUser?.email, visaUser?.name]);
+  }, [profile.visaSupport, profile.visaSupportRequestedAt, profile.citizenship, profile.countryOfResidence, visaUser?.email, visaUser?.firstName, visaUser?.lastName]);
 
   const initial = {
     visaType: (profile.visaType ?? "") as UsStatus | "",
