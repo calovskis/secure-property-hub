@@ -16,6 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { CaseThread } from "@/components/cases/CaseThread";
 
 const OPTIONS: EntityStatus[] = [...ENTITY_STATUSES];
 
@@ -57,7 +58,7 @@ export function EntityStatusDialog({
 
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>Company set-up support — {request.clientName}</DialogTitle>
           <DialogDescription>
