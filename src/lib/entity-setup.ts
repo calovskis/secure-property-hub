@@ -265,7 +265,7 @@ export async function respondToRecommendation(r: EntitySetupRequest, response: R
         ? `Entity recommendation confirmed — ${r.clientName}`
         : `Changes requested on the entity recommendation — ${r.clientName}`,
     body: response.items?.map((i) => `${i.label}: ${i.note}`).join(" · ") || response.note || "",
-    href: `/admin?tab=cases&case=entity&focus=${r.id}`,
+    href: `/admin?tab=cases&line=entity&client=${encodeURIComponent(r.email)}`,
     severity: response.decision === "confirmed" ? "info" : "warning",
   });
   await refreshEntityRequests();
