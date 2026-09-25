@@ -266,7 +266,8 @@ export function LicenceVerificationDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const name = request.companyName || `${request.firstName} ${request.lastName}`;
+  const full = `${request.firstName} ${request.lastName}`.trim();
+  const name = request.companyName ? `${full} · ${request.companyName}` : full;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">

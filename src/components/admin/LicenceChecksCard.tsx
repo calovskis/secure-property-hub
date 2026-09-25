@@ -57,7 +57,8 @@ export function LicenceChecksCard() {
           >
             <div className="min-w-0 text-xs">
               <p className="text-sm font-semibold text-foreground">
-                {request.companyName || `${request.firstName} ${request.lastName}`} ·{" "}
+                {`${request.firstName} ${request.lastName}`.trim()}
+                {request.companyName ? ` · ${request.companyName}` : ""} ·{" "}
                 {licences.length === 1 ? licences[0]!.state : `${licences.length} states`}
               </p>
               <p className="text-muted-foreground">
