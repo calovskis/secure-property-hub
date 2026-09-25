@@ -1348,38 +1348,70 @@ export function VisaSupportTopic({
         </div>
       </div>
 
-      <div className="mt-5 flex flex-col gap-2 sm:flex-row">
-        <button
-          type="button"
-          onClick={() => setLoqalOpen(true)}
-          className={`rounded-md px-4 py-2 text-sm font-semibold ${
-            choice === "loqal"
-              ? "bg-brand text-brand-foreground"
-              : "border border-brand text-brand hover:bg-brand-tint"
-          }`}
-        >
-          Loqal visa support
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            onSave({ visaSupport: "self" });
-            toast.success("Noted — you will handle the visa yourself");
-          }}
-          className={`rounded-md px-4 py-2 text-sm font-semibold ${
-            choice === "self"
-              ? "bg-foreground text-background"
-              : "border border-border text-foreground hover:bg-muted"
-          }`}
-        >
-          I will handle on my own
-        </button>
-      </div>
-      {choice === "loqal" && profile.visaSupportRequestedAt ? (
-        <p className="mt-2 text-xs text-muted-foreground">
-          Requested on {formatDate(profile.visaSupportRequestedAt)}.
-        </p>
-      ) : null}
+      {!choice ? (
+        <div className="mt-5 flex flex-col gap-2 sm:flex-row">
+          <button
+            type="button"
+            onClick={() => setLoqalOpen(true)}
+            className="rounded-md border border-brand px-4 py-2 text-sm font-semibold text-brand hover:bg-brand-tint"
+          >
+            Loqal visa support
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              onSave({ visaSupport: "self" });
+              toast.success("Noted — you will handle the visa yourself");
+            }}
+            className="rounded-md border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted"
+          >
+            I will handle on my own
+          </button>
+        </div>
+      ) : choice === "loqal" ? (
+        <div className="mt-5 rounded-md border border-brand/40 bg-brand-tint/60 p-3">
+          <p className="text-sm font-semibold text-foreground">
+            Loqal visa support requested
+            {profile.visaSupportRequestedAt
+              ? ` on ${formatDate(profile.visaSupportRequestedAt)}`
+              : ""}
+            .
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Our team is on it — we will be in touch with the next steps.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              onSave({ visaSupport: undefined });
+              toast.success("Choice cleared — you can choose again");
+            }}
+            className="mt-2 text-xs font-semibold text-brand underline-offset-2 hover:underline"
+          >
+            Change my choice
+          </button>
+        </div>
+      ) : (
+        <div className="mt-5 rounded-md border border-border bg-muted/50 p-3">
+          <p className="text-sm font-semibold text-foreground">
+            You will handle the visa on your own.
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Remember: the visa must be valid for at least 3 months from the date the purchase
+            agreement is signed, and the notary must be organised 2 weeks before closing.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              onSave({ visaSupport: undefined });
+              toast.success("Choice cleared — you can choose again");
+            }}
+            className="mt-2 text-xs font-semibold text-brand underline-offset-2 hover:underline"
+          >
+            Change my choice
+          </button>
+        </div>
+      )}
 
       <VisaSupportDialog
         open={loqalOpen}
