@@ -1383,7 +1383,7 @@ export function VisaSupportTopic({
           <button
             type="button"
             onClick={() => {
-              onSave({ visaSupport: undefined });
+              onSave({ visaSupport: undefined } as Partial<MortgageProfile>);
               toast.success("Choice cleared — you can choose again");
             }}
             className="mt-2 text-xs font-semibold text-brand underline-offset-2 hover:underline"
@@ -1403,7 +1403,7 @@ export function VisaSupportTopic({
           <button
             type="button"
             onClick={() => {
-              onSave({ visaSupport: undefined });
+              onSave({ visaSupport: undefined } as Partial<MortgageProfile>);
               toast.success("Choice cleared — you can choose again");
             }}
             className="mt-2 text-xs font-semibold text-brand underline-offset-2 hover:underline"
