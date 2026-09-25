@@ -518,7 +518,7 @@ export function AdminCases() {
     out.realtor.partner = livePartners
       .filter((r) => r.kind === "partner" && r.partnerType === "realtor" && r.status === "approved")
       .map((r) =>
-        partnerRow(r, leads.filter((l) => l.buyerAgent?.agentId === r.id || l.buyerAgent?.agentId === r.user_id).length),
+        partnerRow(r, leads.filter((l) => l.buyerAgent?.agentId === r.id).length),
       );
 
     // Mortgage
