@@ -53,7 +53,9 @@ export function registerCloudStore(key: string, apply: () => void) {
   const set = appliers.get(key) ?? new Set();
   set.add(apply);
   appliers.set(key, set);
-  return () => set.delete(apply);
+  return () => {
+    set.delete(apply);
+  };
 }
 
 /* ---------- flatten / merge ---------- */
