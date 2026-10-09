@@ -43,6 +43,7 @@ import { licenceRows, isLicenceVerified, pendingVerifications } from "@/lib/lice
 import { PartnerCountersignDialog } from "@/components/admin/PartnerCountersignDialog";
 import { notify } from "@/lib/notifications";
 import { ActiveActionsList } from "@/components/admin/PersonActions";
+import { ENTITY_TYPE_LABEL, SERVICE_LABEL } from "@/lib/inspection-licensing";
 
 type Tab =
   | "actions"
@@ -492,6 +493,34 @@ function ProfileTab({ person }: { person: AdminPerson }) {
               ))}
             </div>
           ) : null}
+          {req.inspectorProfile ? (() => {
+            const ip = req.inspectorProfile;
+            return (
+              <div className="mt-4 rounded-lg border border-border p-3 text-xs">
+                <div className="font-semibold text-foreground">Inspection company</div>
+                <Row label="Legal name" value={`${ip.legalName}${ip.dba ? ` (DBA ${ip.dba})` : ""}`} />
+                <Row label="Entity" value={`${ENTITY_TYPE_LABEL[ip.entityType]}${ip.ein ? ` · EIN ${ip.ein}` : ""}`} />
+                <Row label="Operations" value={`${ip.operationsEmail} · ${ip.mainPhone}${ip.website ? ` · ${ip.website}` : ""}`} />
+                <Row label="Experience" value={`${ip.yearsInOperation} years · ${ip.inspectorCount} inspector${ip.inspectorCount === 1 ? "" : "s"}`} />
+                {ip.mailingAddress && !ip.mailingSameAsBusiness ? <Row label="Mailing" value={`${ip.mailingAddress.street}, ${ip.mailingAddress.city} ${ip.mailingAddress.state} ${ip.mailingAddress.zip}`} /> : null}
+                {ip.inspectors.length ? <Row label="Inspectors" value={ip.inspectors.map((p) => `${p.firstName} ${p.lastName}${p.languages.length ? ` (${p.languages.join(", ")})` : ""}`).join("; ")} /> : null}
+                <div className="mt-2 space-y-1.5">
+                  {ip.coverage.map((c) => (
+                    <div key={c.state}>
+                      <span className="font-semibold text-foreground">{c.state}</span>
+                      <div className="mt-1 flex flex-wrap gap-1.5">
+                        {c.services.map((sv) => (
+                          <span key={sv.service} className="rounded bg-brand-tint px-2 py-1 text-[11px] font-semibold text-brand">
+                            {SERVICE_LABEL[sv.service]}{sv.number ? ` · ${sv.number}` : ""}{sv.validUntil ? ` · valid till ${formatDate(sv.validUntil)}` : ""}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })() : null}
           {req.kyc ? (
             <div className="mt-4 rounded-lg border border-border p-3 text-xs">
               <div className="font-semibold text-foreground">KYB questionnaire</div>
