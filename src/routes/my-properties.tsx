@@ -6,6 +6,8 @@ export const Route = createFileRoute("/my-properties")({
   component: MyPropertiesPage,
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { title: "LOQAL - My Properties" },
       {
         name: "description",

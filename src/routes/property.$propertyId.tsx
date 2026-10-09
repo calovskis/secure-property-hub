@@ -27,7 +27,12 @@ export const Route = createFileRoute("/property/$propertyId")({
     if (!loaderData) {
       return {
         meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
           { title: "Property unavailable — LOQAL" },
+          { name: "description", content: "This Loqal property listing is unavailable." },
+          { property: "og:title", content: "Property unavailable — LOQAL" },
+          { property: "og:description", content: "This Loqal property listing is unavailable." },
           { name: "robots", content: "noindex" },
         ],
       };
@@ -39,6 +44,8 @@ export const Route = createFileRoute("/property/$propertyId")({
     )} — investment analysis, cash-flow scenarios and acquisition summary on LOQAL.`;
     return {
       meta: [
+        { property: "og:type", content: "website" },
+        { name: "twitter:card", content: "summary" },
         { title },
         { name: "description", content: description },
         { property: "og:title", content: title },
