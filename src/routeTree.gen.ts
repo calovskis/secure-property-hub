@@ -19,6 +19,7 @@ import { Route as EntityStructureFaqRouteImport } from './routes/entity-structur
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as FinancialsRouteImport } from './routes/financials'
 import { Route as InspectionAccountingRouteImport } from './routes/inspection-accounting'
+import { Route as InspectionMyLoqalRouteImport } from './routes/inspection-my-loqal'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as MyPropertiesRouteImport } from './routes/my-properties'
 import { Route as MyServicesRouteImport } from './routes/my-services'
@@ -84,6 +85,11 @@ const FinancialsRoute = FinancialsRouteImport.update({
 const InspectionAccountingRoute = InspectionAccountingRouteImport.update({
   id: '/inspection-accounting',
   path: '/inspection-accounting',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InspectionMyLoqalRoute = InspectionMyLoqalRouteImport.update({
+  id: '/inspection-my-loqal',
+  path: '/inspection-my-loqal',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MarketplaceRoute = MarketplaceRouteImport.update({
@@ -179,6 +185,7 @@ export interface FileRoutesByFullPath {
   '/faq': typeof FaqRoute
   '/financials': typeof FinancialsRoute
   '/inspection-accounting': typeof InspectionAccountingRoute
+  '/inspection-my-loqal': typeof InspectionMyLoqalRoute
   '/marketplace': typeof MarketplaceRoute
   '/my-properties': typeof MyPropertiesRoute
   '/my-services': typeof MyServicesRoute
@@ -207,6 +214,7 @@ export interface FileRoutesByTo {
   '/faq': typeof FaqRoute
   '/financials': typeof FinancialsRoute
   '/inspection-accounting': typeof InspectionAccountingRoute
+  '/inspection-my-loqal': typeof InspectionMyLoqalRoute
   '/marketplace': typeof MarketplaceRoute
   '/my-properties': typeof MyPropertiesRoute
   '/my-services': typeof MyServicesRoute
@@ -236,6 +244,7 @@ export interface FileRoutesById {
   '/faq': typeof FaqRoute
   '/financials': typeof FinancialsRoute
   '/inspection-accounting': typeof InspectionAccountingRoute
+  '/inspection-my-loqal': typeof InspectionMyLoqalRoute
   '/marketplace': typeof MarketplaceRoute
   '/my-properties': typeof MyPropertiesRoute
   '/my-services': typeof MyServicesRoute
@@ -266,6 +275,7 @@ export interface FileRouteTypes {
     | '/faq'
     | '/financials'
     | '/inspection-accounting'
+    | '/inspection-my-loqal'
     | '/marketplace'
     | '/my-properties'
     | '/my-services'
@@ -294,6 +304,7 @@ export interface FileRouteTypes {
     | '/faq'
     | '/financials'
     | '/inspection-accounting'
+    | '/inspection-my-loqal'
     | '/marketplace'
     | '/my-properties'
     | '/my-services'
@@ -322,6 +333,7 @@ export interface FileRouteTypes {
     | '/faq'
     | '/financials'
     | '/inspection-accounting'
+    | '/inspection-my-loqal'
     | '/marketplace'
     | '/my-properties'
     | '/my-services'
@@ -351,6 +363,7 @@ export interface RootRouteChildren {
   FaqRoute: typeof FaqRoute
   FinancialsRoute: typeof FinancialsRoute
   InspectionAccountingRoute: typeof InspectionAccountingRoute
+  InspectionMyLoqalRoute: typeof InspectionMyLoqalRoute
   MarketplaceRoute: typeof MarketplaceRoute
   MyPropertiesRoute: typeof MyPropertiesRoute
   MyServicesRoute: typeof MyServicesRoute
@@ -439,6 +452,13 @@ declare module '@tanstack/react-router' {
       path: '/inspection-accounting'
       fullPath: '/inspection-accounting'
       preLoaderRoute: typeof InspectionAccountingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/inspection-my-loqal': {
+      id: '/inspection-my-loqal'
+      path: '/inspection-my-loqal'
+      fullPath: '/inspection-my-loqal'
+      preLoaderRoute: typeof InspectionMyLoqalRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/marketplace': {
@@ -567,6 +587,7 @@ const rootRouteChildren: RootRouteChildren = {
   FaqRoute: FaqRoute,
   FinancialsRoute: FinancialsRoute,
   InspectionAccountingRoute: InspectionAccountingRoute,
+  InspectionMyLoqalRoute: InspectionMyLoqalRoute,
   MarketplaceRoute: MarketplaceRoute,
   MyPropertiesRoute: MyPropertiesRoute,
   MyServicesRoute: MyServicesRoute,

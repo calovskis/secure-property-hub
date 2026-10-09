@@ -14,7 +14,7 @@ import { notify } from "@/lib/notifications";
 import { InspectorCoverageFields, inspectorError } from "@/components/partner/InspectorRegistrationFields";
 import { US_STATE_CODES, US_STATE_NAME_BY_CODE } from "@/data/us-states";
 
-export function InspectorProfile({ user }: { user: LoqalUser }) {
+export function InspectorProfile({ user, section = "all" }: { user: LoqalUser; section?: "all" | "profile" | "coverage" | "team" }) {
   const { authUserId } = useAuth();
   const { requests, refresh } = usePartnerRequests();
   const request = requests.find((r) => r.email.toLowerCase() === user.email.toLowerCase());
@@ -91,11 +91,11 @@ export function InspectorProfile({ user }: { user: LoqalUser }) {
     ["Years in operation", String(profile.yearsInOperation)], ["Inspectors", String(profile.inspectorCount)], ["Company languages", companyLanguages.join(", ")],
   ];
   return <div className="space-y-8">
-    <section>
+    {section === "all" || section === "profile" ? <section>
       <h2 className="text-lg font-semibold text-foreground">Company profile</h2>
       <dl className="mt-4 grid gap-x-6 gap-y-4 sm:grid-cols-2">{fields.map(([label, value]) => <div key={label} className="min-w-0 border-b border-border pb-3"><dt className="text-xs text-muted-foreground">{label}</dt><dd className="mt-1 break-words text-sm font-medium text-foreground">{value || "—"}</dd></div>)}</dl>
-    </section>
-    <section>
+    </section> : null}
+    {section === "all" || section === "coverage" ? <section>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-lg font-semibold text-foreground">Coverage, services & licences</h2>
         <div className="flex items-center gap-3"><span className={`text-xs font-semibold ${missing.length ? "text-gold" : "text-success"}`}>{missing.length ? `${missing.length} copies to provide` : "All required copies provided"}</span><Button size="sm" variant="outline" onClick={startEdit}><Pencil/>Add or edit</Button></div>
@@ -127,16 +127,16 @@ export function InspectorProfile({ user }: { user: LoqalUser }) {
         </div>)}
         {!profile.coverage.length ? <p className="text-sm text-muted-foreground">No inspection coverage on file.</p> : null}
       </div>
-    </section>
-    <section><h2 className="text-lg font-semibold text-foreground">Inspector team & languages</h2>
+    </section> : null}
+    {section === "all" || section === "team" ? <section><h2 className="text-lg font-semibold text-foreground">Inspector team & languages</h2>
       <div className="mt-3 border-b border-border pb-3"><p className="text-xs text-muted-foreground">Company languages</p><div className="mt-2 flex flex-wrap gap-1.5">{companyLanguages.length ? companyLanguages.map((l) => <span key={l} className="rounded-full bg-brand-tint px-2.5 py-0.5 text-xs font-medium text-brand">{l}</span>) : <span className="text-sm text-muted-foreground">Not provided</span>}</div></div>
-      <div className="mt-1 divide-y divide-border">{profile.inspectors.map((p) => <div key={p.id} className="py-3"><p className="text-sm font-semibold text-foreground">{p.firstName} {p.lastName}</p><p className="mt-1 text-xs text-muted-foreground">{p.languages.join(", ") || "Languages not provided"}</p></div>)}</div>{!profile.inspectors.length ? <p className="mt-3 text-sm text-muted-foreground">No individual inspector details on file.</p> : null}</section>
+      <div className="mt-1 divide-y divide-border">{profile.inspectors.map((p) => <div key={p.id} className="py-3"><p className="text-sm font-semibold text-foreground">{p.firstName} {p.lastName}</p><p className="mt-1 text-xs text-muted-foreground">{p.languages.join(", ") || "Languages not provided"}</p></div>)}</div>{!profile.inspectors.length ? <p className="mt-3 text-sm text-muted-foreground">No individual inspector details on file.</p> : null}</section> : null}
     <Dialog open={editing} onOpenChange={(v) => { if (!savingCov) setEditing(v); }}>
       <DialogContent className="max-h-[85vh] max-w-3xl overflow-y-auto">
         <DialogHeader><DialogTitle>Edit inspection services & licences</DialogTitle><DialogDescription>Add states, inspection types and licence details. Changes are sent to Loqal for verification.</DialogDescription></DialogHeader>
         <div className="space-y-4">
           <div className="flex flex-wrap items-center gap-2">
-            {draftStates.map((st) => <span key={st} className="inline-flex items-center gap-1 rounded-full border border-border px-2.5 py-0.5 text-xs font-medium text-foreground">{st}<button type="button" aria-label={`Remove ${st}`} className="text-muted-foreground hover:text-destructive" onClick={() => { setDraftStates(draftStates.filter((s) => s !== st)); setDraft({ ...draft!, coverage: draft!.coverage.filter((c) => c.state !== st) }); }}>×</button></span>)}
+            {draftStates.map((st) => <span key={st} className="inline-flex items-center gap-1 rounded-full border border-border px-2.5 py-0.5 text-xs font-medium text-foreground">{st}<Button type="button" variant="ghost" size="sm" aria-label={`Remove ${st}`} className="h-5 px-1 text-muted-foreground hover:text-destructive" onClick={() => { if (!draft) return; setDraftStates(draftStates.filter((s) => s !== st)); setDraft({ ...draft, coverage: draft.coverage.filter((c) => c.state !== st) }); }}>×</Button></span>)}
             <select value="" onChange={(e) => { const st = e.target.value; if (st && !draftStates.includes(st)) setDraftStates([...draftStates, st]); }} className="rounded-md border border-input bg-background px-2 py-1 text-xs text-foreground">
               <option value="">+ Add state</option>
               {US_STATE_CODES.filter((s) => !draftStates.includes(s)).map((s) => <option key={s} value={s}>{s} · {US_STATE_NAME_BY_CODE[s]}</option>)}
