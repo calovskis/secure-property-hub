@@ -14,6 +14,7 @@
  * exactly the same state.
  */
 import { useCallback, useMemo, useSyncExternalStore } from "react";
+import { registerCloudStore } from "@/lib/cloud-sync";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
@@ -130,6 +131,10 @@ const EMPTY: State = { purchases: [], changes: [] };
 
 let state: State | null = null;
 const listeners = new Set<() => void>();
+registerCloudStore(STORAGE_KEY, () => {
+  state = null;
+  listeners.forEach((l) => l());
+});
 
 function load(): State {
   if (state) return state;

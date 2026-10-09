@@ -39,7 +39,7 @@ export const CLOUD_KEYS = [
   "loqal.document.requests.staged.v1",
   "loqal.document.requests.firstseen.v1",
   "loqal.upload-drafts.v1",
-  "loqal.licenceFiles.v1",
+  "loqal.licence-files.v1",
   "loqal.presence.v1",
 ] as const;
 const KEYS = new Set<string>(CLOUD_KEYS);

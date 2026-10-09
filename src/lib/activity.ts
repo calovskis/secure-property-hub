@@ -4,6 +4,7 @@
  * the Loqal admin console renders it under Activity.
  */
 import { useSyncExternalStore } from "react";
+import { registerCloudStore } from "@/lib/cloud-sync";
 
 export type ActivityEntry = {
   id: string;
@@ -23,6 +24,10 @@ const MAX_ENTRIES = 400;
 
 let state: ActivityState | null = null;
 const listeners = new Set<() => void>();
+registerCloudStore(STORAGE_KEY, () => {
+  state = null;
+  listeners.forEach((l) => l());
+});
 
 function load(): ActivityState {
   if (state) return state;

@@ -11,6 +11,7 @@ import { useCallback, useSyncExternalStore } from "react";
 import type { MortgageLead } from "@/lib/leads";
 import type { PartnerRequest } from "@/lib/partner-requests";
 import { partnerCoversState } from "@/lib/licence-verification";
+import { registerCloudStore } from "@/lib/cloud-sync";
 
 export type PartnerRole = "lender" | "realtor";
 
@@ -50,6 +51,10 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 
 let state: State | null = null;
 const listeners = new Set<() => void>();
+registerCloudStore(STORAGE_KEY, () => {
+  state = null;
+  listeners.forEach((l) => l());
+});
 
 function load(): State {
   if (state) return state;

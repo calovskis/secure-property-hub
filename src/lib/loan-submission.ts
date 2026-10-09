@@ -7,6 +7,7 @@
  * file stays in the lender portal as pending transfer to the chosen bank.
  */
 import { useCallback, useMemo, useSyncExternalStore } from "react";
+import { registerCloudStore } from "@/lib/cloud-sync";
 
 export type LoanSubmission = {
   leadId: string;
@@ -38,6 +39,10 @@ const EMPTY: State = { submissions: [] };
 
 let state: State | null = null;
 const listeners = new Set<() => void>();
+registerCloudStore(STORAGE_KEY, () => {
+  state = null;
+  listeners.forEach((l) => l());
+});
 
 function load(): State {
   if (state) return state;

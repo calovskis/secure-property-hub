@@ -10,6 +10,7 @@
  *   5. preference  — smallest active buyer pipeline
  */
 import { useCallback, useSyncExternalStore } from "react";
+import { registerCloudStore } from "@/lib/cloud-sync";
 
 export type RealtorLicense = {
   /** Two-letter state code. */
@@ -87,6 +88,10 @@ const DEFAULT_STATE = (): RealtorState => ({ realtors: [] });
 
 let state: RealtorState | null = null;
 const listeners = new Set<() => void>();
+registerCloudStore(STORAGE_KEY, () => {
+  state = null;
+  listeners.forEach((l) => l());
+});
 
 function normalise(next: Partial<RealtorState>): RealtorState {
   return {

@@ -7,6 +7,7 @@
 import { useCallback, useSyncExternalStore } from "react";
 import type { MortgageLead } from "@/lib/leads";
 import { formatDate } from "@/lib/dates";
+import { registerCloudStore } from "@/lib/cloud-sync";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
@@ -135,6 +136,10 @@ const EMPTY: BuyerProcessState = { photos: {}, bookings: [], actions: {} };
 
 let state: BuyerProcessState | null = null;
 const listeners = new Set<() => void>();
+registerCloudStore(STORAGE_KEY, () => {
+  state = null;
+  listeners.forEach((l) => l());
+});
 
 function load(): BuyerProcessState {
   if (state) return state;

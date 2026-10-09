@@ -5,6 +5,7 @@
  * looks at people.
  */
 import { useCallback, useSyncExternalStore } from "react";
+import { registerCloudStore } from "@/lib/cloud-sync";
 
 export type ProfileOverride = {
   displayName?: string | undefined;
@@ -20,6 +21,10 @@ const STORAGE_KEY = "loqal.directory.v1";
 
 let state: DirectoryState | null = null;
 const listeners = new Set<() => void>();
+registerCloudStore(STORAGE_KEY, () => {
+  state = null;
+  listeners.forEach((l) => l());
+});
 
 function load(): DirectoryState {
   if (state) return state;

@@ -10,6 +10,7 @@
  * with no recorded sessions simply shows "no activity recorded yet".
  */
 import { useSyncExternalStore } from "react";
+import { registerCloudStore } from "@/lib/cloud-sync";
 
 export type PageVisit = {
   path: string;
@@ -45,6 +46,10 @@ const SESSION_GAP_MS = 30 * 60 * 1000;
 
 let state: PresenceState | null = null;
 const listeners = new Set<() => void>();
+registerCloudStore(STORAGE_KEY, () => {
+  state = null;
+  listeners.forEach((l) => l());
+});
 
 function load(): PresenceState {
   if (state) return state;

@@ -8,6 +8,7 @@
  * client's unfinished forms.
  */
 import { useSyncExternalStore } from "react";
+import { registerCloudStore } from "@/lib/cloud-sync";
 
 export type UploadDraft = {
   id: string;
@@ -30,6 +31,10 @@ const STORAGE_KEY = "loqal.upload-drafts.v1";
 
 let cache: DraftState | null = null;
 const listeners = new Set<() => void>();
+registerCloudStore(STORAGE_KEY, () => {
+  cache = null;
+  listeners.forEach((l) => l());
+});
 const EMPTY: DraftState = {};
 
 function load(): DraftState {
