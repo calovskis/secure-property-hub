@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Upload, CheckCircle2, FileCheck2 } from "lucide-react";
+import { useRef, useState } from "react";
+import { Upload, CheckCircle2, FileCheck2, Paperclip, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -20,12 +20,14 @@ export function InspectorProfile({ user }: { user: LoqalUser }) {
   const requirements = inspectorLicenceRequirements(profile);
   const [selected, setSelected] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [step, setStep] = useState<"upload" | "confirm">("upload");
   const [confirm, setConfirm] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const item = requirements.find((r) => r.key === selected);
   const missing = requirements.filter((r) => !r.provided);
-  function open(key: string) { setSelected(key); setFile(null); setConfirm(false); setError(""); }
+  function open(key: string) { setSelected(key); setStep("upload"); setFile(null); setConfirm(false); setError(""); }
   useDeepLinkAction("licences", (focus) => {
     const target = requirements.find((r) => r.key === focus) ?? missing[0] ?? requirements[0];
     if (target) open(target.key);
@@ -88,7 +90,7 @@ export function InspectorProfile({ user }: { user: LoqalUser }) {
                 <div className="min-w-0"><p className="mb-1 text-xs text-muted-foreground lg:hidden">Licence / certification №</p><p className="break-words text-sm font-medium text-foreground">{service.number || (rule.required ? "Not provided" : "Not on file")}</p></div>
                 <div><p className="mb-1 text-xs text-muted-foreground lg:hidden">Valid through</p><p className="text-sm font-medium text-foreground">{service.validUntil ? formatDate(service.validUntil) : "Not on file"}</p></div>
                 <div className="min-w-0 sm:col-span-2 lg:col-span-1">
-                  {requirement ? <><p className={`mb-2 flex items-center gap-1 text-xs font-medium ${requirement.provided ? "text-success" : "text-gold"}`}>{requirement.provided ? <CheckCircle2 className="size-3.5 shrink-0"/> : <FileCheck2 className="size-3.5 shrink-0"/>}{requirement.provided ? "Copy provided" : "Copy needed"}</p><Button size="sm" variant={requirement.provided ? "outline" : "default"} onClick={() => open(requirement.key)}><Upload/>{requirement.provided ? "Add copy" : "Upload copy"}</Button><div className="mt-2 flex flex-col gap-1 break-words">{requirement.documents?.map((d) => <UploadedDocLink key={d.path} path={d.path}/>)}</div></> : <p className="text-xs text-muted-foreground">No mandatory copy required</p>}
+                  {requirement ? <><p className={`mb-2 flex items-center gap-1 text-xs font-medium ${requirement.provided ? "text-success" : "text-gold"}`}>{requirement.provided ? <CheckCircle2 className="size-3.5 shrink-0"/> : <FileCheck2 className="size-3.5 shrink-0"/>}{requirement.provided ? "Copy provided" : "Copy needed"}</p><Button size="sm" variant="outline" className={requirement.provided ? "text-muted-foreground" : "border-brand/40 bg-brand-tint text-brand hover:bg-brand-tint/70"} onClick={() => open(requirement.key)}><Upload/>{requirement.provided ? "Replace copy" : "Upload copy"}</Button><div className="mt-2 flex flex-col gap-1 break-words">{requirement.documents?.map((d) => <UploadedDocLink key={d.path} path={d.path}/>)}</div></> : <p className="text-xs text-muted-foreground">No mandatory copy required</p>}
                 </div>
               </div>;
             })}
@@ -98,6 +100,50 @@ export function InspectorProfile({ user }: { user: LoqalUser }) {
       </div>
     </section>
     <section><h2 className="text-lg font-semibold text-foreground">Inspector team & languages</h2><div className="mt-3 divide-y divide-border">{profile.inspectors.map((p) => <div key={p.id} className="py-3"><p className="text-sm font-semibold text-foreground">{p.firstName} {p.lastName}</p><p className="mt-1 text-xs text-muted-foreground">{p.languages.join(", ") || "Languages not provided"}</p></div>)}</div>{!profile.inspectors.length ? <p className="mt-3 text-sm text-muted-foreground">No individual inspector details on file.</p> : null}</section>
-    <Dialog open={Boolean(item)} onOpenChange={(v) => { if (!v && !busy) setSelected(null); }}><DialogContent className="max-w-lg"><DialogHeader><DialogTitle>{item?.state} · {item?.label}</DialogTitle><DialogDescription>Upload and confirm your licence or certification copy for Loqal.</DialogDescription></DialogHeader><p className="text-sm text-foreground">{item?.rule.label}: {item?.number || "Not provided"}</p><input aria-label="Licence copy" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" disabled={busy} onChange={(e) => { const next = e.target.files?.[0]; setConfirm(false); setError(""); if (next && next.size > 20 * 1024 * 1024) { setFile(null); setError("Please choose a file under 20 MB."); } else setFile(next ?? null); }} className="w-full text-sm text-foreground"/>{file ? <p className="break-words text-sm font-medium text-foreground">{file.name}</p> : null}<label className="flex items-start gap-2 text-sm text-foreground"><input type="checkbox" checked={confirm} disabled={busy} onChange={(e) => setConfirm(e.target.checked)} className="mt-1"/>I confirm this copy is correct, authentic and belongs to the registered company or inspector.</label>{error ? <p role="alert" className="text-sm text-destructive">{error}</p> : null}<Button disabled={!file || !confirm || busy || !authUserId} onClick={() => void submit()}><Upload/>{busy ? "Submitting…" : "Confirm & submit copy"}</Button></DialogContent></Dialog>
+    <Dialog open={Boolean(item)} onOpenChange={(v) => { if (!v && !busy) setSelected(null); }}>
+      <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Upload your licence copy</DialogTitle>
+          <DialogDescription>{item?.state} · {item?.label}</DialogDescription>
+        </DialogHeader>
+        <div className="mt-2 space-y-4">
+          {step === "upload" ? <>
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border p-3">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-foreground">{item?.state} · {item?.number || "Number not provided"}</p>
+                <p className="text-xs text-muted-foreground">Valid until {item?.validUntil ? formatDate(item.validUntil) : "not on file"}</p>
+                <p className={`mt-1 text-xs font-semibold ${file ? "text-gold" : item?.provided ? "text-success" : "text-gold"}`}>{file ? "Copy selected · not submitted yet" : item?.provided ? "Copy already on file" : "Copy still needed"}</p>
+              </div>
+              <input ref={fileInput} aria-label="Licence copy" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" disabled={busy} className="hidden" onChange={(e) => {
+                const next = e.target.files?.[0];
+                setConfirm(false); setError("");
+                if (next && next.size > 20 * 1024 * 1024) { setFile(null); setError("Please choose a file under 20 MB."); }
+                else setFile(next ?? null);
+                e.target.value = "";
+              }}/>
+              <div className="flex shrink-0 gap-2">
+                <Button size="sm" variant="outline" className="border-dashed" onClick={() => fileInput.current?.click()}><Upload/>{file || item?.provided ? "Change" : "Upload"}</Button>
+                {file ? <Button size="sm" variant="outline" className="text-destructive" onClick={() => { setFile(null); setConfirm(false); setError(""); }}><Trash2/>Delete</Button> : null}
+              </div>
+            </div>
+            {file ? <p className="flex items-start gap-2 break-words text-xs font-semibold text-gold"><Paperclip className="size-4 shrink-0"/><span className="min-w-0 break-all">{file.name}</span></p> : null}
+            <p className="text-xs text-muted-foreground">PDF or image · up to 20 MB. Nothing is submitted to Loqal until you review and confirm.</p>
+          </> : <>
+            <div className="rounded-md border border-border bg-background p-3 text-xs text-foreground">
+              <p className="font-semibold">{item?.state} · {item?.label}</p>
+              <p className="mt-1 text-muted-foreground">{item?.number || "Number not provided"} · Valid until {item?.validUntil ? formatDate(item.validUntil) : "not on file"}</p>
+              <p className="mt-2 flex items-start gap-2"><Paperclip className="size-4 shrink-0"/><span className="min-w-0 break-all">{file?.name}</span></p>
+            </div>
+            <label className="flex items-start gap-2 text-xs text-foreground"><input type="checkbox" checked={confirm} disabled={busy} onChange={(e) => setConfirm(e.target.checked)} className="mt-0.5"/>I confirm this copy matches the licence number and validity date on file, is authentic and belongs to the registered company or inspector.</label>
+          </>}
+          {error ? <p role="alert" className="text-xs font-semibold text-destructive">{error}</p> : null}
+          <div className="flex flex-wrap justify-end gap-2">
+            <Button variant="outline" disabled={busy} onClick={() => { if (step === "confirm") { setStep("upload"); setConfirm(false); setError(""); } else setSelected(null); }}>{step === "confirm" ? "Back" : "Cancel"}</Button>
+            {step === "upload" ? <Button disabled={!file} onClick={() => { setStep("confirm"); setError(""); }}>Review &amp; submit</Button> : <Button disabled={!file || !confirm || busy || !authUserId} onClick={() => void submit()}>{busy ? "Submitting…" : "Submit copy"}</Button>}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+
   </div>;
 }
