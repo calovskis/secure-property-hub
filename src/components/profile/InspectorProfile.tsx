@@ -1,16 +1,18 @@
 import { useRef, useState } from "react";
-import { Upload, CheckCircle2, FileCheck2, Paperclip, Trash2 } from "lucide-react";
+import { Upload, CheckCircle2, FileCheck2, Paperclip, Trash2, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { UploadedDocLink } from "@/components/profile/UploadedDocLink";
 import { useAuth, type LoqalUser } from "@/lib/auth";
 import { usePartnerRequests } from "@/lib/partner-requests";
-import { ENTITY_TYPE_LABEL, SERVICE_LABEL, licenceRule, inspectorLicenceRequirements } from "@/lib/inspection-licensing";
+import { ENTITY_TYPE_LABEL, SERVICE_LABEL, licenceRule, inspectorLicenceRequirements, type InspectorProfile as InspectorProfileData } from "@/lib/inspection-licensing";
 import { formatDate } from "@/lib/dates";
 import { useDeepLinkAction } from "@/lib/deep-link";
 import { supabase } from "@/integrations/supabase/client";
 import { notify } from "@/lib/notifications";
+import { InspectorCoverageFields, inspectorError } from "@/components/partner/InspectorRegistrationFields";
+import { US_STATE_CODES, US_STATE_NAME_BY_CODE } from "@/data/us-states";
 
 export function InspectorProfile({ user }: { user: LoqalUser }) {
   const { authUserId } = useAuth();
@@ -25,6 +27,11 @@ export function InspectorProfile({ user }: { user: LoqalUser }) {
   const [confirm, setConfirm] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState<InspectorProfileData | null>(null);
+  const [draftStates, setDraftStates] = useState<string[]>([]);
+  const [savingCov, setSavingCov] = useState(false);
+  const [covError, setCovError] = useState("");
   const item = requirements.find((r) => r.key === selected);
   const missing = requirements.filter((r) => !r.provided);
   function open(key: string) { setSelected(key); setStep("upload"); setFile(null); setConfirm(false); setError(""); }
@@ -51,7 +58,29 @@ export function InspectorProfile({ user }: { user: LoqalUser }) {
     finally { setBusy(false); }
   }
 
+  function startEdit() {
+    if (!profile) return;
+    const st = profile.coverage.map((c) => c.state);
+    setDraftStates(st.length ? st : request?.states ?? []);
+    setDraft(structuredClone(profile)); setCovError(""); setEditing(true);
+  }
+  async function saveCoverage() {
+    if (!draft || !request) return;
+    if (!draftStates.length) { setCovError("Add at least one state."); return; }
+    const err = inspectorError({ ...draft, companyLanguages: draft.companyLanguages.length ? draft.companyLanguages : ["English"] }, draftStates);
+    if (err) { setCovError(err); return; }
+    setSavingCov(true); setCovError("");
+    const next = { ...draft, coverage: draft.coverage.filter((c) => draftStates.includes(c.state)) };
+    const { error: e } = await supabase.from("partner_requests").update({ inspector_profile: next, states: draftStates } as never).eq("id", request.id);
+    setSavingCov(false);
+    if (e) { setCovError(e.message); return; }
+    await refresh();
+    notify({ id: `inspector-coverage-${request.id}-${Date.now()}`, to: "admins", title: "Inspection services updated", body: `${request.companyName} updated states, services or licences — please verify.`, href: `/admin-people/partner-${request.id}`, severity: "info" });
+    setEditing(false); toast.success("Services and licences updated — Loqal will verify the changes");
+  }
+
   if (!request || !profile) return <p className="text-sm text-muted-foreground">Inspection company registration details are not available yet.</p>;
+  const companyLanguages = profile.companyLanguages.length ? profile.companyLanguages : request.languages ?? [];
   const fields = [
     ["Legal business name", profile.legalName], ["Trading name / DBA", profile.dba],
     ["Entity type", ENTITY_TYPE_LABEL[profile.entityType]], ["EIN / tax ID", profile.ein],
@@ -59,7 +88,7 @@ export function InspectorProfile({ user }: { user: LoqalUser }) {
     ["Mailing address", profile.mailingSameAsBusiness ? "Same as business address" : profile.mailingAddress ? Object.values(profile.mailingAddress).filter(Boolean).join(", ") : undefined],
     ["Primary contact", `${request.firstName} ${request.lastName}${request.position ? ` · ${request.position}` : ""}`],
     ["Main phone", profile.mainPhone], ["Operations email", profile.operationsEmail], ["Website", profile.website],
-    ["Years in operation", String(profile.yearsInOperation)], ["Inspectors", String(profile.inspectorCount)], ["Company languages", profile.companyLanguages.join(", ")],
+    ["Years in operation", String(profile.yearsInOperation)], ["Inspectors", String(profile.inspectorCount)], ["Company languages", companyLanguages.join(", ")],
   ];
   return <div className="space-y-8">
     <section>
@@ -69,7 +98,7 @@ export function InspectorProfile({ user }: { user: LoqalUser }) {
     <section>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-lg font-semibold text-foreground">Coverage, services & licences</h2>
-        <span className={`text-xs font-semibold ${missing.length ? "text-gold" : "text-success"}`}>{missing.length ? `${missing.length} copies to provide` : "All required copies provided"}</span>
+        <div className="flex items-center gap-3"><span className={`text-xs font-semibold ${missing.length ? "text-gold" : "text-success"}`}>{missing.length ? `${missing.length} copies to provide` : "All required copies provided"}</span><Button size="sm" variant="outline" onClick={startEdit}><Pencil/>Add or edit</Button></div>
       </div>
       {missing.length ? <div className="mt-3 flex items-start gap-3 border-l-4 border-gold bg-gold-tint p-4"><FileCheck2 className="mt-0.5 size-5 shrink-0 text-gold"/><div><p className="text-sm font-semibold text-foreground">Loqal needs your licence copies</p><p className="mt-1 text-xs text-muted-foreground">Provide a clear copy showing the holder, licence number and validity.</p></div></div> : null}
       <div className="mt-5 space-y-6">
@@ -99,7 +128,26 @@ export function InspectorProfile({ user }: { user: LoqalUser }) {
         {!profile.coverage.length ? <p className="text-sm text-muted-foreground">No inspection coverage on file.</p> : null}
       </div>
     </section>
-    <section><h2 className="text-lg font-semibold text-foreground">Inspector team & languages</h2><div className="mt-3 divide-y divide-border">{profile.inspectors.map((p) => <div key={p.id} className="py-3"><p className="text-sm font-semibold text-foreground">{p.firstName} {p.lastName}</p><p className="mt-1 text-xs text-muted-foreground">{p.languages.join(", ") || "Languages not provided"}</p></div>)}</div>{!profile.inspectors.length ? <p className="mt-3 text-sm text-muted-foreground">No individual inspector details on file.</p> : null}</section>
+    <section><h2 className="text-lg font-semibold text-foreground">Inspector team & languages</h2>
+      <div className="mt-3 border-b border-border pb-3"><p className="text-xs text-muted-foreground">Company languages</p><div className="mt-2 flex flex-wrap gap-1.5">{companyLanguages.length ? companyLanguages.map((l) => <span key={l} className="rounded-full bg-brand-tint px-2.5 py-0.5 text-xs font-medium text-brand">{l}</span>) : <span className="text-sm text-muted-foreground">Not provided</span>}</div></div>
+      <div className="mt-1 divide-y divide-border">{profile.inspectors.map((p) => <div key={p.id} className="py-3"><p className="text-sm font-semibold text-foreground">{p.firstName} {p.lastName}</p><p className="mt-1 text-xs text-muted-foreground">{p.languages.join(", ") || "Languages not provided"}</p></div>)}</div>{!profile.inspectors.length ? <p className="mt-3 text-sm text-muted-foreground">No individual inspector details on file.</p> : null}</section>
+    <Dialog open={editing} onOpenChange={(v) => { if (!savingCov) setEditing(v); }}>
+      <DialogContent className="max-h-[85vh] max-w-3xl overflow-y-auto">
+        <DialogHeader><DialogTitle>Edit inspection services & licences</DialogTitle><DialogDescription>Add states, inspection types and licence details. Changes are sent to Loqal for verification.</DialogDescription></DialogHeader>
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-center gap-2">
+            {draftStates.map((st) => <span key={st} className="inline-flex items-center gap-1 rounded-full border border-border px-2.5 py-0.5 text-xs font-medium text-foreground">{st}<button type="button" aria-label={`Remove ${st}`} className="text-muted-foreground hover:text-destructive" onClick={() => { setDraftStates(draftStates.filter((s) => s !== st)); setDraft({ ...draft!, coverage: draft!.coverage.filter((c) => c.state !== st) }); }}>×</button></span>)}
+            <select value="" onChange={(e) => { const st = e.target.value; if (st && !draftStates.includes(st)) setDraftStates([...draftStates, st]); }} className="rounded-md border border-input bg-background px-2 py-1 text-xs text-foreground">
+              <option value="">+ Add state</option>
+              {US_STATE_CODES.filter((s) => !draftStates.includes(s)).map((s) => <option key={s} value={s}>{s} · {US_STATE_NAME_BY_CODE[s]}</option>)}
+            </select>
+          </div>
+          {draft && draftStates.length ? <InspectorCoverageFields states={draftStates} value={draft} onChange={(patch) => setDraft({ ...draft, ...patch })}/> : <p className="text-sm text-muted-foreground">Add at least one state.</p>}
+          {covError ? <p role="alert" className="text-xs font-semibold text-destructive">{covError}</p> : null}
+          <div className="flex justify-end gap-2"><Button variant="outline" disabled={savingCov} onClick={() => setEditing(false)}>Cancel</Button><Button disabled={savingCov} onClick={() => void saveCoverage()}>{savingCov ? "Saving…" : "Save changes"}</Button></div>
+        </div>
+      </DialogContent>
+    </Dialog>
     <Dialog open={Boolean(item)} onOpenChange={(v) => { if (!v && !busy) setSelected(null); }}>
       <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
