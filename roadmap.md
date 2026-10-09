@@ -23,3 +23,5 @@
 - [ ] After agreement signing: appraisal step (lender-ordered) — next
 - [x] After agreement signing: route inspection requests (from purchase terms) to registered inspection companies by state & service
 - [x] Inspection company partner registration
+- [ ] Show inspection service licence requests and uploads on the company profile, consistent with dashboard tasks
+- [ ] Add inspection-specific navigation, case filters, company details and real metrics
