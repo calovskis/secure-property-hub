@@ -431,6 +431,39 @@ export type Database = {
         }
         Relationships: []
       }
+      shared_records: {
+        Row: {
+          audience: string | null
+          data: Json | null
+          deleted: boolean
+          item_key: string
+          pos: number
+          store: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          audience?: string | null
+          data?: Json | null
+          deleted?: boolean
+          item_key: string
+          pos?: number
+          store: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          audience?: string | null
+          data?: Json | null
+          deleted?: boolean
+          item_key?: string
+          pos?: number
+          store?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -512,6 +545,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      put_shared_records: { Args: { _rows: Json }; Returns: undefined }
       respond_entity_recommendation: {
         Args: { _id: string; _response: Json }
         Returns: undefined
