@@ -13,6 +13,8 @@
  */
 import type { PartnerRequest } from "@/lib/partner-requests";
 import { formatDate } from "@/lib/dates";
+import { INSPECTION_AGREEMENT_TEXT } from "@/lib/inspection-agreement-text";
+import { ENTITY_TYPE_LABEL } from "@/lib/inspection-licensing";
 
 /** Loqal's own contracting details — one place to keep them. */
 export const LOQAL_PARTY = {
@@ -86,7 +88,39 @@ export function agreementVariables(r: PartnerRequest, effectiveDate: string): Ag
       { label: "Licensed states", value: statesOf(r) },
     );
   }
+  if (r.partnerType === "inspector") {
+    const profile = r.inspectorProfile;
+    vars[1] = { label: "Partner legal name", value: profile?.legalName || r.companyName };
+    vars[2] = { label: "Entity type", value: profile ? ENTITY_TYPE_LABEL[profile.entityType] : r.companyType };
+    vars[8] = { label: "Notices email", value: profile?.operationsEmail || r.email };
+    vars.push({ label: "EIN / tax ID", value: profile?.ein || "—" });
+  }
   return vars;
+}
+
+function inspectorBody(r: PartnerRequest, effectiveDate: string) {
+  const legalName = r.inspectorProfile?.legalName || r.companyName;
+  const values: Record<string, string> = {
+    effectiveDate: formatDate(effectiveDate),
+    legalName,
+    legalNameUpper: legalName.toUpperCase(),
+    entityType: r.inspectorProfile ? ENTITY_TYPE_LABEL[r.inspectorProfile.entityType] : r.companyType || "entity",
+    jurisdiction: [r.state, r.country].filter(Boolean).join(", "),
+    businessAddress: addressOf(r),
+    loqalState: LOQAL_PARTY.state,
+    loqalAddress: LOQAL_PARTY.address,
+    serviceLevelsUrl: LOQAL_PARTY.serviceLevelsUrl,
+    venue: LOQAL_PARTY.venue,
+    loqalSignatory: LOQAL_PARTY.signatoryName,
+    loqalTitle: LOQAL_PARTY.signatoryTitle,
+    signatory: signatoryName(r),
+    signatoryTitle: r.position || "Authorized representative",
+  };
+  return INSPECTION_AGREEMENT_TEXT.replace(/\{\{(\w+)\}\}/g, (_match, key: string) => {
+    const value = values[key];
+    if (value === undefined) throw new Error(`Unknown inspection agreement variable: ${key}`);
+    return value;
+  });
 }
 
 /* ------------------------------------------------------------------ */
@@ -372,6 +406,7 @@ Title: ${title}
 export function buildPartnerAgreement(r: PartnerRequest): PartnerAgreement {
   const effectiveDate = r.decidedAt ?? r.submittedAt;
   const isLender = r.partnerType === "lender";
+  const isInspector = r.partnerType === "inspector";
   const slug = (r.companyName || "partner")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
@@ -379,11 +414,11 @@ export function buildPartnerAgreement(r: PartnerRequest): PartnerAgreement {
   return {
     title: isLender
       ? "Mortgage Lender Partner Agreement (Loqal Platform)"
-      : "Loqal Partner Agreement",
+      : isInspector ? "Inspection Company Partner Agreement (Loqal Platform)" : "Loqal Partner Agreement",
     effectiveDate,
     variables: agreementVariables(r, effectiveDate),
-    body: isLender ? lenderBody(r, effectiveDate) : generalBody(r, effectiveDate),
-    fileBase: `loqal-${isLender ? "mortgage-lender" : "partner"}-agreement-${slug}`,
+    body: isLender ? lenderBody(r, effectiveDate) : isInspector ? inspectorBody(r, effectiveDate) : generalBody(r, effectiveDate),
+    fileBase: `loqal-${isLender ? "mortgage-lender" : isInspector ? "inspection-company" : "partner"}-agreement-${slug}`,
   };
 }
 
