@@ -437,6 +437,7 @@ export type Database = {
           data: Json | null
           deleted: boolean
           item_key: string
+          participants: string[] | null
           pos: number
           store: string
           updated_at: string
@@ -447,6 +448,7 @@ export type Database = {
           data?: Json | null
           deleted?: boolean
           item_key: string
+          participants?: string[] | null
           pos?: number
           store: string
           updated_at?: string
@@ -457,6 +459,7 @@ export type Database = {
           data?: Json | null
           deleted?: boolean
           item_key?: string
+          participants?: string[] | null
           pos?: number
           store?: string
           updated_at?: string
@@ -549,6 +552,10 @@ export type Database = {
       respond_entity_recommendation: {
         Args: { _id: string; _response: Json }
         Returns: undefined
+      }
+      shared_record_visible: {
+        Args: { _audience: string; _participants: string[] }
+        Returns: boolean
       }
     }
     Enums: {

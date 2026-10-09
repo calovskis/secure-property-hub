@@ -8,6 +8,13 @@
       "when": 1791549065003,
       "tag": "0000_shared_records_sync",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791550046650,
+      "tag": "0001_shared_records_participants",
+      "breakpoints": true
     }
   ]
 }
