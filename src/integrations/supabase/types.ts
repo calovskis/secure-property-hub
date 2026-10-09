@@ -224,6 +224,90 @@ export type Database = {
         }
         Relationships: []
       }
+      inspection_requests: {
+        Row: {
+          agent_email: string | null
+          agreement_signed_at: string | null
+          client_email: string
+          client_label: string
+          client_user_id: string
+          created_at: string
+          deadline_days: number | null
+          fee: number | null
+          history: Json
+          id: string
+          inspection_types: string[]
+          inspector_company: string | null
+          inspector_contact: Json | null
+          inspector_request_id: string | null
+          inspector_user_id: string | null
+          lead_id: string
+          property_category: string
+          property_id: string | null
+          property_label: string
+          proposed_at: string | null
+          report_files: Json
+          scheduled_at: string | null
+          state: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          agent_email?: string | null
+          agreement_signed_at?: string | null
+          client_email?: string
+          client_label?: string
+          client_user_id?: string
+          created_at?: string
+          deadline_days?: number | null
+          fee?: number | null
+          history?: Json
+          id?: string
+          inspection_types?: string[]
+          inspector_company?: string | null
+          inspector_contact?: Json | null
+          inspector_request_id?: string | null
+          inspector_user_id?: string | null
+          lead_id: string
+          property_category?: string
+          property_id?: string | null
+          property_label?: string
+          proposed_at?: string | null
+          report_files?: Json
+          scheduled_at?: string | null
+          state: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          agent_email?: string | null
+          agreement_signed_at?: string | null
+          client_email?: string
+          client_label?: string
+          client_user_id?: string
+          created_at?: string
+          deadline_days?: number | null
+          fee?: number | null
+          history?: Json
+          id?: string
+          inspection_types?: string[]
+          inspector_company?: string | null
+          inspector_contact?: Json | null
+          inspector_request_id?: string | null
+          inspector_user_id?: string | null
+          lead_id?: string
+          property_category?: string
+          property_id?: string | null
+          property_label?: string
+          proposed_at?: string | null
+          report_files?: Json
+          scheduled_at?: string | null
+          state?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       partner_requests: {
         Row: {
           additional_contacts: Json
@@ -544,6 +628,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_inspection_request: {
+        Args: {
+          _contact: Json
+          _fee: number
+          _id: string
+          _proposed_at: string
+        }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -551,6 +644,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      inspector_covers: { Args: { _state: string }; Returns: boolean }
       put_shared_records: { Args: { _rows: Json }; Returns: undefined }
       respond_entity_recommendation: {
         Args: { _id: string; _response: Json }

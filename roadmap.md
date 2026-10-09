@@ -21,5 +21,5 @@
 - [x] Present Properties in Action as listing-style cards with nearby deal status and direct next actions
 
 - [ ] After agreement signing: appraisal step (lender-ordered) — next
-- [ ] After agreement signing: route inspection requests (from purchase terms) to registered inspection companies by state & service
+- [x] After agreement signing: route inspection requests (from purchase terms) to registered inspection companies by state & service
 - [x] Inspection company partner registration
