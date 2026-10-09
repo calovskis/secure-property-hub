@@ -10,6 +10,7 @@ import { termsSummary, type AgreementTerms } from "@/lib/purchase-agreement";
 import { storeAgreementFile, downloadAgreementFile } from "@/lib/agreement-files";
 import type { PurchaseRequest } from "@/lib/property-requests";
 import { Button } from "@/components/ui/button";
+import { EscrowDepositPanel } from "@/components/realtor/EscrowDepositPanel";
 
 const input = "w-full rounded-md border border-input bg-background px-2.5 py-1.5 text-xs text-foreground outline-none focus:border-brand";
 
@@ -158,6 +159,7 @@ export function SellerResponsePanel({ leadId, propertyId, propertyLabel, purchas
           <p className="font-semibold text-foreground">Step 2 — agreement for e-signing <span className="font-normal text-muted-foreground">(due {formatDateTime(new Date(new Date(plan.sellerAgreedAt).getTime() + 48 * 3600e3).toISOString())})</span></p>
           <Button size="sm" onClick={() => openDialog(false)}><Upload />Share the agreement</Button>
         </div>}
+        <EscrowDepositPanel leadId={leadId} propertyId={propertyId} propertyLabel={propertyLabel} offerPrice={purchase.offerPrice} buyerName={buyerName} buyerEmail={buyerEmail} agentName={agentName} />
       </> : null}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

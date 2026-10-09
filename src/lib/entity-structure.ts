@@ -97,6 +97,14 @@ export type EntityPlan = {
   /** Buyer signed the uploaded purchase agreement. */
   agreementSignedAt?: string | undefined;
   agreementSignedBy?: string | undefined;
+  /** Escrow account the buyer's agent shares for the earnest money deposit. */
+  escrowDetails?: EscrowDetails | undefined;
+  /** Buyer uploaded proof of the earnest money payment. */
+  depositProofName?: string | undefined;
+  depositProofUploadedAt?: string | undefined;
+  /** Agent confirmed escrow received the deposit. */
+  depositConfirmedAt?: string | undefined;
+  depositConfirmedBy?: string | undefined;
   /** Mortgage company reconfirmed its terms against the signed agreement. */
   hardCheckConfirmedAt?: string | undefined;
   hardCheckConfirmedBy?: string | undefined;
@@ -264,3 +272,18 @@ export const SETUP_COST_LINES: { label: string; note: string }[] = [
     note: "Business account for the closing wire, rent and running costs.",
   },
 ];
+
+export type EscrowDetails = {
+  holder: string;
+  holderContact?: string | undefined;
+  bankName: string;
+  accountName: string;
+  routingNumber: string;
+  accountNumber: string;
+  reference?: string | undefined;
+  amount: string;
+  dueBy?: string | undefined;
+  notes?: string | undefined;
+  sharedAt: string;
+  sharedBy: string;
+};

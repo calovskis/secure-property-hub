@@ -54,7 +54,12 @@ export function realtorFileStatus(i: Input): RealtorFileStatus {
       "requests",
     );
 
-  if (plan?.agreementSignedAt) return { label: "Agreement signed", tone: "done" };
+  if (plan?.agreementSignedAt && !plan.escrowDetails)
+    return act("Share escrow details", "Share the escrow account for the deposit", "The buyer signed — send the earnest money payment instructions.", "overview");
+  if (plan?.agreementSignedAt && plan.depositProofUploadedAt && !plan.depositConfirmedAt)
+    return act("Confirm the deposit", "Confirm the earnest money deposit", "The buyer uploaded the payment confirmation — check with escrow.", "overview");
+  if (plan?.agreementSignedAt && !plan.depositConfirmedAt) return { label: "Awaiting buyer deposit", tone: "waiting" };
+  if (plan?.agreementSignedAt) return { label: "Deposit received", tone: "done" };
   if (plan?.agreementUploadedAt) return { label: "Awaiting buyer signature", tone: "waiting" };
   if (plan?.termsConfirmedAt && plan.sellerAgreedAt)
     return act(
