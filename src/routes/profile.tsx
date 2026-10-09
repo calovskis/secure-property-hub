@@ -529,7 +529,7 @@ function ProfilePage() {
 
           {isPartner ? (
             <aside className="space-y-6">
-              <OpenRequests user={user} isRealtor={isRealtor} />
+              {user.partnerType === "inspector" ? <section className="border-t border-border py-4"><h2 className="text-base font-semibold text-foreground">Loqal information requests</h2><InfoRequestsList user={user} /></section> : <OpenRequests user={user} isRealtor={isRealtor} />}
               <CorrespondenceCard user={user} />
               {isRealtor ? null : <KybCard user={user} />}
               <AgreementCard user={user} />

@@ -27,6 +27,8 @@ export const Route = createFileRoute("/")({
           "Loqal is the white-glove concierge platform where property owners manage properties, services, payments and documents from one dashboard.",
       },
       { property: "og:title", content: "Loqal — Concierge Dashboard for Real Estate Investors" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       {
         property: "og:description",
         content:
