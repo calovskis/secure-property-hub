@@ -17,3 +17,4 @@
 - Inspection home summaries reuse the existing inspection job controls in a case dialog; financial tiles show quoted inspection fees, not inferred payments or payouts, because payment settlement is not tracked.
 - Inspector Accounting derives estimates from assigned inspection quotes and exports labelled summaries; confirmed balances, invoices and paid states require a payment ledger, so quote data never implies settlement.
 - Accounting uses the shared portal controls within compact metric tiles, underline tabs and unframed billing sections; payment-provider connection alone never enables collection or implies settlement.
+- Inspection My Loqal groups organization views through validated section search parameters and reuses existing profile, licence, identity-review and agreement controls; registered inspector contacts never imply delegated account permissions.

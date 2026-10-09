@@ -7,7 +7,7 @@ export function InspectorNav({ current = "" }: { current?: string }) {
   return <div className="flex items-center gap-1">
     {tabs.map((t) => <Button key={t.id} size="sm" variant="ghost" asChild className={navClass(t.id)}><Link to="/partner" search={{ tab: t.id }}><span aria-hidden>{t.icon}</span>{t.label}</Link></Button>)}
     <Button size="sm" variant="ghost" asChild className={navClass("accounting")}><Link to="/inspection-accounting"><span aria-hidden>💳</span>Accounting</Link></Button>
-    <Button size="sm" variant="ghost" asChild className={navClass("profile")}><Link to="/profile"><span aria-hidden>👤</span>Company profile</Link></Button>
+    <Button size="sm" variant="ghost" asChild className={navClass("my-loqal")}><Link to="/inspection-my-loqal" search={{ section: "profile" }}><span aria-hidden>📁</span>My Loqal</Link></Button>
     <Button size="sm" variant="ghost" asChild className={navClass("settings")}><Link to="/settings"><span aria-hidden>⚙️</span>Organisation settings</Link></Button>
   </div>;
 }
