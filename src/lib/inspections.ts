@@ -44,8 +44,9 @@ export type InspectionRequest = {
   createdAt: string;
 };
 
-type Row = Record<string, unknown>;
-const fromRow = (r: Row): InspectionRequest => ({
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Row = Record<string, any> & { [k: string]: any };
+const fromRow = (r: any): InspectionRequest => ({
   id: String(r.id),
   leadId: String(r.lead_id),
   clientEmail: String(r.client_email ?? ""),

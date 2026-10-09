@@ -84,7 +84,7 @@ function OpenJob({ r, user, onDone }: { r: InspectionRequest; user: LoqalUser; o
     try {
       const at = new Date(`${date}T${time}`).toISOString();
       await acceptInspection(r.id, Number(fee), at, { name: fullName(user), phone: user.phone ?? "", email: user.email });
-      notify({ id: `inspection-accepted-${r.id}`, to: r.clientEmail, title: "An inspector accepted your inspection request", body: `${r.propertyLabel} — ${user.companyName || fullName(user)} proposed ${formatDateTime(at)} for $${Number(fee).toLocaleString("en-US")}.`, href: "/my-properties", severity: "success" });
+      notify({ id: `inspection-accepted-${r.id}`, to: r.clientEmail, title: "An inspector accepted your inspection request", body: `${r.propertyLabel} — ${user.companyName || fullName(user)} proposed ${formatDateTime(at)} for $${Number(fee).toLocaleString("en-US")}.`, href: "/my-properties", severity: "info" });
       if (r.agentEmail) notify({ id: `inspection-accepted-agent-${r.id}`, to: r.agentEmail, title: "Inspector assigned to your buyer's file", body: `${r.propertyLabel} — ${user.companyName || fullName(user)}, proposed ${formatDateTime(at)}.`, href: `/partner?tab=buyers&focus=${r.leadId}`, severity: "info" });
       toast("Job accepted");
       onDone();
@@ -121,7 +121,7 @@ function MyJob({ r, onDone }: { r: InspectionRequest; onDone: () => void }) {
     setBusy(true);
     try {
       await uploadInspectionReport(r, file);
-      notify({ id: `inspection-report-${r.id}-${Date.now()}`, to: r.clientEmail, title: "Your inspection report is ready", body: `${r.propertyLabel} — ${r.inspectorCompany} uploaded the report. Review it with your agent before the inspection period ends.`, href: "/my-properties", severity: "success" });
+      notify({ id: `inspection-report-${r.id}-${Date.now()}`, to: r.clientEmail, title: "Your inspection report is ready", body: `${r.propertyLabel} — ${r.inspectorCompany} uploaded the report. Review it with your agent before the inspection period ends.`, href: "/my-properties", severity: "info" });
       if (r.agentEmail) notify({ id: `inspection-report-agent-${r.id}-${Date.now()}`, to: r.agentEmail, title: "Inspection report uploaded", body: `${r.propertyLabel} — the buyer may ask for repairs or credits.`, href: `/partner?tab=buyers&focus=${r.leadId}`, severity: "warning" });
       toast("Report uploaded");
       onDone();
