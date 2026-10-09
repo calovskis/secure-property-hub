@@ -32,4 +32,4 @@
 
 - [x] Match Accounting closely to the supplied billing and payouts reference while preserving client-portal controls and truthful financial states
 
-- [ ] Add inspection partner My Loqal from the reference with company, team, coverage, services, notifications, security and compliance sections
+- [x] Add inspection partner My Loqal from the reference with company, team, coverage, services, notifications, security and compliance sections
