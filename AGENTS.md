@@ -9,4 +9,4 @@
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
 
-- Shared app stores persist locally and mirror item-by-item to the `shared_records` table via `src/lib/cloud-sync.ts` (add new shared localStorage keys to CLOUD_KEYS and call registerCloudStore) — so every user sees the same data on any device.
+- Shared app stores persist locally and mirror item-by-item to the `shared_records` table via `src/lib/cloud-sync.ts` (add new keys to CLOUD_KEYS + registerCloudStore). Each row carries `participants` (emails, `partner:<registration id>`, `lenderstate:<ST>`) checked server-side by `shared_record_visible` — so data reaches every device but only the file's client, partners and Loqal admins can read or change it.

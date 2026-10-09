@@ -44,6 +44,69 @@ export const CLOUD_KEYS = [
 const KEYS = new Set<string>(CLOUD_KEYS);
 
 type Row = { data: unknown; pos: number; audience: string | null };
+
+/* ---------- who may see each record ---------- */
+
+/** Directory-style data every signed-in user may read. */
+const PUBLIC_STORES = new Set(["loqal.realtors.v2", "loqal.staff.v1", "loqal.directory.v1", "loqal.lender.team.v2"]);
+/** Stores whose items belong to one client file (lead). */
+const LEAD_STORES = new Set([
+  "loqal.leads.v1",
+  "loqal.entityStructure.v1",
+  "loqal.propertyRequests.v1",
+  "loqal.buyer-process.v1",
+  "loqal.fileChat.v1",
+  "loqal.loanSubmissions.v1",
+  "loqal.partnerHandovers.v1",
+  "loqal.accounting.v1",
+]);
+
+type LeadLite = { id: string; clientEmail?: string; propertyLabel?: string; lenderPartnerId?: string; buyerAgent?: { agentId?: string } };
+
+function leadIdOf(store: string, key: string, data: unknown): string | null {
+  if (isObj(data)) {
+    const l = data["leadId"];
+    if (typeof l === "string") return l;
+    if (store === "loqal.leads.v1" && typeof data["id"] === "string") return data["id"] as string;
+  }
+  const at = key.indexOf("{}");
+  return at >= 0 ? key.slice(at + 2) : null;
+}
+
+/**
+ * Who may see a record. File records resolve to the file's client, buyer's
+ * agent and lender (same answer on every device); notifications to their
+ * recipient. Anything else keeps whoever it already belongs to, or the writer
+ * for a new record (Loqal admins always see everything).
+ */
+function participantsFor(store: string, key: string, data: unknown): string[] | null {
+  if (PUBLIC_STORES.has(store)) return null;
+  const prev = prevParts.get(`${store}\u0000${key}`);
+  const own = () => (prev !== undefined ? prev : me ? [me] : null);
+  if (store === "loqal.notifications.v1") {
+    const to = audienceOf(data);
+    return to ? [to] : own();
+  }
+  const out = new Set<string>();
+  if (LEAD_STORES.has(store)) {
+    const id = leadIdOf(store, key, data);
+    const leads = readLocal("loqal.leads.v1");
+    const lead = id && Array.isArray(leads) ? (leads as LeadLite[]).find((l) => l?.id === id) : undefined;
+    if (lead) {
+      if (lead.clientEmail) out.add(lead.clientEmail.toLowerCase());
+      if (lead.buyerAgent?.agentId) out.add(`partner:${lead.buyerAgent.agentId}`);
+      if (lead.lenderPartnerId) out.add(`partner:${lead.lenderPartnerId}`);
+      else {
+        const st = lead.propertyLabel?.match(/\b([A-Z]{2})\b\s*$/)?.[1];
+        if (st) out.add(`lenderstate:${st}`);
+      }
+      return [...out].sort();
+    }
+  }
+  return own();
+}
+/** Participants last seen on the server for each record. */
+const prevParts = new Map<string, string[] | null>();
 type Flat = Map<string, Row>;
 
 const appliers = new Map<string, Set<() => void>>();
@@ -162,7 +225,7 @@ let timer: ReturnType<typeof setTimeout> | null = null;
 let poll: ReturnType<typeof setInterval> | null = null;
 let session = 0;
 
-const json = (r: Row) => JSON.stringify([r.data, r.audience]);
+const json = (r: Row, p?: string[] | null) => JSON.stringify([r.data, r.audience, p ?? null]);
 
 function schedulePush() {
   if (timer) clearTimeout(timer);
@@ -179,10 +242,12 @@ async function pushDirty() {
     baseline.set(store, base);
     const flat = flatten(readLocal(store));
     for (const [k, r] of flat) {
-      const s = json(r);
+      const parts = participantsFor(store, k, r.data);
+      const s = json(r, parts);
       if (base.get(k) === s) continue;
       base.set(k, s);
-      rows.push({ store, key: k, data: r.data, pos: r.pos, deleted: false, audience: r.audience ?? "" });
+      prevParts.set(`${store}\u0000${k}`, parts);
+      rows.push({ store, key: k, data: r.data, pos: r.pos, deleted: false, audience: r.audience ?? "", participants: parts });
     }
     for (const k of [...base.keys()])
       if (!flat.has(k)) {
@@ -203,14 +268,14 @@ async function pushDirty() {
   }
 }
 
-type DbRow = { store: string; item_key: string; data: unknown; pos: number; deleted: boolean; audience: string | null; updated_at: string };
+type DbRow = { store: string; item_key: string; data: unknown; pos: number; deleted: boolean; audience: string | null; participants: string[] | null; updated_at: string };
 
 async function fetchSince(since: string): Promise<DbRow[] | null> {
   const out: DbRow[] = [];
   for (let from = 0; ; from += 1000) {
     const { data, error } = await supabase
       .from("shared_records")
-      .select("store,item_key,data,pos,deleted,audience,updated_at")
+      .select("store,item_key,data,pos,deleted,audience,participants,updated_at")
       .gt("updated_at", since)
       .order("updated_at", { ascending: true })
       .range(from, from + 999);
@@ -244,7 +309,8 @@ function mergeRemote(rows: DbRow[], initial: boolean) {
         continue;
       }
       const row: Row = { data: r.data, pos: r.pos, audience: r.audience };
-      const s = json(row);
+      prevParts.set(`${store}\u0000${r.item_key}`, r.participants);
+      const s = json(row, r.participants);
       if (base.get(r.item_key) === s) continue;
       base.set(r.item_key, s);
       value = applyRow(value, r.item_key, row);
@@ -253,7 +319,8 @@ function mergeRemote(rows: DbRow[], initial: boolean) {
       /* Items addressed to someone else that this browser created are already
          on the server — treat them as synced instead of re-sending stale copies. */
       for (const [k, r] of flatten(value))
-        if (!remoteKeys.has(k) && r.audience && r.audience !== me && r.audience !== "admins") base.set(k, json(r));
+        if (!remoteKeys.has(k) && r.audience && r.audience !== me && r.audience !== "admins")
+          base.set(k, json(r, participantsFor(store, k, r.data)));
       dirty.add(store);
     }
     if (value !== undefined && JSON.stringify(value) !== before) writeLocal(store, value);
@@ -265,6 +332,7 @@ async function start(email: string) {
   me = email.toLowerCase();
   ready = false;
   baseline.clear();
+  prevParts.clear();
   cursor = "1970-01-01T00:00:00Z";
   const rows = await fetchSince(cursor);
   if (mine !== session || !rows) return;
@@ -299,6 +367,8 @@ export function startCloudSync() {
     original.call(this, k, v);
     if (this === window.localStorage && KEYS.has(k)) {
       dirty.add(k);
+      // A file's client/partners changed — re-check who may see its records.
+      if (k === "loqal.leads.v1") LEAD_STORES.forEach((s) => dirty.add(s));
       schedulePush();
     }
   };
