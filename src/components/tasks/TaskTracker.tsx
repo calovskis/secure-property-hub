@@ -27,6 +27,11 @@ import { useEffect } from "react";
 import { pendingVerifications } from "@/lib/licence-verification";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import { usePurchaseProgress } from "@/lib/purchase-stage";
+import { useRealtors } from "@/lib/realtors";
+import { useBuyerProcess } from "@/lib/buyer-process";
+import { usePropertyRequests } from "@/lib/property-requests";
+import { useAllFileChat } from "@/lib/file-chat";
+import { realtorFileStatus } from "@/lib/realtor-file-status";
 
 type GroupId =
   | "documents"
@@ -230,6 +235,49 @@ export function TaskTracker({ className = "" }: { className?: string }) {
   }, [user, isAdmin, allLeads, entityPlans, entityIntent?.supportRequestedAt]);
   const { deleted } = useDeletions();
   const { progressOf } = usePurchaseProgress();
+  const { realtors } = useRealtors();
+  const { photos, bookings } = useBuyerProcess();
+  const propertyRequests = usePropertyRequests();
+  const { messages: fileMessages } = useAllFileChat();
+
+  /* Buyer's agents: open work is read off each buyer file's live status (the
+     same one the Buyer files list shows), never off stored alerts — so a step
+     the agent already completed disappears from Open tasks immediately. */
+  const realtorTasks = useMemo<Task[] | null>(() => {
+    if (!user || isAdmin) return null;
+    const me = realtors.find((r) => r.email.toLowerCase() === user.email.toLowerCase());
+    if (!me) return null;
+    const newest = <T extends { leadId: string; createdAt: string }>(xs: T[], id: string) =>
+      xs.filter((x) => x.leadId === id).sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
+    const out: Task[] = [];
+    for (const l of leads.filter((x) => x.buyerAgent?.agentId === me.id)) {
+      const plan = entityPlans.find((p) => p.leadId === l.id);
+      const st = realtorFileStatus({
+        lead: l,
+        purchase: newest(propertyRequests.purchases, l.id),
+        change: newest(propertyRequests.changes, l.id),
+        plan,
+        photo: photos[l.id],
+        hasVideoTour: bookings.some((b) => b.leadId === l.id && b.kind === "video_tour"),
+        hasIntroCall: bookings.some((b) => b.leadId === l.id && b.kind === "intro_call"),
+        unread: fileMessages.filter((m) => m.leadId === l.id && m.from !== "agent" && !m.readAt).length,
+      });
+      if (!st.task) continue;
+      out.push({
+        def: GROUPS.buyerFiles,
+        notification: {
+          id: `rtask-${l.id}-${st.label}`,
+          to: user.email,
+          title: `${st.task.title} — ${l.propertyLabel ?? "buyer file"}`,
+          body: st.task.detail,
+          href: `/partner?tab=buyers&focus=${l.id}`,
+          severity: "warning",
+          createdAt: plan?.updatedAt ?? l.submittedAt ?? new Date().toISOString(),
+        },
+      });
+    }
+    return out;
+  }, [user, isAdmin, realtors, leads, entityPlans, propertyRequests.purchases, propertyRequests.changes, photos, bookings, fileMessages]);
 
   /**
    * Loqal-side tasks read straight off the live records instead of waiting for
@@ -472,7 +520,13 @@ export function TaskTracker({ className = "" }: { className?: string }) {
          reconfirmed…) belong in Recent activity, not in Open tasks. */
       const partnerOpen = (n: AppNotification) =>
         user?.role !== "partner" || (n.severity !== "info" && n.badge !== "Done" && n.badge !== "Assigned");
-      for (const n of notifications.filter((x) => isStillOpen(x) && partnerOpen(x))) push(n, groupOf(n.id));
+      const buyerFileAlert = (n: AppNotification) =>
+        Boolean(n.href?.includes("tab=buyers")) || groupOf(n.id) === "buyerFiles";
+      for (const n of notifications.filter(
+        (x) => isStillOpen(x) && partnerOpen(x) && !(realtorTasks && buyerFileAlert(x)),
+      ))
+        push(n, groupOf(n.id));
+      for (const t of realtorTasks ?? []) push(t.notification, "buyerFiles");
       for (const n of adminItems.filter(isStillOpen)) push(n, adminGroupOf(n.id));
 
       /* Visa: a foreign buyer with no valid US visa on file must say whether
@@ -548,6 +602,7 @@ export function TaskTracker({ className = "" }: { className?: string }) {
     user?.mortgageProfile,
     user?.usPerson,
     progressOf,
+    realtorTasks,
   ]);
 
   const [showAll, setShowAll] = useState(false);
