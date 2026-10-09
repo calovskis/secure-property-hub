@@ -19,6 +19,7 @@ import {
   type ReactNode,
 } from "react";
 import { toast } from "sonner";
+import { registerCloudStore } from "@/lib/cloud-sync";
 
 export type ReminderChannel = "in_app" | "in_app_email";
 
@@ -100,6 +101,14 @@ export function MortgageDraftProvider({ children }: { children: ReactNode }) {
       /* ignore */
     }
     setReady(true);
+    return registerCloudStore(STORAGE_KEY, () => {
+      try {
+        const raw = window.localStorage.getItem(STORAGE_KEY);
+        setState(raw ? { ...emptyState, ...(JSON.parse(raw) as DraftState) } : emptyState);
+      } catch {
+        /* ignore */
+      }
+    });
   }, []);
 
   const persist = useCallback((next: DraftState) => {

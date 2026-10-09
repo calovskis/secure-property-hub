@@ -19,6 +19,7 @@ import { RealtorDirectorySync } from "@/components/realtor/RealtorDirectorySync"
 
 import { I18nProvider } from "@/lib/i18n";
 import { LeadsProvider } from "@/lib/leads";
+import { startCloudSync } from "@/lib/cloud-sync";
 import { MortgageDraftProvider } from "@/lib/mortgage-draft";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -131,6 +132,9 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  useEffect(() => {
+    startCloudSync();
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
