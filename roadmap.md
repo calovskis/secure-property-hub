@@ -17,3 +17,5 @@
 - [x] Hide the client entity tip once company information is on file
 - [x] Ensure client dashboard contacts remain visible with privacy-safe assignment fallbacks
 - [ ] Replace realtor purchase terms with a saved four-stage pop-up and expanded buyer-confirmed summary
+
+- [x] Present Properties in Action as listing-style cards with nearby deal status and direct next actions
