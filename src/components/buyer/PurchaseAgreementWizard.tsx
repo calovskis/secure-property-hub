@@ -46,6 +46,7 @@ import { downloadAgreementFile } from "@/lib/agreement-files";
 import { CLOSING_STEPS } from "@/lib/closing-steps";
 import { CounterCard } from "@/components/realtor/SellerResponsePanel";
 import type { EntityPlan } from "@/lib/entity-structure";
+import { EarnestDepositStep } from "@/components/buyer/EarnestDepositStep";
 import type { PurchaseRequest } from "@/lib/property-requests";
 
 const inputClass =
@@ -252,9 +253,9 @@ export function PurchaseAgreementWizard({
         id: `agreement-signed-agent-${leadId}`,
         to: agentEmail.toLowerCase(),
         title: "Your buyer signed the purchase agreement",
-        body: `${purchase.propertyLabel} — ${formatPrice(purchase.offerPrice)} with ${clientLabel}.`,
+        body: `${purchase.propertyLabel} — ${formatPrice(purchase.offerPrice)} with ${clientLabel}. Share the escrow account details so the buyer can pay the earnest money deposit.`,
         href: `/partner?tab=buyers&focus=${leadId}`,
-        severity: "info",
+        severity: "warning",
       });
     }
     tellLoqal(
@@ -706,6 +707,7 @@ export function PurchaseAgreementWizard({
                       setCounterNote={setCounterNote}
                       onCounter={answerCounter}
                       onSigned={markDocusignSigned}
+                      deposit={<EarnestDepositStep leadId={leadId} agentName={agentName} agentEmail={agentEmail} clientLabel={clientLabel} propertyLabel={purchase.propertyLabel} />}
                     />
                   </>
                 ) : changeAsked ? (
@@ -824,9 +826,9 @@ function NextSteps({ current }: { current: number }) {
   );
 }
 
-function SellerStage({ plan, leadId, agentName, counterNote, setCounterNote, onCounter, onSigned }: {
+function SellerStage({ plan, leadId, agentName, counterNote, setCounterNote, onCounter, onSigned, deposit }: {
   plan: EntityPlan; leadId: string; agentName: string; counterNote: string; setCounterNote: (v: string) => void;
-  onCounter: (d: "accepted" | "declined") => void; onSigned: () => void;
+  onCounter: (d: "accepted" | "declined") => void; onSigned: () => void; deposit: React.ReactNode;
 }) {
   if (plan.agreementSignedAt)
     return (
@@ -838,6 +840,7 @@ function SellerStage({ plan, leadId, agentName, counterNote, setCounterNote, onC
             {plan.agreementDoc ? ` · ${plan.agreementDoc}` : ""}. Your mortgage company has the signed copy and is reconfirming your mortgage terms.
           </p>
         </div>
+        {deposit}
         <NextSteps current={1} />
       </>
     );
