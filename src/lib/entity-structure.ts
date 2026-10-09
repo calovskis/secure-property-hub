@@ -272,3 +272,18 @@ export const SETUP_COST_LINES: { label: string; note: string }[] = [
     note: "Business account for the closing wire, rent and running costs.",
   },
 ];
+
+export type EscrowDetails = {
+  holder: string;
+  holderContact?: string | undefined;
+  bankName: string;
+  accountName: string;
+  routingNumber: string;
+  accountNumber: string;
+  reference?: string | undefined;
+  amount: string;
+  dueBy?: string | undefined;
+  notes?: string | undefined;
+  sharedAt: string;
+  sharedBy: string;
+};
