@@ -116,6 +116,7 @@ export type InspectorServiceLicence = {
   service: InspectionServiceId;
   number: string;
   validUntil: string;
+  documents?: { path: string; name: string; uploadedAt: string }[];
 };
 
 export type InspectorStateCoverage = {
@@ -153,3 +154,17 @@ export const ENTITY_TYPE_LABEL: Record<InspectorProfile["entityType"], string> =
   sole_proprietor: "Individual / sole proprietor",
   partnership: "Partnership",
 };
+
+/** One requirement per offered service, not a generic licence for every state. */
+export function inspectorLicenceRequirements(profile?: InspectorProfile) {
+  return (profile?.coverage ?? []).flatMap((area) => area.services
+    .filter((licence) => licenceRule(licence.service, area.state).required || Boolean(licence.number))
+    .map((licence) => ({
+      ...licence,
+      state: area.state,
+      key: `${area.state}-${licence.service}`,
+      label: SERVICE_LABEL[licence.service],
+      rule: licenceRule(licence.service, area.state),
+      provided: Boolean(licence.documents?.length),
+    })));
+}
