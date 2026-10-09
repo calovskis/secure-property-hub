@@ -13,7 +13,7 @@
  * the seller, the buyer's agent uploads the actual agreement for review and
  * signing.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { CheckCircle2, Building2, ClipboardCheck, Phone, ExternalLink, Clock } from "lucide-react";
 import { TermsChangeRequest, type TermsChange } from "@/components/buyer/TermsChangeRequest";
@@ -828,7 +828,7 @@ function NextSteps({ current }: { current: number }) {
 
 function SellerStage({ plan, leadId, agentName, counterNote, setCounterNote, onCounter, onSigned, deposit }: {
   plan: EntityPlan; leadId: string; agentName: string; counterNote: string; setCounterNote: (v: string) => void;
-  onCounter: (d: "accepted" | "declined") => void; onSigned: () => void; deposit: React.ReactNode;
+  onCounter: (d: "accepted" | "declined") => void; onSigned: () => void; deposit: ReactNode;
 }) {
   if (plan.agreementSignedAt)
     return (
