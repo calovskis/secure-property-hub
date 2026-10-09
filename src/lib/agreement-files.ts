@@ -32,3 +32,29 @@ export async function downloadAgreementFile(leadId: string, fileName = "purchase
   setTimeout(() => URL.revokeObjectURL(url), 1000);
   return true;
 }
+
+const depositPath = (leadId: string) => `${leadId}/deposit-proof`;
+
+/** Buyer's proof of the earnest money payment, readable by the agent. */
+export async function storeDepositProof(leadId: string, file: File) {
+  const { error } = await supabase.storage.from(BUCKET).upload(depositPath(leadId), file, {
+    upsert: true,
+    contentType: file.type || "application/octet-stream",
+    metadata: { name: file.name },
+  });
+  if (error) throw error;
+}
+
+export async function downloadDepositProof(leadId: string, fileName = "deposit-proof") {
+  const { data, error } = await supabase.storage.from(BUCKET).download(depositPath(leadId));
+  if (error || !data) return false;
+  const url = URL.createObjectURL(data);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  return true;
+}

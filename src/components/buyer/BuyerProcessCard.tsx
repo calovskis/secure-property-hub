@@ -158,9 +158,15 @@ export function BuyerProcessCard({
   }
 
   const photo = photos[lead.id];
-  const agentEmail = ba.agentId
-    ? partnerRegistrations.find((r) => r.id === ba.agentId)?.email
-    : undefined;
+  // Match the assigned agent by id; fall back to the agent's full name so
+  // the agent is still notified when the id isn't on the assignment.
+  const agentEmail =
+    (ba.agentId ? partnerRegistrations.find((r) => r.id === ba.agentId)?.email : undefined) ??
+    (ba.agentName
+      ? partnerRegistrations.find(
+          (r) => `${r.firstName} ${r.lastName}`.trim().toLowerCase() === ba.agentName!.trim().toLowerCase(),
+        )?.email
+      : undefined);
   // Clients only ever see the agent's first name + internal number.
   const agentDisplay = ba.agentName
     ? partnerDisplayForClient(ba.agentName, agentEmail)
