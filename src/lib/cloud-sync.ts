@@ -73,16 +73,21 @@ function leadIdOf(store: string, key: string, data: unknown): string | null {
   return at >= 0 ? key.slice(at + 2) : null;
 }
 
-/** Client, assigned buyer's agent and lender of a file, plus the writer. */
+/**
+ * Who may see a record. File records resolve to the file's client, buyer's
+ * agent and lender (same answer on every device); notifications to their
+ * recipient. Anything else keeps whoever it already belongs to, or the writer
+ * for a new record (Loqal admins always see everything).
+ */
 function participantsFor(store: string, key: string, data: unknown): string[] | null {
   if (PUBLIC_STORES.has(store)) return null;
-  const out = new Set<string>();
-  if (me) out.add(me);
+  const prev = prevParts.get(`${store}\u0000${key}`);
+  const own = () => (prev !== undefined ? prev : me ? [me] : null);
   if (store === "loqal.notifications.v1") {
     const to = audienceOf(data);
-    if (to) out.add(to);
-    return [...out];
+    return to ? [to] : own();
   }
+  const out = new Set<string>();
   if (LEAD_STORES.has(store)) {
     const id = leadIdOf(store, key, data);
     const leads = readLocal("loqal.leads.v1");
@@ -95,10 +100,13 @@ function participantsFor(store: string, key: string, data: unknown): string[] | 
         const st = lead.propertyLabel?.match(/\b([A-Z]{2})\b\s*$/)?.[1];
         if (st) out.add(`lenderstate:${st}`);
       }
+      return [...out].sort();
     }
   }
-  return [...out];
+  return own();
 }
+/** Participants last seen on the server for each record. */
+const prevParts = new Map<string, string[] | null>();
 type Flat = Map<string, Row>;
 
 const appliers = new Map<string, Set<() => void>>();
@@ -238,6 +246,7 @@ async function pushDirty() {
       const s = json(r, parts);
       if (base.get(k) === s) continue;
       base.set(k, s);
+      prevParts.set(`${store}\u0000${k}`, parts);
       rows.push({ store, key: k, data: r.data, pos: r.pos, deleted: false, audience: r.audience ?? "", participants: parts });
     }
     for (const k of [...base.keys()])
@@ -300,6 +309,7 @@ function mergeRemote(rows: DbRow[], initial: boolean) {
         continue;
       }
       const row: Row = { data: r.data, pos: r.pos, audience: r.audience };
+      prevParts.set(`${store}\u0000${r.item_key}`, r.participants);
       const s = json(row, r.participants);
       if (base.get(r.item_key) === s) continue;
       base.set(r.item_key, s);
@@ -322,6 +332,7 @@ async function start(email: string) {
   me = email.toLowerCase();
   ready = false;
   baseline.clear();
+  prevParts.clear();
   cursor = "1970-01-01T00:00:00Z";
   const rows = await fetchSince(cursor);
   if (mine !== session || !rows) return;
