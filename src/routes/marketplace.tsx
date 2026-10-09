@@ -22,6 +22,8 @@ export const Route = createFileRoute("/marketplace")({
           "Discover residential and commercial properties available for purchase or investment on LOQAL.",
       },
       { property: "og:title", content: "LOQAL - Properties Marketplace" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       {
         property: "og:description",
         content:
