@@ -18,6 +18,7 @@ import { Route as DocumentsRouteImport } from './routes/documents'
 import { Route as EntityStructureFaqRouteImport } from './routes/entity-structure-faq'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as FinancialsRouteImport } from './routes/financials'
+import { Route as InspectionAccountingRouteImport } from './routes/inspection-accounting'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as MyPropertiesRouteImport } from './routes/my-properties'
 import { Route as MyServicesRouteImport } from './routes/my-services'
@@ -78,6 +79,11 @@ const FaqRoute = FaqRouteImport.update({
 const FinancialsRoute = FinancialsRouteImport.update({
   id: '/financials',
   path: '/financials',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InspectionAccountingRoute = InspectionAccountingRouteImport.update({
+  id: '/inspection-accounting',
+  path: '/inspection-accounting',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MarketplaceRoute = MarketplaceRouteImport.update({
@@ -172,6 +178,7 @@ export interface FileRoutesByFullPath {
   '/entity-structure-faq': typeof EntityStructureFaqRoute
   '/faq': typeof FaqRoute
   '/financials': typeof FinancialsRoute
+  '/inspection-accounting': typeof InspectionAccountingRoute
   '/marketplace': typeof MarketplaceRoute
   '/my-properties': typeof MyPropertiesRoute
   '/my-services': typeof MyServicesRoute
@@ -199,6 +206,7 @@ export interface FileRoutesByTo {
   '/entity-structure-faq': typeof EntityStructureFaqRoute
   '/faq': typeof FaqRoute
   '/financials': typeof FinancialsRoute
+  '/inspection-accounting': typeof InspectionAccountingRoute
   '/marketplace': typeof MarketplaceRoute
   '/my-properties': typeof MyPropertiesRoute
   '/my-services': typeof MyServicesRoute
@@ -227,6 +235,7 @@ export interface FileRoutesById {
   '/entity-structure-faq': typeof EntityStructureFaqRoute
   '/faq': typeof FaqRoute
   '/financials': typeof FinancialsRoute
+  '/inspection-accounting': typeof InspectionAccountingRoute
   '/marketplace': typeof MarketplaceRoute
   '/my-properties': typeof MyPropertiesRoute
   '/my-services': typeof MyServicesRoute
@@ -256,6 +265,7 @@ export interface FileRouteTypes {
     | '/entity-structure-faq'
     | '/faq'
     | '/financials'
+    | '/inspection-accounting'
     | '/marketplace'
     | '/my-properties'
     | '/my-services'
@@ -283,6 +293,7 @@ export interface FileRouteTypes {
     | '/entity-structure-faq'
     | '/faq'
     | '/financials'
+    | '/inspection-accounting'
     | '/marketplace'
     | '/my-properties'
     | '/my-services'
@@ -310,6 +321,7 @@ export interface FileRouteTypes {
     | '/entity-structure-faq'
     | '/faq'
     | '/financials'
+    | '/inspection-accounting'
     | '/marketplace'
     | '/my-properties'
     | '/my-services'
@@ -338,6 +350,7 @@ export interface RootRouteChildren {
   EntityStructureFaqRoute: typeof EntityStructureFaqRoute
   FaqRoute: typeof FaqRoute
   FinancialsRoute: typeof FinancialsRoute
+  InspectionAccountingRoute: typeof InspectionAccountingRoute
   MarketplaceRoute: typeof MarketplaceRoute
   MyPropertiesRoute: typeof MyPropertiesRoute
   MyServicesRoute: typeof MyServicesRoute
@@ -419,6 +432,13 @@ declare module '@tanstack/react-router' {
       path: '/financials'
       fullPath: '/financials'
       preLoaderRoute: typeof FinancialsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/inspection-accounting': {
+      id: '/inspection-accounting'
+      path: '/inspection-accounting'
+      fullPath: '/inspection-accounting'
+      preLoaderRoute: typeof InspectionAccountingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/marketplace': {
@@ -546,6 +566,7 @@ const rootRouteChildren: RootRouteChildren = {
   EntityStructureFaqRoute: EntityStructureFaqRoute,
   FaqRoute: FaqRoute,
   FinancialsRoute: FinancialsRoute,
+  InspectionAccountingRoute: InspectionAccountingRoute,
   MarketplaceRoute: MarketplaceRoute,
   MyPropertiesRoute: MyPropertiesRoute,
   MyServicesRoute: MyServicesRoute,
