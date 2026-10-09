@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { UploadedDocLink } from "@/components/profile/UploadedDocLink";
 import { useAuth, type LoqalUser } from "@/lib/auth";
 import { usePartnerRequests } from "@/lib/partner-requests";
-import { ENTITY_TYPE_LABEL, SERVICE_LABEL, inspectorLicenceRequirements } from "@/lib/inspection-licensing";
+import { ENTITY_TYPE_LABEL, SERVICE_LABEL, licenceRule, inspectorLicenceRequirements } from "@/lib/inspection-licensing";
 import { formatDate } from "@/lib/dates";
 import { useDeepLinkAction } from "@/lib/deep-link";
 import { supabase } from "@/integrations/supabase/client";
@@ -65,12 +65,38 @@ export function InspectorProfile({ user }: { user: LoqalUser }) {
       <dl className="mt-4 grid gap-x-6 gap-y-4 sm:grid-cols-2">{fields.map(([label, value]) => <div key={label} className="min-w-0 border-b border-border pb-3"><dt className="text-xs text-muted-foreground">{label}</dt><dd className="mt-1 break-words text-sm font-medium text-foreground">{value || "—"}</dd></div>)}</dl>
     </section>
     <section>
-      <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-lg font-semibold text-foreground">Licences & certifications</h2><span className={`text-xs font-semibold ${missing.length ? "text-gold" : "text-success"}`}>{missing.length ? `${missing.length} copies to provide` : "All required copies provided"}</span></div>
-      {missing.length ? <div className="mt-3 flex items-start gap-3 border-l-4 border-gold bg-gold-tint p-4"><FileCheck2 className="mt-0.5 size-5 shrink-0 text-gold"/><div><p className="text-sm font-semibold text-foreground">Loqal needs your licence copies</p><p className="mt-1 text-xs text-muted-foreground">Provide a clear copy for each listed service and state, showing the holder, licence number and validity. Copies remain on your company file.</p></div></div> : null}
-      <div className="mt-4 divide-y divide-border">{requirements.map((r) => <div key={r.key} className="py-4"><div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0"><h3 className="text-sm font-semibold text-foreground">{r.state} · {r.label}</h3><p className="mt-1 text-xs text-muted-foreground">{r.rule.label}: {r.number || "Not provided"}{r.validUntil ? ` · valid through ${formatDate(r.validUntil)}` : ""}</p><p className="mt-1 text-xs text-muted-foreground">{r.rule.note}</p></div><Button size="sm" variant={r.provided ? "outline" : "default"} onClick={() => open(r.key)}><Upload/>{r.provided ? "Add copy" : "Upload copy"}</Button></div>{r.provided ? <p className="mt-2 flex items-center gap-1 text-xs font-medium text-success"><CheckCircle2 className="size-3.5"/>Copy provided to Loqal</p> : null}<div className="mt-2 flex flex-col gap-1">{r.documents?.map((d) => <UploadedDocLink key={d.path} path={d.path}/>)}</div></div>)}</div>
-      {!requirements.length ? <p className="mt-3 text-sm text-muted-foreground">No mandatory licence copies are listed for your registered services. Optional certifications appear here when a number is on file.</p> : null}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-lg font-semibold text-foreground">Coverage, services & licences</h2>
+        <span className={`text-xs font-semibold ${missing.length ? "text-gold" : "text-success"}`}>{missing.length ? `${missing.length} copies to provide` : "All required copies provided"}</span>
+      </div>
+      {missing.length ? <div className="mt-3 flex items-start gap-3 border-l-4 border-gold bg-gold-tint p-4"><FileCheck2 className="mt-0.5 size-5 shrink-0 text-gold"/><div><p className="text-sm font-semibold text-foreground">Loqal needs your licence copies</p><p className="mt-1 text-xs text-muted-foreground">Provide a clear copy showing the holder, licence number and validity.</p></div></div> : null}
+      <div className="mt-5 space-y-6">
+        {profile.coverage.map((area) => <div key={area.state}>
+          <div className="flex items-center justify-between gap-3 border-b border-border bg-muted/40 px-3 py-3">
+            <h3 className="text-sm font-semibold text-brand">{area.state}</h3>
+            <span className="text-xs text-muted-foreground">{area.services.length} {area.services.length === 1 ? "service" : "services"}</span>
+          </div>
+          <div className="hidden grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.2fr)] gap-4 border-b border-border px-3 py-2 text-xs font-medium text-muted-foreground lg:grid" aria-hidden="true">
+            <span>Inspection service</span><span>Licence / certification №</span><span>Valid through</span><span>Licence copy</span>
+          </div>
+          <div className="divide-y divide-border">
+            {area.services.map((service) => {
+              const rule = licenceRule(service.service, area.state);
+              const requirement = requirements.find((r) => r.key === `${area.state}-${service.service}`);
+              return <div key={service.service} className="grid gap-3 px-3 py-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.2fr)] lg:gap-4">
+                <div className="min-w-0 sm:col-span-2 lg:col-span-1"><h4 className="text-sm font-semibold text-foreground">{SERVICE_LABEL[service.service]}</h4><p className="mt-1 text-xs leading-relaxed text-muted-foreground">{rule.note}</p></div>
+                <div className="min-w-0"><p className="mb-1 text-xs text-muted-foreground lg:hidden">Licence / certification №</p><p className="break-words text-sm font-medium text-foreground">{service.number || (rule.required ? "Not provided" : "Not on file")}</p></div>
+                <div><p className="mb-1 text-xs text-muted-foreground lg:hidden">Valid through</p><p className="text-sm font-medium text-foreground">{service.validUntil ? formatDate(service.validUntil) : "Not on file"}</p></div>
+                <div className="min-w-0 sm:col-span-2 lg:col-span-1">
+                  {requirement ? <><p className={`mb-2 flex items-center gap-1 text-xs font-medium ${requirement.provided ? "text-success" : "text-gold"}`}>{requirement.provided ? <CheckCircle2 className="size-3.5 shrink-0"/> : <FileCheck2 className="size-3.5 shrink-0"/>}{requirement.provided ? "Copy provided" : "Copy needed"}</p><Button size="sm" variant={requirement.provided ? "outline" : "default"} onClick={() => open(requirement.key)}><Upload/>{requirement.provided ? "Add copy" : "Upload copy"}</Button><div className="mt-2 flex flex-col gap-1 break-words">{requirement.documents?.map((d) => <UploadedDocLink key={d.path} path={d.path}/>)}</div></> : <p className="text-xs text-muted-foreground">No mandatory copy required</p>}
+                </div>
+              </div>;
+            })}
+          </div>
+        </div>)}
+        {!profile.coverage.length ? <p className="text-sm text-muted-foreground">No inspection coverage on file.</p> : null}
+      </div>
     </section>
-    <section><h2 className="text-lg font-semibold text-foreground">Coverage & inspection services</h2><div className="mt-3 divide-y divide-border">{profile.coverage.map((a) => <div key={a.state} className="py-3"><h3 className="text-sm font-semibold text-brand">{a.state}</h3><p className="mt-1 text-sm text-foreground">{a.services.map((s) => SERVICE_LABEL[s.service]).join(" · ")}</p></div>)}</div></section>
     <section><h2 className="text-lg font-semibold text-foreground">Inspector team & languages</h2><div className="mt-3 divide-y divide-border">{profile.inspectors.map((p) => <div key={p.id} className="py-3"><p className="text-sm font-semibold text-foreground">{p.firstName} {p.lastName}</p><p className="mt-1 text-xs text-muted-foreground">{p.languages.join(", ") || "Languages not provided"}</p></div>)}</div>{!profile.inspectors.length ? <p className="mt-3 text-sm text-muted-foreground">No individual inspector details on file.</p> : null}</section>
     <Dialog open={Boolean(item)} onOpenChange={(v) => { if (!v && !busy) setSelected(null); }}><DialogContent className="max-w-lg"><DialogHeader><DialogTitle>{item?.state} · {item?.label}</DialogTitle><DialogDescription>Upload and confirm your licence or certification copy for Loqal.</DialogDescription></DialogHeader><p className="text-sm text-foreground">{item?.rule.label}: {item?.number || "Not provided"}</p><input aria-label="Licence copy" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" disabled={busy} onChange={(e) => { const next = e.target.files?.[0]; setConfirm(false); setError(""); if (next && next.size > 20 * 1024 * 1024) { setFile(null); setError("Please choose a file under 20 MB."); } else setFile(next ?? null); }} className="w-full text-sm text-foreground"/>{file ? <p className="break-words text-sm font-medium text-foreground">{file.name}</p> : null}<label className="flex items-start gap-2 text-sm text-foreground"><input type="checkbox" checked={confirm} disabled={busy} onChange={(e) => setConfirm(e.target.checked)} className="mt-1"/>I confirm this copy is correct, authentic and belongs to the registered company or inspector.</label>{error ? <p role="alert" className="text-sm text-destructive">{error}</p> : null}<Button disabled={!file || !confirm || busy || !authUserId} onClick={() => void submit()}><Upload/>{busy ? "Submitting…" : "Confirm & submit copy"}</Button></DialogContent></Dialog>
   </div>;
