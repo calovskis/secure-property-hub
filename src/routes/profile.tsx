@@ -443,11 +443,11 @@ function ProfilePage() {
             ) : (
               <>
                 <h1 className="text-2xl font-bold text-foreground">
-                  {isPartner ? fullName(user) : "My profile"}
+                  {user.partnerType === "inspector" ? "Inspection company profile" : isPartner ? fullName(user) : "My profile"}
                 </h1>
                 <p className="mt-1 text-sm text-muted-foreground">
                   {isPartner
-                    ? "Your partner details, licenses and performance with Loqal."
+                    ? user.partnerType === "inspector" ? `${myRegistration?.inspectorProfile?.legalName || user.companyName || fullName(user)} · Company, coverage, licences and team` : "Your partner details, licenses and performance with Loqal."
                     : "Everything you have shared with Loqal, and the status of what you submitted."}
                 </p>
               </>

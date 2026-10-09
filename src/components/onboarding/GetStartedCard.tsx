@@ -18,6 +18,7 @@ import { useLeads } from "@/lib/leads";
 import { usePartnerRequests } from "@/lib/partner-requests";
 import { useEntityIntent } from "@/lib/entity-onboarding";
 import { useGettingStarted } from "@/lib/getting-started";
+import { inspectorLicenceRequirements } from "@/lib/inspection-licensing";
 
 type Item = {
   id: string;
@@ -57,7 +58,11 @@ export function GetStartedCard({ className = "" }: { className?: string }) {
       ).filter(Boolean);
       const licenceItems: Item[] = [];
       const label = type === "lender" ? "lending licence" : "licence";
-      if (declared.length > 0 && declared.length <= 8) {
+      if (type === "inspector") {
+        for (const licence of inspectorLicenceRequirements(req?.inspectorProfile)) {
+          licenceItems.push({ id: `p-licence-${licence.key}`, title: `${licence.state} · ${licence.label}`, desc: `${licence.rule.label}: ${licence.number || "not provided"}. Attach a clear copy on Company profile.`, icon: "📜", done: licence.provided, to: `/profile?open=licences&focus=${licence.key}`, actionLabel: "Upload copy" });
+        }
+      } else if (declared.length > 0 && declared.length <= 8) {
         for (const st of declared) {
           const d = licenceDocs.find((x) => x.state === st);
           licenceItems.push({

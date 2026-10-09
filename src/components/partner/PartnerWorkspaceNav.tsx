@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import type { PartnerType } from "@/lib/auth";
 import { OTHER_TABS, useLenderTabs } from "@/components/lender/LenderPortal";
 import { REALTOR_TABS } from "@/components/realtor/RealtorPortal";
+import { InspectorNav } from "@/components/partner/InspectorNav";
 
 const linkCls =
   "flex items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-brand-tint hover:text-brand";
@@ -58,6 +59,7 @@ function LenderLinks() {
  * falling back to the client navigation.
  */
 export function PartnerWorkspaceNav({ partnerType }: { partnerType?: PartnerType | undefined }) {
+  if (partnerType === "inspector") return <InspectorNav />;
   if (partnerType === "lender") return <LenderLinks />;
   if (partnerType === "realtor") {
     return (

@@ -9,6 +9,7 @@ import { PointOfContactCard } from "@/components/partner/PointOfContactCard";
 import { TaskTracker } from "@/components/tasks/TaskTracker";
 import { GetStartedCard } from "@/components/onboarding/GetStartedCard";
 import { InspectionJobs } from "@/components/partner/InspectionJobs";
+import { InspectorWorkspace } from "@/components/partner/InspectorWorkspace";
 
 import { PARTNER_LABEL, fullName, useAuth, type LoqalUser, type PartnerType } from "@/lib/auth";
 
@@ -30,6 +31,8 @@ export const Route = createFileRoute("/partner")({
           "Realtors, mortgage lenders, cleaning crews and service providers manage their Loqal pipeline, jobs and payouts here.",
       },
       { property: "og:title", content: "Partner Workspace — Loqal" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       {
         property: "og:description",
         content: "Manage your Loqal pipeline, assigned jobs, documents and payouts.",
@@ -150,6 +153,7 @@ const BOARDS: Record<PartnerType, Board> = {
 
 function PartnerPage() {
   const { user, ready } = useAuth();
+  const { tab } = Route.useSearch();
 
   if (!ready) return <div className="min-h-screen bg-background" />;
 
@@ -174,6 +178,7 @@ function PartnerPage() {
   }
 
   const type = user.partnerType ?? "other";
+  if (type === "inspector") return <InspectorWorkspace user={user} tab={tab} />;
 
   if (type === "lender") {
     return <LenderWorkspace lenderName={user.companyName || fullName(user)} />;

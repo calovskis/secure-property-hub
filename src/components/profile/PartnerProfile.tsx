@@ -2,18 +2,20 @@ import { PARTNER_LABEL, fullName, type LoqalUser } from "@/lib/auth";
 import { getTeamSnapshot, LENDER_ROLE_LABEL } from "@/lib/lender-team";
 import { useLeads } from "@/lib/leads";
 import { RealtorProfileCard } from "@/components/profile/RealtorProfileCard";
+import { InspectorProfile } from "@/components/profile/InspectorProfile";
 
 function avgResponseHours(items: { submittedAt: string; decidedAt?: string }[]) {
   const done = items.filter((l) => l.decidedAt);
   if (!done.length) return null;
   const totalMs = done.reduce(
-    (sum, l) => sum + (new Date(l.decidedAt!).getTime() - new Date(l.submittedAt).getTime()),
+    (sum, l) => sum + (new Date(l.decidedAt ?? l.submittedAt).getTime() - new Date(l.submittedAt).getTime()),
     0,
   );
   return totalMs / done.length / 3600000;
 }
 
 export function PartnerProfile({ user }: { user: LoqalUser }) {
+  if (user.partnerType === "inspector") return <InspectorProfile user={user} />;
   if (user.partnerType === "realtor") return <RealtorProfileCard user={user} />;
   return <LenderPartnerProfile user={user} />;
 }
