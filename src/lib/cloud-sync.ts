@@ -319,3 +319,4 @@ export function startCloudSync() {
     if (!document.hidden && ready) void fetchSince(new Date(new Date(cursor).getTime() - 5000).toISOString()).then((r) => r && mergeRemote(r, false));
   });
 }
+export const __cloudSyncTest = { flatten, applyRow };
