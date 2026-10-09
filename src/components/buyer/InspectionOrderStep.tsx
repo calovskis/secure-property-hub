@@ -19,7 +19,7 @@ import {
 } from "@/lib/inspections";
 
 export function InspectionOrderStep({ leadId, propertyId, propertyLabel, clientLabel, agentEmail }: {
-  leadId: string; propertyId?: string | undefined; propertyLabel: string; clientLabel: string; agentEmail?: string | undefined;
+  leadId: string; propertyId?: number | undefined; propertyLabel: string; clientLabel: string; agentEmail?: string | undefined;
 }) {
   const { plan } = useEntityPlan(leadId);
   const { user } = useAuth();
@@ -29,7 +29,7 @@ export function InspectionOrderStep({ leadId, propertyId, propertyLabel, clientL
   const terms = completeTerms(plan?.proposedTerms as Partial<AgreementTerms> | undefined);
   if (!plan?.agreementSignedAt || !terms.inspection || !terms.inspectionTypes.length) return null;
 
-  const property = getProperty(propertyId ?? "");
+  const property = getProperty(propertyId ?? -1);
   const state = stateFromLocation(property?.location) ?? "";
   const deadline = new Date(new Date(plan.agreementSignedAt).getTime() + terms.inspectionDeadlineDays * 86400000).toISOString();
   const active = items.find((i) => i.status !== "cancelled");
@@ -39,7 +39,7 @@ export function InspectionOrderStep({ leadId, propertyId, propertyLabel, clientL
     setBusy(true);
     try {
       await createInspectionRequest({
-        leadId, clientEmail: user?.email ?? "", clientLabel, agentEmail, propertyId, propertyLabel, state,
+        leadId, clientEmail: user?.email ?? "", clientLabel, agentEmail, propertyId: propertyId == null ? undefined : String(propertyId), propertyLabel, state,
         propertyCategory: propertyCategory(property?.type), inspectionTypes: terms.inspectionTypes,
         deadlineDays: terms.inspectionDeadlineDays, agreementSignedAt: plan!.agreementSignedAt,
       });
