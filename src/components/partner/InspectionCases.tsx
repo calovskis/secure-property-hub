@@ -24,7 +24,7 @@ export function InspectionCases({ user, items, ready, refresh }: { user: LoqalUs
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const visible = items.filter((r) => r.status === "open" || (!!authUserId && r.inspectorUserId === authUserId));
   const matchesTab = (r: InspectionRequest, id: string) => id === "all" || (id === "open" ? r.status === "open" : id === "scheduled" ? r.status === "accepted" || r.status === "scheduled" : id === "pending" ? isPending(r) : r.status === "report_uploaded" || r.status === "completed");
-  const tabs = [["all", "All inspections"], ["open", "New requests"], ["scheduled", "Scheduled & assigned"], ["pending", "Reports pending"], ["complete", "Reports & completed"]];
+  const tabs = [["all", "All inspections"], ["open", "New requests"], ["scheduled", "Scheduled & assigned"], ["pending", "Reports pending"], ["complete", "Reports & completed"]] as const;
   const services = Array.from(new Set(visible.flatMap((r) => r.inspectionTypes))).sort();
   const filtered = visible.filter((r) => matchesTab(r, tab) && (status === "all" || r.status === status) && (service === "all" || r.inspectionTypes.includes(service)) && (category === "all" || r.propertyCategory === category) && `${r.propertyLabel} ${r.clientLabel} ${r.id} ${r.state}`.toLowerCase().includes(search.toLowerCase().trim())).sort((a, b) => (newest ? -1 : 1) * (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()));
   const maxPage = Math.max(0, Math.ceil(filtered.length / PAGE_SIZE) - 1);

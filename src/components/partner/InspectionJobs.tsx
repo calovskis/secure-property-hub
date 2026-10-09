@@ -2,7 +2,7 @@
  * Inspection company workspace: open requests in the states they cover, and
  * their accepted jobs through scheduling to report upload.
  */
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { Download, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -108,6 +108,7 @@ function OpenJob({ r, user, onDone }: { r: InspectionRequest; user: LoqalUser; o
 
 function MyJob({ r, onDone }: { r: InspectionRequest; onDone: () => void }) {
   const [busy, setBusy] = useState(false);
+  const fileInput = useRef<HTMLInputElement>(null);
   async function confirmDate() {
     setBusy(true);
     try {
@@ -132,10 +133,8 @@ function MyJob({ r, onDone }: { r: InspectionRequest; onDone: () => void }) {
       <p className="mt-2 text-xs text-muted-foreground">Fee ${r.fee?.toLocaleString("en-US")} · {r.scheduledAt ? `scheduled ${formatDateTime(r.scheduledAt)}` : r.proposedAt ? `proposed ${formatDateTime(r.proposedAt)}` : ""}</p>
       <div className="mt-3 flex flex-wrap items-center gap-2">
         {r.status === "accepted" ? <Button size="sm" disabled={busy} onClick={confirmDate}>Mark as scheduled</Button> : null}
-        <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-foreground">
-          <Upload className="h-3.5 w-3.5" aria-hidden /> {r.reportFiles.length ? "Add another report file" : "Upload report"}
-          <input type="file" className="hidden" disabled={busy} onChange={(e) => { const f = e.target.files?.[0]; if (f) void upload(f); e.target.value = ""; }} />
-        </label>
+        <Button variant="outline" size="sm" disabled={busy} onClick={() => fileInput.current?.click()}><Upload aria-hidden/> {r.reportFiles.length ? "Add another report file" : "Upload report"}</Button>
+        <input ref={fileInput} aria-label="Inspection report file" type="file" className="hidden" disabled={busy} onChange={(e) => { const f = e.target.files?.[0]; if (f) void upload(f); e.target.value = ""; }} />
         {r.reportFiles.map((f) => <Button key={f.path} type="button" variant="ghost" size="sm" onClick={() => downloadInspectionReport(f).catch(() => toast.error("Download failed"))} className="text-xs text-brand"><Download className="h-3.5 w-3.5" aria-hidden /> {f.name}</Button>)}
       </div>
     </div>
