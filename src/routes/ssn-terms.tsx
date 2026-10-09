@@ -4,6 +4,8 @@ export const Route = createFileRoute("/ssn-terms")({
   component: SsnTermsPage,
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { title: "SSN Processing Terms — Loqal" },
       {
         name: "description",

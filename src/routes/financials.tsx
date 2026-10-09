@@ -131,6 +131,8 @@ export const Route = createFileRoute("/financials")({
   component: FinancialsPage,
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { title: "LOQAL - My Financials" },
       {
         name: "description",

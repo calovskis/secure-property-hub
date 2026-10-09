@@ -13,4 +13,5 @@
 - Partner agreement text is selected centrally by partner type; inspector source text lives in a browser-safe template with registration-derived variables so partner review, downloads and admin countersigning use the same document.
 - Inspector licence requirements derive from registered state/service coverage; copies are private Storage files referenced in inspector_profile so profile and dashboard completion agree across devices.
 - Inspection navigation is shared across workspace, profile and settings; case views and metrics use inspection_requests rather than lender data or sample figures.
+- Inspection case tables reuse InspectionJobDetails for actions, keeping acceptance, scheduling and report uploads identical to dashboard case dialogs.
 - Inspection home summaries reuse the existing inspection job controls in a case dialog; financial tiles show quoted inspection fees, not inferred payments or payouts, because payment settlement is not tracked.

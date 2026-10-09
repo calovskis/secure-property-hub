@@ -26,3 +26,4 @@
 - [x] Show inspection service licence requests and uploads on the company profile, consistent with dashboard tasks
 - [x] Add inspection-specific navigation, case filters, company details and real metrics
 - [x] Match the inspection partner home to the supplied dashboard reference, preserving case actions and live data
+- [x] Align inspection navigation with client portal details and build the referenced inspection case table with live summaries, filters and case dialogs
