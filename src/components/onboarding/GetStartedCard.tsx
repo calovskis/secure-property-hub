@@ -309,7 +309,6 @@ export function GetStartedCard({ className = "" }: { className?: string }) {
   const pct = Math.round((completed / items.length) * 100);
   const next = items.find((i) => !i.done);
   if (!next) return null;
-  const allDone = false;
 
   return (
     <>
@@ -340,23 +339,14 @@ export function GetStartedCard({ className = "" }: { className?: string }) {
 
           <div className="mt-4 flex items-center gap-3">
             <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-muted">
-              <div
-                className={`h-full rounded-full transition-all ${allDone ? "bg-success" : "bg-brand"}`}
-                style={{ width: `${pct}%` }}
-              />
+              <div className="h-full rounded-full bg-brand" style={{ width: `${pct}%` }} />
             </div>
             <span className="text-sm font-semibold text-muted-foreground">{pct}%</span>
           </div>
 
           <div className="mt-2 text-[13px]">
-            {allDone ? (
-              <span className="font-semibold text-success">All set — your profile is complete</span>
-            ) : (
-              <>
-                <span className="font-semibold text-foreground">{next.title}</span>
-                <span className="text-muted-foreground"> · In progress</span>
-              </>
-            )}
+            <span className="font-semibold text-foreground">{next.title}</span>
+            <span className="text-muted-foreground"> · In progress</span>
           </div>
         </button>
       </section>
@@ -371,10 +361,7 @@ export function GetStartedCard({ className = "" }: { className?: string }) {
 
           <div className="flex items-center gap-3">
             <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-muted">
-              <div
-                className={`h-full rounded-full ${allDone ? "bg-success" : "bg-brand"}`}
-                style={{ width: `${pct}%` }}
-              />
+              <div className="h-full rounded-full bg-brand" style={{ width: `${pct}%` }} />
             </div>
             <span className="text-sm font-semibold text-muted-foreground">
               {completed}/{items.length}
