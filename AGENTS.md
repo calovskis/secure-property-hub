@@ -15,3 +15,4 @@
 - Inspection navigation is shared across workspace, profile and settings; case views and metrics use inspection_requests rather than lender data or sample figures.
 - Inspection case tables reuse InspectionJobDetails for actions, keeping acceptance, scheduling and report uploads identical to dashboard case dialogs.
 - Inspection home summaries reuse the existing inspection job controls in a case dialog; financial tiles show quoted inspection fees, not inferred payments or payouts, because payment settlement is not tracked.
+- Inspector Accounting derives estimates from assigned inspection quotes and exports labelled summaries; confirmed balances, invoices and paid states require a payment ledger, so quote data never implies settlement.
