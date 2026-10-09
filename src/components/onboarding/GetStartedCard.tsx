@@ -302,12 +302,14 @@ export function GetStartedCard({ className = "" }: { className?: string }) {
     return clientItems;
   }, [user, requests, leadsForClient, intent, read]);
 
+  /* Hidden entirely once every item is completed — all users, all roles. */
   if (!user || dismissed || items.length === 0) return null;
 
   const completed = items.filter((i) => i.done).length;
   const pct = Math.round((completed / items.length) * 100);
   const next = items.find((i) => !i.done);
-  const allDone = !next;
+  if (!next) return null;
+  const allDone = false;
 
   return (
     <>
