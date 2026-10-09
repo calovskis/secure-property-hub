@@ -14,7 +14,7 @@ import { joinName, nameInitials, namesFromEmail, normalizeName } from "@/lib/nam
 
 
 export type Role = "client" | "corporate" | "partner" | "admin";
-export type PartnerType = "realtor" | "lender" | "cleaning" | "other";
+export type PartnerType = "realtor" | "lender" | "inspector" | "cleaning" | "other";
 
 export const ROLE_LABEL: Record<Role, string> = {
   client: "Client",
@@ -26,6 +26,7 @@ export const ROLE_LABEL: Record<Role, string> = {
 export const PARTNER_LABEL: Record<PartnerType, string> = {
   realtor: "Realtor",
   lender: "Mortgage lender",
+  inspector: "Inspection company",
   cleaning: "Cleaning service provider",
   other: "Other service provider",
 };

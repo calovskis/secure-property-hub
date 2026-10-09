@@ -15,6 +15,7 @@ import { useCallback, useEffect, useSyncExternalStore } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { PartnerType } from "@/lib/auth";
 import type { RealtorLicense } from "@/lib/realtors";
+import type { InspectorProfile } from "@/lib/inspection-licensing";
 
 export type PartnerRequestStatus = "pending" | "approved" | "declined";
 
@@ -228,6 +229,8 @@ export type PartnerRequest = {
   /** Realtors: the brokerage's own license and switchboard number. */
   companyLicence?: string;
   companyPhone?: string;
+  /** Inspection companies: identity, team and per-state services & licences. */
+  inspectorProfile?: InspectorProfile;
   /** Extra company contact people the partner maintains in My Profile. */
   additionalContacts?: AdditionalContact[];
   /** Partner-specific T&C accepted at registration. */
@@ -296,6 +299,7 @@ function fromRow(r: Row): PartnerRequest {
     languages: (r["languages"] as string[] | null) ?? [],
     companyLicence: s(r["company_licence"]),
     companyPhone: s(r["company_phone"]),
+    inspectorProfile: (r["inspector_profile"] as InspectorProfile | null) ?? undefined,
     additionalContacts: (r["additional_contacts"] as AdditionalContact[] | null) ?? [],
     tcAcceptedAt: s(r["tc_accepted_at"]),
     verificationDocs: (r["verification_docs"] as string[] | null) ?? [],
@@ -345,6 +349,7 @@ const COLUMN: Record<string, string> = {
   companyLicence: "company_licence",
   companyPhone: "company_phone",
   additionalContacts: "additional_contacts",
+  inspectorProfile: "inspector_profile",
   tcAcceptedAt: "tc_accepted_at",
   verificationDocs: "verification_docs",
   kyc: "kyc",
