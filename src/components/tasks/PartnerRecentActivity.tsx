@@ -6,7 +6,7 @@ import { useNotifications } from "@/lib/notifications";
 import { openDeepLink } from "@/lib/deep-link";
 import { formatDateTime } from "@/lib/dates";
 
-export function PartnerRecentActivity() {
+export function PartnerRecentActivity({ title = "Recent activity", initialLimit = 6, className = "" }: { title?: string; initialLimit?: number; className?: string }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { notifications } = useNotifications(user?.email);
@@ -14,13 +14,13 @@ export function PartnerRecentActivity() {
   const items = [...notifications]
     .filter((n) => !n.id.includes("-rem-"))
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  const visible = all ? items : items.slice(0, 6);
+  const visible = all ? items : items.slice(0, initialLimit);
   if (!user) return null;
   return (
-    <section className="rounded-xl border border-border bg-card p-4">
+    <section className={`rounded-xl border border-border bg-card p-4 ${className}`}>
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold text-foreground">Recent activity</h2>
-        {items.length > 6 ? (
+        <h2 className="text-sm font-semibold text-foreground">{title}</h2>
+        {items.length > initialLimit ? (
           <button type="button" onClick={() => setAll((v) => !v)} className="text-xs font-semibold text-brand">
             {all ? "Show less" : `Show all ${items.length}`}
           </button>

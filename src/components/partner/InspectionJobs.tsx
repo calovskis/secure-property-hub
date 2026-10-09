@@ -67,6 +67,10 @@ function JobHead({ r }: { r: InspectionRequest }) {
   );
 }
 
+export function InspectionJobDetails({ r, user, onDone }: { r: InspectionRequest; user: LoqalUser; onDone: () => void }) {
+  return r.status === "open" ? <OpenJob r={r} user={user} onDone={onDone} /> : <MyJob r={r} onDone={onDone} />;
+}
+
 function OpenJob({ r, user, onDone }: { r: InspectionRequest; user: LoqalUser; onDone: () => void }) {
   const [form, setForm] = useState(false);
   const [fee, setFee] = useState("");
@@ -93,10 +97,10 @@ function OpenJob({ r, user, onDone }: { r: InspectionRequest; user: LoqalUser; o
           <label className="text-xs text-muted-foreground">Total fee (USD)<input className={input} inputMode="decimal" value={fee} onChange={(e) => setFee(e.target.value.replace(/[^\d.]/g, ""))} /></label>
           <label className="text-xs text-muted-foreground">Proposed date<DateInput value={date} onChange={setDate} /></label>
           <label className="text-xs text-muted-foreground">Time<input type="time" className={input} value={time} onChange={(e) => setTime(e.target.value)} /></label>
-          <button type="button" disabled={busy} onClick={accept} className="rounded-md bg-brand px-3 py-2 text-xs font-semibold text-background disabled:opacity-60">{busy ? "Saving…" : "Confirm"}</button>
+          <Button size="sm" disabled={busy} onClick={accept}>{busy ? "Saving…" : "Confirm"}</Button>
         </div>
       ) : (
-        <button type="button" onClick={() => setForm(true)} className="mt-3 rounded-md bg-brand px-3 py-1.5 text-xs font-semibold text-background">Accept job</button>
+        <Button size="sm" onClick={() => setForm(true)} className="mt-3">Accept job</Button>
       )}
     </div>
   );
@@ -127,12 +131,12 @@ function MyJob({ r, onDone }: { r: InspectionRequest; onDone: () => void }) {
       <JobHead r={r} />
       <p className="mt-2 text-xs text-muted-foreground">Fee ${r.fee?.toLocaleString("en-US")} · {r.scheduledAt ? `scheduled ${formatDateTime(r.scheduledAt)}` : r.proposedAt ? `proposed ${formatDateTime(r.proposedAt)}` : ""}</p>
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        {r.status === "accepted" ? <button type="button" disabled={busy} onClick={confirmDate} className="rounded-md bg-brand px-3 py-1.5 text-xs font-semibold text-background">Mark as scheduled</button> : null}
+        {r.status === "accepted" ? <Button size="sm" disabled={busy} onClick={confirmDate}>Mark as scheduled</Button> : null}
         <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-foreground">
           <Upload className="h-3.5 w-3.5" aria-hidden /> {r.reportFiles.length ? "Add another report file" : "Upload report"}
           <input type="file" className="hidden" disabled={busy} onChange={(e) => { const f = e.target.files?.[0]; if (f) void upload(f); e.target.value = ""; }} />
         </label>
-        {r.reportFiles.map((f) => <button key={f.path} type="button" onClick={() => downloadInspectionReport(f).catch(() => toast.error("Download failed"))} className="inline-flex items-center gap-1 text-xs font-semibold text-brand"><Download className="h-3.5 w-3.5" aria-hidden /> {f.name}</button>)}
+        {r.reportFiles.map((f) => <Button key={f.path} type="button" variant="ghost" size="sm" onClick={() => downloadInspectionReport(f).catch(() => toast.error("Download failed"))} className="text-xs text-brand"><Download className="h-3.5 w-3.5" aria-hidden /> {f.name}</Button>)}
       </div>
     </div>
   );
