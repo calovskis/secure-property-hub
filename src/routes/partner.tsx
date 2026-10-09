@@ -256,8 +256,9 @@ function PartnerPage() {
             </div>
           </div>
         </section>
+        </>}
 
-        <div className="mb-6 md:w-1/2">
+        <div className="my-6 md:w-1/2">
           <PointOfContactCard compact />
         </div>
       </main>
