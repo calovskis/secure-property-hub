@@ -29,6 +29,13 @@
       "when": 1791553030539,
       "tag": "0003_inspection_requests",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791575284540,
+      "tag": "0004_partner_request_document_owner_read",
+      "breakpoints": true
     }
   ]
 }
