@@ -35,7 +35,7 @@ export function InspectorProfile({ user }: { user: LoqalUser }) {
     if (!file || !item || !profile || !request || !authUserId || !confirm || busy) return;
     setBusy(true); setError("");
     try {
-      const path = `${authUserId}/inspector-licences/${item.key}/${crypto.randomUUID()}-${file.name.replace(/[^\w.-]/g, "_")}`;
+      const path = `requests/${request.id}/inspector-licences/${item.key}/${crypto.randomUUID()}-${file.name.replace(/[^\w.-]/g, "_")}`;
       const { error: uploadError } = await supabase.storage.from("partner-documents").upload(path, file);
       if (uploadError) throw uploadError;
       const uploadedAt = new Date().toISOString();
@@ -43,7 +43,7 @@ export function InspectorProfile({ user }: { user: LoqalUser }) {
       const { error: saveError } = await supabase.from("partner_requests").update({ inspector_profile: next } as never).eq("id", request.id);
       if (saveError) throw saveError;
       await refresh();
-      notify({ id: `inspector-licence-${request.id}-${item.key}-${uploadedAt}`, to: "admins", title: "Inspection licence copy provided", body: `${request.companyName} — ${item.state}: ${item.label}.`, href: `/admin-people/${encodeURIComponent(request.email)}?open=profile`, severity: "info" });
+      notify({ id: `inspector-licence-${request.id}-${item.key}-${uploadedAt}`, to: "admins", title: "Inspection licence copy provided", body: `${request.companyName} — ${item.state}: ${item.label}.`, href: `/admin-people/partner-${request.id}`, severity: "info" });
       setSelected(null); toast.success("Licence copy submitted to Loqal");
     } catch (e) { setError(e instanceof Error ? e.message : "Could not submit the licence copy. Please try again."); }
     finally { setBusy(false); }
