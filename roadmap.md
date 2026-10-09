@@ -30,4 +30,4 @@
 - [x] Add inspector Accounting from the billing reference with quote summaries, fee records, PDF/CSV downloads and payment-method section
 - [ ] Connect secure online Accounting fee collection and confirmed settlement ledger — Stripe test connection enabled; checkout and settlement ledger remain a separate task
 
-- [ ] Match Accounting closely to the supplied billing and payouts reference while preserving client-portal controls and truthful financial states
+- [x] Match Accounting closely to the supplied billing and payouts reference while preserving client-portal controls and truthful financial states
