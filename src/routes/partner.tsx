@@ -8,6 +8,7 @@ import { RealtorPortal, type RealtorTabId } from "@/components/realtor/RealtorPo
 import { PointOfContactCard } from "@/components/partner/PointOfContactCard";
 import { TaskTracker } from "@/components/tasks/TaskTracker";
 import { GetStartedCard } from "@/components/onboarding/GetStartedCard";
+import { InspectionJobs } from "@/components/partner/InspectionJobs";
 
 import { PARTNER_LABEL, fullName, useAuth, type LoqalUser, type PartnerType } from "@/lib/auth";
 
@@ -210,6 +211,7 @@ function PartnerPage() {
           <TaskTracker />
         </div>
 
+        {type === "inspector" ? <InspectionJobs user={user} /> : <>
         <section className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-3">
           {board.metrics.map(([label, value, note]) => (
             <div key={label} className="rounded-lg border border-border bg-card p-6">
