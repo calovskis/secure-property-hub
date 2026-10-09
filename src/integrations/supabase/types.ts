@@ -245,6 +245,7 @@ export type Database = {
           email: string
           first_name: string
           id: string
+          inspector_profile: Json | null
           kind: string
           kyc: Json | null
           languages: string[]
@@ -294,6 +295,7 @@ export type Database = {
           email?: string
           first_name?: string
           id?: string
+          inspector_profile?: Json | null
           kind: string
           kyc?: Json | null
           languages?: string[]
@@ -343,6 +345,7 @@ export type Database = {
           email?: string
           first_name?: string
           id?: string
+          inspector_profile?: Json | null
           kind?: string
           kyc?: Json | null
           languages?: string[]

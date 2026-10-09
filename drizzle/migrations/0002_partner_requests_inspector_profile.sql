@@ -1,0 +1,1 @@
+ALTER TABLE public.partner_requests ADD COLUMN inspector_profile jsonb;

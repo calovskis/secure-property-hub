@@ -15,6 +15,13 @@
       "when": 1791550046650,
       "tag": "0001_shared_records_participants",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791550873950,
+      "tag": "0002_partner_requests_inspector_profile",
+      "breakpoints": true
     }
   ]
 }

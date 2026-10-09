@@ -14,6 +14,14 @@ import { logActivity } from "@/lib/activity";
 import { supabase } from "@/integrations/supabase/client";
 import { PhoneField } from "@/components/form/PhoneField";
 import { isValidPhone } from "@/lib/phone";
+import {
+  EMPTY_INSPECTOR,
+  InspectorCoverageFields,
+  InspectorIdentityFields,
+  InspectorTeamFields,
+  inspectorError,
+} from "@/components/partner/InspectorRegistrationFields";
+import { ENTITY_TYPE_LABEL, type InspectorProfile } from "@/lib/inspection-licensing";
 
 export const Route = createFileRoute("/partner-access")({
   component: PartnerAccessPage,
@@ -111,6 +119,9 @@ function PartnerAccessPage() {
 
   const isRealtor = kind === "partner" && partnerType === "realtor";
   const isLender = kind === "partner" && partnerType === "lender";
+  const isInspector = kind === "partner" && partnerType === "inspector";
+  const [inspector, setInspector] = useState<InspectorProfile>(EMPTY_INSPECTOR);
+  const patchInspector = (patch: Partial<InspectorProfile>) => setInspector((v) => ({ ...v, ...patch }));
 
   function toggleAllStates() {
     setAllStates((v) => {
@@ -135,8 +146,8 @@ function PartnerAccessPage() {
 
   async function runSubmit() {
     if (!companyName.trim()) return setError("Company name is required.");
-    if (!companyType.trim()) return setError("Company type is required.");
-    if (!registrationNumber.trim()) return setError("Registration number is required.");
+    if (!isInspector && !companyType.trim()) return setError("Company type is required.");
+    if (!isInspector && !registrationNumber.trim()) return setError("Registration number is required.");
     if (!street.trim() || !city.trim() || !zip.trim() || !country.trim())
       return setError("Full legal address (street, city, ZIP, country) is required.");
     if (country === "US" && !addressState.trim())
@@ -184,6 +195,13 @@ function PartnerAccessPage() {
             return setError(`Enter the state NMLS number and its validity for ${s}.`);
         }
       }
+      if (isInspector) {
+        const issue = inspectorError(inspector, states);
+        if (issue) {
+          setPhoneTouched(true);
+          return setError(issue);
+        }
+      }
       if (isRealtor) {
         for (const s of states) {
           const lic = licenses[s];
@@ -224,8 +242,8 @@ function PartnerAccessPage() {
       kind,
       ...(kind === "partner" ? { partnerType } : {}),
       companyName: companyName.trim(),
-      companyType: companyType.trim(),
-      registrationNumber: registrationNumber.trim(),
+      companyType: isInspector ? ENTITY_TYPE_LABEL[inspector.entityType] : companyType.trim(),
+      registrationNumber: isInspector ? inspector.ein?.trim() || "Sole proprietor" : registrationNumber.trim(),
       street: street.trim(),
       city: city.trim(),
       state: addressState,
@@ -243,6 +261,19 @@ function PartnerAccessPage() {
         ? {
             lenderLicence: licenceNumber.trim(),
             lenderLicenses: states.map((st) => ({ state: st, ...licenses[st]! })),
+          }
+        : {}),
+      ...(isInspector
+        ? {
+            companyPhone: inspector.mainPhone,
+            languages: inspector.companyLanguages,
+            inspectorProfile: {
+              ...inspector,
+              legalName: companyName.trim(),
+              inspectorCount: inspector.entityType === "sole_proprietor" ? 1 : inspector.inspectorCount,
+              coverage: inspector.coverage.filter((c) => states.includes(c.state)),
+              inspectors: inspector.inspectors.filter((p) => p.firstName.trim() || p.lastName.trim()),
+            },
           }
         : {}),
       ...(isRealtor
@@ -382,13 +413,14 @@ function PartnerAccessPage() {
               <SectionTitle n={kind === "partner" ? 2 : 1}>Company information</SectionTitle>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <label>
-                  <Label required>Company name</Label>
+                  <Label required>{isInspector ? "Legal business name" : "Company name"}</Label>
                   <input
                     value={companyName}
                     onChange={(e) => setCompanyName(e.target.value)}
                     className={inputClass}
                   />
                 </label>
+                {!isInspector ? <>
                 <label>
                   <Label required>Company type</Label>
                   <input
@@ -406,8 +438,9 @@ function PartnerAccessPage() {
                     className={inputClass}
                   />
                 </label>
+                </> : null}
                 <div className="sm:col-span-2">
-                  <Label required>Legal address</Label>
+                  <Label required>{isInspector ? "Business address" : "Legal address"}</Label>
                   <AddressFields
                     value={{ country, state: addressState, city, street, zip }}
                     streetPlaceholder="Street and number — start typing for suggestions"
@@ -421,6 +454,10 @@ function PartnerAccessPage() {
                   />
                 </div>
               </div>
+
+              {isInspector ? (
+                <InspectorIdentityFields value={inspector} onChange={patchInspector} phoneTouched={phoneTouched} />
+              ) : null}
 
               {isRealtor ? (
                 <div className="grid grid-cols-1 gap-4 rounded-lg border border-brand/30 bg-brand-tint/30 p-4 sm:grid-cols-2">
@@ -444,7 +481,7 @@ function PartnerAccessPage() {
                 </div>
               ) : null}
 
-              <SectionTitle n={kind === "partner" ? 3 : 2}>Contact person</SectionTitle>
+              <SectionTitle n={kind === "partner" ? 3 : 2}>{isInspector ? "Primary contact" : "Contact person"}</SectionTitle>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <label>
                   <Label required>First name</Label>
@@ -532,7 +569,7 @@ function PartnerAccessPage() {
 
               {kind === "partner" ? (
                 <>
-                  <SectionTitle n={4}>Coverage &amp; licences</SectionTitle>
+                  <SectionTitle n={4}>{isInspector ? "Areas & inspection licences" : "Coverage & licences"}</SectionTitle>
 
                   {partnerType === "lender" ? (
                     <label className="block">
@@ -550,7 +587,9 @@ function PartnerAccessPage() {
                     <Label required>
                       {isRealtor
                         ? "States you are licensed in as a real estate agent"
-                        : "States you are active in"}
+                        : isInspector
+                          ? "States you inspect in"
+                          : "States you are active in"}
                     </Label>
                     <div className="mb-3 flex flex-wrap items-center gap-3">
                       <button
@@ -666,6 +705,17 @@ function PartnerAccessPage() {
                         );
                       })}
                     </div>
+                  ) : null}
+
+                  {isInspector && states.length > 0 ? (
+                    <InspectorCoverageFields states={states} value={inspector} onChange={patchInspector} />
+                  ) : null}
+
+                  {isInspector ? (
+                    <>
+                      <SectionTitle n={5}>Team &amp; languages</SectionTitle>
+                      <InspectorTeamFields value={inspector} onChange={patchInspector} contactName={joinName({ firstName, lastName })} />
+                    </>
                   ) : null}
 
                   {isRealtor ? (

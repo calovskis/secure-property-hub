@@ -111,6 +111,17 @@ const BOARDS: Record<PartnerType, Board> = {
     ],
     actions: ["Accept job", "Upload completion photos", "Report an issue", "Update availability"],
   },
+  inspector: {
+    headline: "Inspection jobs",
+    intro: "Inspection requests from signed purchase agreements, routed by Loqal to your coverage areas.",
+    metrics: [
+      ["Open requests", "0", "New jobs appear here"],
+      ["Scheduled", "0", "This week"],
+      ["Reports due", "0", "Upload within agreed time"],
+    ],
+    queue: [],
+    actions: ["Accept job", "Schedule inspection", "Upload report", "Update availability"],
+  },
   other: {
     headline: "Service jobs",
     intro: "Maintenance, inspections, legal, utilities and everything else routed through Loqal.",
