@@ -47,10 +47,10 @@ export function InspectorAccounting({ user, items, ready, refresh }: { user: Loq
     doc.text("Payment status and outstanding balance: not tracked. No payout is recorded.", 15, y + 26);
     doc.save(`Loqal-accounting-${month}.pdf`);
   }
-  const clientToken = import.meta.env.VITE_PAYMENTS_CLIENT_TOKEN;
+  const clientToken = import.meta.env['VITE_PAYMENTS_CLIENT_TOKEN'];
   const testConnected = clientToken?.startsWith("pk_test_");
   const previousPeriod = (() => {
-    const [year, month] = period.split("-").map(Number);
+    const [year = 2026, month = 1] = period.split("-").map(Number);
     return new Date(Date.UTC(year, month - 2, 1)).toISOString().slice(0, 7);
   })();
   const previousGross = records.filter((r) => periodOf(r) === previousPeriod).reduce((sum, r) => sum + (r.fee ?? 0), 0);
