@@ -25,6 +25,7 @@ import { useEntityPlans } from "@/lib/entity-structure";
 import { useEntityIntent } from "@/lib/entity-onboarding";
 import { useEffect } from "react";
 import { pendingVerifications } from "@/lib/licence-verification";
+import { inspectorLicenceRequirements } from "@/lib/inspection-licensing";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import { usePurchaseProgress } from "@/lib/purchase-stage";
 import { useRealtors } from "@/lib/realtors";
@@ -527,6 +528,12 @@ export function TaskTracker({ className = "" }: { className?: string }) {
       ))
         push(n, groupOf(n.id));
       for (const t of realtorTasks ?? []) push(t.notification, "buyerFiles");
+      if (user?.role === "partner" && user.partnerType === "inspector") {
+        const registration = requests.find((r) => r.email.toLowerCase() === user.email.toLowerCase());
+        for (const licence of inspectorLicenceRequirements(registration?.inspectorProfile).filter((r) => !r.provided)) {
+          push({ id: `inspector-licence-needed-${licence.key}`, to: user.email, title: `Provide ${licence.state} · ${licence.label} licence copy`, body: `${licence.rule.label}: ${licence.number || "Not provided"}.`, href: `/profile?open=licences&focus=${licence.key}`, severity: "warning", createdAt: registration?.submittedAt ?? new Date().toISOString() }, "licences");
+        }
+      }
       for (const n of adminItems.filter(isStillOpen)) push(n, adminGroupOf(n.id));
 
       /* Visa: a foreign buyer with no valid US visa on file must say whether

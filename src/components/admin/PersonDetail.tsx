@@ -515,6 +515,9 @@ function ProfileTab({ person }: { person: AdminPerson }) {
                           </span>
                         ))}
                       </div>
+                      <div className="mt-2 flex flex-col gap-1">
+                        {c.services.flatMap((sv) => (sv.documents ?? []).map((d) => <div key={d.path}><span className="mr-2 text-[11px] text-muted-foreground">{SERVICE_LABEL[sv.service]}</span><UploadedDocLink path={d.path} /></div>))}
+                      </div>
                     </div>
                   ))}
                 </div>

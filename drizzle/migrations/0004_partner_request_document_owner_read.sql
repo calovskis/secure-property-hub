@@ -1,0 +1,1 @@
+CREATE POLICY "Partners read their request folder documents" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'partner-documents' AND (storage.foldername(name))[1] = 'requests' AND EXISTS (SELECT 1 FROM public.partner_requests pr WHERE pr.id::text = (storage.foldername(name))[2] AND pr.user_id = auth.uid()));

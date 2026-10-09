@@ -61,7 +61,7 @@ function SettingsPage() {
 
       <main className="mx-auto max-w-[900px] px-4 py-8 md:px-7">
         <header>
-          <h1 className="text-2xl font-bold text-foreground">Settings</h1>
+          <h1 className="text-2xl font-bold text-foreground">{user?.partnerType === "inspector" ? "Inspection organisation settings" : "Settings"}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Your account details live here. Changes to your registered name or company are reviewed
             by Loqal.

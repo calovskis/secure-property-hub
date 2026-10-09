@@ -5,6 +5,8 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { Download, Upload } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/auth";
 import { DateInput } from "@/components/form/DateInput";
 import { notify } from "@/lib/notifications";
 import { formatDate, formatDateTime } from "@/lib/dates";
@@ -15,43 +17,36 @@ import {
   downloadInspectionReport,
   updateInspection,
   uploadInspectionReport,
-  useInspectionRequests,
   type InspectionRequest,
 } from "@/lib/inspections";
 
 const input = "w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-sm text-foreground";
 
-export function InspectionJobs({ user }: { user: LoqalUser }) {
-  const { items, ready, refresh } = useInspectionRequests();
-  const open = items.filter((i) => i.status === "open");
-  const mine = items.filter((i) => i.inspectorUserId && i.status !== "open" && i.status !== "cancelled");
-  const scheduled = mine.filter((i) => i.status === "scheduled").length;
-  const reportsDue = mine.filter((i) => i.status === "accepted" || i.status === "scheduled").length;
+export function InspectionJobs({ user, items, ready, refresh, compact = false }: { user: LoqalUser; items: InspectionRequest[]; ready: boolean; refresh: () => void; compact?: boolean }) {
+  const { authUserId } = useAuth();
+  const [category, setCategory] = useState("all");
+  const [stage, setStage] = useState("all");
+  const filtered = items.filter((i) => (category === "all" || i.propertyCategory === category) && (stage === "all" || (stage === "active" ? i.status === "accepted" || i.status === "scheduled" : stage === "reports" ? i.status === "report_uploaded" || i.status === "completed" : i.status === "open")));
+  const open = filtered.filter((i) => i.status === "open");
+  const mine = filtered.filter((i) => i.inspectorUserId === authUserId && i.status !== "open" && i.status !== "cancelled");
+  const visibleOpen = compact ? open.slice(0, 3) : open;
+  const visibleMine = compact ? mine.filter((r) => r.status === "accepted" || r.status === "scheduled").slice(0, 3) : mine;
 
   return (
     <div className="space-y-6">
-      <section className="grid grid-cols-1 gap-6 md:grid-cols-3">
-        {([["Open requests", open.length, "In the states you cover"], ["Scheduled", scheduled, "Inspection date set"], ["Reports due", reportsDue, "Upload once inspected"]] as const).map(([l, v, n]) => (
-          <div key={l} className="rounded-lg border border-border bg-card p-6">
-            <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{l}</div>
-            <div className="mt-2 text-3xl font-bold text-brand">{v}</div>
-            <div className="mt-2 text-xs text-muted-foreground">{n}</div>
-          </div>
-        ))}
-      </section>
+      {!compact ? <div className="space-y-4"><div role="group" aria-label="Property type" className="flex flex-wrap gap-2">{([["all", "All property types"], ["house", "Houses"], ["apartment", "Apartments"], ["commercial", "Commercial"], ["land", "Land"]] as const).map(([id, label]) => <Button key={id} size="sm" variant={category === id ? "secondary" : "ghost"} aria-pressed={category === id} onClick={() => setCategory(id)}>{label}</Button>)}</div><label className="flex items-center gap-3 text-xs font-medium text-muted-foreground">Case stage<select aria-label="Case stage" value={stage} onChange={(e) => setStage(e.target.value)} className="rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground"><option value="all">All stages</option><option value="open">New requests</option><option value="active">Scheduled & in progress</option><option value="reports">Reports & completed</option></select></label></div> : null}
 
-      <section className="rounded-lg border border-border bg-card p-6">
+      <section className="border-t border-border py-5">
         <h2 className="text-base font-semibold text-foreground">New inspection requests</h2>
-        <p className="mt-1 text-xs text-muted-foreground">From signed purchase agreements in your coverage areas. The first company to accept gets the job.</p>
         <div className="mt-4 space-y-3">
-          {!ready ? <p className="text-sm text-muted-foreground">Loading…</p> : open.length === 0 ? <p className="text-sm text-muted-foreground">No open requests right now — new ones appear here and in your notifications.</p> : open.map((r) => <OpenJob key={r.id} r={r} user={user} onDone={refresh} />)}
+          {!ready ? <p className="text-sm text-muted-foreground">Loading…</p> : !visibleOpen.length ? <p className="text-sm text-muted-foreground">No new requests in this view.</p> : visibleOpen.map((r) => <OpenJob key={r.id} r={r} user={user} onDone={refresh} />)}
         </div>
       </section>
 
-      <section className="rounded-lg border border-border bg-card p-6">
-        <h2 className="text-base font-semibold text-foreground">My inspection jobs</h2>
+      <section className="border-t border-border py-5">
+        <h2 className="text-base font-semibold text-foreground">{compact ? "Cases requiring follow-up" : "My inspection cases"}</h2>
         <div className="mt-4 space-y-3">
-          {mine.length === 0 ? <p className="text-sm text-muted-foreground">Jobs you accept appear here.</p> : mine.map((r) => <MyJob key={r.id} r={r} onDone={refresh} />)}
+          {!ready ? <p className="text-sm text-muted-foreground">Loading…</p> : !visibleMine.length ? <p className="text-sm text-muted-foreground">No assigned cases in this view.</p> : visibleMine.map((r) => <MyJob key={r.id} r={r} onDone={refresh} />)}
         </div>
       </section>
     </div>
