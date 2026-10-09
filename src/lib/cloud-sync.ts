@@ -40,7 +40,6 @@ export const CLOUD_KEYS = [
   "loqal.document.requests.firstseen.v1",
   "loqal.upload-drafts.v1",
   "loqal.licence-files.v1",
-  "loqal.presence.v1",
 ] as const;
 const KEYS = new Set<string>(CLOUD_KEYS);
 
@@ -319,4 +318,3 @@ export function startCloudSync() {
     if (!document.hidden && ready) void fetchSince(new Date(new Date(cursor).getTime() - 5000).toISOString()).then((r) => r && mergeRemote(r, false));
   });
 }
-export const __cloudSyncTest = { flatten, applyRow };

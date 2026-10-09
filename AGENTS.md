@@ -8,3 +8,5 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Shared app stores persist locally and mirror item-by-item to the `shared_records` table via `src/lib/cloud-sync.ts` (add new shared localStorage keys to CLOUD_KEYS and call registerCloudStore) — so every user sees the same data on any device.
