@@ -385,7 +385,9 @@ export function TaskTracker({ className = "" }: { className?: string }) {
             "correspondence",
             `Read the answer from ${who}`,
             "The partner answered an information request from Loqal.",
-            `/admin-partner-requests?focus=${r.id}&open=correspondence&item=${a.id}`,
+            r.status === "pending"
+              ? `/admin-partner-requests?focus=${r.id}&open=correspondence&item=${a.id}`
+              : `/admin-people/${r.kind}-${r.id}`,
             a.answeredAt,
             "info",
           );
