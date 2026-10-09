@@ -14,6 +14,7 @@
  * see the same state.
  */
 import { useCallback, useMemo, useSyncExternalStore } from "react";
+import { registerCloudStore } from "@/lib/cloud-sync";
 
 /** One-time Loqal Managerial Set-up fee, USD. */
 export const LOQAL_SETUP_FEE_USD = 500;
@@ -126,6 +127,10 @@ const EMPTY: State = { plans: [] };
 
 let state: State | null = null;
 const listeners = new Set<() => void>();
+registerCloudStore(STORAGE_KEY, () => {
+  state = null;
+  listeners.forEach((l) => l());
+});
 
 function load(): State {
   if (state) return state;

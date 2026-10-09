@@ -5,6 +5,7 @@
  */
 import { useCallback, useSyncExternalStore } from "react";
 import { notify } from "@/lib/notifications";
+import { registerCloudStore } from "@/lib/cloud-sync";
 
 export type ChatMessage = {
   id: string;
@@ -30,6 +31,10 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 
 let state: ChatState | null = null;
 const listeners = new Set<() => void>();
+registerCloudStore(STORAGE_KEY, () => {
+  state = null;
+  listeners.forEach((l) => l());
+});
 
 function load(): ChatState {
   if (state) return state;

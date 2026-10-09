@@ -8,6 +8,7 @@
  * has read them, so the progress ring reflects a genuinely complete profile.
  */
 import { useCallback, useMemo, useSyncExternalStore } from "react";
+import { registerCloudStore } from "@/lib/cloud-sync";
 
 type Entry = { done: string[]; dismissedAt?: string };
 type State = Record<string, Entry>;
@@ -17,6 +18,10 @@ const EMPTY: State = {};
 
 let cache: State | null = null;
 const listeners = new Set<() => void>();
+registerCloudStore(STORAGE_KEY, () => {
+  cache = null;
+  listeners.forEach((l) => l());
+});
 
 function load(): State {
   if (cache) return cache;

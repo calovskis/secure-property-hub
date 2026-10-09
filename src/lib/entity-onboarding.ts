@@ -13,6 +13,7 @@
  * src/lib/entity-structure.ts, per file).
  */
 import { useCallback, useMemo, useSyncExternalStore } from "react";
+import { registerCloudStore } from "@/lib/cloud-sync";
 
 export type EntityIntent = {
   /** Lowercased client e-mail. */
@@ -40,6 +41,10 @@ const EMPTY: State = { intents: [] };
 
 let state: State | null = null;
 const listeners = new Set<() => void>();
+registerCloudStore(STORAGE_KEY, () => {
+  state = null;
+  listeners.forEach((l) => l());
+});
 
 function load(): State {
   if (state) return state;

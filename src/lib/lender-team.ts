@@ -5,6 +5,7 @@
  */
 import { useCallback, useSyncExternalStore } from "react";
 import { usDateToIso } from "@/lib/dates";
+import { registerCloudStore } from "@/lib/cloud-sync";
 
 export type LenderRole =
   | "admin"
@@ -226,6 +227,10 @@ const DEFAULT_STATE = (): TeamState => {
 
 let state: TeamState | null = null;
 const listeners = new Set<() => void>();
+registerCloudStore(STORAGE_KEY, () => {
+  state = null;
+  listeners.forEach((l) => l());
+});
 
 /** Older stored members may predate state scoping / licences / vacation. */
 function normalise(next: Partial<TeamState>): TeamState {

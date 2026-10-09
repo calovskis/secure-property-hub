@@ -10,6 +10,7 @@ import {
   type LoqalRoleId,
   type Permission,
 } from "@/lib/roles";
+import { registerCloudStore } from "@/lib/cloud-sync";
 
 export type AdminSectionId =
   | "overview"
@@ -124,6 +125,10 @@ const SEED: StaffMember[] = [
 
 let state: StaffState | null = null;
 const listeners = new Set<() => void>();
+registerCloudStore(STORAGE_KEY, () => {
+  state = null;
+  listeners.forEach((l) => l());
+});
 
 function load(): StaffState {
   if (state) return state;

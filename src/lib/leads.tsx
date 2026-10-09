@@ -16,6 +16,7 @@ import {
 } from "@/lib/lender-team";
 import { pickRealtor } from "@/lib/realtors";
 import { useDeletions } from "@/lib/deletions";
+import { registerCloudStore } from "@/lib/cloud-sync";
 
 export type LeadStatus =
   | "new"
@@ -430,6 +431,14 @@ export function LeadsProvider({ children }: { children: ReactNode }) {
       /* ignore */
     }
     setReady(true);
+    return registerCloudStore(STORAGE_KEY, () => {
+      try {
+        const raw = window.localStorage.getItem(STORAGE_KEY);
+        setLeads(raw ? (JSON.parse(raw) as MortgageLead[]) : []);
+      } catch {
+        /* ignore */
+      }
+    });
   }, []);
 
   const persist = useCallback((next: MortgageLead[]) => {

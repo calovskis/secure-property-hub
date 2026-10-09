@@ -10,6 +10,7 @@
  * later, per product rules).
  */
 import { useCallback, useSyncExternalStore } from "react";
+import { registerCloudStore } from "@/lib/cloud-sync";
 
 export type NotificationSeverity = "info" | "warning" | "critical";
 
@@ -67,6 +68,13 @@ const readKey = (i: { to: string; id: string }) => `${i.to}|${i.id}`;
 
 let state: NotificationState | null = null;
 const listeners = new Set<() => void>();
+registerCloudStore(STORAGE_KEY, () => {
+  state = null;
+  listeners.forEach((l) => l());
+});
+registerCloudStore(READ_KEY, () => {
+  readIds = null;
+});
 
 function load(): NotificationState {
   if (state) return state;

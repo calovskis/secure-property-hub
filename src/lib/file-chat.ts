@@ -8,6 +8,7 @@
  * exchange stays with the property it belongs to.
  */
 import { useCallback, useMemo, useSyncExternalStore } from "react";
+import { registerCloudStore } from "@/lib/cloud-sync";
 
 export type ChatSide = "client" | "agent";
 
@@ -37,6 +38,10 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 
 let state: State | null = null;
 const listeners = new Set<() => void>();
+registerCloudStore(STORAGE_KEY, () => {
+  state = null;
+  listeners.forEach((l) => l());
+});
 
 function load(): State {
   if (state) return state;

@@ -14,6 +14,7 @@ import {
 } from "@/lib/accounting";
 import { formatDate } from "@/lib/dates";
 import { logActivity } from "@/lib/activity";
+import { registerCloudStore } from "@/lib/cloud-sync";
 
 /** Estimated loan = purchase price minus the standard 20% down payment. */
 const LOAN_PCT = 0.8;
@@ -45,6 +46,7 @@ export function LenderAccounting({ lenderName }: { lenderName: string }) {
 
   useEffect(() => {
     setBanks(loadBanks());
+    return registerCloudStore(BANKS_KEY, () => setBanks(loadBanks()));
   }, []);
 
   function saveBanks(next: BankAccount[]) {

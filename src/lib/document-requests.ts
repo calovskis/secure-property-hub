@@ -8,6 +8,7 @@
  */
 import { useCallback, useEffect, useState } from "react";
 import type { LoqalUser, MortgageProfile, StoredDocument } from "@/lib/auth";
+import { registerCloudStore } from "@/lib/cloud-sync";
 
 export type DocumentRequestKind = "idDocuments" | "visaDocuments" | "bankruptcyDocuments";
 
@@ -107,6 +108,7 @@ export function useStagedDocuments(email: string | undefined, kind: DocumentRequ
   useEffect(() => {
     if (!email) return;
     setDocs(readStaged()[stagedKey(email, kind)] ?? []);
+    return registerCloudStore(STAGED_KEY, () => setDocs(readStaged()[stagedKey(email, kind)] ?? []));
   }, [email, kind]);
 
   const persist = useCallback(

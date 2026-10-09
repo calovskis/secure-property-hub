@@ -5,6 +5,7 @@
  * persist here.
  */
 import { useCallback, useSyncExternalStore } from "react";
+import { registerCloudStore } from "@/lib/cloud-sync";
 
 export type InvoiceStatus = "sent" | "paid";
 
@@ -33,6 +34,10 @@ const uid = () => Math.random().toString(36).slice(2, 8);
 
 let state: AccountingState | null = null;
 const listeners = new Set<() => void>();
+registerCloudStore(STORAGE_KEY, () => {
+  state = null;
+  listeners.forEach((l) => l());
+});
 
 function load(): AccountingState {
   if (state) return state;
