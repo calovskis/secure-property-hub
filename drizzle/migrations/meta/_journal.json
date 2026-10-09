@@ -36,6 +36,13 @@
       "when": 1791575284540,
       "tag": "0004_partner_request_document_owner_read",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791575880480,
+      "tag": "0005_fix_inspection_policies_private_role_check",
+      "breakpoints": true
     }
   ]
 }
