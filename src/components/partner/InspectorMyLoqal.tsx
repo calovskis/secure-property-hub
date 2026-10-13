@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Link } from "@tanstack/react-router";
-import { Bell, Building2, CheckCircle2, FileText, LockKeyhole, MapPin, Pencil, ShieldCheck, Users, Wrench } from "lucide-react";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { Bell, Building2, CheckCircle2, ChevronDown, FileText, LockKeyhole, MapPin, Pencil, Settings2, ShieldCheck, Users, Wrench } from "lucide-react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { InspectorNav } from "@/components/partner/InspectorNav";
 import { InspectorProfile } from "@/components/profile/InspectorProfile";
@@ -21,14 +21,23 @@ import { SERVICE_LABEL } from "@/lib/inspection-licensing";
 
 export const MY_LOQAL_SECTIONS = ["profile", "team", "areas", "services", "notifications", "security", "compliance"] as const;
 export type MyLoqalSection = typeof MY_LOQAL_SECTIONS[number];
-const menu = [
-  { id: "profile", label: "Profile", icon: Building2, group: "Company profile" },
-  { id: "team", label: "Team members", icon: Users, group: "Organisation settings", newGroup: true },
-  { id: "areas", label: "Service areas", icon: MapPin },
-  { id: "services", label: "Inspection services", icon: Wrench },
-  { id: "notifications", label: "Notifications", icon: Bell },
-  { id: "security", label: "Security & access", icon: LockKeyhole },
-  { id: "compliance", label: "Documents & compliance", icon: FileText },
+const ORG_SECTIONS = ["team", "areas", "services", "notifications", "security", "compliance"] as const;
+const SECTION_LABEL: Record<MyLoqalSection, string> = {
+  profile: "Company Profile",
+  team: "Team members",
+  areas: "Service areas",
+  services: "Inspection services",
+  notifications: "Notifications",
+  security: "Security & access",
+  compliance: "Documents & compliance",
+};
+const orgMenu = [
+  { id: "team", icon: Users },
+  { id: "areas", icon: MapPin },
+  { id: "services", icon: Wrench },
+  { id: "notifications", icon: Bell },
+  { id: "security", icon: LockKeyhole },
+  { id: "compliance", icon: FileText },
 ] as const;
 
 export function InspectorMyLoqal({ user, section }: { user: LoqalUser; section: MyLoqalSection }) {
@@ -38,9 +47,17 @@ export function InspectorMyLoqal({ user, section }: { user: LoqalUser; section: 
   const { notifications, unread, markRead, markAllRead } = useNotifications(user.email);
   const [accountOpen, setAccountOpen] = useState(false);
   const [agreementOpen, setAgreementOpen] = useState(false);
+  const navigate = useNavigate();
+  const inOrg = (ORG_SECTIONS as readonly string[]).includes(section);
+  const [orgOpen, setOrgOpen] = useState(inOrg);
+  const toggleOrg = () => {
+    const next = !orgOpen;
+    setOrgOpen(next);
+    if (next && !inOrg) navigate({ to: "/inspection-my-loqal", search: { section: "team" } });
+  };
   const company = profile?.legalName || request?.companyName || user.companyName || fullName(user);
   const initials = company.split(/\s+/).slice(0, 2).map((s) => s[0]).join("");
-  const title = menu.find((item) => item.id === section)?.label || "Company profile";
+  const title = SECTION_LABEL[section];
   const descriptions: Record<MyLoqalSection, string> = {
     profile: "Company identity, business details and primary contact.",
     team: "Registered inspectors and company languages.",
@@ -56,7 +73,11 @@ export function InspectorMyLoqal({ user, section }: { user: LoqalUser; section: 
       <header className="mb-6 flex flex-wrap items-start justify-between gap-4"><div><h1 className="text-2xl font-bold">My Loqal</h1><p className="mt-2 text-sm text-muted-foreground">Manage your inspection company’s organization, services and compliance information.</p></div><Button size="sm" variant="outline" disabled={!request} onClick={() => setAgreementOpen(true)}><FileText/>View partner agreement</Button></header>
       <div className="grid items-start gap-5 lg:grid-cols-[238px_minmax(0,1fr)]">
         <nav aria-label="My Loqal sections" className="border-y border-border bg-card p-2 lg:border-l lg:border-r lg:rounded-lg">
-          {menu.map((item) => <div key={item.id}>{"group" in item ? <p className={`${"newGroup" in item ? "mt-2 border-t border-border pt-3" : "pt-3"} px-3 pb-1.5 text-[9px] font-semibold uppercase text-muted-foreground`}>{item.group}</p> : null}<Button size="sm" variant="ghost" asChild className={`h-auto w-full justify-start gap-2 px-3 py-2.5 text-xs ${section === item.id ? "bg-brand-tint text-brand" : "text-muted-foreground"}`}><Link to="/inspection-my-loqal" search={{ section: item.id }} aria-current={section === item.id ? "page" : undefined}><item.icon className="size-4 shrink-0"/>{item.label}</Link></Button></div>)}
+          <Button size="sm" variant="ghost" asChild className={`h-auto w-full justify-start gap-2 px-3 py-2.5 text-xs ${section === "profile" ? "bg-brand-tint text-brand" : "text-muted-foreground"}`}><Link to="/inspection-my-loqal" search={{ section: "profile" }} aria-current={section === "profile" ? "page" : undefined}><Building2 className="size-4 shrink-0"/>Company Profile</Link></Button>
+          <div className="mt-1 border-t border-border pt-1">
+            <Button size="sm" variant="ghost" onClick={toggleOrg} aria-expanded={orgOpen} className={`h-auto w-full items-center justify-between gap-2 px-3 py-2.5 text-xs ${inOrg ? "text-brand" : "text-muted-foreground"}`}><span className="flex items-center gap-2"><Settings2 className="size-4 shrink-0"/>Organisation Settings</span><ChevronDown className={`size-3.5 shrink-0 transition-transform ${orgOpen ? "rotate-180" : ""}`}/></Button>
+            {orgOpen ? <div className="ml-3 mt-1 space-y-1 border-l border-border pl-2">{orgMenu.map((item) => <Button key={item.id} size="sm" variant="ghost" asChild className={`h-auto w-full justify-start gap-2 px-3 py-2.5 text-xs ${section === item.id ? "bg-brand-tint text-brand" : "text-muted-foreground"}`}><Link to="/inspection-my-loqal" search={{ section: item.id }} aria-current={section === item.id ? "page" : undefined}><item.icon className="size-4 shrink-0"/>{SECTION_LABEL[item.id]}</Link></Button>)}</div> : null}
+          </div>
         </nav>
         <div className="min-w-0 space-y-5">
           {section === "profile" ? <div className="flex flex-wrap items-center gap-3 border-y border-border bg-card px-5 py-5"><span className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-brand-tint text-lg font-bold text-brand">{initials}</span><div className="min-w-0 flex-1"><h2 className="break-words text-base font-semibold">{company}</h2><p className="mt-1 text-xs text-muted-foreground">Inspection Partner{request?.states.length ? ` · ${request.states.join(", ")}` : ""}</p></div><span className={`rounded px-2 py-1 text-[10px] font-semibold ${request?.agreementCountersignedAt ? "bg-success/10 text-success" : "bg-brand-tint text-brand"}`}>{request?.agreementCountersignedAt ? "PARTNERSHIP ACTIVE" : request?.status === "approved" ? "REGISTRATION APPROVED" : "REGISTRATION IN REVIEW"}</span></div> : null}
