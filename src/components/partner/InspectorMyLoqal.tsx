@@ -22,13 +22,13 @@ import { SERVICE_LABEL } from "@/lib/inspection-licensing";
 export const MY_LOQAL_SECTIONS = ["profile", "team", "areas", "services", "notifications", "security", "compliance"] as const;
 export type MyLoqalSection = typeof MY_LOQAL_SECTIONS[number];
 const menu = [
-  { id: "profile", label: "Company profile", icon: Building2, group: "Organization" },
-  { id: "team", label: "Team members", icon: Users },
+  { id: "profile", label: "Profile", icon: Building2, group: "Company profile" },
+  { id: "team", label: "Team members", icon: Users, group: "Organisation settings", newGroup: true },
   { id: "areas", label: "Service areas", icon: MapPin },
   { id: "services", label: "Inspection services", icon: Wrench },
-  { id: "notifications", label: "Notifications", icon: Bell, group: "Preferences" },
+  { id: "notifications", label: "Notifications", icon: Bell },
   { id: "security", label: "Security & access", icon: LockKeyhole },
-  { id: "compliance", label: "Documents & compliance", icon: FileText, group: "Legal" },
+  { id: "compliance", label: "Documents & compliance", icon: FileText },
 ] as const;
 
 export function InspectorMyLoqal({ user, section }: { user: LoqalUser; section: MyLoqalSection }) {
@@ -56,7 +56,7 @@ export function InspectorMyLoqal({ user, section }: { user: LoqalUser; section: 
       <header className="mb-6 flex flex-wrap items-start justify-between gap-4"><div><h1 className="text-2xl font-bold">My Loqal</h1><p className="mt-2 text-sm text-muted-foreground">Manage your inspection company’s organization, services and compliance information.</p></div><Button size="sm" variant="outline" disabled={!request} onClick={() => setAgreementOpen(true)}><FileText/>View partner agreement</Button></header>
       <div className="grid items-start gap-5 lg:grid-cols-[238px_minmax(0,1fr)]">
         <nav aria-label="My Loqal sections" className="border-y border-border bg-card p-2 lg:border-l lg:border-r lg:rounded-lg">
-          {menu.map((item) => <div key={item.id}>{"group" in item ? <p className="px-3 pb-1.5 pt-3 text-[9px] font-semibold uppercase text-muted-foreground">{item.group}</p> : null}<Button size="sm" variant="ghost" asChild className={`h-auto w-full justify-start gap-2 px-3 py-2.5 text-xs ${section === item.id ? "bg-brand-tint text-brand" : "text-muted-foreground"}`}><Link to="/inspection-my-loqal" search={{ section: item.id }} aria-current={section === item.id ? "page" : undefined}><item.icon className="size-4 shrink-0"/>{item.label}</Link></Button></div>)}
+          {menu.map((item) => <div key={item.id}>{"group" in item ? <p className={`${"newGroup" in item ? "mt-2 border-t border-border pt-3" : "pt-3"} px-3 pb-1.5 text-[9px] font-semibold uppercase text-muted-foreground`}>{item.group}</p> : null}<Button size="sm" variant="ghost" asChild className={`h-auto w-full justify-start gap-2 px-3 py-2.5 text-xs ${section === item.id ? "bg-brand-tint text-brand" : "text-muted-foreground"}`}><Link to="/inspection-my-loqal" search={{ section: item.id }} aria-current={section === item.id ? "page" : undefined}><item.icon className="size-4 shrink-0"/>{item.label}</Link></Button></div>)}
         </nav>
         <div className="min-w-0 space-y-5">
           {section === "profile" ? <div className="flex flex-wrap items-center gap-3 border-y border-border bg-card px-5 py-5"><span className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-brand-tint text-lg font-bold text-brand">{initials}</span><div className="min-w-0 flex-1"><h2 className="break-words text-base font-semibold">{company}</h2><p className="mt-1 text-xs text-muted-foreground">Inspection Partner{request?.states.length ? ` · ${request.states.join(", ")}` : ""}</p></div><span className={`rounded px-2 py-1 text-[10px] font-semibold ${request?.agreementCountersignedAt ? "bg-success/10 text-success" : "bg-brand-tint text-brand"}`}>{request?.agreementCountersignedAt ? "PARTNERSHIP ACTIVE" : request?.status === "approved" ? "REGISTRATION APPROVED" : "REGISTRATION IN REVIEW"}</span></div> : null}
