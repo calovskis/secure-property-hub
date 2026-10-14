@@ -1,3 +1,4 @@
+import { InspectionOffersPanel } from "@/components/realtor/InspectionOffersPanel";
 import { useState } from "react";
 import { ArrowRight, Check, CheckCircle2, ChevronDown, Download, FileSignature, FileText, Handshake, Link2, MessageSquareQuote, Pencil, Scale, Upload } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -160,6 +161,7 @@ export function SellerResponsePanel({ leadId, propertyId, propertyLabel, purchas
           <Button size="sm" onClick={() => openDialog(false)}><Upload />Share the agreement</Button>
         </div>}
         <EscrowDepositPanel leadId={leadId} propertyId={propertyId} propertyLabel={propertyLabel} offerPrice={purchase.offerPrice} buyerName={buyerName} buyerEmail={buyerEmail} agentName={agentName} />
+        {plan.agreementSignedAt ? <InspectionOffersPanel leadId={leadId} agentName={agentName} /> : null}
       </> : null}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

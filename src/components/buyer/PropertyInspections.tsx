@@ -7,7 +7,7 @@
  */
 import { useState } from "react";
 import { toast } from "sonner";
-import { AlertTriangle, CheckCircle2, ClipboardCheck, Download, Plus, Search } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ClipboardCheck, Download, FileText, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useEntityPlan } from "@/lib/entity-structure";
@@ -16,24 +16,54 @@ import { notify } from "@/lib/notifications";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import { getProperty } from "@/data/properties";
 import { completeTerms, INSPECTION_TYPES, propertyCategory, stateFromLocation, type AgreementTerms } from "@/lib/purchase-agreement";
-import { INSPECTION_STATUS_LABEL, createInspectionRequest, downloadInspectionReport, useInspectionRequests, type InspectionRequest } from "@/lib/inspections";
+import { INSPECTION_STATUS_LABEL, confirmInspectionOffer, createInspectionRequest, downloadInspectionInvoice, downloadInspectionReport, useInspectionOffers, useInspectionRequests, type InspectionRequest } from "@/lib/inspections";
 
 type Props = { leadId: string; propertyId?: number | undefined; propertyLabel: string; clientLabel: string; agentEmail?: string | undefined };
 
-function RequestStatus({ r }: { r: InspectionRequest }) {
-  if (r.status === "open") return <p className="mt-2 flex items-center gap-2 text-xs text-muted-foreground"><Search className="size-3.5" aria-hidden /> Sent {formatDateTime(r.createdAt)} — waiting for an inspection company to accept.</p>;
+function RequestStatus({ r, onDone }: { r: InspectionRequest; onDone: () => void }) {
+  const { offers } = useInspectionOffers([r.id]);
+  const [busy, setBusy] = useState(false);
+  const live = offers.filter((o) => o.status !== "withdrawn");
+  if (r.status === "open") return <p className="mt-2 flex items-center gap-2 text-xs text-muted-foreground"><Search className="size-3.5" aria-hidden /> Sent {formatDateTime(r.createdAt)} — {live.length ? `${live.length} offer${live.length > 1 ? "s" : ""} received.` : "inspection companies are preparing offers."} Your agent will compare price and timing{r.offersDueAt ? ` by ${formatDateTime(r.offersDueAt)}` : ""} and recommend one.</p>;
+  if (r.status === "awaiting_client") {
+    const chosen = live.find((o) => o.id === r.selectedOfferId);
+    const others = live.filter((o) => o.id !== r.selectedOfferId);
+    async function confirm() {
+      if (!chosen) return;
+      setBusy(true);
+      try {
+        await confirmInspectionOffer(r.id);
+        if (chosen.contact?.email) notify({ id: `inspection-confirmed-${r.id}`, to: chosen.contact.email.toLowerCase(), title: "You've been chosen for an inspection", body: `${r.propertyLabel} — the client confirmed $${chosen.price.toLocaleString("en-US")}. Coordinate access with the buyer's agent and mark the visit as scheduled.`, href: "/partner?tab=cases", severity: "info" });
+        if (r.agentEmail) notify({ id: `inspection-confirmed-agent-${r.id}`, to: r.agentEmail.toLowerCase(), title: "Your buyer confirmed the inspection", body: `${r.propertyLabel} — ${chosen.company}, $${chosen.price.toLocaleString("en-US")}.`, href: `/partner?tab=buyers&focus=${r.leadId}`, severity: "info" });
+        notify({ id: `inspection-confirmed-admin-${r.id}`, to: "admins", title: "Inspection confirmed — invoices issued", body: `${r.propertyLabel} — ${chosen.company}, $${chosen.price.toLocaleString("en-US")}.`, href: "/admin", severity: "info" });
+        toast("Inspection confirmed", { description: "Your invoice is ready to download." });
+        onDone();
+      } catch (e) { toast.error(e instanceof Error ? e.message : "Couldn't confirm"); } finally { setBusy(false); }
+    }
+    return chosen ? (
+      <div className="mt-2 space-y-2 rounded-md border border-brand/30 bg-brand-tint/30 p-3 text-xs">
+        <p className="font-semibold text-foreground">Your agent recommends {chosen.company}</p>
+        <p className="text-muted-foreground">Price <b className="text-foreground">${chosen.price.toLocaleString("en-US")}</b> · visit {chosen.visitSlots[0] ? <b className="text-foreground">{formatDateTime(chosen.visitSlots[0])}</b> : "flexible"}{chosen.visitSlots.length > 1 ? ` (+${chosen.visitSlots.length - 1} alternative${chosen.visitSlots.length > 2 ? "s" : ""})` : ""} · report within <b className="text-foreground">{chosen.reportDays} business days</b></p>
+        {r.agentNote ? <p className="text-muted-foreground">Agent's note: “{r.agentNote}”</p> : null}
+        {others.length ? <div className="text-muted-foreground"><p className="font-semibold text-foreground">Other offers</p>{others.map((o) => <p key={o.id}>{o.company} — ${o.price.toLocaleString("en-US")} · {o.visitSlots[0] ? formatDateTime(o.visitSlots[0]) : "flexible"} · report {o.reportDays} days</p>)}</div> : null}
+        <p className="text-muted-foreground">By confirming, you agree to this price and timing. You pay the inspection company directly; an invoice is generated for you.</p>
+        <Button size="sm" disabled={busy} onClick={confirm}>{busy ? "Confirming…" : "Confirm price & timing"}</Button>
+      </div>
+    ) : null;
+  }
   return (
     <div className="mt-2 space-y-1.5 rounded-md border border-success/30 bg-success/5 p-3 text-xs">
       <p className="flex items-center gap-2 font-semibold text-foreground"><CheckCircle2 className="size-4 text-success" aria-hidden /> {r.inspectorCompany}</p>
       {r.inspectorContact ? <p className="text-muted-foreground">{[r.inspectorContact.name, r.inspectorContact.phone, r.inspectorContact.email].filter(Boolean).join(" · ")}</p> : null}
       {r.fee != null ? <p className="text-muted-foreground">Fee: <b className="text-foreground">${r.fee.toLocaleString("en-US")}</b> — paid directly to the inspector.</p> : null}
       {r.scheduledAt || r.proposedAt ? <p className="text-muted-foreground">{r.scheduledAt ? "Scheduled for " : "Proposed date: "}<b className="text-foreground">{formatDateTime(r.scheduledAt || r.proposedAt || "")}</b></p> : null}
+      {r.invoices.filter((i) => i.kind === "inspection_service").map((inv) => <button key={inv.number} type="button" onClick={() => downloadInspectionInvoice(inv).catch(() => toast.error("Download failed"))} className="flex items-center gap-1.5 font-semibold text-brand"><FileText className="size-3.5" aria-hidden /> Invoice {inv.number}</button>)}
       {r.reportFiles.map((f) => <button key={f.path} type="button" onClick={() => downloadInspectionReport(f).catch(() => toast.error("Download failed"))} className="flex items-center gap-1.5 font-semibold text-brand"><Download className="size-3.5" aria-hidden /> {f.name}</button>)}
     </div>
   );
 }
 
-function RequestRow({ r }: { r: InspectionRequest }) {
+function RequestRow({ r, onDone }: { r: InspectionRequest; onDone: () => void }) {
   return (
     <div className="rounded-md border border-border bg-background p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -41,7 +71,7 @@ function RequestRow({ r }: { r: InspectionRequest }) {
         <span className="rounded-full bg-brand-tint px-2.5 py-0.5 text-[11px] font-semibold text-brand">{INSPECTION_STATUS_LABEL[r.status]}</span>
       </div>
       {r.outsideAgreement ? <p className="mt-2 text-[11px] font-semibold text-gold">Additional — not part of the purchase agreement</p> : null}
-      <RequestStatus r={r} />
+      <RequestStatus r={r} onDone={onDone} />
     </div>
   );
 }
@@ -100,7 +130,7 @@ export function PropertyInspections({ leadId, propertyId, propertyLabel, clientL
             {deadline ? <p className="mt-0.5 text-xs text-muted-foreground">Your inspection period ends on <b className="text-foreground">{formatDate(deadline)}</b> ({terms.inspectionDeadlineDays} days from signing). Within this period, findings from these inspections can be used to ask the seller for repairs or credits, as your agreement allows.</p> : <p className="mt-0.5 text-xs text-muted-foreground">Your signed agreement does not include an inspection contingency.</p>}
           </div>
         </div>
-        {!ready ? null : agreedTypes.length === 0 ? null : agreedReq ? <div className="mt-3"><RequestRow r={agreedReq} /></div> : (
+        {!ready ? null : agreedTypes.length === 0 ? null : agreedReq ? <div className="mt-3"><RequestRow r={agreedReq} onDone={refresh} /></div> : (
           <div className="mt-3">
             <div className="flex flex-wrap gap-1.5">{agreedTypes.map((t) => <span key={t} className="rounded-full border border-border bg-background px-2.5 py-0.5 text-[11px] text-foreground">{t}</span>)}</div>
             {confirmAgreed ? (
@@ -122,7 +152,7 @@ export function PropertyInspections({ leadId, propertyId, propertyLabel, clientL
           </div>
           <Button size="sm" variant="outline" onClick={() => setExtraOpen(true)}><Plus aria-hidden /> Add inspection</Button>
         </div>
-        {extras.length ? <div className="mt-3 space-y-2">{extras.map((r) => <RequestRow key={r.id} r={r} />)}</div> : null}
+        {extras.length ? <div className="mt-3 space-y-2">{extras.map((r) => <RequestRow key={r.id} r={r} onDone={refresh} />)}</div> : null}
       </div>
 
       <Dialog open={extraOpen} onOpenChange={setExtraOpen}>
