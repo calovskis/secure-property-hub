@@ -50,6 +50,13 @@
       "when": 1792001881484,
       "tag": "0006_inspection_outside_agreement",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792002329751,
+      "tag": "0007_notify_matching_inspectors",
+      "breakpoints": true
     }
   ]
 }
