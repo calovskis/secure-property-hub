@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { BuyerProcessCard } from "@/components/buyer/BuyerProcessCard";
+import { PropertyInspections } from "@/components/buyer/PropertyInspections";
 import { VideoCallDialog } from "@/components/calls/VideoCallDialog";
 import { MortgageCaseCard } from "@/components/mortgage/MortgageCaseCard";
 import { BuyerAgentDialog } from "@/components/mortgage/BuyerAgentDialog";
@@ -40,7 +41,7 @@ import { assignedPartner } from "@/lib/partner-assignments";
 import { usePartnerRequests } from "@/lib/partner-requests";
 import { useClientPropertyActivity } from "@/lib/property-activity";
 import { useFileRequests } from "@/lib/property-requests";
-import { partnerDisplayForClient } from "@/lib/user-id";
+import { clientDisplayForPartner, partnerDisplayForClient } from "@/lib/user-id";
 import { formatDateTime } from "@/lib/dates";
 
 type WorkspaceSearch = {
@@ -344,6 +345,12 @@ function PropertyWorkspacePage() {
                 <MortgageCaseCard lead={lead} />
               )}
             </WorkspaceCard>
+
+            {lead && plan?.agreementSignedAt ? (
+              <WorkspaceCard title="Inspections">
+                <PropertyInspections leadId={lead.id} propertyId={property.id} propertyLabel={`${property.address}`} clientLabel={clientDisplayForPartner(lead.clientName, lead.clientEmail)} agentEmail={realtor?.email} />
+              </WorkspaceCard>
+            ) : null}
           </div>
 
           <aside className="space-y-5 xl:sticky xl:top-5">
