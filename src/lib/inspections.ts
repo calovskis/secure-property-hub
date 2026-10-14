@@ -169,7 +169,8 @@ export type InspectionOffer = {
   status: "submitted" | "selected" | "not_selected" | "withdrawn"; createdAt: string;
 };
 
-const offerFrom = (r: Row): InspectionOffer => ({
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const offerFrom = (r: any): InspectionOffer => ({
   id: String(r.id), requestId: String(r.request_id), inspectorUserId: String(r.inspector_user_id), company: String(r.company ?? ""),
   contact: r.contact ?? null, price: Number(r.price), visitSlots: (r.visit_slots as string[]) ?? [], visitFlexible: Boolean(r.visit_flexible),
   reportDays: Number(r.report_days), note: r.note ?? null, status: r.status, createdAt: String(r.created_at),
@@ -227,7 +228,8 @@ export type InspectionMessage = {
   authorName: string; body: string; callSlots: string[]; chosenSlot?: string | null; createdAt: string;
 };
 const msgDb = () => supabase.from("inspection_messages" as never) as unknown as ReturnType<typeof supabase.from>;
-const msgFrom = (r: Row): InspectionMessage => ({
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const msgFrom = (r: any): InspectionMessage => ({
   id: String(r.id), requestId: String(r.request_id), inspectorUserId: String(r.inspector_user_id), inspectorEmail: String(r.inspector_email ?? ""),
   fromSide: r.from_side, authorName: String(r.author_name ?? ""), body: String(r.body ?? ""), callSlots: (r.call_slots as string[]) ?? [],
   chosenSlot: r.chosen_slot ?? null, createdAt: String(r.created_at),
