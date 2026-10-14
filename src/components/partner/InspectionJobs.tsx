@@ -26,9 +26,9 @@ export function InspectionJobs({ user, items, ready, refresh, compact = false }:
   const { authUserId } = useAuth();
   const [category, setCategory] = useState("all");
   const [stage, setStage] = useState("all");
-  const filtered = items.filter((i) => (category === "all" || i.propertyCategory === category) && (stage === "all" || (stage === "active" ? i.status === "accepted" || i.status === "scheduled" : stage === "reports" ? i.status === "report_uploaded" || i.status === "completed" : i.status === "open")));
-  const open = filtered.filter((i) => i.status === "open");
-  const mine = filtered.filter((i) => i.inspectorUserId === authUserId && i.status !== "open" && i.status !== "cancelled");
+  const filtered = items.filter((i) => (category === "all" || i.propertyCategory === category) && (stage === "all" || (stage === "active" ? i.status === "accepted" || i.status === "scheduled" : stage === "reports" ? i.status === "report_uploaded" || i.status === "completed" : (i.status === "open" || i.status === "awaiting_client"))));
+  const open = filtered.filter((i) => i.status === "open" || (i.status === "awaiting_client" && i.inspectorUserId == null));
+  const mine = filtered.filter((i) => i.inspectorUserId === authUserId && i.status !== "open" && i.status !== "awaiting_client" && i.status !== "cancelled");
   const visibleOpen = compact ? open.slice(0, 3) : open;
   const visibleMine = compact ? mine.filter((r) => r.status === "accepted" || r.status === "scheduled").slice(0, 3) : mine;
 
@@ -70,7 +70,7 @@ function JobHead({ r }: { r: InspectionRequest }) {
 }
 
 export function InspectionJobDetails({ r, user, onDone }: { r: InspectionRequest; user: LoqalUser; onDone: () => void }) {
-  return r.status === "open" ? <OpenJob r={r} user={user} onDone={onDone} /> : <MyJob r={r} onDone={onDone} />;
+  return r.status === "open" || r.status === "awaiting_client" ? <OpenJob r={r} user={user} onDone={onDone} /> : <MyJob r={r} onDone={onDone} />;
 }
 
 function OpenJob({ r, user, onDone }: { r: InspectionRequest; user: LoqalUser; onDone: () => void }) {
