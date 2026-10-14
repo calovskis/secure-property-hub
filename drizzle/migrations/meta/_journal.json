@@ -43,6 +43,13 @@
       "when": 1791575880480,
       "tag": "0005_fix_inspection_policies_private_role_check",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792001881484,
+      "tag": "0006_inspection_outside_agreement",
+      "breakpoints": true
     }
   ]
 }
