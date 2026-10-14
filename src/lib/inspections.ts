@@ -8,10 +8,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-export type InspectionStatus = "open" | "accepted" | "scheduled" | "report_uploaded" | "completed" | "cancelled";
+export type InspectionStatus = "open" | "awaiting_client" | "accepted" | "scheduled" | "report_uploaded" | "completed" | "cancelled";
 
 export const INSPECTION_STATUS_LABEL: Record<InspectionStatus, string> = {
-  open: "Looking for an inspector",
+  open: "Collecting offers",
+  awaiting_client: "Awaiting your confirmation",
   accepted: "Inspector assigned",
   scheduled: "Inspection scheduled",
   report_uploaded: "Report ready",
@@ -44,6 +45,12 @@ export type InspectionRequest = {
   /** Requested by the buyer on top of the signed agreement — no contractual rights against the seller. */
   outsideAgreement: boolean;
   clientNote?: string | null;
+  propertyId?: string | null;
+  offersDueAt?: string | null;
+  selectedOfferId?: string | null;
+  agentNote?: string | null;
+  clientConfirmedAt?: string | null;
+  invoices: InspectionInvoice[];
   createdAt: string;
 };
 
@@ -71,6 +78,12 @@ const fromRow = (r: any): InspectionRequest => ({
   reportFiles: (r.report_files as InspectionReport[] | null) ?? [],
   outsideAgreement: Boolean(r.outside_agreement),
   clientNote: (r.client_note as string | null) ?? null,
+  propertyId: (r.property_id as string | null) ?? null,
+  offersDueAt: (r.offers_due_at as string | null) ?? null,
+  selectedOfferId: (r.selected_offer_id as string | null) ?? null,
+  agentNote: (r.agent_note as string | null) ?? null,
+  clientConfirmedAt: (r.client_confirmed_at as string | null) ?? null,
+  invoices: (r.invoices as InspectionInvoice[] | null) ?? [],
   createdAt: String(r.created_at),
 });
 
@@ -139,4 +152,136 @@ export async function downloadInspectionReport(r: InspectionReport) {
   const { data, error } = await supabase.storage.from("inspection-reports").createSignedUrl(r.path, 120, { download: r.name });
   if (error || !data) throw new Error(error?.message ?? "Download failed");
   window.open(data.signedUrl, "_blank", "noopener");
+}
+
+/* ---------- Offers: inspectors quote, the buyer's agent recommends, the client confirms ---------- */
+
+export type InspectionInvoice = {
+  number: string; kind: "inspection_service" | "loqal_fee"; issuedAt: string;
+  from: { name: string; email?: string; phone?: string }; to: { name: string; email?: string };
+  description: string; amount: number; payableTo: string; due: string;
+};
+
+export type InspectionOffer = {
+  id: string; requestId: string; inspectorUserId: string; company: string;
+  contact: { name?: string; phone?: string; email?: string } | null;
+  price: number; visitSlots: string[]; visitFlexible: boolean; reportDays: number; note?: string | null;
+  status: "submitted" | "selected" | "not_selected" | "withdrawn"; createdAt: string;
+};
+
+const offerFrom = (r: Row): InspectionOffer => ({
+  id: String(r.id), requestId: String(r.request_id), inspectorUserId: String(r.inspector_user_id), company: String(r.company ?? ""),
+  contact: r.contact ?? null, price: Number(r.price), visitSlots: (r.visit_slots as string[]) ?? [], visitFlexible: Boolean(r.visit_flexible),
+  reportDays: Number(r.report_days), note: r.note ?? null, status: r.status, createdAt: String(r.created_at),
+});
+const offersDb = () => supabase.from("inspection_offers" as never) as unknown as ReturnType<typeof supabase.from>;
+
+/** Offers visible to the caller (own offers, or all offers when agent/client/admin). */
+export function useInspectionOffers(requestIds: string[]) {
+  const key = requestIds.slice().sort().join(",");
+  const [offers, setOffers] = useState<InspectionOffer[]>([]);
+  const refresh = useCallback(async () => {
+    if (!key) { setOffers([]); return; }
+    const { data, error } = await offersDb().select("*").in("request_id", key.split(",")).order("price", { ascending: true });
+    if (error) console.error("inspection_offers load failed", error.message);
+    setOffers(((data ?? []) as Row[]).map(offerFrom));
+  }, [key]);
+  useEffect(() => { void refresh(); const t = setInterval(() => void refresh(), 20000); return () => clearInterval(t); }, [refresh]);
+  return { offers, refresh };
+}
+
+export async function submitInspectionOffer(input: {
+  requestId: string; partnerRequestId?: string | undefined; company: string; contact: InspectionOffer["contact"];
+  price: number; visitSlots: string[]; visitFlexible: boolean; reportDays: number; note?: string | undefined; existingId?: string | undefined;
+}) {
+  const row = {
+    request_id: input.requestId, partner_request_id: input.partnerRequestId ?? null, company: input.company, contact: input.contact,
+    price: input.price, visit_slots: input.visitSlots, visit_flexible: input.visitFlexible, report_days: input.reportDays, note: input.note?.trim() || null,
+  };
+  const { error } = input.existingId
+    ? await offersDb().update(row as never).eq("id", input.existingId)
+    : await offersDb().insert(row as never);
+  if (error) throw new Error(error.message);
+}
+
+export async function selectInspectionOffer(offerId: string, note: string) {
+  const { error } = await supabase.rpc("select_inspection_offer" as never, { _offer_id: offerId, _note: note } as never);
+  if (error) throw new Error(error.message);
+}
+
+export async function confirmInspectionOffer(requestId: string) {
+  const { error } = await supabase.rpc("confirm_inspection_offer" as never, { _request_id: requestId } as never);
+  if (error) throw new Error(error.message);
+}
+
+export type AgentContact = { email: string; name: string; company: string; phone: string };
+export async function fetchAgentContact(requestId: string): Promise<AgentContact | null> {
+  const { data } = await supabase.rpc("inspection_agent_contact" as never, { _request_id: requestId } as never);
+  return (data as AgentContact | null) ?? null;
+}
+
+/* ---------- Inspector ↔ buyer's agent thread (one per inspector per request) ---------- */
+
+export type InspectionMessage = {
+  id: string; requestId: string; inspectorUserId: string; inspectorEmail: string; fromSide: "inspector" | "agent";
+  authorName: string; body: string; callSlots: string[]; chosenSlot?: string | null; createdAt: string;
+};
+const msgDb = () => supabase.from("inspection_messages" as never) as unknown as ReturnType<typeof supabase.from>;
+const msgFrom = (r: Row): InspectionMessage => ({
+  id: String(r.id), requestId: String(r.request_id), inspectorUserId: String(r.inspector_user_id), inspectorEmail: String(r.inspector_email ?? ""),
+  fromSide: r.from_side, authorName: String(r.author_name ?? ""), body: String(r.body ?? ""), callSlots: (r.call_slots as string[]) ?? [],
+  chosenSlot: r.chosen_slot ?? null, createdAt: String(r.created_at),
+});
+
+export function useInspectionMessages(requestId: string, inspectorUserId?: string) {
+  const [messages, setMessages] = useState<InspectionMessage[]>([]);
+  const refresh = useCallback(async () => {
+    let q = msgDb().select("*").eq("request_id", requestId).order("created_at", { ascending: true });
+    if (inspectorUserId) q = q.eq("inspector_user_id", inspectorUserId);
+    const { data } = await q;
+    setMessages(((data ?? []) as Row[]).map(msgFrom));
+  }, [requestId, inspectorUserId]);
+  useEffect(() => { void refresh(); const t = setInterval(() => void refresh(), 15000); return () => clearInterval(t); }, [refresh]);
+  return { messages, refresh };
+}
+
+export async function sendInspectionMessage(input: {
+  requestId: string; inspectorUserId: string; inspectorEmail: string; fromSide: "inspector" | "agent"; authorName: string; body: string; callSlots?: string[];
+}) {
+  const { error } = await msgDb().insert({
+    request_id: input.requestId, inspector_user_id: input.inspectorUserId, inspector_email: input.inspectorEmail.toLowerCase(),
+    from_side: input.fromSide, author_name: input.authorName, body: input.body, call_slots: input.callSlots ?? [],
+  } as never);
+  if (error) throw new Error(error.message);
+}
+
+export async function chooseCallSlot(messageId: string, slot: string) {
+  const { error } = await msgDb().update({ chosen_slot: slot } as never).eq("id", messageId);
+  if (error) throw new Error(error.message);
+}
+
+/* ---------- Invoice PDF ---------- */
+
+export async function downloadInspectionInvoice(inv: InspectionInvoice) {
+  const { jsPDF } = await import("jspdf");
+  const doc = new jsPDF();
+  const money = (n: number) => `$${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const d = new Date(inv.issuedAt);
+  const date = `${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}/${d.getFullYear()}`;
+  doc.setFontSize(18); doc.text("INVOICE", 20, 24);
+  doc.setFontSize(10);
+  doc.text(`Invoice no. ${inv.number}`, 20, 34); doc.text(`Issued ${date}`, 20, 40);
+  doc.setFontSize(11); doc.text("From", 20, 54); doc.text("Bill to", 110, 54);
+  doc.setFontSize(10);
+  [inv.from.name, inv.from.email, inv.from.phone].filter(Boolean).forEach((l, i) => doc.text(String(l), 20, 61 + i * 6));
+  [inv.to.name, inv.to.email].filter(Boolean).forEach((l, i) => doc.text(String(l), 110, 61 + i * 6));
+  doc.line(20, 86, 190, 86);
+  doc.text(doc.splitTextToSize(inv.description, 130) as string[], 20, 94);
+  doc.text(money(inv.amount), 190, 94, { align: "right" });
+  doc.line(20, 110, 190, 110);
+  doc.setFontSize(12); doc.text(`Total due: ${money(inv.amount)}`, 190, 120, { align: "right" });
+  doc.setFontSize(9);
+  doc.text(`Payable to: ${inv.payableTo}`, 20, 134); doc.text(`Due: ${inv.due}`, 20, 140);
+  doc.text("Generated by Loqal from the price and timing confirmed by the client.", 20, 152);
+  doc.save(`${inv.number}.pdf`);
 }
