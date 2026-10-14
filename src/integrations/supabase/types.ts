@@ -228,8 +228,10 @@ export type Database = {
         Row: {
           agent_email: string | null
           agreement_signed_at: string | null
+          client_acknowledged_at: string | null
           client_email: string
           client_label: string
+          client_note: string | null
           client_user_id: string
           created_at: string
           deadline_days: number | null
@@ -242,6 +244,7 @@ export type Database = {
           inspector_request_id: string | null
           inspector_user_id: string | null
           lead_id: string
+          outside_agreement: boolean
           property_category: string
           property_id: string | null
           property_label: string
@@ -255,8 +258,10 @@ export type Database = {
         Insert: {
           agent_email?: string | null
           agreement_signed_at?: string | null
+          client_acknowledged_at?: string | null
           client_email?: string
           client_label?: string
+          client_note?: string | null
           client_user_id?: string
           created_at?: string
           deadline_days?: number | null
@@ -269,6 +274,7 @@ export type Database = {
           inspector_request_id?: string | null
           inspector_user_id?: string | null
           lead_id: string
+          outside_agreement?: boolean
           property_category?: string
           property_id?: string | null
           property_label?: string
@@ -282,8 +288,10 @@ export type Database = {
         Update: {
           agent_email?: string | null
           agreement_signed_at?: string | null
+          client_acknowledged_at?: string | null
           client_email?: string
           client_label?: string
+          client_note?: string | null
           client_user_id?: string
           created_at?: string
           deadline_days?: number | null
@@ -296,6 +304,7 @@ export type Database = {
           inspector_request_id?: string | null
           inspector_user_id?: string | null
           lead_id?: string
+          outside_agreement?: boolean
           property_category?: string
           property_id?: string | null
           property_label?: string

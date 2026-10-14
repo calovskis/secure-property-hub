@@ -41,6 +41,9 @@ export type InspectionRequest = {
   proposedAt?: string | null;
   scheduledAt?: string | null;
   reportFiles: InspectionReport[];
+  /** Requested by the buyer on top of the signed agreement — no contractual rights against the seller. */
+  outsideAgreement: boolean;
+  clientNote?: string | null;
   createdAt: string;
 };
 
@@ -66,6 +69,8 @@ const fromRow = (r: any): InspectionRequest => ({
   proposedAt: (r.proposed_at as string | null) ?? null,
   scheduledAt: (r.scheduled_at as string | null) ?? null,
   reportFiles: (r.report_files as InspectionReport[] | null) ?? [],
+  outsideAgreement: Boolean(r.outside_agreement),
+  clientNote: (r.client_note as string | null) ?? null,
   createdAt: String(r.created_at),
 });
 
@@ -94,6 +99,7 @@ export function useInspectionRequests(leadId?: string) {
 export async function createInspectionRequest(input: {
   leadId: string; clientEmail: string; clientLabel: string; agentEmail?: string | undefined; propertyId?: string | undefined;
   propertyLabel: string; state: string; propertyCategory: string; inspectionTypes: string[]; deadlineDays?: number | undefined; agreementSignedAt?: string | undefined;
+  outsideAgreement?: boolean | undefined; clientNote?: string | undefined;
 }) {
   const { data: u } = await supabase.auth.getUser();
   if (!u.user) throw new Error("Please sign in again.");
@@ -103,7 +109,9 @@ export async function createInspectionRequest(input: {
     agent_email: input.agentEmail?.toLowerCase() ?? null, property_id: input.propertyId ?? null, property_label: input.propertyLabel,
     state: input.state, property_category: input.propertyCategory, inspection_types: input.inspectionTypes,
     deadline_days: input.deadlineDays ?? null, agreement_signed_at: input.agreementSignedAt ?? null, status: "open",
-    history: [{ status: "open", at: now, by: input.clientLabel }],
+    outside_agreement: Boolean(input.outsideAgreement), client_note: input.clientNote?.trim() || null,
+    client_acknowledged_at: input.outsideAgreement ? now : null,
+    history: [{ status: "open", at: now, by: input.clientLabel, ...(input.outsideAgreement ? { note: "Additional inspection outside the purchase agreement; buyer acknowledged no claim against the seller" } : {}) }],
   } as never).select("*").single();
   if (error) throw new Error(error.message);
   return fromRow(data as Row);

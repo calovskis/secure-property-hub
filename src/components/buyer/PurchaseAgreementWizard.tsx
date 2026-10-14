@@ -47,7 +47,6 @@ import { CLOSING_STEPS } from "@/lib/closing-steps";
 import { CounterCard } from "@/components/realtor/SellerResponsePanel";
 import type { EntityPlan } from "@/lib/entity-structure";
 import { EarnestDepositStep } from "@/components/buyer/EarnestDepositStep";
-import { InspectionOrderStep } from "@/components/buyer/InspectionOrderStep";
 import type { PurchaseRequest } from "@/lib/property-requests";
 
 const inputClass =
@@ -708,7 +707,7 @@ export function PurchaseAgreementWizard({
                       setCounterNote={setCounterNote}
                       onCounter={answerCounter}
                       onSigned={markDocusignSigned}
-                      deposit={<><EarnestDepositStep leadId={leadId} agentName={agentName} agentEmail={agentEmail} clientLabel={clientLabel} propertyLabel={purchase.propertyLabel} /><InspectionOrderStep leadId={leadId} propertyId={purchase.propertyId} propertyLabel={purchase.propertyLabel} clientLabel={clientLabel} agentEmail={agentEmail} /></>}
+                      deposit={<><EarnestDepositStep leadId={leadId} agentName={agentName} agentEmail={agentEmail} clientLabel={clientLabel} propertyLabel={purchase.propertyLabel} /></>}
                     />
                   </>
                 ) : changeAsked ? (
