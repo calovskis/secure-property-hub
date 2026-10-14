@@ -22,7 +22,7 @@ export function InspectionCases({ user, items, ready, refresh }: { user: LoqalUs
   const [newest, setNewest] = useState(true);
   const [page, setPage] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const visible = items.filter((r) => r.status === "open" || (!!authUserId && r.inspectorUserId === authUserId));
+  const visible = items.filter((r) => r.status === "open" || r.status === "awaiting_client" || (!!authUserId && r.inspectorUserId === authUserId));
   const matchesTab = (r: InspectionRequest, id: string) => id === "all" || (id === "open" ? r.status === "open" : id === "scheduled" ? r.status === "accepted" || r.status === "scheduled" : id === "pending" ? isPending(r) : r.status === "report_uploaded" || r.status === "completed");
   const tabs = [["all", "All inspections"], ["open", "New requests"], ["scheduled", "Scheduled & assigned"], ["pending", "Reports pending"], ["complete", "Reports & completed"]] as const;
   const services = Array.from(new Set(visible.flatMap((r) => r.inspectionTypes))).sort();

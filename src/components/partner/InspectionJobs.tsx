@@ -2,9 +2,13 @@
  * Inspection company workspace: open requests in the states they cover, and
  * their accepted jobs through scheduling to report upload.
  */
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Link } from "@tanstack/react-router";
+import { supabase } from "@/integrations/supabase/client";
+import { getProperty } from "@/data/properties";
+import { InspectionThread } from "@/components/inspections/InspectionThread";
 import { toast } from "sonner";
-import { Download, Upload } from "lucide-react";
+import { Download, ExternalLink, FileText, MessageSquare, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import { DateInput } from "@/components/form/DateInput";
@@ -13,8 +17,13 @@ import { formatDate, formatDateTime } from "@/lib/dates";
 import { fullName, type LoqalUser } from "@/lib/auth";
 import {
   INSPECTION_STATUS_LABEL,
-  acceptInspection,
+  downloadInspectionInvoice,
   downloadInspectionReport,
+  fetchAgentContact,
+  submitInspectionOffer,
+  useInspectionOffers,
+  type AgentContact,
+  type InspectionInvoice,
   updateInspection,
   uploadInspectionReport,
   type InspectionRequest,
@@ -26,9 +35,9 @@ export function InspectionJobs({ user, items, ready, refresh, compact = false }:
   const { authUserId } = useAuth();
   const [category, setCategory] = useState("all");
   const [stage, setStage] = useState("all");
-  const filtered = items.filter((i) => (category === "all" || i.propertyCategory === category) && (stage === "all" || (stage === "active" ? i.status === "accepted" || i.status === "scheduled" : stage === "reports" ? i.status === "report_uploaded" || i.status === "completed" : i.status === "open")));
-  const open = filtered.filter((i) => i.status === "open");
-  const mine = filtered.filter((i) => i.inspectorUserId === authUserId && i.status !== "open" && i.status !== "cancelled");
+  const filtered = items.filter((i) => (category === "all" || i.propertyCategory === category) && (stage === "all" || (stage === "active" ? i.status === "accepted" || i.status === "scheduled" : stage === "reports" ? i.status === "report_uploaded" || i.status === "completed" : (i.status === "open" || i.status === "awaiting_client"))));
+  const open = filtered.filter((i) => i.status === "open" || (i.status === "awaiting_client" && i.inspectorUserId == null));
+  const mine = filtered.filter((i) => i.inspectorUserId === authUserId && i.status !== "open" && i.status !== "awaiting_client" && i.status !== "cancelled");
   const visibleOpen = compact ? open.slice(0, 3) : open;
   const visibleMine = compact ? mine.filter((r) => r.status === "accepted" || r.status === "scheduled").slice(0, 3) : mine;
 
@@ -70,45 +79,135 @@ function JobHead({ r }: { r: InspectionRequest }) {
 }
 
 export function InspectionJobDetails({ r, user, onDone }: { r: InspectionRequest; user: LoqalUser; onDone: () => void }) {
-  return r.status === "open" ? <OpenJob r={r} user={user} onDone={onDone} /> : <MyJob r={r} onDone={onDone} />;
+  return r.status === "open" || r.status === "awaiting_client" ? <OpenJob r={r} user={user} onDone={onDone} /> : <MyJob r={r} onDone={onDone} />;
 }
 
-function OpenJob({ r, user, onDone }: { r: InspectionRequest; user: LoqalUser; onDone: () => void }) {
-  const [form, setForm] = useState(false);
-  const [fee, setFee] = useState("");
-  const [date, setDate] = useState("");
-  const [time, setTime] = useState("10:00");
-  const [busy, setBusy] = useState(false);
-  async function accept() {
-    if (!(Number(fee) > 0) || !date) { toast("Enter your fee and a proposed date."); return; }
-    setBusy(true);
-    try {
-      const at = new Date(`${date}T${time}`).toISOString();
-      await acceptInspection(r.id, Number(fee), at, { name: fullName(user), phone: user.phone ?? "", email: user.email });
-      notify({ id: `inspection-accepted-${r.id}`, to: r.clientEmail, title: "An inspector accepted your inspection request", body: `${r.propertyLabel} — ${user.companyName || fullName(user)} proposed ${formatDateTime(at)} for $${Number(fee).toLocaleString("en-US")}.`, href: "/my-properties", severity: "info" });
-      if (r.agentEmail) notify({ id: `inspection-accepted-agent-${r.id}`, to: r.agentEmail, title: "Inspector assigned to your buyer's file", body: `${r.propertyLabel} — ${user.companyName || fullName(user)}, proposed ${formatDateTime(at)}.`, href: `/partner?tab=buyers&focus=${r.leadId}`, severity: "info" });
-      toast("Job accepted");
-      onDone();
-    } catch (e) { toast.error(e instanceof Error ? e.message : "Couldn't accept"); onDone(); } finally { setBusy(false); }
-  }
+function useAgent(r: InspectionRequest) {
+  const [agent, setAgent] = useState<AgentContact | null>(null);
+  useEffect(() => { void fetchAgentContact(r.id).then(setAgent); }, [r.id]);
+  return agent;
+}
+
+/** What an inspection company needs before quoting: property, scope, deadlines, access via the buyer's agent. */
+function RequestBrief({ r }: { r: InspectionRequest }) {
+  const property = r.propertyId ? getProperty(Number(r.propertyId)) : undefined;
+  const deadline = r.agreementSignedAt && r.deadlineDays ? new Date(new Date(r.agreementSignedAt).getTime() + r.deadlineDays * 86400000).toISOString() : null;
+  const facts: [string, string][] = [
+    ["Property type", property?.type ?? r.propertyCategory],
+    ["Location", property ? `${property.address}, ${property.location}` : `${r.propertyLabel}, ${r.state}`],
+    ["Size", property ? `${property.sqft.toLocaleString("en-US")} ${property.type === "Land" ? "acres" : "sqft"}` : "—"],
+    ["Layout", property?.beds ? `${property.beds} bed · ${property.baths} bath` : "—"],
+    ["Inspection period ends", deadline && !r.outsideAgreement ? formatDate(deadline) : r.outsideAgreement ? "Not contractual (buyer's extra)" : "—"],
+    ["Offers due", r.offersDueAt ? formatDateTime(r.offersDueAt) : "—"],
+  ];
   return (
-    <div className="rounded-md border border-border bg-background p-4">
-      <JobHead r={r} />
-      {form ? (
-        <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_1fr_120px_auto] sm:items-end">
-          <label className="text-xs text-muted-foreground">Total fee (USD)<input className={input} inputMode="decimal" value={fee} onChange={(e) => setFee(e.target.value.replace(/[^\d.]/g, ""))} /></label>
-          <label className="text-xs text-muted-foreground">Proposed date<DateInput value={date} onChange={setDate} /></label>
-          <label className="text-xs text-muted-foreground">Time<input type="time" className={input} value={time} onChange={(e) => setTime(e.target.value)} /></label>
-          <Button size="sm" disabled={busy} onClick={accept}>{busy ? "Saving…" : "Confirm"}</Button>
-        </div>
-      ) : (
-        <Button size="sm" onClick={() => setForm(true)} className="mt-3">Accept job</Button>
-      )}
+    <div className="mt-3 space-y-3">
+      <div className="grid gap-2 sm:grid-cols-3">{facts.map(([k, v]) => <div key={k} className="rounded-md border border-border bg-muted/30 px-3 py-2"><p className="text-[10px] font-semibold uppercase text-muted-foreground">{k}</p><p className="mt-0.5 text-xs font-semibold text-foreground">{v}</p></div>)}</div>
+      <p className="text-[11px] leading-5 text-muted-foreground">Access is arranged through the buyer's agent with the seller's side (lockbox, occupancy, utilities on). The buyer is identified by first name and client number only. Your fee is paid directly by the client; Loqal's 10% partner fee is invoiced after completion.</p>
+      {property ? <Button asChild size="sm" variant="outline"><Link to="/property/$propertyId" params={{ propertyId: String(property.id) }} target="_blank"><ExternalLink aria-hidden /> View original listing</Link></Button> : null}
     </div>
   );
 }
 
+function AgentBox({ r, user, inspectorUserId }: { r: InspectionRequest; user: LoqalUser; inspectorUserId: string }) {
+  const agent = useAgent(r);
+  const [open, setOpen] = useState(false);
+  if (!r.agentEmail) return <p className="mt-3 text-xs text-muted-foreground">No buyer's agent on this file — Loqal will coordinate access.</p>;
+  return (
+    <div className="mt-3 rounded-md border border-border bg-muted/20 p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="text-xs"><p className="font-semibold text-foreground">Buyer's agent: {agent?.name || r.agentEmail}</p><p className="text-muted-foreground">{[agent?.company, agent?.phone, agent?.email ?? r.agentEmail].filter(Boolean).join(" · ")}</p></div>
+        <Button size="sm" variant="outline" onClick={() => setOpen((o) => !o)}><MessageSquare aria-hidden /> {open ? "Hide messages" : "Message / schedule call"}</Button>
+      </div>
+      {open ? <div className="mt-3"><InspectionThread r={r} side="inspector" inspectorUserId={inspectorUserId} inspectorEmail={user.email} authorName={user.companyName || fullName(user)} counterpartEmail={r.agentEmail ?? undefined} /></div> : null}
+    </div>
+  );
+}
+
+function OpenJob({ r, user, onDone }: { r: InspectionRequest; user: LoqalUser; onDone: () => void }) {
+  const { authUserId } = useAuth();
+  const { offers, refresh } = useInspectionOffers([r.id]);
+  const mine = offers.find((o) => o.inspectorUserId === authUserId);
+  const [form, setForm] = useState(false);
+  const [price, setPrice] = useState("");
+  const [slots, setSlots] = useState([{ date: "", time: "10:00" }, { date: "", time: "10:00" }, { date: "", time: "10:00" }]);
+  const [flexible, setFlexible] = useState(false);
+  const [reportDays, setReportDays] = useState("2");
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const closed = r.status !== "open";
+
+  function edit() {
+    if (mine) {
+      setPrice(String(mine.price)); setFlexible(mine.visitFlexible); setReportDays(String(mine.reportDays)); setNote(mine.note ?? "");
+      setSlots([0, 1, 2].map((i) => { const s = mine.visitSlots[i]; if (!s) return { date: "", time: "10:00" }; const d = new Date(s); return { date: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`, time: `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}` }; }));
+    }
+    setForm(true);
+  }
+
+  async function submit() {
+    const visitSlots = slots.filter((s) => s.date).map((s) => new Date(`${s.date}T${s.time}`).toISOString());
+    if (!(Number(price) > 0)) { toast("Enter your total price."); return; }
+    if (!flexible && !visitSlots.length) { toast("Add at least one visit date or choose Flexible."); return; }
+    if (!(Number(reportDays) > 0)) { toast("Enter how many business days until the report is ready."); return; }
+    setBusy(true);
+    try {
+      const { data: pr } = await supabase.from("partner_requests").select("id,company_name").eq("user_id", authUserId ?? "").eq("partner_type", "inspector").eq("status", "approved").maybeSingle();
+      const company = user.companyName || (pr?.company_name as string | undefined) || fullName(user);
+      await submitInspectionOffer({ requestId: r.id, partnerRequestId: pr?.id as string | undefined, company, contact: { name: fullName(user), phone: user.phone ?? "", email: user.email }, price: Number(price), visitSlots, visitFlexible: flexible, reportDays: Number(reportDays), note, existingId: mine?.id });
+      if (r.agentEmail) notify({ id: `inspection-offer-${r.id}-${authUserId}`, to: r.agentEmail, title: mine ? "Inspection offer updated" : "New inspection offer", body: `${r.propertyLabel} — ${company}: $${Number(price).toLocaleString("en-US")}, ${flexible ? "flexible timing" : `from ${formatDateTime(visitSlots[0] ?? "")}`}, report in ${reportDays} business days.`, href: `/partner?tab=buyers&focus=${r.leadId}`, severity: "info" });
+      notify({ id: `inspection-offer-admin-${r.id}-${authUserId}`, to: "admins", title: "Inspection offer received", body: `${r.propertyLabel} — ${company}, $${Number(price).toLocaleString("en-US")}.`, href: "/admin", severity: "info" });
+      toast(mine ? "Offer updated" : "Offer sent to the buyer's agent");
+      setForm(false); await refresh(); onDone();
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Couldn't send the offer"); } finally { setBusy(false); }
+  }
+
+  return (
+    <div className="rounded-md border border-border bg-background p-4">
+      <JobHead r={r} />
+      <RequestBrief r={r} />
+      {authUserId ? <AgentBox r={r} user={user} inspectorUserId={authUserId} /> : null}
+      {mine && !form ? (
+        <div className="mt-3 rounded-md border border-brand/30 bg-brand-tint/30 p-3 text-xs">
+          <p className="font-semibold text-foreground">Your offer: ${mine.price.toLocaleString("en-US")} · report in {mine.reportDays} business days</p>
+          <p className="mt-1 text-muted-foreground">Visit: {mine.visitFlexible ? "Flexible" : ""}{mine.visitSlots.length ? `${mine.visitFlexible ? " · preferred " : ""}${mine.visitSlots.map((s, i) => `${i + 1}. ${formatDateTime(s)}`).join("  ")}` : ""}</p>
+          <p className="mt-1 text-muted-foreground">{closed ? (r.selectedOfferId === mine.id ? "The buyer's agent recommended your offer — waiting for the client's confirmation." : "The buyer's agent recommended another offer; the client hasn't confirmed yet.") : "The buyer's agent compares offers and recommends one to the client."}</p>
+          {!closed ? <Button size="sm" variant="outline" className="mt-2" onClick={edit}>Edit offer</Button> : null}
+        </div>
+      ) : form ? (
+        <div className="mt-3 space-y-3 rounded-md border border-border p-3">
+          <div className="grid gap-2 sm:grid-cols-2">
+            <label className="text-xs text-muted-foreground">Total price for all listed inspections (USD)<input className={input} inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value.replace(/[^\d.]/g, ""))} /></label>
+            <label className="text-xs text-muted-foreground">Report ready within (business days after the visit)<input className={input} inputMode="numeric" value={reportDays} onChange={(e) => setReportDays(e.target.value.replace(/\D/g, ""))} /></label>
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-foreground">When could you visit? (in order of preference)</p>
+            <label className="mt-2 flex items-center gap-2 text-xs text-foreground"><input type="checkbox" className="accent-brand" checked={flexible} onChange={(e) => setFlexible(e.target.checked)} /> Flexible — any time that suits the buyer's agent and seller within the inspection period</label>
+            <div className="mt-2 grid gap-2">{slots.map((s, i) => (
+              <div key={i} className="grid grid-cols-[80px_1fr_110px] items-center gap-2 text-xs text-muted-foreground">
+                <span>Priority {i + 1}</span>
+                <DateInput value={s.date} onChange={(v) => setSlots(slots.map((x, j) => (j === i ? { ...x, date: v } : x)))} />
+                <input type="time" aria-label={`Priority ${i + 1} time`} className={input} value={s.time} onChange={(e) => setSlots(slots.map((x, j) => (j === i ? { ...x, time: e.target.value } : x)))} />
+              </div>))}</div>
+          </div>
+          <label className="block text-xs text-muted-foreground">Note (optional — what's included, access needs, add-ons)<textarea rows={2} className={input} value={note} onChange={(e) => setNote(e.target.value)} /></label>
+          <div className="flex gap-2"><Button size="sm" disabled={busy} onClick={submit}>{busy ? "Sending…" : mine ? "Update offer" : "Send offer"}</Button><Button size="sm" variant="outline" onClick={() => setForm(false)}>Cancel</Button></div>
+        </div>
+      ) : !closed ? (
+        <Button size="sm" onClick={() => setForm(true)} className="mt-3">Send price & availability</Button>
+      ) : null}
+    </div>
+  );
+}
+
+function Invoices({ r, kinds }: { r: InspectionRequest; kinds: InspectionInvoice["kind"][] }) {
+  const list = r.invoices.filter((i) => kinds.includes(i.kind));
+  if (!list.length) return null;
+  return <div className="mt-3 flex flex-wrap gap-2">{list.map((inv) => <Button key={inv.number} size="sm" variant="outline" onClick={() => downloadInspectionInvoice(inv).catch(() => toast.error("Download failed"))}><FileText aria-hidden /> {inv.kind === "loqal_fee" ? "Loqal fee invoice" : "Client invoice"} {inv.number} · ${inv.amount.toLocaleString("en-US")}</Button>)}</div>;
+}
+
 function MyJob({ r, onDone }: { r: InspectionRequest; onDone: () => void }) {
+  const { user, authUserId } = useAuth();
   const [busy, setBusy] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   async function confirmDate() {
@@ -132,6 +231,8 @@ function MyJob({ r, onDone }: { r: InspectionRequest; onDone: () => void }) {
   return (
     <div className="rounded-md border border-border bg-background p-4">
       <JobHead r={r} />
+      <Invoices r={r} kinds={["inspection_service", "loqal_fee"]} />
+      {user && authUserId ? <AgentBox r={r} user={user} inspectorUserId={authUserId} /> : null}
       <p className="mt-2 text-xs text-muted-foreground">Fee ${r.fee?.toLocaleString("en-US")} · {r.scheduledAt ? `scheduled ${formatDateTime(r.scheduledAt)}` : r.proposedAt ? `proposed ${formatDateTime(r.proposedAt)}` : ""}</p>
       <div className="mt-3 flex flex-wrap items-center gap-2">
         {r.status === "accepted" ? <Button size="sm" disabled={busy} onClick={confirmDate}>Mark as scheduled</Button> : null}

@@ -224,11 +224,123 @@ export type Database = {
         }
         Relationships: []
       }
+      inspection_messages: {
+        Row: {
+          author_id: string
+          author_name: string
+          body: string
+          call_slots: Json
+          chosen_slot: string | null
+          created_at: string
+          from_side: string
+          id: string
+          inspector_email: string
+          inspector_user_id: string
+          request_id: string
+        }
+        Insert: {
+          author_id?: string
+          author_name?: string
+          body?: string
+          call_slots?: Json
+          chosen_slot?: string | null
+          created_at?: string
+          from_side: string
+          id?: string
+          inspector_email?: string
+          inspector_user_id: string
+          request_id: string
+        }
+        Update: {
+          author_id?: string
+          author_name?: string
+          body?: string
+          call_slots?: Json
+          chosen_slot?: string | null
+          created_at?: string
+          from_side?: string
+          id?: string
+          inspector_email?: string
+          inspector_user_id?: string
+          request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inspection_messages_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "inspection_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inspection_offers: {
+        Row: {
+          company: string
+          contact: Json | null
+          created_at: string
+          id: string
+          inspector_user_id: string
+          note: string | null
+          partner_request_id: string | null
+          price: number
+          report_days: number
+          request_id: string
+          status: string
+          updated_at: string
+          visit_flexible: boolean
+          visit_slots: Json
+        }
+        Insert: {
+          company?: string
+          contact?: Json | null
+          created_at?: string
+          id?: string
+          inspector_user_id?: string
+          note?: string | null
+          partner_request_id?: string | null
+          price: number
+          report_days: number
+          request_id: string
+          status?: string
+          updated_at?: string
+          visit_flexible?: boolean
+          visit_slots?: Json
+        }
+        Update: {
+          company?: string
+          contact?: Json | null
+          created_at?: string
+          id?: string
+          inspector_user_id?: string
+          note?: string | null
+          partner_request_id?: string | null
+          price?: number
+          report_days?: number
+          request_id?: string
+          status?: string
+          updated_at?: string
+          visit_flexible?: boolean
+          visit_slots?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inspection_offers_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "inspection_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inspection_requests: {
         Row: {
           agent_email: string | null
+          agent_note: string | null
+          agent_selected_at: string | null
           agreement_signed_at: string | null
           client_acknowledged_at: string | null
+          client_confirmed_at: string | null
           client_email: string
           client_label: string
           client_note: string | null
@@ -243,7 +355,9 @@ export type Database = {
           inspector_contact: Json | null
           inspector_request_id: string | null
           inspector_user_id: string | null
+          invoices: Json
           lead_id: string
+          offers_due_at: string | null
           outside_agreement: boolean
           property_category: string
           property_id: string | null
@@ -251,14 +365,18 @@ export type Database = {
           proposed_at: string | null
           report_files: Json
           scheduled_at: string | null
+          selected_offer_id: string | null
           state: string
           status: string
           updated_at: string
         }
         Insert: {
           agent_email?: string | null
+          agent_note?: string | null
+          agent_selected_at?: string | null
           agreement_signed_at?: string | null
           client_acknowledged_at?: string | null
+          client_confirmed_at?: string | null
           client_email?: string
           client_label?: string
           client_note?: string | null
@@ -273,7 +391,9 @@ export type Database = {
           inspector_contact?: Json | null
           inspector_request_id?: string | null
           inspector_user_id?: string | null
+          invoices?: Json
           lead_id: string
+          offers_due_at?: string | null
           outside_agreement?: boolean
           property_category?: string
           property_id?: string | null
@@ -281,14 +401,18 @@ export type Database = {
           proposed_at?: string | null
           report_files?: Json
           scheduled_at?: string | null
+          selected_offer_id?: string | null
           state: string
           status?: string
           updated_at?: string
         }
         Update: {
           agent_email?: string | null
+          agent_note?: string | null
+          agent_selected_at?: string | null
           agreement_signed_at?: string | null
           client_acknowledged_at?: string | null
+          client_confirmed_at?: string | null
           client_email?: string
           client_label?: string
           client_note?: string | null
@@ -303,7 +427,9 @@ export type Database = {
           inspector_contact?: Json | null
           inspector_request_id?: string | null
           inspector_user_id?: string | null
+          invoices?: Json
           lead_id?: string
+          offers_due_at?: string | null
           outside_agreement?: boolean
           property_category?: string
           property_id?: string | null
@@ -311,6 +437,7 @@ export type Database = {
           proposed_at?: string | null
           report_files?: Json
           scheduled_at?: string | null
+          selected_offer_id?: string | null
           state?: string
           status?: string
           updated_at?: string
@@ -646,6 +773,12 @@ export type Database = {
         }
         Returns: undefined
       }
+      can_offer_inspection: { Args: { _request_id: string }; Returns: boolean }
+      confirm_inspection_offer: {
+        Args: { _request_id: string }
+        Returns: undefined
+      }
+      has_inspection_offer: { Args: { _request_id: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -653,10 +786,16 @@ export type Database = {
         }
         Returns: boolean
       }
+      inspection_agent_contact: { Args: { _request_id: string }; Returns: Json }
       inspector_covers: { Args: { _state: string }; Returns: boolean }
+      is_inspection_agent: { Args: { _request_id: string }; Returns: boolean }
       put_shared_records: { Args: { _rows: Json }; Returns: undefined }
       respond_entity_recommendation: {
         Args: { _id: string; _response: Json }
+        Returns: undefined
+      }
+      select_inspection_offer: {
+        Args: { _note: string; _offer_id: string }
         Returns: undefined
       }
       shared_record_visible: {
