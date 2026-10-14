@@ -64,6 +64,13 @@
       "when": 1792002354113,
       "tag": "0008_notify_inspectors_cases_link",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792002707973,
+      "tag": "0009_inspection_offers_flow",
+      "breakpoints": true
     }
   ]
 }
