@@ -778,6 +778,7 @@ export type Database = {
         Args: { _request_id: string }
         Returns: undefined
       }
+      has_inspection_offer: { Args: { _request_id: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
