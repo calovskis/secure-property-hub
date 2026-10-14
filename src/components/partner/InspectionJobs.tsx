@@ -61,7 +61,9 @@ function JobHead({ r }: { r: InspectionRequest }) {
         <p className="text-sm font-semibold text-foreground">{r.propertyLabel} <span className="font-normal text-muted-foreground">· {r.state}</span></p>
         <span className="rounded-full bg-brand-tint px-2.5 py-0.5 text-[11px] font-semibold text-brand">{INSPECTION_STATUS_LABEL[r.status]}</span>
       </div>
-      <p className="mt-0.5 text-xs text-muted-foreground">Buyer {r.clientLabel}{deadline ? ` · inspection period ends ${formatDate(deadline)}` : ""}</p>
+      <p className="mt-0.5 text-xs text-muted-foreground">Buyer {r.clientLabel}{deadline && !r.outsideAgreement ? ` · inspection period ends ${formatDate(deadline)}` : ""}</p>
+      {r.outsideAgreement ? <p className="mt-1 inline-block rounded bg-gold-tint px-2 py-0.5 text-[10px] font-semibold text-gold">Additional inspection requested by the buyer — not part of the purchase agreement</p> : null}
+      {r.clientNote ? <p className="mt-1 text-xs text-muted-foreground">Buyer's note: {r.clientNote}</p> : null}
       <ul className="mt-2 flex flex-wrap gap-1.5">{r.inspectionTypes.map((t) => <li key={t} className="rounded-full border border-border bg-background px-2.5 py-0.5 text-[11px] text-foreground">{t}</li>)}</ul>
     </>
   );
